@@ -1,0 +1,11 @@
+{
+  "stage": "p2_observation_finalize",
+  "window_days": 3,
+  "days_collected": 3,
+  "p0_count": 0,
+  "p1_count": 0,
+  "all_days_passed": true,
+  "b_version_prerequisites_met": true,
+  "final_decision": "GO",
+  "timestamp_utc": "2026-05-02T05:03:38.784258+00:00"
+}

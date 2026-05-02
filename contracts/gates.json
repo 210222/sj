@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract": "eight_gates",
+  "version": "1.0.0",
+  "status": "frozen",
+  "description": "八道升档门禁合约。升档必须全部通过，任一门禁失败则阻止。",
+  "gates": {
+    "1_agency_gate": {
+      "name": "Agency Gate",
+      "description": "前提改写率达标",
+      "metric": "premise_rewrite_rate",
+      "rule": "用户在关键决策点改写前提的比例不低于阈值",
+      "status": "skeleton"
+    },
+    "2_excursion_gate": {
+      "name": "Excursion Gate",
+      "description": "远足后有有效探索证据",
+      "metric": "effective_exploration_evidence",
+      "rule": "使用模型外远足权后产生了有效探索记录",
+      "status": "skeleton"
+    },
+    "3_learning_gate": {
+      "name": "Learning Gate",
+      "description": "No-Assist 不持续下滑",
+      "metric": "no_assist_trajectory",
+      "rule": "No-Assist 表现不存在持续下降趋势",
+      "status": "skeleton"
+    },
+    "4_relational_gate": {
+      "name": "Relational Gate",
+      "description": "顺从信号不超过阈值",
+      "metric": "compliance_signal_score",
+      "rule": "被动同意率/改写率下降/自我判断语句减少 不超阈值",
+      "status": "skeleton"
+    },
+    "5_causal_gate": {
+      "name": "Causal Gate",
+      "description": "三诊断全绿",
+      "metric": "causal_diagnostics_triple",
+      "rule": "平衡性检验 + 负对照 + 安慰剂窗口 全部通过",
+      "status": "skeleton"
+    },
+    "6_audit_gate": {
+      "name": "Audit Gate",
+      "description": "审计分级达标",
+      "metric": "audit_health",
+      "rule": "P0=0 且 P1 低于告警阈值",
+      "status": "skeleton"
+    },
+    "7_framing_gate": {
+      "name": "Framing Gate",
+      "description": "独立选择架构审计通过",
+      "metric": "independent_framing_audit_pass",
+      "rule": "独立进程/模型完成选择架构审计并返回 pass",
+      "status": "skeleton"
+    },
+    "8_window_gate": {
+      "name": "Window Gate",
+      "description": "同一窗口版本口径",
+      "metric": "window_schema_version_consistency",
+      "rule": "参与升档计算的所有数据使用同一 window_schema_version",
+      "status": "skeleton"
+    }
+  },
+  "gate_result_schema": {
+    "fields": {
+      "gate_id": "string — 门禁编号",
+      "gate_name": "string — 门禁名称",
+      "pass": "boolean",
+      "metric_value": "any — 当前指标值",
+      "threshold": "any — 阈值",
+      "reason": "string — 不通过时的原因",
+      "evaluated_at_utc": "ISO 8601 UTC",
+      "window_id": "关联的评估窗口"
+    }
+  },
+  "upgrade_rule": {
+    "logic": "AND",
+    "description": "all 8 gates → pass == true 才允许升档"
+  }
+}

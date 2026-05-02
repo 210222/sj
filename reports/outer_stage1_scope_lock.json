@@ -1,0 +1,40 @@
+{
+  "scope_version": "outer_a_v1.0.0",
+  "core_usecase": "对外提供稳定编排调用入口",
+  "frozen_at_utc": "2026-04-30T00:00:00.000Z",
+  "allowed_paths": [
+    "src/outer/**",
+    "tests/test_outer_*.py"
+  ],
+  "forbidden_paths": [
+    "contracts/**",
+    "src/inner/**",
+    "src/middle/**"
+  ],
+  "must_have": [
+    "L0->L1->L2->Decision->Safety 编排链",
+    "统一输出 schema",
+    "统一 fallback 输出"
+  ],
+  "must_not_have": [
+    "探索配额策略",
+    "税率策略",
+    "动态调参策略"
+  ],
+  "output_schema_keys": [
+    "allowed",
+    "final_intensity",
+    "audit_level",
+    "reason_code",
+    "trace_id",
+    "event_time_utc",
+    "window_id",
+    "evaluated_at_utc"
+  ],
+  "acceptance_gates": [
+    "outer tests pass",
+    "full regression pass",
+    "fallback schema stable",
+    "time/window consistency"
+  ]
+}

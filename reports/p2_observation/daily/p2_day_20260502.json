@@ -1,0 +1,12 @@
+{
+  "stage": "p2_observation_daily",
+  "day_index": 2,
+  "date_utc": "20260502",
+  "release_gate_passed": true,
+  "healthcheck_passed": true,
+  "rollback_verify_passed": true,
+  "p0_detected": false,
+  "p1_detected": false,
+  "final_decision": "GO",
+  "timestamp_utc": "2026-05-02T05:02:48.664099+00:00"
+}

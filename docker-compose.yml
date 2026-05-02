@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  coherence-outer:
+    build: .
+    container_name: coherence-outer
+    environment:
+      - PYTHONUNBUFFERED=1
+      - COHERENCE_ENV=production
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./reports:/app/reports
+      - ./data:/app/data
+    restart: "no"

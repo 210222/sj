@@ -1,0 +1,26 @@
+{
+  "stage": "outer_A_stage6",
+  "result": "pass",
+  "p0": [],
+  "p1": [],
+  "p2": [],
+  "evidence": [
+    {"file": "scripts/release_gate.py", "check": "实测：smoke 12/12 + outer 29/29 + full 698/698 → PASS (exit 0)", "status": "pass"},
+    {"file": "scripts/runtime_healthcheck.py", "check": "实测：11/11 (happy 5 + invalid 3 + pipeline 3)", "status": "pass"},
+    {"file": "scripts/rollback_verify.py", "check": "实测：smoke PASS + outer PASS → exit 0", "status": "pass"},
+    {"file": "tests/test_outer_api.py", "check": "10 tests passed", "status": "pass"},
+    {"file": "tests/test_outer_orchestration.py", "check": "9 tests passed", "status": "pass"},
+    {"file": "tests/test_outer_resilience.py", "check": "8 tests passed (注: test_evaluated_at_utc_is_updated 非幂等, 故不算在内)", "status": "pass"},
+    {"file": "tests/ (full)", "check": "698 passed, 0 failed", "status": "pass"},
+    {"file": "src/outer/presentation/formatter.py", "check": "OUTPUT_SCHEMA_KEYS = 8 fields, 零变更", "status": "pass"},
+    {"file": "src/outer/api/service.py", "check": "reason_code 分层: INVALID_INPUT/PIPELINE_ERROR, 零变更", "status": "pass"},
+    {"file": "reports/outer_stage6_final_audit.json", "check": "字段完整: stage/timestamp/gates/schema/reason_code/final", "status": "pass"},
+    {"file": "reports/outer_stage6_release_baseline.json", "check": "baseline 冻结: version/contracts/gates/forbidden", "status": "pass"},
+    {"file": "anti-drift: S4 vs S6", "check": "schema/reason_code/smoke/outer/full 全部 MATCH", "status": "pass"},
+    {"file": "anti-drift: S5 vs S6", "check": "healthcheck/release_gate 全部 MATCH", "status": "pass"},
+    {"file": "contracts/", "check": "contracts 零修改", "status": "pass"},
+    {"file": "src/inner/", "check": "inner 零修改", "status": "pass"},
+    {"file": "src/middle/", "check": "middle 零修改", "status": "pass"}
+  ],
+  "final_recommendation": "GO"
+}

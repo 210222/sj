@@ -1,0 +1,42 @@
+{
+  "stage": "outer_A_stage6",
+  "timestamp_utc": "2026-04-30T13:44:00.000Z",
+  "release_gate_passed": true,
+  "release_gate_details": {
+    "smoke": "12/12",
+    "outer_tests": "29/29",
+    "full_regression": "698/698"
+  },
+  "healthcheck_passed": true,
+  "healthcheck_details": {
+    "total": 11,
+    "passed": 11,
+    "failed": 0,
+    "categories": {
+      "happy_path": 5,
+      "invalid_input": 3,
+      "pipeline_error": 3
+    }
+  },
+  "rollback_verify_passed": true,
+  "outer_tests_passed": true,
+  "outer_tests_count": 29,
+  "full_regression_passed": true,
+  "full_regression_count": 698,
+  "schema_drift": false,
+  "schema_keys": [
+    "allowed", "final_intensity", "audit_level", "reason_code",
+    "trace_id", "event_time_utc", "window_id", "evaluated_at_utc"
+  ],
+  "reason_code_drift": false,
+  "reason_codes_verified": [
+    "ORCH_INVALID_INPUT", "ORCH_PIPELINE_ERROR",
+    "SEM_PASS", "SEM_BLOCK_P0", "SEM_BLOCK_LOW_SCORE",
+    "SEM_WARN_P1", "SEM_WARN_GATE", "SEM_FREEZE_GATE"
+  ],
+  "stage4_5_consistency": {
+    "stage4_vs_stage6": "ZERO DRIFT",
+    "stage5_vs_stage6": "ZERO DRIFT"
+  },
+  "final_decision": "GO"
+}

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract": "audit_grading",
+  "version": "1.0.0",
+  "status": "frozen",
+  "description": "P0/P1 审计分级合约。定义事件的阻断级和告警级字段缺失检查规则。",
+  "grading": {
+    "p0": {
+      "label": "阻断升档",
+      "description": "缺少任一 P0 字段，阻止该事件关联的升档操作",
+      "required_fields": [
+        "trace_id",
+        "policy_version",
+        "counterfactual_ranker_version",
+        "counterfactual_feature_schema_version"
+      ],
+      "action": "block_upgrade",
+      "rule": "ANY P0 field IS NULL OR missing → block"
+    },
+    "p1": {
+      "label": "可运行告警",
+      "description": "非关键解释字段缺失，累计统计后按阈值告警/冻结",
+      "monitored_fields": [
+        "objective_weights_snapshot",
+        "tradeoff_reason",
+        "protected_metric_guardrail_hit",
+        "used_fact_ids",
+        "ignored_fact_ids_with_reason",
+        "degradation_path",
+        "counterfactual_policy_rank",
+        "assignment_features",
+        "eligibility_rule_id",
+        "meta_conflict_score",
+        "track_disagreement_level",
+        "meta_conflict_alert_flag"
+      ],
+      "thresholds": {
+        "warn": {
+          "value": 0.01,
+          "description": "P1 缺失率 > 1% 触发告警",
+          "action": "alert"
+        },
+        "freeze": {
+          "value": 0.03,
+          "description": "P1 缺失率 > 3% 冻结扩量",
+          "action": "freeze_scale_up"
+        }
+      },
+      "calculation": "P1_missing_rate = count(events_with_any_P1_null) / total_events_in_window"
+    }
+  },
+  "audit_result": {
+    "fields": {
+      "audit_id": "UUID v4",
+      "event_id": "关联的 events.id",
+      "p0_pass": "boolean — 所有 P0 字段非空为 true",
+      "p0_missing_fields": "[string] — 缺失的 P0 字段列表",
+      "p1_null_fields": "[string] — 为空的 P1 字段列表",
+      "p1_null_rate_window": "float — 当前窗口 P1 缺失率",
+      "audit_time_utc": "ISO 8601 UTC",
+      "window_id": "关联窗口",
+      "audit_level": "\"pass\" | \"p1_warn\" | \"p1_freeze\" | \"p0_block\""
+    }
+  }
+}

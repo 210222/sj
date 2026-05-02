@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract": "evidence_ledger",
+  "version": "1.0.0",
+  "status": "frozen",
+  "description": "证据账本核心数据合约。append-only 存储，所有事件通过 hash 链保证完整性。",
+  "storage": {
+    "engine": "sqlite",
+    "database_path": "data/coherence.db",
+    "table": "events",
+    "constraints": {
+      "append_only": true,
+      "no_update": true,
+      "no_delete": true,
+      "enforcement": "trigger"
+    }
+  },
+  "schema": {
+    "fields": {
+      "id": {
+        "type": "INTEGER",
+        "constraint": "PRIMARY KEY AUTOINCREMENT",
+        "description": "自增主键"
+      },
+      "event_hash": {
+        "type": "TEXT",
+        "constraint": "NOT NULL UNIQUE",
+        "description": "本事件 SHA-256 哈希",
+        "format": "hex_string_64_chars"
+      },
+      "prev_hash": {
+        "type": "TEXT",
+        "constraint": "NOT NULL",
+        "description": "前驱事件哈希，创世事件填写 '0000...0000'",
+        "format": "hex_string_64_chars"
+      },
+      "chain_height": {
+        "type": "INTEGER",
+        "constraint": "NOT NULL CHECK(chain_height >= 0)",
+        "description": "链高度，从 0 开始递增"
+      },
+      "event_time_utc": {
+        "type": "TEXT",
+        "constraint": "NOT NULL",
+        "description": "事件发生时间，ISO 8601 UTC 格式",
+        "format": "YYYY-MM-DDTHH:MM:SS.sssZ"
+      },
+      "window_id": {
+        "type": "TEXT",
+        "constraint": "NOT NULL",
+        "description": "所属窗口标识，格式见 clock.json",
+        "format": "YYYY-MM-DDTHH:MM_YYYY-MM-DDTHH:MM"
+      },
+      "window_schema_version": {
+        "type": "TEXT",
+        "constraint": "NOT NULL",
+        "description": "窗口划分规则版本号",
+        "default": "1.0.0"
+      },
+      "trace_id": {
+        "type": "TEXT",
+        "constraint": "NOT NULL",
+        "description": "P0 必填。全链路追踪 ID，UUID v4",
+        "audit_level": "P0"
+      },
+      "policy_version": {
+        "type": "TEXT",
+        "constraint": "NOT NULL",
+        "description": "P0 必填。生成此事件时的策略版本号",
+        "audit_level": "P0"
+      },
+      "counterfactual_ranker_version": {
+        "type": "TEXT",
+        "constraint": "NOT NULL",
+        "description": "P0 必填。反事实排序器版本",
+        "audit_level": "P0"
+      },
+      "counterfactual_feature_schema_version": {
+        "type": "TEXT",
+        "constraint": "NOT NULL",
+        "description": "P0 必填。反事实特征 schema 版本",
+        "audit_level": "P0"
+      },
+      "objective_weights_snapshot": {
+        "type": "TEXT",
+        "constraint": "DEFAULT NULL",
+        "description": "P1 字段。目标权重快照 JSON",
+        "audit_level": "P1"
+      },
+      "tradeoff_reason": {
+        "type": "TEXT",
+        "constraint": "DEFAULT NULL",
+        "description": "P1 字段。权衡理由",
+        "audit_level": "P1"
+      },
+      "protected_metric_guardrail_hit": {
+        "type": "INTEGER",
+        "constraint": "DEFAULT 0",
+        "description": "P1 字段。是否触发护栏，0/1",
+        "audit_level": "P1"
+      },
+      "used_fact_ids": {
+        "type": "TEXT",
+        "constraint": "DEFAULT NULL",
+        "description": "P1 字段。引用的 fact ID 列表 JSON",
+        "audit_level": "P1"
+      },
+      "ignored_fact_ids_with_reason": {
+        "type": "TEXT",
+        "constraint": "DEFAULT NULL",
+        "description": "P1 字段。忽略的 fact ID 及原因 JSON",
+        "audit_level": "P1"
+      },
+      "degradation_path": {
+        "type": "TEXT",
+        "constraint": "DEFAULT NULL",
+        "description": "P1 字段。降级路径",
+        "audit_level": "P1"
+      },
+      "counterfactual_policy_rank": {
+        "type": "INTEGER",
+        "constraint": "DEFAULT NULL",
+        "description": "P1 字段。反事实策略排名",
+        "audit_level": "P1"
+      },
+      "assignment_features": {
+        "type": "TEXT",
+        "constraint": "DEFAULT NULL",
+        "description": "P1 字段。分配特征 JSON",
+        "audit_level": "P1"
+      },
+      "eligibility_rule_id": {
+        "type": "TEXT",
+        "constraint": "DEFAULT NULL",
+        "description": "P1 字段。资格规则 ID",
+        "audit_level": "P1"
+      },
+      "meta_conflict_score": {
+        "type": "REAL",
+        "constraint": "DEFAULT NULL",
+        "description": "P1 字段。元认知冲突分数 [0,1]",
+        "audit_level": "P1"
+      },
+      "track_disagreement_level": {
+        "type": "REAL",
+        "constraint": "DEFAULT NULL",
+        "description": "P1 字段。轨道分歧水平 [0,1]",
+        "audit_level": "P1"
+      },
+      "meta_conflict_alert_flag": {
+        "type": "INTEGER",
+        "constraint": "DEFAULT 0",
+        "description": "P1 字段。冲突告警标记 0/1",
+        "audit_level": "P1"
+      }
+    },
+    "p0_fields": [
+      "trace_id",
+      "policy_version",
+      "counterfactual_ranker_version",
+      "counterfactual_feature_schema_version"
+    ],
+    "p1_fields": [
+      "objective_weights_snapshot",
+      "tradeoff_reason",
+      "protected_metric_guardrail_hit",
+      "used_fact_ids",
+      "ignored_fact_ids_with_reason",
+      "degradation_path",
+      "counterfactual_policy_rank",
+      "assignment_features",
+      "eligibility_rule_id",
+      "meta_conflict_score",
+      "track_disagreement_level",
+      "meta_conflict_alert_flag"
+    ]
+  },
+  "genesis_event": {
+    "description": "链上第一条事件，prev_hash 为全零哈希",
+    "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "chain_height": 0
+  }
+}

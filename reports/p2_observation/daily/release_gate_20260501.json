@@ -1,0 +1,10 @@
+{
+  "stage": "release_gate",
+  "steps": {
+    "smoke": "PASS",
+    "outer_tests": "PASS",
+    "full_regression": "PASS"
+  },
+  "timestamp_utc": "2026-05-01T03:40:04.631806+00:00",
+  "final": "PASS"
+}

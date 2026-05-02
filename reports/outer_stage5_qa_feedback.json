@@ -1,0 +1,24 @@
+{
+  "stage": "outer_A_stage5",
+  "result": "pass",
+  "p0": [],
+  "p1": [],
+  "p2": [],
+  "evidence": [
+    {"file": "scripts/release_gate.py", "check": "三段串联正确：smoke → outer → full，PASS 时退出码 0", "status": "pass", "note": "实测 smoke 12/12, outer 29/29, full 698/698 → PASS (exit 0)"},
+    {"file": "scripts/release_gate.py", "check": "失败快停：smoke 失败时跳过后续阶段", "status": "pass", "note": "代码逻辑：非 0 立即 sys.exit(1)"},
+    {"file": "scripts/runtime_healthcheck.py", "check": "覆盖 happy 场景 (5 项)", "status": "pass", "note": "5/5: schema/allowed/reason/window/time"},
+    {"file": "scripts/runtime_healthcheck.py", "check": "覆盖 invalid input 场景 (3 项)", "status": "pass", "note": "3/3: ORCH_INVALID_INPUT/schema/allowed=False"},
+    {"file": "scripts/runtime_healthcheck.py", "check": "覆盖 pipeline error 场景 (3 项)", "status": "pass", "note": "3/3: ORCH_PIPELINE_ERROR/schema/allowed=False"},
+    {"file": "scripts/rollback_verify.py", "check": "可执行且给出 PASS/FAIL", "status": "pass", "note": "实测 smoke 12/12 + outer 29/29 → PASS (exit 0)"},
+    {"file": "config/release_policy.yaml", "check": "门禁阈值定义完整", "status": "pass", "note": "5 gates: smoke/outer/full/contract/reason_code"},
+    {"file": "src/outer/api/service.py", "check": "8 字段 schema 不变", "status": "pass", "note": "set(r.keys()) == set(OUTPUT_SCHEMA_KEYS)"},
+    {"file": "src/outer/api/service.py", "check": "reason_code 分层不变", "status": "pass", "note": "ORCH_INVALID_INPUT / ORCH_PIPELINE_ERROR / SEM_*"},
+    {"file": "reports/outer_stage5_release_report.json", "check": "字段完整：stage/gates/outer/full/timestamp", "status": "pass"},
+    {"file": "reports/outer_stage5_runtime_report.json", "check": "字段完整：stage/passed/failed/failed_items/timestamp", "status": "pass"},
+    {"file": "contracts/", "check": "contracts 零修改", "status": "pass"},
+    {"file": "src/inner/", "check": "inner 零修改", "status": "pass"},
+    {"file": "src/middle/", "check": "middle 零修改", "status": "pass"}
+  ],
+  "final_recommendation": "GO"
+}

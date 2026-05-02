@@ -1,0 +1,58 @@
+{
+  "stage": "outer_A_stage5",
+  "scope_in": [
+    "scripts/release_gate.py — 一键发布门禁 (smoke → outer → full)",
+    "scripts/runtime_healthcheck.py — 运行健康检查 (happy/invalid/pipeline 三类)",
+    "scripts/rollback_verify.py — 回滚后最小验证",
+    "reports/outer_stage5_release_report.json — 发布报告",
+    "reports/outer_stage5_runtime_report.json — 运行巡检报告",
+    "reports/outer_stage5_qa_feedback.json — QA 独立审计",
+    "config/release_policy.yaml — 门禁阈值定义"
+  ],
+  "scope_out": [
+    "新增/删减输出字段",
+    "修改 reason_code 分层语义",
+    "quota/tax/exploration/dynamic policy 策略层",
+    "修改中圈/内圈业务逻辑"
+  ],
+  "contracts_must_hold": [
+    "OUTPUT_SCHEMA_KEYS 固定 8 字段",
+    "reason_code 分层: ORCH_INVALID_INPUT / ORCH_PIPELINE_ERROR / SEM_*",
+    "外圈三套测试全绿",
+    "全量回归全绿"
+  ],
+  "deliverables": [
+    "scripts/release_gate.py",
+    "scripts/runtime_healthcheck.py",
+    "scripts/rollback_verify.py",
+    "reports/outer_stage5_release_report.json",
+    "reports/outer_stage5_runtime_report.json",
+    "reports/outer_stage5_qa_feedback.json",
+    "config/release_policy.yaml"
+  ],
+  "acceptance_gates": {
+    "p0_blockers": [
+      "8 字段契约漂移",
+      "reason_code 分层漂移",
+      "gate 脚本误报通过",
+      "QA 复测与开发自报冲突且未解释"
+    ],
+    "p1_freeze": [
+      "报告字段缺失无法审计",
+      "健康检查覆盖不全",
+      "回滚流程不可执行"
+    ],
+    "p2_improvements": [
+      "报告可读性与耗时优化",
+      "失败分类更精细",
+      "运行日志聚合"
+    ]
+  },
+  "commands": {
+    "release_gate": "python scripts/release_gate.py",
+    "healthcheck": "python scripts/runtime_healthcheck.py",
+    "rollback_verify": "python scripts/rollback_verify.py",
+    "outer_tests": "python -m pytest tests/test_outer_api.py tests/test_outer_orchestration.py tests/test_outer_resilience.py -q",
+    "full_regression": "python -m pytest tests/ -q"
+  }
+}

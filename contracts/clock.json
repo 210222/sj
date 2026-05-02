@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract": "clock_window",
+  "version": "1.0.0",
+  "status": "frozen",
+  "description": "时钟与窗口一致性合约。所有时间计算统一 UTC，窗口规则固定并版本化。",
+  "timezone": {
+    "canonical": "UTC",
+    "output_format": "ISO 8601",
+    "input_tolerance": "接受 ISO 8601 任意时区，内部自动转 UTC"
+  },
+  "windows": {
+    "window_30min": {
+      "description": "30 分钟固定切分窗口",
+      "duration_minutes": 30,
+      "boundary_rule": "前闭后开 [start, end)",
+      "segments": [
+        { "index": 0, "range": "[HH:00, HH:30)" },
+        { "index": 1, "range": "[HH:30, HH+1:00)" }
+      ],
+      "window_id_format": "YYYY-MM-DDTHH:MM_YYYY-MM-DDTHH:MM",
+      "example": "2026-04-29T14:00_2026-04-29T14:30"
+    },
+    "window_biweekly": {
+      "description": "双周固定 14 天窗口",
+      "duration_days": 14,
+      "boundary_rule": "前闭后开 [start, end)",
+      "window_id_format": "BIWEEK_YYYY-MM-DD_YYYY-MM-DD",
+      "epoch_start": "2026-01-05T00:00:00Z",
+      "note": "以周一为起始，epoch 为 2026 年第一个周一"
+    },
+    "offset_d_plus_1": {
+      "description": "D+1 偏移",
+      "duration": "+24h",
+      "format": "event_time_utc + 24 hours"
+    },
+    "offset_d_plus_7": {
+      "description": "D+7 偏移",
+      "duration": "+168h",
+      "format": "event_time_utc + 168 hours"
+    }
+  },
+  "required_event_fields": [
+    "event_time_utc",
+    "window_id",
+    "window_schema_version"
+  ],
+  "functions": {
+    "get_window_30min": {
+      "input": "datetime_utc",
+      "output": "{ window_id: str, window_start: str, window_end: str }",
+      "description": "给定 UTC 时间，返回所属 30 分钟窗口"
+    },
+    "get_window_biweekly": {
+      "input": "datetime_utc",
+      "output": "{ window_id: str, window_start: str, window_end: str }",
+      "description": "给定 UTC 时间，返回所属双周窗口"
+    },
+    "validate_window_consistency": {
+      "input": "event",
+      "output": "ValidationResult",
+      "description": "校验事件的 window_id 与 event_time_utc 一致"
+    },
+    "get_d_plus_offset": {
+      "input": "datetime_utc, offset_hours",
+      "output": "datetime_utc_offset",
+      "description": "计算偏移后的时间"
+    }
+  },
+  "versioning": {
+    "current_schema_version": "1.0.0",
+    "rule": "升档只允许同一 window_schema_version 的数据参与计算"
+  }
+}

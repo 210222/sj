@@ -1,0 +1,90 @@
+# Coherence V18.8.3 — 可调参数配置
+# 所有阈值、权重、预算值集中于此文件，避免硬编码
+
+# ============================================================
+# 内圈参数（Inner Circle）
+# ============================================================
+
+ledger:
+  database_path: "data/coherence.db"
+  hash_algorithm: "sha256"
+  genesis_prev_hash: "0000000000000000000000000000000000000000000000000000000000000000"
+
+audit:
+  p1_warn_threshold: 0.01    # P1 缺失率 > 1% 告警
+  p1_freeze_threshold: 0.03  # P1 缺失率 > 3% 冻结扩量
+
+clock:
+  timezone: "UTC"
+  window_30min_minutes: 30
+  window_biweekly_days: 14
+  biweekly_epoch: "2026-01-05T00:00:00Z"
+  d_plus_1_hours: 24
+  d_plus_7_hours: 168
+  window_schema_version: "1.0.0"
+
+resolver:
+  disagreement_low_threshold: 0.3
+  disagreement_high_threshold: 0.7
+  resolver_policy_version: "1.0.0"
+
+# ============================================================
+# 中圈参数（Middle Circle）
+# ============================================================
+
+state_estimation:
+  dwell_min_seconds: 300       # 最小驻留时长
+  switch_penalty: 0.15         # 状态切换惩罚
+  hysteresis_entry: 0.70       # 进入阈值
+  hysteresis_exit: 0.50        # 退出阈值（entry > exit 实现滞回）
+
+decision:
+  weight_transfer: 0.40        # 迁移权重
+  weight_creativity: 0.40      # 创造性权重
+  weight_independence: 0.20    # 独立思考权重
+  max_delta_per_update: 0.05   # 单次权重变化上限
+  min_weight: 0.20             # 任一权重下限
+  update_window_days: 14       # 权重更新间隔（天）
+
+# ============================================================
+# 外圈参数（Outer Circle）
+# ============================================================
+
+exploration:
+  quota_min: 0.25              # 探索配额下限
+  tax_base: 0.10               # 默认跨域税率
+  tax_reward_factor: -0.05     # 有效探索减税幅度
+
+# ============================================================
+# 交互参数（Interaction）
+# ============================================================
+
+flow:
+  token_budget_max: 2000
+  round_count_max: 1
+  p95_latency_ms: 1400
+
+checkpoint:
+  token_budget_max: 6000
+  round_count_max: 2
+  p95_latency_ms: 2300
+
+global_latency_hard_cap_ms: 2500
+
+sovereignty_pulse:
+  max_per_25_min: 1
+  defer_on_high_load: true
+
+zero_drift_patch:
+  n_implicit_calibrations: 8
+  max_per_24h: 1
+
+creativity:
+  index_p1_weight: 0.35        # 发散度权重
+  index_p2_weight: 0.35        # 跨域联想率权重
+  index_p3_weight: 0.30        # 新颖-可行平衡权重
+  biweekly_floor: -0.03        # 双周硬裁决阈值（相对基线 %）
+  min_valid_samples: 24        # 最少样本数才进硬裁决
+  warmup_weeks: 3              # 冷启动周期
+  baseline_freeze_week: 4      # 基线冻结周
+  hard_gate_effective_week: 5  # 硬裁决生效周

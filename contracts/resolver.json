@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract": "l3_conflict_resolver",
+  "version": "1.0.0",
+  "status": "frozen",
+  "description": "L3 冲突仲裁器合约。在 L0/L1/L2 三层输出产生分歧时，执行统一仲裁。",
+  "inputs": {
+    "state_L0": {
+      "source": "HBSSM 动态识别层",
+      "type": "object",
+      "description": "潜状态 + 驻留时间"
+    },
+    "residual_L1": {
+      "source": "Shock/Memory/Trend 扰动残差层",
+      "type": "object",
+      "description": "残差修正向量"
+    },
+    "feasibility_L2": {
+      "source": "COM-B 行为可行性层",
+      "type": "object",
+      "description": "行为可行性评估 + 门控建议"
+    },
+    "uncertainty_vector": {
+      "type": "object",
+      "description": "各层不确定性估计的汇总向量"
+    }
+  },
+  "outputs": {
+    "resolved_state": {
+      "type": "object",
+      "description": "仲裁后的融合状态"
+    },
+    "intervention_intensity": {
+      "type": "string",
+      "enum": ["full", "reduced", "minimal", "none"],
+      "description": "干预强度等级"
+    },
+    "resolver_reason_code": {
+      "type": "string",
+      "description": "仲裁决策的理由编码"
+    }
+  },
+  "conflict_levels": {
+    "low": {
+      "condition": "disagreement_score < 0.3",
+      "action": "passthrough",
+      "description": "冲突低 → 按 L0/L1/L2 原路径输出，不做修正"
+    },
+    "mid": {
+      "condition": "0.3 <= disagreement_score < 0.7",
+      "action": "reduce_intervention",
+      "description": "冲突中 → 降一级干预强度（full→reduced→minimal）"
+    },
+    "high": {
+      "condition": "disagreement_score >= 0.7",
+      "action": "conservative_minimum",
+      "description": "冲突高 → 走最小干预保守策略，取各层中最保守的建议"
+    }
+  },
+  "required_fields": {
+    "disagreement_score": {
+      "type": "float",
+      "range": "[0.0, 1.0]",
+      "description": "跨层分歧量化分数"
+    },
+    "dominant_layer": {
+      "type": "string",
+      "enum": ["L0", "L1", "L2", "none"],
+      "description": "本次仲裁中起主导作用的层标识"
+    },
+    "resolver_policy_version": {
+      "type": "string",
+      "description": "仲裁策略版本号"
+    }
+  }
+}

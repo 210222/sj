@@ -1,0 +1,22 @@
+{
+  "stage": "outer_A_stage4",
+  "result": "pass",
+  "p0": [],
+  "p1": [],
+  "p2": [],
+  "evidence": [
+    {"file": "Dockerfile", "check": "FROM python:3.11-slim, WORKDIR /app, CMD regression", "status": "pass"},
+    {"file": "docker-compose.yml", "check": "coherence-outer service, port 8000:8000", "status": "pass"},
+    {"file": ".dockerignore", "check": "Excludes __pycache__/.pytest_cache/.venv/reports etc", "status": "pass"},
+    {"file": "scripts/smoke_outer.py", "check": "12 checks: schema/happy/fallback/error layering", "status": "pass", "note": "12/12 passed"},
+    {"file": "scripts/regression_gate.py", "check": "Outer 29 passed, Full 698 passed", "status": "pass"},
+    {"file": "src/outer/api/service.py", "check": "8 field schema stable, reason_code layering intact", "status": "pass"},
+    {"file": "src/outer/orchestration/pipeline.py", "check": "L0→L1→L2→Decision→Safety chain + stage_markers", "status": "pass"},
+    {"file": "src/outer/presentation/formatter.py", "check": "Pure field mapping only", "status": "pass"},
+    {"file": "src/outer/safeguards/policies.py", "check": "Bad time → UTC normalization, no sentinel window", "status": "pass"},
+    {"file": "contracts/", "check": "Zero modifications to any contract file", "status": "pass"},
+    {"file": "src/inner/", "check": "Zero modifications to any inner module", "status": "pass"},
+    {"file": "src/middle/", "check": "Zero modifications to any middle module", "status": "pass"}
+  ],
+  "final_recommendation": "GO"
+}

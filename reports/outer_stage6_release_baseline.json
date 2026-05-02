@@ -1,0 +1,41 @@
+{
+  "baseline_version": "outer_A_v1.0.0",
+  "frozen_at_utc": "2026-04-30T13:44:00.000Z",
+  "code_version": {
+    "outer": "outer_a_v1.0.0",
+    "middle": "middle_v1.0.0",
+    "inner": "1.0.0 (5 contracts frozen)"
+  },
+  "immutable_contracts": {
+    "output_schema_keys": [
+      "allowed", "final_intensity", "audit_level", "reason_code",
+      "trace_id", "event_time_utc", "window_id", "evaluated_at_utc"
+    ],
+    "reason_code_layering": [
+      "ORCH_INVALID_INPUT",
+      "ORCH_PIPELINE_ERROR",
+      "SEM_PASS", "SEM_BLOCK_P0", "SEM_BLOCK_LOW_SCORE",
+      "SEM_WARN_P1", "SEM_WARN_GATE", "SEM_FREEZE_GATE"
+    ],
+    "orchestration_chain": [
+      "L0Estimator", "L1Estimator", "L2Estimator",
+      "DecisionEngine", "SemanticSafetyEngine"
+    ]
+  },
+  "release_gates": {
+    "smoke": {"required": true, "threshold": "12/12"},
+    "outer_tests": {"required": true, "threshold": "29/29"},
+    "full_regression": {"required": true, "threshold": "698/698"},
+    "healthcheck": {"required": true, "threshold": "11/11"},
+    "rollback_verify": {"required": true, "threshold": "PASS"}
+  },
+  "forbidden_modifications": [
+    "contracts/**",
+    "src/inner/**",
+    "src/middle/**",
+    "OUTPUT_SCHEMA_KEYS (8 fields)",
+    "reason_code layering semantics",
+    "Any strategy-layer logic (quota/tax/exploration/dynamic policy)"
+  ],
+  "final_status": "BASELINE_FROZEN"
+}

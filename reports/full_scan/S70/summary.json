@@ -1,0 +1,9 @@
+{
+  "step": "S70",
+  "status": "GO",
+  "executed_at_utc": "2026-04-30T06:02:38.162Z",
+  "health_index": 88.0,
+  "risk_index": 12.0,
+  "health_index_ok": true,
+  "risk_index_ok": true
+}

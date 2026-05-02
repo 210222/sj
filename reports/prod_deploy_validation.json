@@ -1,0 +1,63 @@
+{
+  "docker_cli_ok": true,
+  "docker_version": "29.4.1",
+  "compose_version": "v5.1.3",
+  "compose_up_ok": true,
+  "compose_exit_code": 0,
+  "container_logs_summary": "29 passed in 0.32s | GATE: PASS",
+  "release_gate_passed": true,
+  "release_gate_details": {
+    "smoke": "12/12",
+    "outer_tests": "29/29",
+    "full_regression": "698/698"
+  },
+  "healthcheck_passed": true,
+  "healthcheck_details": {
+    "total": 11,
+    "passed": 11,
+    "failed": 0
+  },
+  "rollback_verify_passed": true,
+  "outer_tests_passed": true,
+  "outer_tests_count": 29,
+  "full_regression_passed": true,
+  "full_regression_count": 698,
+  "schema_drift": false,
+  "reason_code_drift": false,
+  "final_decision": "GO_WITH_RISK_ACCEPTANCE",
+  "b_version_prerequisites_met": false,
+  "b_version_prerequisites_note": "当前仅完成 2/3 天 P2 观测，未满足标准准入门槛；经决策人风险接受后提前进入 B 版",
+  "b_version_entry_mode": "EARLY_ENTRY_WITH_RISK_ACCEPTANCE",
+  "p2_observation": {
+    "window_days": 3,
+    "mode": "windows_task_scheduler",
+    "daily_report_dir": "reports/p2_observation/daily",
+    "summary_report": "reports/p2_observation/p2_observation_summary.json",
+    "current_status": "INCOMPLETE",
+    "days_completed": 2,
+    "result": "NO_GO"
+  },
+  "risk_acceptance": {
+    "accepted": true,
+    "accepted_by": "project_owner",
+    "accepted_at_utc": "2026-05-02T05:10:00.000000+00:00",
+    "reason": "Need to start B today before completing 3-day observation window"
+  },
+  "rollback_strategy": {
+    "trigger": [
+      "Any P0 in B development period",
+      "Any P1 persisting beyond one validation cycle",
+      "Schema drift or reason_code layering drift"
+    ],
+    "action": "Rollback to frozen baseline outer_A_v1.0.0",
+    "evidence_refs": [
+      "reports/outer_stage6_final_audit.json",
+      "reports/outer_stage6_release_baseline.json",
+      "reports/p2_observation/daily/",
+      "reports/p2_observation/p2_observation_summary.json"
+    ]
+  },
+  "governance_note": "B entry is approved as early entry with explicit risk acceptance; this is not equivalent to P2 completed.",
+  "timestamp_utc": "2026-05-02T05:10:00.000000+00:00",
+  "session_note": "重启后接手验证，portainer 占用 8000 端口已临时停止，coherence-outer 容器构建并运行成功，ExitCode=0"
+}

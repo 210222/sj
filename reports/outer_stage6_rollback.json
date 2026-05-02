@@ -1,0 +1,9 @@
+{
+  "stage": "rollback_verify",
+  "timestamp_utc": "2026-04-30T13:44:12.566381+00:00",
+  "steps": {
+    "smoke": "PASS",
+    "outer_tests": "PASS"
+  },
+  "final": "PASS"
+}

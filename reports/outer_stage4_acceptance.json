@@ -1,0 +1,61 @@
+{
+  "stage": "outer_A_stage4",
+  "timestamp_utc": "2026-04-30T00:00:00.000Z",
+  "image_built": true,
+  "container_up": true,
+  "smoke_passed": true,
+  "smoke_details": {
+    "total": 12,
+    "passed": 12,
+    "failed": 0,
+    "checks": [
+      "8 field schema stable",
+      "allowed is bool",
+      "final_intensity is str",
+      "window_id valid",
+      "evaluated_at_utc ISO8601",
+      "happy path SEM_* reason_code",
+      "invalid input → ORCH_INVALID_INPUT",
+      "fallback schema 8 fields intact",
+      "fallback allowed=False",
+      "pipeline error → ORCH_PIPELINE_ERROR",
+      "pipeline error schema 8 fields intact",
+      "empty time → ORCH_INVALID_INPUT"
+    ]
+  },
+  "outer_tests_passed": true,
+  "outer_tests_details": {
+    "total": 29,
+    "passed": 29,
+    "failed": 0
+  },
+  "full_regression_passed": true,
+  "full_regression_details": {
+    "total": 698,
+    "passed": 698,
+    "failed": 0
+  },
+  "contract_drift": false,
+  "reason_code_drift": false,
+  "schema_keys": [
+    "allowed", "final_intensity", "audit_level", "reason_code",
+    "trace_id", "event_time_utc", "window_id", "evaluated_at_utc"
+  ],
+  "reason_codes_verified": [
+    "ORCH_INVALID_INPUT",
+    "ORCH_PIPELINE_ERROR",
+    "SEM_PASS",
+    "SEM_BLOCK_P0",
+    "SEM_WARN_P1",
+    "SEM_FREEZE_GATE"
+  ],
+  "deliverables": [
+    "Dockerfile",
+    "docker-compose.yml",
+    ".dockerignore",
+    "scripts/smoke_outer.py",
+    "scripts/regression_gate.py",
+    "reports/outer_stage4_acceptance.json"
+  ],
+  "final_decision": "GO"
+}

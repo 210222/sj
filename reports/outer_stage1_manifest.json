@@ -1,0 +1,60 @@
+{
+  "generated_at_utc": "2026-04-30T06:32:40.127Z",
+  "scope_version": "outer_a_v1.0.0",
+  "files": [
+    {
+      "path": "meta_prompts/outer/01_product_outer.xml",
+      "sha256": "024bd2f008ce90a6"
+    },
+    {
+      "path": "meta_prompts/outer/02_architect_outer.xml",
+      "sha256": "81106768a3d53f26"
+    },
+    {
+      "path": "meta_prompts/outer/03_qa_outer.xml",
+      "sha256": "120d1eff2ad0381e"
+    },
+    {
+      "path": "meta_prompts/outer/04_devops_outer.xml",
+      "sha256": "e6a53ae5582b0a8f"
+    },
+    {
+      "path": "reports/outer_stage1_scope_lock.json",
+      "sha256": "19e1dc87c705d1b0"
+    },
+    {
+      "path": "reports/outer_stage1_checklist.md",
+      "sha256": "09d011986db17161"
+    }
+  ],
+  "protected_snapshots": [
+    {
+      "path": "contracts/ledger.json",
+      "sha256": "3b47b135b705277d"
+    },
+    {
+      "path": "contracts/audit.json",
+      "sha256": "527d2ef16077f989"
+    },
+    {
+      "path": "contracts/clock.json",
+      "sha256": "eb580e1f0514ff84"
+    },
+    {
+      "path": "contracts/resolver.json",
+      "sha256": "26c3854d95eceed3"
+    },
+    {
+      "path": "contracts/gates.json",
+      "sha256": "22ce1f29e7042d5c"
+    },
+    {
+      "path": "src/inner/ledger/event_store.py",
+      "sha256": "9e74ab45e84d8d44"
+    },
+    {
+      "path": "src/middle/shared/constants.py",
+      "sha256": "c51d4ca598a78ae9"
+    }
+  ]
+}

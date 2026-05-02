@@ -1,0 +1,40 @@
+# 外圈 A 版 — 发布门禁策略
+# 定义各项质量门禁的阈值与是否必须通过
+
+release_policy:
+  version: "1.0.0"
+  effective_date: "2026-04-30"
+
+  gates:
+    smoke:
+      required: true
+      min_pass_rate: 1.0
+      script: "python scripts/smoke_outer.py"
+      description: "12 项冒烟：schema/错误分层/happy/fallback"
+
+    outer_tests:
+      required: true
+      min_pass_rate: 1.0
+      command: "python -m pytest tests/test_outer_api.py tests/test_outer_orchestration.py tests/test_outer_resilience.py -q"
+      description: "外圈三套测试全部通过"
+
+    full_regression:
+      required: true
+      min_pass_rate: 1.0
+      command: "python -m pytest tests/ -q"
+      description: "全量回归零失败"
+
+    contract_drift:
+      required: true
+      check: "OUTPUT_SCHEMA_KEYS 8 字段不变"
+
+    reason_code_layering:
+      required: true
+      check: "ORCH_INVALID_INPUT / ORCH_PIPELINE_ERROR / SEM_* 不变"
+
+  observation_policy:
+    window_days: 3
+    max_p0: 0
+    max_p1: 0
+    daily_report_dir: "reports/p2_observation/daily"
+    summary_report: "reports/p2_observation/p2_observation_summary.json"

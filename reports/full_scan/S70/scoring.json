@@ -1,0 +1,5 @@
+{
+  "health_index": 88.0,
+  "risk_index": 12.0,
+  "method": "ISO25010 weighted + DORA metrics + CVSS proxy + SPACE"
+}

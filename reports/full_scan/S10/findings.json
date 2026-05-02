@@ -1,0 +1,7 @@
+[
+  {
+    "severity": "P2",
+    "title": "5 functions with complexity > 10",
+    "count": 5
+  }
+]

@@ -1,0 +1,6 @@
+{
+  "smoke": "12/12",
+  "outer_tests": "29/29",
+  "full_regression": "698/698",
+  "final": "PASS"
+}

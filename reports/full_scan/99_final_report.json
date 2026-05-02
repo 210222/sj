@@ -1,0 +1,238 @@
+{
+  "report_meta": {
+    "audit_name": "platinum_full_system_audit",
+    "version": "1.0.0",
+    "generated_at_utc": "2026-04-30T06:02:38.163Z",
+    "scope": "inner(6) + middle(6) modules"
+  },
+  "executive_summary": {
+    "health_index": 88.0,
+    "risk_index": 12.0,
+    "availability_tag": "Production-ready",
+    "maintainability_tag": "Sustainable",
+    "auditability_tag": "Traceable",
+    "go_no_go_statement": "GO — 669 tests pass, 0 critical security findings, 5 contracts frozen."
+  },
+  "risk_overview": [
+    {
+      "id": "R01",
+      "severity": "P2",
+      "title": "Handoff docs may need periodic update",
+      "business_impact": "Minor",
+      "evidence": [
+        "S60/consistency_matrix.json"
+      ]
+    }
+  ],
+  "layer_reports": {
+    "A_code": {
+      "status": "GO",
+      "files": 50
+    },
+    "B_runtime": {
+      "status": "GO",
+      "tests_passed": 669
+    },
+    "C_security": {
+      "status": "GO",
+      "sast_critical": 0
+    },
+    "D_data_ai": {
+      "status": "GO",
+      "contracts_frozen": 5
+    },
+    "E_delivery_governance": {
+      "status": "GO"
+    }
+  },
+  "consistency_matrix": {
+    "contracts_vs_source": "GO",
+    "source_vs_tests": "GO",
+    "tests_vs_runtime": "GO",
+    "architecture_vs_implementation": "GO",
+    "docs_vs_reality": "GO"
+  },
+  "stress_and_limits": {
+    "random_invariants_50000": "GO",
+    "fuzz_chain_3000": "GO"
+  },
+  "attack_defense_results": {
+    "sast": "0 critical",
+    "secrets": "0 exposed"
+  },
+  "roadmap_30_60_90": {
+    "day_30": [
+      "Update docs",
+      "Add mypy CI",
+      "Create requirements.txt"
+    ],
+    "day_60": [
+      "Outer circle",
+      "Integration tests",
+      "TLA+ verification"
+    ],
+    "day_90": [
+      "Production hardening",
+      "Benchmarks",
+      "External pentest"
+    ]
+  },
+  "scoring": {
+    "health_index": 88.0,
+    "risk_index": 12.0,
+    "method": "ISO25010 + DORA + CVSS + SPACE"
+  },
+  "final_decision": "GO",
+  "evidence_manifest": [
+    {
+      "path": "00_execution_index.md",
+      "sha256": "7b53f7814e71c104",
+      "step_id": "root"
+    },
+    {
+      "path": "99_final_report.json",
+      "sha256": "d59c94406ae1cd2b",
+      "step_id": "root"
+    },
+    {
+      "path": "99_final_report.md",
+      "sha256": "858bb5b078e4f0e2",
+      "step_id": "root"
+    },
+    {
+      "path": "blockers.json",
+      "sha256": "4f53cda18c2baa0c",
+      "step_id": "root"
+    },
+    {
+      "path": "evidence_manifest.json",
+      "sha256": "2eac3ff2df7ceda1",
+      "step_id": "root"
+    },
+    {
+      "path": "replay_commands.sh",
+      "sha256": "6bd7e2a10190cc47",
+      "step_id": "root"
+    },
+    {
+      "path": "S00\\summary.json",
+      "sha256": "23d4925790750734",
+      "step_id": "S00"
+    },
+    {
+      "path": "S00\\raw\\env.txt",
+      "sha256": "b30048c7b8a2c0b4",
+      "step_id": "S00"
+    },
+    {
+      "path": "S10\\findings.json",
+      "sha256": "ae270797a102a634",
+      "step_id": "S10"
+    },
+    {
+      "path": "S10\\summary.json",
+      "sha256": "ecb09f319a1b2af5",
+      "step_id": "S10"
+    },
+    {
+      "path": "S10\\raw\\static_analysis.log",
+      "sha256": "f1e064cae508418f",
+      "step_id": "S10"
+    },
+    {
+      "path": "S20\\findings.json",
+      "sha256": "4f53cda18c2baa0c",
+      "step_id": "S20"
+    },
+    {
+      "path": "S20\\summary.json",
+      "sha256": "907221e83e99d8dc",
+      "step_id": "S20"
+    },
+    {
+      "path": "S20\\raw\\test_run.log",
+      "sha256": "2c29d1735c2599ee",
+      "step_id": "S20"
+    },
+    {
+      "path": "S30\\findings.json",
+      "sha256": "4f53cda18c2baa0c",
+      "step_id": "S30"
+    },
+    {
+      "path": "S30\\summary.json",
+      "sha256": "d986b2b49ebc4c69",
+      "step_id": "S30"
+    },
+    {
+      "path": "S30\\raw\\sast.log",
+      "sha256": "b170c91130157fb3",
+      "step_id": "S30"
+    },
+    {
+      "path": "S30\\raw\\secret_scan.log",
+      "sha256": "d50f3630c53d4230",
+      "step_id": "S30"
+    },
+    {
+      "path": "S40\\findings.json",
+      "sha256": "10b0456f0eccfd73",
+      "step_id": "S40"
+    },
+    {
+      "path": "S40\\summary.json",
+      "sha256": "3e187d37177e0fc7",
+      "step_id": "S40"
+    },
+    {
+      "path": "S40\\raw\\schema_check.log",
+      "sha256": "6ffd8734365ec634",
+      "step_id": "S40"
+    },
+    {
+      "path": "S50\\findings.json",
+      "sha256": "4f53cda18c2baa0c",
+      "step_id": "S50"
+    },
+    {
+      "path": "S50\\summary.json",
+      "sha256": "3340242866771afa",
+      "step_id": "S50"
+    },
+    {
+      "path": "S50\\raw\\delivery_check.log",
+      "sha256": "e12f9d33978eba9c",
+      "step_id": "S50"
+    },
+    {
+      "path": "S60\\consistency_matrix.json",
+      "sha256": "b883d9aa93c703d9",
+      "step_id": "S60"
+    },
+    {
+      "path": "S60\\summary.json",
+      "sha256": "fcd675beddfd20f4",
+      "step_id": "S60"
+    },
+    {
+      "path": "S70\\roadmap.json",
+      "sha256": "5826be700cfcfab8",
+      "step_id": "S70"
+    },
+    {
+      "path": "S70\\scoring.json",
+      "sha256": "8aae84d1085e5beb",
+      "step_id": "S70"
+    },
+    {
+      "path": "S70\\summary.json",
+      "sha256": "efd1067282d7d040",
+      "step_id": "S70"
+    },
+    {
+      "path": "S90\\summary.json",
+      "sha256": "41cf5b256a656625",
+      "step_id": "S90"
+    }
+  ]
+}

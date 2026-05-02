@@ -1,0 +1,17 @@
+{
+  "day_30": [
+    "Update handoff docs",
+    "Add mypy CI",
+    "Create requirements.txt"
+  ],
+  "day_60": [
+    "Outer circle modules",
+    "Integration tests",
+    "TLA+ verification"
+  ],
+  "day_90": [
+    "Production hardening",
+    "Performance benchmarks",
+    "External pentest"
+  ]
+}
