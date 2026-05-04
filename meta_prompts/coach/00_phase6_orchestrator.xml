@@ -1,0 +1,156 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 6 多智能体 + MAPE-K 闭环总控</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>6</phase>
+  <phase_name>多智能体分层 + MAPE-K 闭环 + 向量记忆升级</phase_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence 项目 Coach 轨 Phase 6 总控调度器。
+    你的目标是：将教练引擎从"单智能体每次独立决策"升级为"多智能体分层 + MAPE-K 完整控制循环 + 向量记忆"。
+    落地 ai教练.txt V18.7 §6 的多智能体架构和自适应AI伴学.txt 的 MAPE-K / Letta 记忆理论。
+  </role>
+
+  <mission>
+    1) 将 Phase 6 拆分为 S6.1→S6.7 七个子阶段并严格串行推进。
+    2) S6.1 冻结 contracts/mapek_loop.json：MAPE-K 五组件接口合约 + 循环定时 + 知识库 schema。
+    3) S6.2 实现 src/mapek/monitor.py + analyze.py：感知层信号收集 + 分析层深层诊断。
+    4) S6.3 实现 src/mapek/plan.py + execute.py：规划层策略生成 + 执行层动作分发。
+    5) S6.4 实现 src/mapek/knowledge.py：Facts 封装 CRUD + 策略历史 + 实验证据。
+    6) S6.5 升级 src/coach/memory.py：ArchivalMemory (FTS5) + WorkingMemory + RMM。
+    7) S6.6 实现三层次架构：CoachAgent(CEO) → PolicyComposer(Manager) → Handlers(Specialist)。
+    8) S6.7 集成 MAPE-K 到 CoachAgent 管线 + 全量回归 + Phase 6 冻结。
+    9) 不触碰 contracts/已有冻结合约、src/inner/、src/middle/、src/outer/ 等禁改区域。
+  </mission>
+
+  <project_boundaries>
+    <read_write_allowed>
+      <path>contracts/mapek_loop.json (新建：MAPE-K 接口合约)</path>
+      <path>src/mapek/__init__.py (新建)</path>
+      <path>src/mapek/monitor.py (新建：Monitor 感知层)</path>
+      <path>src/mapek/analyze.py (新建：Analyze 分析层)</path>
+      <path>src/mapek/plan.py (新建：Plan 规划层)</path>
+      <path>src/mapek/execute.py (新建：Execute 执行层)</path>
+      <path>src/mapek/knowledge.py (新建：Knowledge 仓库)</path>
+      <path>src/coach/memory.py (修改：ArchivalMemory / WorkingMemory / RMM 升级)</path>
+      <path>src/coach/agent.py (修改：CEO 层升级)</path>
+      <path>src/coach/composer.py (修改：Manager 层升级)</path>
+      <path>src/coach/handlers.py (新建：四个专项处理器)</path>
+      <path>config/coach_defaults.yaml (新增 Phase 6 配置段)</path>
+      <path>meta_prompts/coach/**</path>
+      <path>reports/coach_global_state.json</path>
+      <path>tests/test_mapek*.py (新增)</path>
+      <path>tests/test_vector_memory.py (新增)</path>
+      <path>tests/test_multi_agent_layering.py (新增)</path>
+    </read_write_allowed>
+    <forbidden_modification>
+      <path>contracts/ 已有冻结合约 (ledger/audit/clock/resolver/gates/coach_dsl/user_profile/ttm_stages)</path>
+      <path>src/inner/**</path>
+      <path>src/middle/**</path>
+      <path>src/outer/**</path>
+      <path>src/coach/counterfactual.py (Phase 5 冻结不可修改)</path>
+      <path>src/coach/cross_track.py (Phase 5 冻结不可修改)</path>
+      <path>src/coach/precedent_intercept.py (Phase 5 冻结不可修改)</path>
+      <path>src/coach/state.py (状态追踪接口不可修改)</path>
+      <path>src/coach/data.py (三层图谱 schema 不可修改)</path>
+      <path>src/coach/ttm.py (Phase 4 冻结不可修改)</path>
+      <path>src/coach/sdt.py (Phase 4 冻结不可修改)</path>
+      <path>src/coach/flow.py (Phase 4 冻结不可修改)</path>
+      <path>src/coach/dsl.py (Phase 1 DSL 校验器不可修改)</path>
+      <path>已有 tests/ (只新增不修改)</path>
+    </forbidden_modification>
+  </project_boundaries>
+
+  <design_principles>
+    <principle>MAPE-K 是 CoachAgent 的外循环框架：Monitor 收集信号 → Analyze 诊断 → Plan 策略 → Execute 动作 → Knowledge 学习</principle>
+    <principle>三层次分层：CEO 做"做什么"的判断、Manager 做"怎么做"的选择、Specialist 做"具体做"的执行</principle>
+    <principle>向量记忆升级不改现有 memory.py 接口，只新增 ArchivalMemory / WorkingMemory / RMM 三个类</principle>
+    <principle>MAPE-K 组件默认 OFF（通过配置启停），不影响已有 act() 行为</principle>
+    <principle>Handler 是轻量类（非独立进程），可降级为 PolicyComposer 直通调用</principle>
+    <principle>Knowledge 仓库基于现有 data.py facts 表 schema 做封装，不重建存储层</principle>
+  </design_principles>
+
+  <sub_stage_model>
+    <stage id="S6.1" name="MAPE-K 合约冻结">
+      <description>contracts/mapek_loop.json：五组件接口 + 知识库 schema + 循环定时</description>
+      <file>contracts/mapek_loop.json</file>
+      <estimate>~80 行 JSON</estimate>
+    </stage>
+    <stage id="S6.2" name="Monitor + Analyze 组件">
+      <description>src/mapek/monitor.py 信号收集 + analyze.py 深层诊断</description>
+      <files>src/mapek/__init__.py, src/mapek/monitor.py, src/mapek/analyze.py</files>
+      <estimate>~200 行</estimate>
+    </stage>
+    <stage id="S6.3" name="Plan + Execute 组件">
+      <description>src/mapek/plan.py 策略生成 + execute.py 动作分发</description>
+      <files>src/mapek/plan.py, src/mapek/execute.py</files>
+      <estimate>~180 行</estimate>
+    </stage>
+    <stage id="S6.4" name="Knowledge 仓库">
+      <description>src/mapek/knowledge.py：Facts CRUD + 策略历史 + 实验证据</description>
+      <files>src/mapek/knowledge.py</files>
+      <estimate>~150 行</estimate>
+    </stage>
+    <stage id="S6.5" name="向量记忆升级">
+      <description>memory.py 升级：ArchivalMemory FTS5 + WorkingMemory + RMM</description>
+      <files>src/coach/memory.py (修改)</files>
+      <estimate>~250 行</estimate>
+    </stage>
+    <stage id="S6.6" name="多智能体分层">
+      <description>CoachAgent(CEO) + PolicyComposer(Manager) + Handlers(Specialist)</description>
+      <files>src/coach/agent.py, src/coach/composer.py, src/coach/handlers.py</files>
+      <estimate>~220 行</estimate>
+    </stage>
+    <stage id="S6.7" name="Phase 6 集成 + 冻结">
+      <description>MAPE-K 集成到 CoachAgent + 全量回归 + 合约冻结 + 状态更新</description>
+      <files>src/coach/agent.py, reports/coach_global_state.json</files>
+      <estimate>~100 行</estimate>
+    </stage>
+  </sub_stage_model>
+
+  <routing>
+    <command>/run_coach_s6_1</command>  →  61_mapek_contract.xml
+    <command>/run_coach_s6_2</command>  →  62_monitor_analyze.xml
+    <command>/run_coach_s6_3</command>  →  63_plan_execute.xml
+    <command>/run_coach_s6_4</command>  →  64_knowledge.xml
+    <command>/run_coach_s6_5</command>  →  65_vector_memory.xml
+    <command>/run_coach_s6_6</command>  →  66_multi_agent.xml
+    <command>/run_coach_s6_7</command>  →  67_phase6_freeze_close.xml
+  </routing>
+
+  <state_management>
+    <state_file>reports/coach_global_state.json</state_file>
+    <status_flow>
+      <allowed>PENDING → IN_PROGRESS → GO | NO_GO</allowed>
+      <rule>上一子阶段非 GO，不得进入下一子阶段</rule>
+    </status_flow>
+  </state_management>
+
+  <safety_rules>
+    <rule>不得修改 contracts/ 已有冻结合约</rule>
+    <rule>不得修改 src/inner/**、src/middle/**、src/outer/**</rule>
+    <rule>src/coach/state.py 状态追踪接口不可修改</rule>
+    <rule>src/coach/data.py facts 表 schema 不可修改（Knowledge 只做封装，不做重建）</rule>
+    <rule>Phase 4 三个模型文件（ttm/sdt/flow）不可修改</rule>
+    <rule>Phase 5 三个安全文件（counterfactual/cross_track/precedent_intercept）不可修改</rule>
+    <rule>916 个已有 tests 必须全程保持 pass</rule>
+    <rule>MAPE-K 组件默认 OFF（通过 config 启用），不影响已有 act() 行为</rule>
+    <rule>向量记忆升级不破坏现有 SessionMemory 接口</rule>
+    <rule>多智能体分层可降级：Handler 不启动时 PolicyComposer 直通处理</rule>
+    <rule>ArchivalMemory 过期回收使用软删除（lifecycle_status=archived），不物理删除</rule>
+  </safety_rules>
+
+  <success_definition>
+    Phase 6 结束时：
+    1. contracts/mapek_loop.json 已冻结（frozen + v1.0.0）
+    2. src/mapek/ 包五个文件全部存在（monitor/analyze/plan/execute/knowledge）
+    3. memory.py 新增 ArchivalMemory + WorkingMemory + ReflectiveMemoryManager
+    4. src/coach/handlers.py 存在四个 Handler 类
+    5. CoachAgent(CEO) → PolicyComposer(Manager) → Handler(Specialist) 三层路由可用
+    6. MAPE-K 五步闭环集成到 CoachAgent.act() 流中
+    7. 新增测试 55+ 全部 pass
+    8. 916 已有测试零回归
+    9. reports/coach_global_state.json Phase 6 → GO
+  </success_definition>
+</prompt>

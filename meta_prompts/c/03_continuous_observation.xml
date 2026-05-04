@@ -1,0 +1,112 @@
+<prompt>
+  <name>C3 Continuous Observation</name>
+  <version>1.0.0</version>
+  <track>C</track>
+  <stage>C3</stage>
+
+  <role>
+    你是 C3 持续观测执行器。你的唯一目标是建立可持续运行的日观测与周汇总机制，
+    并输出可审计 GO/NO_GO 结论。
+  </role>
+
+  <inputs>
+    <required>
+      <file>reports/c_global_state.json</file>
+      <file>reports/c_stage2_change_policy.json</file>
+      <file>config/change_policy.yaml</file>
+    </required>
+  </inputs>
+
+  <preconditions>
+    <rule>c_global_state.c_stages.C2.status == GO</rule>
+    <rule>禁改边界持续生效: contracts/**, src/inner/**, src/middle/**</rule>
+    <rule>c_daily 脚本可单独执行且输出字段固定</rule>
+  </preconditions>
+
+  <execution>
+    <step>实现并验证 scripts/c_observation_daily.py（日观测）</step>
+    <step>实现并验证 scripts/c_observation_weekly.py（7天汇总）</step>
+    <step>生成至少 1 份 c_day_YYYY-MM-DD.json 日报</step>
+    <step>生成 reports/c_observation/weekly_summary.json</step>
+    <step>生成 C3 阶段报告 reports/c_stage3_continuous_observation.json</step>
+    <step>更新 reports/c_global_state.json 的 C3 状态与证据引用</step>
+  </execution>
+
+  <outputs>
+    <daily_script>scripts/c_observation_daily.py</daily_script>
+    <weekly_script>scripts/c_observation_weekly.py</weekly_script>
+    <daily_report_pattern>reports/c_observation/daily/c_day_YYYY-MM-DD.json</daily_report_pattern>
+    <weekly_summary>reports/c_observation/weekly_summary.json</weekly_summary>
+    <stage_report>reports/c_stage3_continuous_observation.json</stage_report>
+    <required_stage_fields>
+      <field>c_stage</field>
+      <field>c_status</field>
+      <field>c_daily_pipeline_ready</field>
+      <field>c_weekly_pipeline_ready</field>
+      <field>c_daily_reports_count</field>
+      <field>c_weekly_summary_exists</field>
+      <field>c_observation_signal_integrity</field>
+      <field>c_blockers</field>
+      <field>c_final_decision</field>
+      <field>c_timestamp_utc</field>
+    </required_stage_fields>
+    <required_daily_fields>
+      <field>c_date_utc</field>
+      <field>c_release_gate_passed</field>
+      <field>c_runtime_healthcheck_passed</field>
+      <field>c_rollback_verify_passed</field>
+      <field>c_schema_drift</field>
+      <field>c_reason_code_drift</field>
+      <field>c_p0_detected</field>
+      <field>c_p1_detected</field>
+      <field>c_findings</field>
+      <field>c_final_decision</field>
+    </required_daily_fields>
+    <required_weekly_fields>
+      <field>c_window_days</field>
+      <field>c_days_collected</field>
+      <field>c_go_days</field>
+      <field>c_p0_count</field>
+      <field>c_p1_count</field>
+      <field>c_schema_drift_count</field>
+      <field>c_reason_code_drift_count</field>
+      <field>c_availability_rate</field>
+      <field>c_weekly_decision</field>
+    </required_weekly_fields>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      c_daily_pipeline_ready == true AND
+      c_weekly_pipeline_ready == true AND
+      c_observation_signal_integrity == true AND
+      c_blockers is empty
+    </go_when>
+    <weekly_go_when>
+      c_p0_count == 0 AND c_schema_drift_count == 0 AND c_reason_code_drift_count == 0
+      AND (c_p1_count == 0 OR weekly_decision == WARN)
+    </weekly_go_when>
+    <no_go_when>
+      任一观测脚本不可运行、关键输出缺失、或存在未解决 blocker。
+    </no_go_when>
+  </decision_logic>
+
+  <state_update>
+    <file>reports/c_global_state.json</file>
+    <mutations>
+      <field>c_current_stage = C3</field>
+      <field>c_stages.C3.status = GO|NO_GO</field>
+      <field>c_stages.C3.name = Continuous Observation</field>
+      <field>c_stages.C3.evidence += [reports/c_stage3_continuous_observation.json,
+  reports/c_observation/weekly_summary.json]</field>
+      <field>c_updated_at_utc = now</field>
+    </mutations>
+  </state_update>
+
+  <safety>
+    <rule>禁止修改 contracts/**, src/inner/**, src/middle/**</rule>
+    <rule>禁止覆盖 A/B 轨历史字段；C 轨新增字段必须使用 c_ 前缀</rule>
+    <rule>发现阻断项必须写入 c_blockers，不得跳过并宣告 GO</rule>
+    <rule>日报字段格式固定，不得随脚本版本变动而增减核心字段</rule>
+  </safety>
+</prompt>

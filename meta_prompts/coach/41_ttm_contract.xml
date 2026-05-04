@@ -1,0 +1,249 @@
+<prompt>
+  <name>Coherence Coach Track — S4.1 TTM 合约冻结</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>4</phase>
+  <sub_stage>S4.1</sub_stage>
+  <sub_stage_name>TTM 合约冻结 — Stages + Change Processes + Strategy Mapping</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S4.1 实现者。
+    你的任务是：新建 contracts/ttm_stages.json，冻结 TTM 五阶段枚举、
+    十改变过程定义、以及阶段→策略→action_type 映射表。
+    这是整个行为科学模型层的"宪法"——后续模块只读。
+  </role>
+
+  <context>
+    已存在的代码和设计：
+    - 自适应AI伴学.txt: TTM 五阶段 + 十改变过程的完整理论体系
+    - ai教练.txt: TTM 阶段→干预策略映射表
+    - contracts/ 已有 7 个冻结合约（ledger/audit/clock/resolver/gates/coach_dsl/user_profile）
+    - 已有合约模式：$schema, contract, version, status, frozen_constraints 结构
+    - config/coach_defaults.yaml 已有 Phase 1-3 配置段（composer_rules / V18.8 运行时）
+
+    TTM 核心理论（来自 自适应AI伴学.txt）：
+    ```
+    阶段变化理论(TTM)的五阶段:
+    1. PRECONTEMPLATION（前意向）: 未意识到问题，无改变意图
+    2. CONTEMPLATION（意向）: 意识到问题，考虑改变，但未行动
+    3. PREPARATION（准备）: 准备行动，制定计划
+    4. ACTION（行动）: 实施改变行为
+    5. MAINTENANCE（维持）: 维持改变，防止复发
+
+    十改变过程:
+    意识唤醒、情感唤起、自我再评价、环境再评价、
+    自我解放、社会解放、反条件作用、刺激控制、
+    强化管理、支持关系
+    ```
+  </context>
+
+  <task>
+    新建 contracts/ttm_stages.json，包含五阶段枚举 + 十改变过程 + 策略映射。
+    S4.2~S4.5 对此文件只读。
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="定义合约框架">
+      创建 contracts/ttm_stages.json，按已有合约的 schema 风格：
+
+      ```json
+      {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "contract": "ttm_stages",
+        "version": "1.0.0",
+        "status": "frozen",
+        "description": "TTM 五阶段变化理论合约。定义阶段枚举、十改变过程、阶段→策略→action_type 映射。S4.5 冻结后字段不可删改。",
+
+        "stages": [
+          {
+            "id": "precontemplation",
+            "name": "前意向",
+            "description": "未意识到问题，无改变意图"
+          },
+          ...
+        ],
+
+        "change_processes": [...],
+
+        "stage_strategy_map": {...},
+
+        "frozen_constraints": {...}
+      }
+      ```
+    </step>
+    <step id="2" name="五阶段枚举">
+      定义 stages 数组，5 个条目，每个包含：
+      - id: 英文标识符（precontemplation/contemplation/preparation/action/maintenance）
+      - name: 中文名称
+      - description: 简短理论描述
+      - indicators（可选）: 语言行为指标（如"我不需要改变"→ precontemplation）
+    </step>
+    <step id="3" name="十改变过程">
+      定义 change_processes 数组：
+      ```json
+      {
+        "id": "consciousness_raising",
+        "name": "意识唤醒",
+        "description": "提供信息增强对问题行为的认知",
+        "primary_stages": ["precontemplation"]
+      },
+      {
+        "id": "dramatic_relief",
+        "name": "情感唤起",
+        "description": "体验并表达与问题行为相关的情绪",
+        "primary_stages": ["precontemplation", "contemplation"]
+      },
+      {
+        "id": "self_reevaluation",
+        "name": "自我再评价",
+        "description": "评估改变对自我身份的正面影响",
+        "primary_stages": ["contemplation"]
+      },
+      {
+        "id": "environmental_reevaluation",
+        "name": "环境再评价",
+        "description": "评估问题行为对社会环境的影响",
+        "primary_stages": ["contemplation"]
+      },
+      {
+        "id": "self_liberation",
+        "name": "自我解放",
+        "description": "做出改变的承诺和选择",
+        "primary_stages": ["preparation"]
+      },
+      {
+        "id": "social_liberation",
+        "name": "社会解放",
+        "description": "增加社会替代方案",
+        "primary_stages": ["preparation"]
+      },
+      {
+        "id": "counterconditioning",
+        "name": "反条件作用",
+        "description": "用健康行为替代问题行为",
+        "primary_stages": ["action"]
+      },
+      {
+        "id": "stimulus_control",
+        "name": "刺激控制",
+        "description": "移除问题行为诱因，增加健康行为提示",
+        "primary_stages": ["action"]
+      },
+      {
+        "id": "reinforcement_management",
+        "name": "强化管理",
+        "description": "对积极改变提供奖励",
+        "primary_stages": ["action", "maintenance"]
+      },
+      {
+        "id": "helping_relationships",
+        "name": "支持关系",
+        "description": "利用社会支持维持改变",
+        "primary_stages": ["maintenance"]
+      }
+      ]
+      ```
+
+      每个 process 包含：id, name, description, primary_stages（该过程最有效的阶段）
+    </step>
+    <step id="4" name="阶段→策略→action_type 映射">
+      定义 stage_strategy_map，每个阶段映射到推荐策略和 DSL action_type：
+
+      ```json
+      "stage_strategy_map": {
+        "precontemplation": {
+          "goal": "认知唤醒 — 让用户意识到问题/机会",
+          "change_processes": ["consciousness_raising", "dramatic_relief"],
+          "recommended_action_types": ["reflect", "suggest"],
+          "avoid_action_types": ["challenge", "probe"],
+          "intervention_style": "low_pressure_awareness",
+          "dialogue_tone": "informational"
+        },
+        "contemplation": {
+          "goal": "价值重塑 — 帮助用户做决策平衡分析",
+          "change_processes": ["self_reevaluation", "environmental_reevaluation"],
+          "recommended_action_types": ["reflect", "suggest"],
+          "avoid_action_types": ["challenge"],
+          "intervention_style": "decisional_balance",
+          "dialogue_tone": "exploratory"
+        },
+        "preparation": {
+          "goal": "执行脚手架—制定具体行动计划",
+          "change_processes": ["self_liberation", "social_liberation"],
+          "recommended_action_types": ["scaffold", "challenge"],
+          "avoid_action_types": ["defer"],
+          "intervention_style": "action_planning",
+          "dialogue_tone": "supportive_directive"
+        },
+        "action": {
+          "goal": "高频干预+正向强化",
+          "change_processes": ["counterconditioning", "stimulus_control", "reinforcement_management"],
+          "recommended_action_types": ["challenge", "probe"],
+          "avoid_action_types": ["defer", "suggest"],
+          "intervention_style": "high_frequency_reinforcement",
+          "dialogue_tone": "encouraging"
+        },
+        "maintenance": {
+          "goal": "退居幕后监测—预警复发+压力应对",
+          "change_processes": ["reinforcement_management", "helping_relationships"],
+          "recommended_action_types": ["probe", "defer"],
+          "avoid_action_types": ["suggest", "scaffold"],
+          "intervention_style": "relapse_prevention",
+          "dialogue_tone": "monitoring"
+        }
+      }
+      ```
+
+      严格按照 自适应AI伴学.txt 的 "TTM理论框架在AI系统中的实施策略映射" 表对齐。
+    </step>
+    <step id="5" name="冻结约束">
+      ```json
+      "frozen_constraints": {
+        "stages_enum": "S4.5 冻结后 stages.id 五枚举不可删改，仅可扩展",
+        "change_processes_enum": "十改变过程不可删改，仅可扩展",
+        "stage_strategy_map_keys": "每个阶段的 goal/change_processes/recommended_action_types/avoid_action_types 字段不可删改",
+        "contract_version": "1.0.0"
+      }
+      ```
+
+    注意：intervention_style 和 dialogue_tone 是 Phase 4 的可调建议字段，
+    可在后续阶段新增但不可修改已有字段。
+    </step>
+    <step id="6" name="验证">
+      用 python 验证 JSON 格式正确性：
+      ```python
+      import json
+      with open("contracts/ttm_stages.json", encoding="utf-8") as f:
+          data = json.load(f)
+      assert data["contract"] == "ttm_stages"
+      assert len(data["stages"]) == 5
+      assert len(data["change_processes"]) == 10
+      assert len(data["stage_strategy_map"]) == 5
+      for stage in data["stages"]:
+          assert stage["id"] in data["stage_strategy_map"]
+      for sid, strategy in data["stage_strategy_map"].items():
+          assert "recommended_action_types" in strategy
+          assert "avoid_action_types" in strategy
+      print("TTM 合约验证通过")
+      ```
+
+      不做 pytest 测试——这是 JSON schema 验证，python 解释器执行即可。
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="contracts/ttm_stages.json" type="new">~120 行: TTM 五阶段 + 十改变过程 + 策略映射</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. contracts/ttm_stages.json 存在且 JSON 格式正确
+    2. stages 数组包含 5 个阶段枚举（precontemplation→maintenance）
+    3. change_processes 数组包含 10 个改变过程
+    4. stage_strategy_map 包含全部 5 个阶段的策略映射
+    5. 每个策略映射至少包含 recommended_action_types 和 avoid_action_types
+    6. 冻结约束声明正确
+    7. JSON schema 验证通过
+    8. 839 已有 tests 全部 pass
+  </success_criteria>
+</prompt>

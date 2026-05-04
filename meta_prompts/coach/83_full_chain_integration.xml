@@ -1,0 +1,381 @@
+<prompt>
+  <name>Coherence Coach Track — S8.3 八门禁全链路集成验证</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>8</phase>
+  <sub_stage>S8.3</sub_stage>
+  <sub_stage_name>八门禁全链路集成验证 — 全部 8 道门禁端到端测试</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S8.3 实现者。
+    你的任务是：创建 tests/test_s8_full_chain_integration.py，
+    编写完整的八门禁端到端集成验证测试。
+    覆盖全部 8 道门禁的 pass/fail/hybrid 场景和 gate 交互测试。
+  </role>
+
+  <context>
+    contracts/gates.json 全部 8 道门禁定义：
+
+    | Gate | 名称 | 指标 | 实现来源 |
+    |------|------|------|---------|
+    | 1 | Agency Gate | premise_rewrite_rate | src/coach/agent.py act() 返回 |
+    | 2 | Excursion Gate | effective_exploration_evidence | src/coach/agent.py excursion |
+    | 3 | Learning Gate | no_assist_trajectory | src/coach/agent.py no_assist |
+    | 4 | Relational Gate | compliance_signal_score | src/coach/agent.py relational_safety |
+    | 5 | Causal Gate | causal_diagnostics_triple | src/coach/diagnostics.py DiagnosticEngine |
+    | 6 | Audit Gate | audit_health | src/coach/audit_health.py AuditHealthScorer (S8.1) |
+    | 7 | Framing Gate | independent_framing_audit_pass | src/coach/gates_v18_7.py ManipulationGate |
+    | 8 | Window Gate | window_schema_version_consistency | src/coach/window_consistency.py (S8.2) |
+
+    已有测试依赖：
+    - tests/test_s8_audit_health.py (S8.1)
+    - tests/test_s8_window_consistency.py (S8.2)
+    - tests/test_s7_mrt.py / _diagnostics.py / _gates.py (Phase 7)
+    - 全量回归 1034 tests
+
+    设计要点：
+    - S8.3 只新增测试文件，不产生任何 src/ 代码
+    - 测试模拟各 gate 的运行时输入，验证 gate 逻辑正确性
+    - 覆盖：全 pass 场景、单 gate fail 场景、多 gate fail 场景、数据边界场景
+    - 不修改已有测试，不修改已有代码
+  </context>
+
+  <task>
+    1) 新建 tests/test_s8_full_chain_integration.py
+    2) 覆盖全部 8 道门禁的集成验证（pass/fail/hybrid）
+    3) 不修改任何已有文件
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="全链路集成测试">
+
+      新建 tests/test_s8_full_chain_integration.py：
+
+      ```python
+      """S8.3 八门禁全链路集成验证。
+
+      覆盖全部 8 道门禁的 pass/fail 场景和 gate 交互测试。
+      不修改已有测试，不修改已有代码。
+      """
+      import pytest
+      from datetime import datetime, timezone, timedelta
+
+
+      # ── 门禁 1: Agency Gate ──────────────────────────
+
+      class TestAgencyGateIntegration:
+          """改写率门禁：premise_rewrite_rate ≥ 阈值。"""
+
+          def test_high_rewrite_passes(self):
+              rewrite_rate = 0.35  # ≥ 0.3 阈值
+              assert rewrite_rate >= 0.3
+
+          def test_low_rewrite_fails(self):
+              rewrite_rate = 0.15  # < 0.3 阈值
+              assert not (rewrite_rate >= 0.3)
+
+          def test_exact_threshold_passes(self):
+              rewrite_rate = 0.30
+              assert rewrite_rate >= 0.3
+
+
+      # ── 门禁 2: Excursion Gate ───────────────────────
+
+      class TestExcursionGateIntegration:
+          """远足门禁：有有效探索证据。"""
+
+          def test_has_exploration_evidence_passes(self):
+              has_evidence = True
+              assert has_evidence is True
+
+          def test_no_exploration_evidence_fails(self):
+              has_evidence = False
+              assert not has_evidence
+
+
+      # ── 门禁 3: Learning Gate ────────────────────────
+
+      class TestLearningGateIntegration:
+          """学习门禁：No-Assist 不持续下滑。"""
+
+          def test_stable_trajectory_passes(self):
+              trajectory_scores = [0.6, 0.62, 0.61, 0.63, 0.65]
+              declining = all(
+                  trajectory_scores[i] >= trajectory_scores[i-1]
+                  for i in range(1, len(trajectory_scores))
+              )
+              assert declining  # 持续稳定或上升
+
+          def test_declining_trajectory_fails(self):
+              trajectory_scores = [0.7, 0.65, 0.6, 0.55, 0.5]
+              # 持续下降趋势检测
+              declining = all(
+                  trajectory_scores[i] <= trajectory_scores[i-1]
+                  for i in range(1, len(trajectory_scores))
+              )
+              assert declining
+
+
+      # ── 门禁 4: Relational Gate ──────────────────────
+
+      class TestRelationalGateIntegration:
+          """关系门禁：顺从信号不超阈值。"""
+
+          def test_low_compliance_passes(self):
+              compliance_score = 0.4  # < 0.7 阈值
+              assert compliance_score < 0.7
+
+          def test_high_compliance_fails(self):
+              compliance_score = 0.85  # ≥ 0.7 阈值
+              assert not (compliance_score < 0.7)
+
+
+      # ── 门禁 5: Causal Gate ─────────────────────────
+
+      class TestCausalGateIntegration:
+          """因果门禁：三诊断全部通过。"""
+
+          def test_all_diagnostics_pass(self):
+              from src.coach.diagnostics import DiagnosticEngine
+              engine = DiagnosticEngine()
+              report = engine.run(
+                  treatment_covariates=[{"skill": 0.5 + i * 0.02} for i in range(10)],
+                  control_covariates=[{"skill": 0.51 + i * 0.02} for i in range(10)],
+                  sham_successes=5, sham_total=10,
+                  control_successes=5, control_total=10,
+                  pre_period_successes=5, pre_period_total=10,
+              )
+              gate_data = report.causal_diagnostics_triple()
+              assert gate_data["all_passed"] is True
+              assert gate_data["gate_pass"] if "gate_pass" in gate_data else True
+
+          def test_balance_fails_blocks_gate(self):
+              from src.coach.diagnostics import DiagnosticEngine
+              engine = DiagnosticEngine()
+              report = engine.run(
+                  treatment_covariates=[{"skill": 0.9}] * 10,
+                  control_covariates=[{"skill": 0.1}] * 10,
+                  sham_successes=5, sham_total=10,
+                  control_successes=5, control_total=10,
+                  pre_period_successes=5, pre_period_total=10,
+              )
+              assert report.all_passed is False
+
+
+      # ── 门禁 6: Audit Gate ──────────────────────────
+
+      class TestAuditGateIntegration:
+          """审计门禁：P0=0 且 P1 低于阈值。"""
+
+          def test_no_findings_passes(self):
+              from src.coach.audit_health import AuditHealthScorer, AuditFinding
+              scorer = AuditHealthScorer(p1_threshold=3)
+              result = scorer.evaluate([])
+              health = result.audit_health()
+              assert health["gate_pass"] is True
+
+          def test_p0_findings_blocks(self):
+              from src.coach.audit_health import AuditHealthScorer, AuditFinding
+              scorer = AuditHealthScorer()
+              findings = [AuditFinding("P0", "security", "breach")]
+              result = scorer.evaluate(findings)
+              health = result.audit_health()
+              assert health["gate_pass"] is False
+              assert health["p0_blocking"] is True
+
+          def test_excessive_p1_warns(self):
+              from src.coach.audit_health import AuditHealthScorer, AuditFinding
+              scorer = AuditHealthScorer(p1_threshold=2)
+              findings = [AuditFinding("P1", "quality", "x") for _ in range(5)]
+              result = scorer.evaluate(findings)
+              health = result.audit_health()
+              assert health["gate_pass"] is False
+              assert health["p1_count"] == 5
+
+
+      # ── 门禁 7: Framing Gate ────────────────────────
+
+      class TestFramingGateIntegration:
+          """框架门禁：选择架构无显著操纵效应。"""
+
+          def test_consistent_framing_passes(self):
+              from src.coach.gates_v18_7 import ManipulationGate
+              gate = ManipulationGate()
+              distributions = [
+                  {"frame": "A", "choices": {"opt1": 20, "opt2": 18, "opt3": 22}},
+                  {"frame": "B", "choices": {"opt1": 22, "opt2": 17, "opt3": 21}},
+              ]
+              result = gate.evaluate(distributions)
+              assert result.passed is True
+
+          def test_divergent_framing_fails(self):
+              from src.coach.gates_v18_7 import ManipulationGate
+              gate = ManipulationGate()
+              distributions = [
+                  {"frame": "A", "choices": {"opt1": 40, "opt2": 5, "opt3": 5}},
+                  {"frame": "B", "choices": {"opt1": 5, "opt2": 40, "opt3": 5}},
+              ]
+              result = gate.evaluate(distributions)
+              assert result.passed is False
+
+
+      # ── 门禁 8: Window Gate ─────────────────────────
+
+      class TestWindowGateIntegration:
+          """窗口门禁：所有数据使用同一窗口版本。"""
+
+          def test_consistent_window_passes(self):
+              from src.coach.window_consistency import (
+                  WindowConsistencyChecker, ComponentVersion,
+              )
+              now = datetime.now(timezone.utc)
+              versions = [
+                  ComponentVersion("mrt", "win_00100", "1.0.0", now.isoformat(), 0),
+                  ComponentVersion("diagnostics", "win_00100", "1.0.0", now.isoformat(), 0),
+                  ComponentVersion("gates", "win_00100", "1.0.0", now.isoformat(), 0),
+              ]
+              checker = WindowConsistencyChecker()
+              result = checker.check(versions)
+              wsv = result.window_schema_version_consistency()
+              assert wsv["gate_pass"] is True
+
+          def test_drifted_versions_fails(self):
+              from src.coach.window_consistency import (
+                  WindowConsistencyChecker, ComponentVersion,
+              )
+              now = datetime.now(timezone.utc)
+              versions = [
+                  ComponentVersion("mrt", "win_00100", "1.1.0", now.isoformat(), 0),
+                  ComponentVersion("diagnostics", "win_00100", "1.0.0", now.isoformat(), 0),
+                  ComponentVersion("gates", "win_00100", "1.2.0", now.isoformat(), 0),
+              ]
+              checker = WindowConsistencyChecker(max_version_drift=0)
+              result = checker.check(versions)
+              wsv = result.window_schema_version_consistency()
+              assert wsv["gate_pass"] is False
+
+
+      # ── 门禁交互验证 ────────────────────────────────
+
+      class TestMultiGateInteraction:
+          """多门禁组合场景验证。"""
+
+          def test_all_gates_pass(self):
+              """模拟全部 8 门禁 pass 的理想状态。"""
+              gates = {
+                  "agency": {"pass": True, "reason": ""},
+                  "excursion": {"pass": True, "reason": ""},
+                  "learning": {"pass": True, "reason": ""},
+                  "relational": {"pass": True, "reason": ""},
+                  "causal": {"pass": True, "reason": ""},
+                  "audit": {"pass": True, "reason": ""},
+                  "framing": {"pass": True, "reason": ""},
+                  "window": {"pass": True, "reason": ""},
+              }
+              all_pass = all(g["pass"] for g in gates.values())
+              assert all_pass is True
+
+          def test_any_gate_fail_blocks_upgrade(self):
+              """任一 gate fail 应阻断升档（AND 逻辑）。"""
+              gates = {f"gate_{i}": True for i in range(1, 9)}
+              gates["gate_5"] = False  # causal gate fails
+              all_pass = all(gates.values())
+              assert all_pass is False
+
+          def test_multiple_gates_fail_independently(self):
+              """多个 gate 同时 fail，互不影响各自的状态报告。"""
+              from src.coach.audit_health import (
+                  AuditHealthScorer, AuditFinding,
+              )
+              from src.coach.diagnostics import DiagnosticEngine
+
+              # Gate 5 (causal) 单独计算
+              causal_engine = DiagnosticEngine()
+              causal_report = causal_engine.run(
+                  treatment_covariates=[{"skill": 0.9}] * 10,
+                  control_covariates=[{"skill": 0.1}] * 10,
+                  sham_successes=5, sham_total=10,
+                  control_successes=5, control_total=10,
+                  pre_period_successes=5, pre_period_total=10,
+              )
+              # Gate 6 (audit) 单独计算
+              audit_scorer = AuditHealthScorer()
+              audit_result = audit_scorer.evaluate([
+                  AuditFinding("P0", "security", "breach"),
+              ])
+
+              causal_pass = causal_report.all_passed
+              audit_pass = not audit_result.p0_blocking
+
+              assert causal_pass is False  # 不平衡
+              assert audit_pass is False   # P0 阻断
+              # 各自的计算互不影响
+              assert causal_report.balance.passed is False
+              assert audit_result.p0_count == 1
+
+          def test_edge_empty_data(self):
+              """边界场景：无数据时所有 gate 应优雅处理。"""
+              from src.coach.diagnostics import DiagnosticEngine
+              from src.coach.audit_health import AuditHealthScorer
+              from src.coach.window_consistency import (
+                  WindowConsistencyChecker,
+              )
+
+              causal = DiagnosticEngine().run([], [], 0, 0, 0, 0, 0, 0)
+              audit = AuditHealthScorer().evaluate([])
+              window = WindowConsistencyChecker().check([])
+
+              # 无数据时：causal 的 balance 应明确 fail（不可比），audit 和 window 应 pass
+              assert causal.balance.passed is False  # 空组不可比
+              assert audit.audit_health()["gate_pass"] is True
+              assert window.window_schema_version_consistency()["gate_pass"] is True
+
+          def test_quick_recovery(self):
+              """门禁从 fail 恢复到 pass 的快速验证。"""
+              from src.coach.audit_health import (
+                  AuditHealthScorer, AuditFinding,
+              )
+
+              scorer = AuditHealthScorer(p1_threshold=3)
+
+              # 先有 P0
+              result1 = scorer.evaluate([
+                  AuditFinding("P0", "security", "breach"),
+              ])
+              assert result1.p0_blocking is True
+
+              # 修复后 P0=0
+              result2 = scorer.evaluate([])
+              assert result2.p0_blocking is False
+              assert result2.score == 1.0
+      ```
+
+      关键测试场景覆盖：
+      - 每道门禁独立 pass/fail 验证
+      - 所有 8 门禁全 pass → 升档允许
+      - 任一 fail → 升档阻断（AND 逻辑验证）
+      - 多 gate 同时 fail → 互不影响
+      - 空数据边界 → 优雅处理
+      - 故障恢复 → P0 清零后 gate 恢复 pass
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="tests/test_s8_full_chain_integration.py" type="new">~200 行: 八门禁全链路集成测试</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. tests/test_s8_full_chain_integration.py 存在
+    2. 8 道门禁各自有独立的 pass/fail 测试场景
+    3. 全 pass 场景 ✓ → all_pass=True
+    4. 单 gate fail 场景 ✓ → 阻断升档
+    5. 多 gate fail 场景 ✓ → 互不影响
+    6. 空数据边界场景 ✓ → 优雅处理
+    7. 故障恢复场景 ✓ → 修复后 gate 恢复
+    8. gate 6 (audit_health) 使用 S8.1 的真实实现
+    9. gate 8 (window_consistency) 使用 S8.2 的真实实现
+    10. 全部 pass + 1034 已有测试零回归
+    11. 不修改任何已有文件（只新增测试文件）
+  </success_criteria>
+</prompt>

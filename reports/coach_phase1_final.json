@@ -1,0 +1,65 @@
+{
+  "coach_phase": 1,
+  "coach_sub_stage": "S1.4",
+  "coach_status": "GO",
+  "coach_name": "Full Regression + Contract Freeze + Phase 1 Close",
+  "coach_description": "全量回归 749 pass，coach_dsl.json 标记 frozen，Phase 1 完结",
+
+  "coach_phase1_summary": {
+    "S1.1_dsl_contract": "GO — contracts/coach_dsl.json frozen (8 action_types)",
+    "S1.2_coach_core": "GO — src/coach/ (agent/dsl/composer/state/memory) + coach_defaults.yaml",
+    "S1.3_dual_mode": "GO — pipeline mode='coach' + CoachAgent.act() integrated",
+    "S1.4_regression_close": "GO — 749 pass + contract frozen"
+  },
+
+  "coach_files_created": {
+    "contracts/coach_dsl.json": "frozen — 8 action_types, required/optional fields, domain_passport_levels, source_tags",
+    "src/coach/__init__.py": "5 lines",
+    "src/coach/agent.py": "99 lines",
+    "src/coach/dsl.py": "96 lines",
+    "src/coach/composer.py": "75 lines",
+    "src/coach/state.py": "45 lines",
+    "src/coach/memory.py": "62 lines",
+    "config/coach_defaults.yaml": "31 lines",
+    "tests/test_coach_agent.py": "24 tests",
+    "tests/test_pipeline_dual_mode.py": "11 tests"
+  },
+
+  "coach_files_modified": {
+    "src/outer/orchestration/pipeline.py": "mode parameter + coach branch (+30 lines, Phase 0 flow untouched)",
+    "src/coach/agent.py": "integrated run_pipeline call (+25 lines)"
+  },
+
+  "coach_pipeline_flow_final": [
+    "legacy mode: L0→L1→L2→Decision→GateEngine→Safety→Ledger→Audit→format_output",
+    "coach mode:  DSL→signal extraction→L0→L1→L2→Decision→GateEngine→Safety→Ledger→Audit→sanitized_dsl"
+  ],
+
+  "coach_test_totals": {
+    "phase0_original": 698,
+    "phase0_added": 16,
+    "phase1_s12_added": 24,
+    "phase1_s13_added": 11,
+    "phase1_total": 749
+  },
+
+  "coach_test_results": {
+    "total": 749,
+    "passed": 749,
+    "failed": 0
+  },
+
+  "coach_immutable_boundaries_verified": {
+    "contracts_existing_5": "untouched",
+    "src/inner": "untouched",
+    "src/middle": "untouched",
+    "src/outer/api": "untouched",
+    "src/outer/presentation": "untouched",
+    "src/outer/safeguards": "untouched",
+    "phase0_pipeline_flow": "unchanged (one line not modified)"
+  },
+
+  "coach_final_decision": "GO",
+  "coach_next_phase": "Phase 2 — 记忆与用户模型 (Letta 精简版 + 三层图谱)",
+  "coach_timestamp_utc": "2026-05-02T14:00:00.000000+00:00"
+}

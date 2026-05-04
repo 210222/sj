@@ -1,0 +1,177 @@
+<prompt>
+  <name>Coherence Coach Track — S6.1 MAPE-K 合约冻结</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>6</phase>
+  <sub_stage>S6.1</sub_stage>
+  <sub_stage_name>MAPE-K 合约冻结 — mapek_loop.json 五组件接口定义</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S6.1 实现者。
+    你的任务是：新建并冻结 contracts/mapek_loop.json，
+    定义 MAPE-K 五组件的输入/输出/方法接口、知识库 schema、循环定时参数。
+    这是 Phase 6 所有代码实现的前提合约。
+  </role>
+
+  <context>
+    已有冻结合约参考格式：
+    - contracts/coach_dsl.json: action_types 枚举 + required_fields + domain_passport_levels
+    - contracts/ttm_stages.json: 五阶段枚举 + 十过程映射 + 策略表
+    - contracts/user_profile.json: 用户画像 schema
+
+    本合约定义 MAPE-K 闭环的五组件接口合约：
+
+    ```
+    MAPE-K 循环:
+    Monitor(感知) → Analyze(分析) → Plan(规划) → Execute(执行) → Knowledge(知识)
+         ↑                                                        │
+         └──────────────────── 闭环反馈 ──────────────────────────┘
+    ```
+
+    五组件职责（来自 ai教练.txt V18.7 §6 + 自适应AI伴学.txt MAPE-K 理论）：
+    - Monitor: 用户输入 + DSL 反馈 + 外部信号的收集与缓冲
+    - Analyze: 状态深层诊断 + 趋势检测 + 异常识别
+    - Plan: 策略组合生成 + 资源分配 + 冲突消解
+    - Execute: DSL 动作包分发 + 外部 API 调用 + 结果写 ledger
+    - Knowledge: Facts CRUD + 策略历史 + 实验证据 + 置信度管理
+
+    循环定时参考范围:
+    - CoachAgent.act() 单次调用内完成完整 MAPE-K 不现实 → MAPE-K 作为"外循环"
+    - 每 N 次 act() 触发一次完整循环，或外部信号触发
+    - min_interval 防止高频空转，max_interval 保证最长响应时间
+  </context>
+
+  <task>
+    新建 contracts/mapek_loop.json，包含：
+    1) 五组件的 inputs/outputs/methods 接口定义
+    2) Knowledge 仓库的 stores/query_methods/confidence 定义
+    3) Loop timing 参数（min/max interval, adaptive control）
+    4) 合约版本 1.0.0 + status "draft"（S6.7 改为 frozen）
+    5) 配置段追加到 config/coach_defaults.yaml
+
+    不需要实现任何代码。本子阶段只产出合约文件。
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="创建 mapek_loop.json">
+      新建 contracts/mapek_loop.json，严格遵循以下 schema：
+
+      ```json
+      {
+        "contract": "mapek_loop",
+        "version": "1.0.0",
+        "status": "draft",
+        "description": "MAPE-K 控制循环五组件接口合约 — Phase 6 冻结",
+        "components": {
+          "monitor": {
+            "description": "感知层：用户输入 + DSL 反馈 + 外部信号的收集与缓冲",
+            "inputs": ["user_input", "dsl_feedback", "external_signals"],
+            "output": "monitor_snapshot",
+            "buffer_size": 100,
+            "dedup_window_s": 5
+          },
+          "analyze": {
+            "description": "分析层：状态深层诊断 + 趋势检测 + 异常识别",
+            "inputs": ["monitor_snapshot"],
+            "output": "analysis_report",
+            "methods": ["trend_detection", "anomaly_detection", "causal_signal"],
+            "min_confidence": 0.3
+          },
+          "plan": {
+            "description": "规划层：策略组合生成 + 资源分配 + 冲突消解",
+            "inputs": ["analysis_report", "current_strategy"],
+            "output": "plan",
+            "methods": ["strategy_generation", "resource_allocation", "conflict_resolution"],
+            "max_horizon_steps": 5
+          },
+          "execute": {
+            "description": "执行层：DSL 动作分发 + 外部 API 调用 + 结果写入 ledger",
+            "inputs": ["plan"],
+            "output": "execution_result",
+            "targets": ["CoachAgent", "Ledger", "Audit", "ExternalAPI"],
+            "max_retries": 2
+          },
+          "knowledge": {
+            "description": "知识仓库：Facts + 策略历史 + 实验证据 + 置信度衰减",
+            "stores": ["facts", "strategy_history", "experiment_evidence"],
+            "query_methods": ["exact_match", "semantic_search", "temporal_range"],
+            "confidence_decay_rate": 0.05,
+            "archival_after_days": 30
+          }
+        },
+        "loop_timing": {
+          "description": "MAPE-K 外循环触发定时参数",
+          "min_interval_ms": 100,
+          "max_interval_ms": 5000,
+          "adaptive": true,
+          "backpressure_threshold": 0.8,
+          "trigger_modes": ["interval", "on_demand", "external_signal"]
+        },
+        "frozen_at": null
+      }
+      ```
+
+      关键设计决策：
+      - buffer_size=100: Monitor 缓冲区上限，超出丢弃最旧信号
+      - dedup_window_s=5: 5 秒内相同输入去重
+      - min_confidence=0.3: Analyze 输出的最低置信度，低于此不触发 Plan
+      - max_horizon_steps=5: Plan 最多往前规划 5 步
+      - max_retries=2: Execute 分发失败重试次数
+      - confidence_decay_rate=0.05: 每次 RMM 运行知识置信度衰减 5%
+      - archival_after_days=30: 30 天未使用的事实自动归档
+    </step>
+
+    <step id="2" name="追加 coach_defaults.yaml 配置段">
+      在 config/coach_defaults.yaml 追加 Phase 6 配置段：
+
+      ```yaml
+      # ── Phase 6: MAPE-K 闭环 + 多智能体 ──────────────────
+      mapek:
+        enabled: false
+        loop:
+          min_interval_ms: 100
+          max_interval_ms: 5000
+          adaptive: true
+          backpressure_threshold: 0.8
+        monitor:
+          buffer_size: 100
+          dedup_window_s: 5
+        analyze:
+          min_confidence: 0.3
+        plan:
+          max_horizon_steps: 5
+        execute:
+          max_retries: 2
+        knowledge:
+          confidence_decay_rate: 0.05
+          archival_after_days: 30
+      ```
+    </step>
+
+    <step id="3" name="验证合约格式">
+      1) JSON 格式有效（python -c "import json; json.load(open('contracts/mapek_loop.json'))"）
+      2) 五个 components 全部存在
+      3) 每个 component 有 inputs/output/methods 定义
+      4) loop_timing 参数完整
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="contracts/mapek_loop.json" type="new">~80 行: MAPE-K 五组件接口合约 + 循环定时</change>
+    <change file="config/coach_defaults.yaml" type="append">+20 行: Phase 6 mapek 配置段</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. contracts/mapek_loop.json 存在，JSON 格式有效
+    2. 五个 components (monitor/analyze/plan/execute/knowledge) 全部定义
+    3. 每个 component 有 description/inputs/output
+    4. 至少 monitor/analyze/plan 包含 methods 枚举
+    5. execute 包含 targets 枚举
+    6. knowledge 包含 stores/query_methods 枚举
+    7. loop_timing 包含 min/max interval、adaptive、backpressure_threshold
+    8. contract version = "1.0.0", status = "draft"
+    9. coach_defaults.yaml 新增 Phase 6 配置段
+    10. 916 已有 tests 全部 pass（本阶段不修改代码，纯合约操作）
+  </success_criteria>
+</prompt>

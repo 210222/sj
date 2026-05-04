@@ -1,0 +1,68 @@
+{
+  "b_track": "B",
+  "b_stage": "B1",
+  "b_status": "GO",
+  "b_baseline_ref": "outer_A_v1.0.0 (git tag outer_A_v1.0.0_frozen)",
+  "b_entry_mode": "EARLY_ENTRY_WITH_RISK_ACCEPTANCE",
+  "b_in_scope": [
+    "src/outer/** — B-track incremental enhancement on outer orchestration layer",
+    "scripts/** — B-track scripts and adjustments to existing governance scripts",
+    "reports/b_*/** — B-stage evidence and audit trail",
+    "config/release_policy.yaml — policy tuning within existing structure",
+    "meta_prompts/b/** — B stage prompt definitions",
+    "reports/prod_deploy_validation.json — b_-prefixed field appends only"
+  ],
+  "b_out_of_scope": [
+    "contracts/** — frozen, version 1.0.0",
+    "src/inner/** — frozen inner circle",
+    "src/middle/** — frozen middle circle",
+    "8-field output schema expansion or contraction",
+    "reason_code layering semantic change (INVALID_INPUT / PIPELINE_ERROR / SEM_*)",
+    "orchestration chain reordering (L0→L1→L2→Decision→Safety)",
+    "A-track files: global_state.json, prompts/*, reports/outer_stage*, reports/p2_observation/*",
+    "A-track fields in reports/prod_deploy_validation.json (only b_ prefixed appends)"
+  ],
+  "b_allowed_paths": [
+    "src/outer/**",
+    "scripts/**",
+    "reports/b_*/**",
+    "config/release_policy.yaml",
+    "meta_prompts/b/**",
+    "reports/prod_deploy_validation.json (b_-prefixed field appends only, A fields read-only)"
+  ],
+  "b_forbidden_paths": [
+    "contracts/**",
+    "src/inner/**",
+    "src/middle/**",
+    "reports/outer_stage* (A-track, read-only)",
+    "reports/p2_observation/** (A-track P2, read-only)",
+    "reports/prod_deploy_validation.json (non-b_-prefixed fields)"
+  ],
+  "b_immutable_contracts": {
+    "b_output_schema_keys_locked": true,
+    "b_output_schema_keys": [
+      "allowed", "final_intensity", "audit_level", "reason_code",
+      "trace_id", "event_time_utc", "window_id", "evaluated_at_utc"
+    ],
+    "b_reason_code_layering_locked": true,
+    "b_reason_code_values": ["ORCH_INVALID_INPUT", "ORCH_PIPELINE_ERROR", "SEM_*"],
+    "b_orchestration_chain_locked": true,
+    "b_orchestration_chain": ["L0Estimator", "L1Estimator", "L2Estimator", "DecisionEngine", "SemanticSafetyEngine"]
+  },
+  "b_acceptance_criteria": [
+    "B2 must produce explicit allowed_files white-list derived from this scope",
+    "B3 implementation must not modify any forbidden path",
+    "B4 gate checks must pass: smoke 12/12, outer 29/29, full 698/698",
+    "B4 must confirm zero schema drift and zero reason_code drift",
+    "B5 observation must complete with 3 consecutive days of GO",
+    "All B-track report fields must use b_ prefix"
+  ],
+  "b_go_no_go_rule": "GO when in_scope/out_of_scope are mutually exclusive, forbidden paths are explicit, immutable contracts are listed and verified against baseline, and B2 entry conditions are defined.",
+  "b_b2_entry_conditions": [
+    "Read b_stage1_scope_lock.json",
+    "Produce design freeze document defining exact file changes within allowed paths",
+    "No new files outside allowed_paths",
+    "No modification of forbidden_paths"
+  ],
+  "b_timestamp_utc": "2026-05-02T06:15:00.000000+00:00"
+}

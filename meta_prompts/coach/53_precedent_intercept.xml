@@ -1,0 +1,257 @@
+<prompt>
+  <name>Coherence Coach Track — S5.3 失败先例拦截</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>5</phase>
+  <sub_stage>S5.3</sub_stage>
+  <sub_stage_name>失败先例拦截 — facts 表检索 + 历史失败阻断</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S5.3 实现者。
+    你的任务是：实现 src/coach/precedent_intercept.py，包含 PrecedentInterceptor 类，
+    从 facts 表检索与当前 DSL 动作相似的失败先例，命中则阻断。
+    这是语义安全三件套的第三道闸门。
+  </role>
+
+  <context>
+    已存在的代码和数据源：
+    - src/coach/data.py: 三层图谱数据层，包含 facts 表（已有 query_facts 方法）
+    - facts 表 schema（data.py:30-41）：
+      - fact_id, claim, confidence, timestamp_utc, ttl_seconds
+      - context_scope, source_tag, lifecycle_status ('active'|'frozen'|'archived')
+      - reversibility_flag (0|1)
+    - src/coach/composer.py: PolicyComposer 输出 action dict（含 intent/action_type）
+    - src/coach/memory.py: SessionMemory 提供会话上下文
+
+    失败先例拦截理论（来自 ai教练.txt §5.3）：
+    ```
+    DSL 动作提交后:
+      从 facts 表检索相似先例（claim → action intent 匹配）
+      检索条件: lifecycle_status='archived' AND reversibility_flag=0
+      命中 → 阻断并返回先例的 failure_reason
+    ```
+
+    facts 表已有方法（data.py）：
+    - query_facts(context_scope, lifecycle_status, limit) 可用
+    - 注意：data.py 不可修改（schema 冻结），只做查询
+  </context>
+
+  <task>
+    实现 src/coach/precedent_intercept.py：PrecedentInterceptor — facts 表查询 + 意图匹配 + 阻断逻辑。
+    新增 config/coach_defaults.yaml 先例配置段。
+    新增 tests/test_precedent_intercept.py。
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="配置段">
+      在 config/coach_defaults.yaml Phase 5 段追加：
+
+      ```yaml
+      precedent_intercept:
+        enabled: false
+        matching:
+          min_confidence: 0.3          # 先例最低置信度
+          max_results: 5               # 最多返回先例数
+          text_similarity_threshold: 0.4  # 文本匹配阈值
+        action:
+          on_hit: "block"              # "block"|"warn" 命中后动作
+      ```
+    </step>
+    <step id="2" name="PrecedentInterceptor 核心类">
+      ```python
+      class PrecedentInterceptor:
+          """基于 facts 表的失败先例拦截。
+
+          intercept(action, session_data) → PrecedentResult
+          """
+
+          def __init__(self, config: dict | None = None):
+              self._config = config or {}
+              self._match_cfg = config.get("matching", {}) if config else {}
+              self._data = None  # 延迟加载
+
+          @property
+          def data(self):
+              """延迟加载 facts 数据源。"""
+              if self._data is None:
+                  from src.coach.data import TripleLayerGraph
+                  self._data = TripleLayerGraph(":memory:")
+              return self._data
+      ```
+
+      注意：data.py 的 facts 表 schema 不可修改。
+      TripleLayerGraph 的 __init__ 可能需要 session_id 参数。
+      如果 data.py 要求 session_id，改为注入模式：
+      ```python
+      def __init__(self, config: dict | None = None, data_source=None):
+          self._config = config or {}
+          self._match_cfg = config.get("matching", {}) if config else {}
+          self._data = data_source  # 注入，不自行实例化
+      ```
+    </step>
+    <step id="3" name="先例检索">
+      ```python
+      def _search_precedents(self, intent: str, domain: str) -> list[dict]:
+          """从 facts 表检索失败的相似先例。"""
+          if not self._data:
+              return []
+
+          # 查询 archived + 不可回退 的先例
+          precedents = self._data.query_facts(
+              context_scope=domain,
+              lifecycle_status="archived",
+              limit=self._match_cfg.get("max_results", 5),
+          )
+          # 过滤：仅保留 reversibility_flag=0（不可回退）
+          irreversibles = [p for p in precedents if p.get("reversibility_flag") == 0]
+
+          # 意图相似度匹配（简化：关键词重叠率）
+          threshold = self._match_cfg.get("text_similarity_threshold", 0.4)
+          matched = []
+          intent_keywords = set(self._tokenize(intent))
+
+          for p in irreversibles:
+              claim_keywords = set(self._tokenize(p.get("claim", "")))
+              if not intent_keywords or not claim_keywords:
+                  continue
+              overlap = len(intent_keywords & claim_keywords) / max(len(intent_keywords | claim_keywords), 1)
+              if overlap >= threshold:
+                  p["_similarity"] = round(overlap, 4)
+                  matched.append(p)
+
+          return sorted(matched, key=lambda x: x.get("_similarity", 0), reverse=True)
+
+      @staticmethod
+      def _tokenize(text: str) -> list[str]:
+          """简单中文+英文分词。"""
+          import re
+          # 中文按字拆，英文按空格拆
+          words = []
+          for part in re.split(r'[\s,，。；；：、！？?]', text):
+              if not part:
+                  continue
+              # 含中文的部分按字符拆
+              if any('一' <= c <= '鿿' for c in part):
+                  words.extend(list(part))
+              else:
+                  words.append(part.lower())
+          return words
+      ```
+    </step>
+    <step id="4" name="拦截主线">
+      ```python
+      def intercept(self, intent: str, domain: str = "general",
+                     action_type: str = "") -> dict:
+          """检查当前动作是否命中失败先例。
+
+          Args:
+              intent: 用户意图文本
+              domain: 领域标签
+              action_type: DSL 动作类型
+
+          Returns: {
+              "hit": bool,                    # 是否命中
+              "precedents": list[dict],      # 命中先例列表
+              "action": str,                 # 处置动作 "block"|"warn"|"pass"
+              "reason": str | None,          # 阻断原因
+              "precedent_count": int,        # 匹配到的先例数
+          }
+          """
+          precedents = self._search_precedents(intent, domain)
+
+          if not precedents:
+              return {"hit": False, "precedents": [],
+                      "action": "pass", "reason": None, "precedent_count": 0}
+
+          on_hit = self._config.get("action", {}).get("on_hit", "block")
+          best = precedents[0]
+          return {
+              "hit": True,
+              "precedents": precedents,
+              "action": on_hit,
+              "reason": f"命中失败先例: {best.get('claim', 'unknown')} "
+                        f"(相似度 {best.get('_similarity', 0):.2f})",
+              "precedent_count": len(precedents),
+          }
+      ```
+    </step>
+    <step id="5" name="测试（隔离模式）">
+      先例拦截依赖 facts 表数据。测试采用注入模式：
+
+      ```python
+      import pytest
+      from src.coach.precedent_intercept import PrecedentInterceptor
+
+      class FakeDataSource:
+          """模拟 facts 表的 query_facts。"""
+          def query_facts(self, context_scope="", lifecycle_status="active", limit=5):
+              return [
+                  {"fact_id": "f1", "claim": "挑战任务导致用户焦虑",
+                   "confidence": 0.7, "context_scope": "programming",
+                   "lifecycle_status": "archived", "reversibility_flag": 0},
+                  {"fact_id": "f2", "claim": "脚手架提示过多引发依赖",
+                   "confidence": 0.6, "context_scope": "programming",
+                   "lifecycle_status": "archived", "reversibility_flag": 0},
+                  {"fact_id": "f3", "claim": "建议用户休息效果良好",
+                   "confidence": 0.8, "context_scope": "programming",
+                   "lifecycle_status": "active", "reversibility_flag": 1},
+              ]
+
+      class TestPrecedentInterceptor:
+          def test_no_hit_when_empty_intent(self):
+              pi = PrecedentInterceptor(data_source=FakeDataSource())
+              result = pi.intercept("", domain="general")
+              assert not result["hit"]
+
+          def test_hit_on_matching_precedent(self):
+              pi = PrecedentInterceptor(
+                  {"matching": {"text_similarity_threshold": 0.1}},
+                  data_source=FakeDataSource(),
+              )
+              result = pi.intercept("挑战任务太难了", domain="programming")
+              assert result["hit"]
+
+          def test_action_block_on_hit(self):
+              pi = PrecedentInterceptor(data_source=FakeDataSource())
+              result = pi.intercept("挑战任务", domain="programming")
+              if result["hit"]:
+                  assert result["action"] in ("block", "warn")
+
+          def test_precedent_count(self):
+              pi = PrecedentInterceptor(
+                  {"matching": {"text_similarity_threshold": 0.1,
+                                "max_results": 10}},
+                  data_source=FakeDataSource(),
+              )
+              result = pi.intercept("挑战", domain="programming")
+              if result["hit"]:
+                  assert result["precedent_count"] >= 1
+      ```
+
+      基线 6 个测试。
+      <important>
+        使用 data_source 依赖注入方式，不实例化真实的 TripleLayerGraph。
+        FakeDataSource 仅实现 query_facts 接口，不修改 data.py。
+        S5.5 集成时传入真实 data 实例。
+      </important>
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/precedent_intercept.py" type="new">~150 行: PrecedentInterceptor + 先例检索 + tokenize + 阻断逻辑</change>
+    <change file="config/coach_defaults.yaml" type="append">+12 行: precedent_intercept 配置段</change>
+    <change file="tests/test_precedent_intercept.py" type="new">~70 行: 6 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. PrecedentInterceptor 通过依赖注入接受 data_source
+    2. 空意图/空领域不命中（误报率低）
+    3. 匹配意图关键词时命中失败先例
+    4. hit=True 时 action 为 "block" 或 "warn"
+    5. _tokenize 正确处理中英文混合文本
+    6. 返回结果包含全部 5 个必需键
+    7. 6 个测试全部通过
+    8. 881 已有测试无回归
+  </success_criteria>
+</prompt>

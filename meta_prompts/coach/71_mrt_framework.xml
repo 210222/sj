@@ -1,0 +1,510 @@
+<prompt>
+  <name>Coherence Coach Track — S7.1 MRT 微随机实验框架</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>7</phase>
+  <sub_stage>S7.1</sub_stage>
+  <sub_stage_name>MRT 微随机实验框架 — 随机分配 + 贝叶斯因果效应估计 + 实验合约</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S7.1 实现者。
+    你的任务是：实现 MRT（Micro-Randomized Trial）微随机实验框架，
+    包含随机变体分配、贝叶斯因果效应估计、实验记录写入 ledger，
+    并新建 contracts/causal_governance.json 合约（draft 状态）。
+    这是 Phase 7 的因果推理层基石。
+  </role>
+
+  <context>
+    已有相关代码和数据源：
+    - src/coach/agent.py: CoachAgent — 运行时，act() 方法输出 action packet
+    - src/coach/composer.py: PolicyComposer — 动作类型路由，已有 TTM/SDT/Flow 融合
+    - src/coach/state.py: UserStateTracker — 用户状态（含 session 时间戳）
+    - src/coach/data.py: 三层图谱 — facts/entity_profiles/events 表
+    - src/inner/ledger/event_store.py: EventStore — append_event 写事件到 ledger
+    - contracts/gates.json: gate 5 (causal_gate) 已定义 causal_diagnostics_triple 指标
+    - config/coach_defaults.yaml: 已有 Phase 1-6 配置段
+
+    MRT 微随机实验理论（来自自适应AI伴学.txt）：
+    ```
+    MRT 在低风险动作上随机施加 2 种变体（A/B）：
+      - 每 24 小时窗口内，随机选择 20% 的 flow 动作做变体
+      - 变体仅影响"如何提供"（风格/措辞/时机），不影响"提供什么"（内容安全）
+      - 记录 variant_id + outcome_metrics 到 ledger
+      - 贝叶斯更新因果效应估计（参考 pyBKT 的贝叶斯方法）
+    ```
+
+    四门禁数据源（S7.3 使用，S7.1 不需实现）：
+    - Verification Load Gate: CoachAgent 计时（act() 执行时间）
+    - Serendipity Gate: excursion 记录（Phase 3 excursion_right）
+    - Trespassing Gate: 语义安全审计（Phase 5）
+    - Manipulation Gate: 选择架构审计（Phase 2 data model）
+  </context>
+
+  <task>
+    1) 新建 contracts/causal_governance.json（status=draft, v1.0.0）
+    2) 实现 src/coach/mrt.py：MRT 框架（MRTConfig + MRTAssignment + MRTTracker + BayesianEstimator）
+    3) 追加 config/coach_defaults.yaml Phase 7 配置段
+    4) 新增 tests/test_s7_mrt.py
+    5) 不实现诊断或门禁（S7.2/S7.3），不集成到 CoachAgent（S7.4）
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="创建 causal_governance.json 合约">
+      新建 contracts/causal_governance.json，定义 MRT 实验设计和三诊断合约：
+
+      ```json
+      {
+        "contract": "causal_governance",
+        "version": "1.0.0",
+        "status": "draft",
+        "description": "因果稳健 + 治理闭环合约 — Phase 7 冻结",
+        "mrt": {
+          "description": "微随机实验框架设计参数",
+          "randomization_rate": 0.2,
+          "window_hours": 24,
+          "eligible_action_types": ["challenge", "probe", "reflect", "scaffold"],
+          "excluded_action_types": ["suggest", "defer"],
+          "variant_schema": {
+            "fields": {
+              "variant_id": "string — 变体标识 (A/B/C)",
+              "variant_name": "string — 变体名称",
+              "delta": {"type": "float", "description": "相对基线的偏移量 [-1, 1]"},
+              "dimension": "string — 变体维度 (style/timing/pacing)"
+            }
+          },
+          "outcome_metrics": ["engagement_score", "completion_rate", "satisfaction_rating"],
+          "estimation_method": "bayesian",
+          "min_sample_per_variant": 10
+        },
+        "diagnostics": {
+          "description": "升档前三诊断合约",
+          "balance_check": {
+            "description": "变体组 vs 对照组基线可比性检验",
+            "method": "standardized_mean_difference",
+            "smd_threshold": 0.25,
+            "covariates": ["prior_engagement", "skill_level", "session_count"]
+          },
+          "negative_control": {
+            "description": "已知无效干预不应检测出显著性效果",
+            "method": "bayesian_posterior_overlap",
+            "overlap_threshold": 0.8,
+            "min_control_events": 5
+          },
+          "placebo_window": {
+            "description": "真实干预前窗口不应检测出效果",
+            "window_hours_before": 2,
+            "method": "pre_trend_test",
+            "p_value_threshold": 0.05
+          }
+        },
+        "frozen_at": null
+      }
+      ```
+
+      关键设计决策：
+      - randomization_rate=0.2: 每 24h 窗口最多 20% 的符合条件的动作为变体
+      - suggest/defer 排除：suggest 为默认动作太轻量，defer 为退出动作不适合实验
+      - smd_threshold=0.25: 标准化均值差 > 0.25 认为不平衡（Cohen 标准小效应）
+      - overlap_threshold=0.8: 后验分布重叠 > 80% 认为无显著差异
+    </step>
+
+    <step id="2" name="追加 coach_defaults.yaml 配置段">
+      在 config/coach_defaults.yaml 追加：
+
+      ```yaml
+      # ── Phase 7: 因果稳健 + 治理闭环 ──────────────────
+      mrt:
+        enabled: false
+        randomization_rate: 0.2
+        window_hours: 24
+        eligible_action_types:
+          - challenge
+          - probe
+          - reflect
+          - scaffold
+        outcome_metrics:
+          - engagement_score
+          - completion_rate
+          - satisfaction_rating
+        estimation:
+          min_sample_per_variant: 10
+          confidence_level: 0.95
+
+      diagnostics:
+        enabled: false
+        balance_check:
+          smd_threshold: 0.25
+        negative_control:
+          overlap_threshold: 0.8
+          min_control_events: 5
+        placebo_window:
+          window_hours_before: 2
+          p_value_threshold: 0.05
+      ```
+    </step>
+
+    <step id="3" name="实现 mrt.py — MRT 框架">
+      新建 src/coach/mrt.py，包含以下类：
+
+      ```python
+      """S7.1 MRT 微随机实验框架。
+
+      在低风险 flow 动作上实施微随机实验，贝叶斯估计因果效应。
+      """
+      import hashlib
+      import json
+      import random
+      import time
+      from dataclasses import dataclass, field
+      from datetime import datetime, timedelta, timezone
+      from typing import Any
+
+
+      @dataclass
+      class MRTConfig:
+          """MRT 实验配置，默认值来自合约。"""
+          randomization_rate: float = 0.2
+          window_hours: int = 24
+          eligible_action_types: tuple = ("challenge", "probe", "reflect", "scaffold")
+          excluded_action_types: tuple = ("suggest", "defer")
+          outcome_metrics: tuple = ("engagement_score", "completion_rate", "satisfaction_rating")
+          min_sample_per_variant: int = 10
+          confidence_level: float = 0.95
+
+          @classmethod
+          def from_dict(cls, d: dict) -> "MRTConfig":
+              return cls(
+                  randomization_rate=d.get("randomization_rate", 0.2),
+                  window_hours=d.get("window_hours", 24),
+                  eligible_action_types=tuple(d.get("eligible_action_types",
+                      ["challenge", "probe", "reflect", "scaffold"])),
+                  outcome_metrics=tuple(d.get("outcome_metrics",
+                      ["engagement_score", "completion_rate", "satisfaction_rating"])),
+                  min_sample_per_variant=d.get("estimation", {}).get("min_sample_per_variant", 10),
+              )
+
+
+      @dataclass
+      class MRTAssignment:
+          """单次 MRT 变体分配结果。"""
+          variant_id: str | None         # None = control (no variant)
+          variant_name: str | None
+          is_variant: bool               # True = 被分配到变体组
+          delta: float = 0.0             # 相对基线的偏移量
+          dimension: str = "style"       # 变体维度
+          trace_id: str = ""             # 关联的动作 trace_id
+          window_id: str = ""            # 24h 窗口标识
+          assigned_at_utc: str = ""
+
+          def to_dict(self) -> dict:
+              return {
+                  "variant_id": self.variant_id,
+                  "variant_name": self.variant_name,
+                  "is_variant": self.is_variant,
+                  "delta": self.delta,
+                  "dimension": self.dimension,
+                  "trace_id": self.trace_id,
+                  "window_id": self.window_id,
+                  "assigned_at_utc": self.assigned_at_utc,
+              }
+
+
+      class MRTExperiment:
+          """MRT 实验管理器。
+
+          职责：
+          - 检查动作是否在符合条件的 action_types 中
+          - 检查当前 24h 窗口的变体分配率是否 ≤ 20%
+          - 随机决定是否分配变体
+          - 生成 variant_id 和 delta
+          - 记录分配到 ledger
+          """
+
+          VARIANTS = [
+              {"id": "A", "name": "鼓励型", "delta": 0.2, "dimension": "style"},
+              {"id": "B", "name": "反思型", "delta": -0.1, "dimension": "style"},
+          ]
+
+          def __init__(self, config: MRTConfig | None = None):
+              self.config = config or MRTConfig()
+              self._assignments: list[MRTAssignment] = []  # 当前窗口内的分配记录
+
+          def current_window_id(self) -> str:
+              """计算当前 24h 窗口标识。"""
+              now = datetime.now(timezone.utc)
+              epoch = datetime(2024, 1, 1, tzinfo=timezone.utc)
+              elapsed_hours = (now - epoch).total_seconds() / 3600
+              window_index = int(elapsed_hours // self.config.window_hours)
+              return f"win_{window_index:08d}"
+
+          def _window_assignments(self, window_id: str) -> list[MRTAssignment]:
+              """获取当前窗口内已发生的分配。"""
+              return [a for a in self._assignments if a.window_id == window_id]
+
+          def _window_variant_count(self, window_id: str) -> int:
+              """当前窗口内变体分配数。"""
+              return sum(1 for a in self._window_assignments(window_id) if a.is_variant)
+
+          def _window_total_count(self, window_id: str) -> int:
+              """当前窗口内总分配数。"""
+              return len(self._window_assignments(window_id))
+
+          def eligible(self, action_type: str) -> bool:
+              """动作类型是否可参与 MRT。"""
+              return action_type in self.config.eligible_action_types
+
+          def assign(
+              self,
+              action_type: str,
+              context: dict | None = None,
+              trace_id: str = "",
+          ) -> MRTAssignment:
+              """对给定动作分配变体（或对照组）。
+
+              流程：
+              1. 检查 eligibility
+              2. 检查窗口变体率 ≤ randomization_rate
+              3. 如果通过且随机命中 → 变体；否则 → 对照组
+              """
+              if not self.eligible(action_type):
+                  return MRTAssignment(
+                      variant_id=None, variant_name=None, is_variant=False,
+                      trace_id=trace_id, assigned_at_utc=datetime.now(timezone.utc).isoformat(),
+                  )
+
+              window_id = self.current_window_id()
+
+              # 窗口变体率检查
+              total = self._window_total_count(window_id)
+              variants = self._window_variant_count(window_id)
+              current_rate = variants / total if total > 0 else 0
+
+              if current_rate >= self.config.randomization_rate:
+                  # 窗口已满，分配为对照
+                  return MRTAssignment(
+                      variant_id=None, variant_name=None, is_variant=False,
+                      trace_id=trace_id, window_id=window_id,
+                      assigned_at_utc=datetime.now(timezone.utc).isoformat(),
+                  )
+
+              # 随机确定是否变体
+              if random.random() < self.config.randomization_rate:
+                  variant = random.choice(self.VARIANTS)
+                  assignment = MRTAssignment(
+                      variant_id=variant["id"],
+                      variant_name=variant["name"],
+                      is_variant=True,
+                      delta=variant["delta"],
+                      dimension=variant["dimension"],
+                      trace_id=trace_id,
+                      window_id=window_id,
+                      assigned_at_utc=datetime.now(timezone.utc).isoformat(),
+                  )
+              else:
+                  assignment = MRTAssignment(
+                      variant_id=None, variant_name=None, is_variant=False,
+                      trace_id=trace_id, window_id=window_id,
+                      assigned_at_utc=datetime.now(timezone.utc).isoformat(),
+                  )
+
+              self._assignments.append(assignment)
+              return assignment
+
+          def window_stats(self, window_id: str | None = None) -> dict:
+              """返回当前/指定窗口的统计。"""
+              wid = window_id or self.current_window_id()
+              assigns = self._window_assignments(wid)
+              total = len(assigns)
+              variants = sum(1 for a in assigns if a.is_variant)
+              return {
+                  "window_id": wid,
+                  "total_assignments": total,
+                  "variant_count": variants,
+                  "control_count": total - variants,
+                  "variant_rate": round(variants / total, 4) if total > 0 else 0.0,
+              }
+
+
+      class BayesianEstimator:
+          """贝叶斯因果效应估计器。
+
+          使用 Beta-Bernoulli 共轭先验对二值结果建模（pyBKT 启发的贝叶斯方法）。
+          对连续结果使用 Normal-Inverse-Gamma 模型。
+
+          输出后验均值 + 95% 可信区间，不做频率学派 p 值报告。
+          """
+
+          def __init__(self, alpha_prior: float = 1.0, beta_prior: float = 1.0):
+              # Beta 先验参数
+              self.alpha_prior = alpha_prior
+              self.beta_prior = beta_prior
+
+          def estimate_binary(
+              self,
+              variant_successes: int, variant_total: int,
+              control_successes: int, control_total: int,
+          ) -> dict:
+              """二值结果的贝叶斯估计（如完成率）。
+
+              返回后验均值 + 95% 可信区间。
+              """
+              # 后验
+              a_v = self.alpha_prior + variant_successes
+              b_v = self.beta_prior + variant_total - variant_successes
+              a_c = self.alpha_prior + control_successes
+              b_c = self.beta_prior + control_total - control_successes
+
+              # 后验均值
+              mean_v = a_v / (a_v + b_v)
+              mean_c = a_c / (a_c + b_c)
+              effect = mean_v - mean_c
+
+              # 近似 95% 可信区间（基于 Beta 分布方差）
+              var_v = (a_v * b_v) / ((a_v + b_v) ** 2 * (a_v + b_v + 1))
+              var_c = (a_c * b_c) / ((a_c + b_c) ** 2 * (a_c + b_c + 1))
+              se = (var_v + var_c) ** 0.5
+              ci_lower = effect - 1.96 * se
+              ci_upper = effect + 1.96 * se
+
+              # 后验重叠概率：P(treatment > control)
+              overlap = self._posterior_overlap(a_v, b_v, a_c, b_c)
+
+              return {
+                  "method": "beta_binomial",
+                  "variant_mean": round(mean_v, 4),
+                  "control_mean": round(mean_c, 4),
+                  "effect_size": round(effect, 4),
+                  "ci_95": [round(ci_lower, 4), round(ci_upper, 4)],
+                  "posterior_overlap": round(overlap, 4),
+                  "variant_n": variant_total,
+                  "control_n": control_total,
+              }
+
+          def _posterior_overlap(self, a1, b1, a2, b2, samples: int = 10000) -> float:
+              """蒙特卡洛估计两个后验分布的重叠概率。"""
+              import random as rnd
+              overlap = 0
+              for _ in range(samples):
+                  s1 = rnd.betavariate(a1, b1)
+                  s2 = rnd.betavariate(a2, b2)
+                  if abs(s1 - s2) < 0.1:  # 接近的重叠
+                      overlap += 1
+              return overlap / samples
+      ```
+
+      关键设计决策：
+      - 使用 Beta-Bernoulli 共轭先验，与 pyBKT 的贝叶斯方法一致
+      - 不做频率学派 p 值——只报告后验均值 + 95% 可信区间 + 后验重叠概率
+      - 窗口机制基于 UTC 绝对时间计算，不受会话重启影响
+      - 变体只影响 style 维度（如何说），不影响 action_type（说什么）
+    </step>
+
+    <step id="4" name="新增测试 test_s7_mrt.py">
+      新建 tests/test_s7_mrt.py：
+
+      ```python
+      """S7.1 MRT 微随机实验框架测试。"""
+
+      import pytest
+      from src.coach.mrt import MRTConfig, MRTExperiment, BayesianEstimator
+
+
+      class TestMRTConfig:
+          def test_default_config(self):
+              cfg = MRTConfig()
+              assert cfg.randomization_rate == 0.2
+              assert cfg.window_hours == 24
+              assert "challenge" in cfg.eligible_action_types
+
+          def test_from_dict(self):
+              cfg = MRTConfig.from_dict({"randomization_rate": 0.5})
+              assert cfg.randomization_rate == 0.5
+
+
+      class TestMRTExperiment:
+          def test_eligible_action_types(self):
+              exp = MRTExperiment()
+              assert exp.eligible("challenge") is True
+              assert exp.eligible("suggest") is False
+
+          def test_assign_returns_control_for_ineligible(self):
+              exp = MRTExperiment()
+              result = exp.assign("suggest", trace_id="t1")
+              assert result.is_variant is False
+              assert result.variant_id is None
+
+          def test_assign_returns_assignment(self):
+              exp = MRTExperiment()
+              result = exp.assign("challenge", trace_id="t2")
+              assert result.trace_id == "t2"
+              assert result.window_id == exp.current_window_id()
+              assert result.is_variant in (True, False)
+
+          def test_window_stats(self):
+              exp = MRTExperiment()
+              for i in range(10):
+                  exp.assign("challenge", trace_id=f"t{i}")
+              stats = exp.window_stats()
+              assert stats["total_assignments"] == 10
+              assert stats["variant_count"] + stats["control_count"] == 10
+
+          def test_window_rate_bound(self):
+              """验证窗口变体率不超过 randomization_rate。"""
+              exp = MRTExperiment(randomization_rate=0.5)
+              # 分配大量动作验证上限
+              for i in range(100):
+                  exp.assign("challenge", trace_id=f"t{i}")
+              stats = exp.window_stats()
+              assert stats["variant_rate"] <= 0.5 + 0.05  # 允许 5% 松弛
+
+
+      class TestBayesianEstimator:
+          def test_estimate_binary_positive_effect(self):
+              est = BayesianEstimator()
+              result = est.estimate_binary(
+                  variant_successes=8, variant_total=10,
+                  control_successes=4, control_total=10,
+              )
+              assert result["effect_size"] > 0
+              assert "ci_95" in result
+              assert "posterior_overlap" in result
+              assert result["variant_n"] == 10
+
+          def test_estimate_binary_no_effect(self):
+              est = BayesianEstimator()
+              result = est.estimate_binary(
+                  variant_successes=5, variant_total=10,
+                  control_successes=5, control_total=10,
+              )
+              assert abs(result["effect_size"]) < 0.15
+
+          def test_posterior_overlap_range(self):
+              est = BayesianEstimator()
+              result = est.estimate_binary(2, 10, 2, 10)
+              assert 0 <= result["posterior_overlap"] <= 1.0
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="contracts/causal_governance.json" type="new">~60 行: MRT + 三诊断合约 (status=draft)</change>
+    <change file="src/coach/mrt.py" type="new">~200 行: MRT 实验框架</change>
+    <change file="config/coach_defaults.yaml" type="append">+25 行: Phase 7 配置段</change>
+    <change file="tests/test_s7_mrt.py" type="new">~70 行: MRT 单元测试</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. contracts/causal_governance.json 存在，JSON 格式有效，status="draft"
+    2. src/coach/mrt.py 存在，包含 MRTConfig/MRTExperiment/BayesianEstimator 三个类
+    3. MRTExperiment.assign() 正确区分 eligible/ineligible action_types
+    4. MRTExperiment.assign() 返回 assignment 包含 variant_id/is_variant/trace_id/window_id
+    5. MRTExperiment.window_stats() 返回正确的窗口统计
+    6. 窗口变体率不超过 randomization_rate（统计上限验证）
+    7. BayesianEstimator.estimate_binary() 返回 effect_size + ci_95 + posterior_overlap
+    8. config/coach_defaults.yaml 新增 Phase 7 配置段
+    9. 新增 tests/test_s7_mrt.py 全部 pass
+    10. 990 已有 tests 全部 pass
+    11. 不修改任何已冻结的文件
+  </success_criteria>
+</prompt>

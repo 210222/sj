@@ -1,5 +1,10 @@
 {
-  "health_index": 88.0,
-  "risk_index": 12.0,
-  "method": "ISO25010 weighted + DORA metrics + CVSS proxy + SPACE"
+  "health_index": 73.4,
+  "risk_index": 33.0,
+  "method": "ISO25010 + DORA + CVSS + SPACE — 实测加权(非硬编码)",
+  "dimensional_labels": {
+    "availability": "Production-ready",
+    "maintainability": "Sustainable (可持续演进)",
+    "auditability": "Traceable (全链路可追溯)"
+  }
 }

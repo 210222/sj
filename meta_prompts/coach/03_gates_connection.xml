@@ -1,0 +1,135 @@
+<prompt>
+  <name>S0.3 — Gates 接线</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>0</phase>
+  <sub_stage>S0.3</sub_stage>
+
+  <role>
+    你是 S0.3 Gates 接线器。你的唯一目标是让 GateEngine.evaluate()
+    取代外部传入的 gate_decision 字符串，实现管线内实时门禁评估。
+  </role>
+
+  <context>
+    src/inner/gates/engine.py 中有完整的 GateEngine（8 道门禁 + AND 逻辑），
+    但当前 pipeline 的 gate_decision 来自外部传入的字符串（safety_context 参数），
+    GateEngine 从未被生产管线调用。
+
+    这意味着门禁引擎虽然写着"8 道 AND 门禁"，实际上形同虚设——
+    调用方给什么 gate_decision，管线就信什么。
+
+    本阶段要改变这一点：在 DecisionEngine 之后、SemanticSafetyEngine 之前，
+    插入 GateEngine.evaluate() 实时评估，gate_decision 不再是外部字符串，
+    而是由当前管线数据实时产生的门禁结果。
+  </context>
+
+  <inputs>
+    <required>
+      <file>src/outer/orchestration/pipeline.py</file>
+      <file>src/inner/gates/engine.py</file>
+      <file>src/inner/gates/config.py</file>
+      <file>src/middle/semantic_safety/engine.py</file>
+    </required>
+    <depends_on>
+      <file>reports/coach_phase0_s02_audit.json</file>
+      <rule>必须先完成 S0.2（audit 数据作为 Gate 6 的输入）</rule>
+    </depends_on>
+  </inputs>
+
+  <preconditions>
+    <rule>coach_global_state.coach_stages.S0.2.status == GO</rule>
+    <rule>禁改边界持续生效</rule>
+    <rule>src/inner/gates/ 只读，仅调用不修改</rule>
+  </preconditions>
+
+  <execution>
+    <step>1. 在 DecisionEngine 之后、SemanticSafetyEngine 之前，插入 GateEngine 调用</step>
+    <step>2. 从 L0/L1/L2 输出构造 gate_inputs 参数</step>
+    <step>3. 调用 GateEngine.evaluate() 获取实时门禁决策</step>
+    <step>4. 将 gate_decision 传给 SemanticSafetyEngine（替代原来外部传入的字符串）</step>
+    <step>5. 处理 gate_inputs 不足时的降级（当前阶段默认 pass，等 V18.8 数据管道阶段再填充真实数据）</step>
+    <step>6. 调整 SemanticSafetyEngine 调用参数：p0_count/p1_count 从审计结果获取，gate_decision 从 GateEngine 获取</step>
+    <step>7. 编写 tests/test_pipeline_gates_integration.py 验证</step>
+    <step>8. 运行全量回归 pytest -q</step>
+  </execution>
+
+  <gate_inputs_construction>
+    <description>
+      当前阶段只有 pipeline 内部数据可作为 gate_inputs。
+      每个门禁输入规则如下（V18.8 数据管道阶段将补充真实数据源）：
+    </description>
+    <gate name="1_agency_gate">
+      <inputs>无（保留默认 pass，等待 CoachAgent 改写率数据）</inputs>
+    </gate>
+    <gate name="2_excursion_gate">
+      <inputs>无（保留默认 pass，等待远足权数据）</inputs>
+    </gate>
+    <gate name="3_learning_gate">
+      <inputs>无（保留默认 pass，等待 No-Assist 序列数据）</inputs>
+    </gate>
+    <gate name="4_relational_gate">
+      <inputs>无（保留默认 pass，等待关系层监测数据）</inputs>
+    </gate>
+    <gate name="5_causal_gate">
+      <inputs>无（保留默认 pass，等待 MRT 数据）</inputs>
+    </gate>
+    <gate name="6_audit_gate">
+      <inputs>p0_count: 来自 audit 步骤的 p0_count, p1_rate: 来自 audit 的 p1_rate_ratio</inputs>
+    </gate>
+    <gate name="7_framing_gate">
+      <inputs>无（保留默认 pass，等待选择架构审计）</inputs>
+    </gate>
+    <gate name="8_window_gate">
+      <inputs>schema_versions: [当前 pipeline 各阶段使用的 schema_version 列表]</inputs>
+    </gate>
+  </gate_inputs_construction>
+
+  <pipeline_flow_update>
+    <before>
+      Safety.evaluate(candidate, {"p0_count": input_p0, "p1_count": input_p1, "gate_decision": input_gate_str})
+    </before>
+    <after>
+      gate_result = GateEngine.evaluate(gate_inputs={...})
+      Safety.evaluate(candidate, {"p0_count": audit_p0, "p1_count": audit_p1, "gate_decision": gate_result["decision"]})
+    </after>
+  </pipeline_flow_update>
+
+  <outputs>
+    <changed_file>src/outer/orchestration/pipeline.py (GateEngine 调用 + Safety 参数替换)</changed_file>
+    <new_file>tests/test_pipeline_gates_integration.py</new_file>
+    <stage_report>reports/coach_phase0_s03_gates.json</stage_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      pipeline 执行后 GateEngine 被调用并产出实时 gate_decision AND
+      gate_decision 进入 SemanticSafetyEngine 作为参数 AND
+      全量回归 698 pass AND
+      S0.1 + S0.2 测试依然全部 pass
+    </go_when>
+    <no_go_when>
+      GateEngine 未被调用 / Safety 引擎仍接收外部字符串 / 全量测试失败 / 禁改区域被触碰
+    </no_go_when>
+  </decision_logic>
+
+  <test_cases>
+    <test>
+      <name>test_gate_engine_called_in_pipeline</name>
+      <assert>pipeline 执行后 pipeline_result 中包含 GateEngine 的输出字段</assert>
+    </test>
+    <test>
+      <name>test_gate_decision_replaces_external_string</name>
+      <assert>SemanticSafetyEngine 收到的 gate_decision 来自 GateEngine 而非调用方参数</assert>
+    </test>
+    <test>
+      <name>test_gate_engine_no_input_does_not_crash</name>
+      <assert>所有门禁无输入时返回 GO（默认 pass 安全降级）</assert>
+    </test>
+  </test_cases>
+
+  <safety>
+    <rule>禁止修改 src/inner/gates/** 任何文件</rule>
+    <rule>禁止修改 src/middle/semantic_safety/** 任何文件（只改传参方式）</rule>
+    <rule>GateEngine 调用失败不得阻断管线（降级为 GO + 日志）</rule>
+  </safety>
+</prompt>

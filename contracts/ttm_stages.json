@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract": "ttm_stages",
+  "version": "1.0.0",
+  "status": "frozen",
+  "description": "TTM 五阶段变化理论合约。定义阶段枚举、十改变过程、阶段→策略→action_type 映射。S4.5 冻结后字段不可删改。",
+
+  "stages": [
+    {
+      "id": "precontemplation",
+      "name": "前意向",
+      "description": "未意识到问题，无改变意图",
+      "indicators": ["我不需要改变", "这不是问题", "别人小题大做"]
+    },
+    {
+      "id": "contemplation",
+      "name": "意向",
+      "description": "意识到问题，考虑改变，但未行动",
+      "indicators": ["我可能有问题", "我考虑过改变", "但还没准备好"]
+    },
+    {
+      "id": "preparation",
+      "name": "准备",
+      "description": "准备行动，制定计划",
+      "indicators": ["我打算下个月开始", "我需要一个计划", "我在做准备"]
+    },
+    {
+      "id": "action",
+      "name": "行动",
+      "description": "实施改变行为",
+      "indicators": ["我已经开始了", "我在坚持", "我正在做"]
+    },
+    {
+      "id": "maintenance",
+      "name": "维持",
+      "description": "维持改变，防止复发",
+      "indicators": ["我保持很久了", "这已经是习惯", "我不会回去了"]
+    }
+  ],
+
+  "change_processes": [
+    {
+      "id": "consciousness_raising",
+      "name": "意识唤醒",
+      "description": "提供信息增强对问题行为的认知",
+      "primary_stages": ["precontemplation"]
+    },
+    {
+      "id": "dramatic_relief",
+      "name": "情感唤起",
+      "description": "体验并表达与问题行为相关的情绪",
+      "primary_stages": ["precontemplation", "contemplation"]
+    },
+    {
+      "id": "self_reevaluation",
+      "name": "自我再评价",
+      "description": "评估改变对自我身份的正面影响",
+      "primary_stages": ["contemplation"]
+    },
+    {
+      "id": "environmental_reevaluation",
+      "name": "环境再评价",
+      "description": "评估问题行为对社会环境的影响",
+      "primary_stages": ["contemplation"]
+    },
+    {
+      "id": "self_liberation",
+      "name": "自我解放",
+      "description": "做出改变的承诺和选择",
+      "primary_stages": ["preparation"]
+    },
+    {
+      "id": "social_liberation",
+      "name": "社会解放",
+      "description": "增加社会替代方案",
+      "primary_stages": ["preparation"]
+    },
+    {
+      "id": "counterconditioning",
+      "name": "反条件作用",
+      "description": "用健康行为替代问题行为",
+      "primary_stages": ["action"]
+    },
+    {
+      "id": "stimulus_control",
+      "name": "刺激控制",
+      "description": "移除问题行为诱因，增加健康行为提示",
+      "primary_stages": ["action"]
+    },
+    {
+      "id": "reinforcement_management",
+      "name": "强化管理",
+      "description": "对积极改变提供奖励",
+      "primary_stages": ["action", "maintenance"]
+    },
+    {
+      "id": "helping_relationships",
+      "name": "支持关系",
+      "description": "利用社会支持维持改变",
+      "primary_stages": ["maintenance"]
+    }
+  ],
+
+  "stage_strategy_map": {
+    "precontemplation": {
+      "goal": "认知唤醒 — 让用户意识到问题/机会",
+      "change_processes": ["consciousness_raising", "dramatic_relief"],
+      "recommended_action_types": ["reflect", "suggest"],
+      "avoid_action_types": ["challenge", "probe"],
+      "intervention_style": "low_pressure_awareness",
+      "dialogue_tone": "informational"
+    },
+    "contemplation": {
+      "goal": "价值重塑 — 帮助用户做决策平衡分析",
+      "change_processes": ["self_reevaluation", "environmental_reevaluation"],
+      "recommended_action_types": ["reflect", "suggest"],
+      "avoid_action_types": ["challenge"],
+      "intervention_style": "decisional_balance",
+      "dialogue_tone": "exploratory"
+    },
+    "preparation": {
+      "goal": "执行脚手架 — 制定具体行动计划",
+      "change_processes": ["self_liberation", "social_liberation"],
+      "recommended_action_types": ["scaffold", "challenge"],
+      "avoid_action_types": ["defer"],
+      "intervention_style": "action_planning",
+      "dialogue_tone": "supportive_directive"
+    },
+    "action": {
+      "goal": "高频干预+正向强化",
+      "change_processes": ["counterconditioning", "stimulus_control", "reinforcement_management"],
+      "recommended_action_types": ["challenge", "probe"],
+      "avoid_action_types": ["defer", "suggest"],
+      "intervention_style": "high_frequency_reinforcement",
+      "dialogue_tone": "encouraging"
+    },
+    "maintenance": {
+      "goal": "退居幕后监测 — 预警复发+压力应对",
+      "change_processes": ["reinforcement_management", "helping_relationships"],
+      "recommended_action_types": ["probe", "defer"],
+      "avoid_action_types": ["suggest", "scaffold"],
+      "intervention_style": "relapse_prevention",
+      "dialogue_tone": "monitoring"
+    }
+  },
+
+  "frozen_constraints": {
+    "stages_enum": "S4.5 冻结后 stages.id 五枚举不可删改，仅可扩展",
+    "change_processes_enum": "十改变过程不可删改，仅可扩展",
+    "stage_strategy_map_keys": "每个阶段的 goal/change_processes/recommended_action_types/avoid_action_types 字段不可删改",
+    "contract_version": "1.0.0"
+  }
+}

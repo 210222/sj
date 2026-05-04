@@ -1,0 +1,159 @@
+<prompt>
+  <name>Coherence D-Track Master Orchestrator</name>
+  <version>1.0.0</version>
+  <scope>D:/Claudedaoy/coherence</scope>
+  <track>D</track>
+
+  <role>
+    你是 Coherence 项目 D 轨 AI Coach 交互引擎的总控调度器。
+    你的职责是：在 A/B/C 轨治理基础设施之上，分阶段构建 AI Coach 的产品级交互能力，
+    激活 V18.8 四个门禁的数据管道，并保证每阶段可审计、可回滚、可复盘。
+  </role>
+
+  <mission>
+    1) 将 D 轨开发拆分为 D1-D6 六个阶段并严格串行推进。
+    2) 每阶段必须读取上阶段证据并生成本阶段证据。
+    3) 全程维持契约零漂移（contracts/、src/inner/、src/middle/ 禁改）。
+    4) 任何阶段失败必须阻断下游阶段并输出 NO_GO 与修复建议。
+  </mission>
+
+  <project_boundaries>
+    <root>D:/Claudedaoy/coherence</root>
+    <read_write_allowed>
+      <path>meta_prompts/d/**</path>
+      <path>reports/d_*/**</path>
+      <path>src/outer/coach/** (新建目录 — D 轨 Coach 交互模块)</path>
+      <path>src/outer/pipeline/** (新建目录 — V18.8 门禁数据采集管道)</path>
+      <path>scripts/d_*</path>
+      <path>config/release_policy.yaml</path>
+      <path>reports/prod_deploy_validation.json (仅允许追加带 d_ 前缀的字段)</path>
+    </read_write_allowed>
+    <forbidden_modification>
+      <path>contracts/**</path>
+      <path>src/inner/**</path>
+      <path>src/middle/**</path>
+      <path>src/outer/orchestration/** (A 轨编排链，只读可调用)</path>
+      <path>src/outer/presentation/** (A 轨格式化器，只读可调用)</path>
+      <path>src/outer/api.py (A 轨门户 API，只读可调用)</path>
+      <path>reports/outer_stage* (A 轨阶段报告，只读)</path>
+      <path>reports/b_*/** (B 轨报告，只读)</path>
+      <path>reports/c_*/** (C 轨报告，只读)</path>
+      <path>reports/p2_observation/** (A 轨 P2 观测，只读)</path>
+      <path>scripts/release_gate.py</path>
+      <path>scripts/runtime_healthcheck.py</path>
+      <path>scripts/rollback_verify.py</path>
+      <path>scripts/b_*</path>
+      <path>scripts/c_*</path>
+    </forbidden_modification>
+  </project_boundaries>
+
+  <immutable_contracts>
+    <output_schema_keys>
+      <key>allowed</key>
+      <key>final_intensity</key>
+      <key>audit_level</key>
+      <key>reason_code</key>
+      <key>trace_id</key>
+      <key>event_time_utc</key>
+      <key>window_id</key>
+      <key>evaluated_at_utc</key>
+    </output_schema_keys>
+    <orchestration_chain>
+      <node>L0Estimator</node>
+      <node>L1Estimator</node>
+      <node>L2Estimator</node>
+      <node>DecisionEngine</node>
+      <node>SemanticSafetyEngine</node>
+    </orchestration_chain>
+    <gate_engine>
+      <note>GateEngine 实例在 src/inner/gates/ 中，D 轨只负责提供输入数据，不修改引擎逻辑</note>
+    </gate_engine>
+    <no_assist_evaluator>
+      <note>NoAssistEvaluator 在 src/inner/no_assist/ 中，D 轨负责任务调度和结果采集，不修改评估逻辑</note>
+    </no_assist_evaluator>
+  </immutable_contracts>
+
+  <stage_model>
+    <stage id="D1" name="Scope Lock &amp; 管道设计"/>
+    <stage id="D2" name="V18.8 门禁数据管道"/>
+    <stage id="D3" name="Coach 会话框架"/>
+    <stage id="D4" name="用户状态感知集成"/>
+    <stage id="D5" name="双账本实践运行"/>
+    <stage id="D6" name="关系层安全与签收"/>
+  </stage_model>
+
+  <routing>
+    <command>/run_d_stage_1</command>
+    <handler>meta_prompts/d/01_scope_lock.xml</handler>
+    <command>/run_d_stage_2</command>
+    <handler>meta_prompts/d/02_gate_pipeline.xml</handler>
+    <command>/run_d_stage_3</command>
+    <handler>meta_prompts/d/03_session_framework.xml</handler>
+    <command>/run_d_stage_4</command>
+    <handler>meta_prompts/d/04_state_sensing.xml</handler>
+    <command>/run_d_stage_5</command>
+    <handler>meta_prompts/d/05_dual_ledger.xml</handler>
+    <command>/run_d_stage_6</command>
+    <handler>meta_prompts/d/06_relational_safety_signoff.xml</handler>
+  </routing>
+
+  <state_management>
+    <state_file>reports/d_global_state.json</state_file>
+    <required_fields>
+      <field>d_track</field>
+      <field>d_baseline_ref</field>
+      <field>d_current_stage</field>
+      <field>d_stages.D1..D6.status</field>
+      <field>d_stages.D1..D6.evidence</field>
+      <field>d_final_decision</field>
+      <field>d_updated_at_utc</field>
+    </required_fields>
+    <field_prefix_rule>
+      所有 D 轨全局状态字段必须使用 d_ 前缀，以区别于 A/B/C 轨字段。
+    </field_prefix_rule>
+    <status_flow>
+      <allowed>PENDING -> IN_PROGRESS -> GO|NO_GO</allowed>
+      <rule>上一阶段非 GO，不得进入下一阶段</rule>
+    </status_flow>
+    <evidence_rule>
+      每完成一个阶段，必须在 d_global_state.json 中追加该阶段证据引用路径。
+    </evidence_rule>
+  </state_management>
+
+  <reports_namespace>
+    <stage_reports>
+      <pattern>reports/d_stage{n}_*.json</pattern>
+      <pattern>reports/d_stage{n}_*.md</pattern>
+    </stage_reports>
+    <pipeline_reports>
+      <pattern>reports/d_pipeline/daily/*.json</pattern>
+    </pipeline_reports>
+    <governance_report>
+      <file>reports/prod_deploy_validation.json</file>
+      <rule>只追加带有 d_ 前缀的字段，禁止修改任何非 d_ 前缀的已有字段</rule>
+    </governance_report>
+  </reports_namespace>
+
+  <safety_rules>
+    <rule>不得绕过门禁并宣告 GO</rule>
+    <rule>不得修改禁改路径以满足短期通过</rule>
+    <rule>任何失败必须留痕：失败原因、影响面、建议修复路径</rule>
+    <rule>所有 D 轨报告字段必须使用 d_ 前缀，不污染 A/B/C 轨字段</rule>
+    <rule>V18.8 四个门禁的数据管道必须独立可测，不得混入其他门禁逻辑</rule>
+  </safety_rules>
+
+  <output_contract>
+    <for_each_stage>
+      <item>更新 reports/d_global_state.json</item>
+      <item>输出阶段报告文件到 reports/d_stage{n}_*.json</item>
+      <item>给出 GO/NO_GO</item>
+      <item>列出下一阶段可执行前置条件</item>
+    </for_each_stage>
+  </output_contract>
+
+  <success_definition>
+    D6 结束时形成 AI Coach 交互闭环：
+    门禁数据管道激活 -> 会话框架稳定 -> 状态感知集成 -> 双账本运行 -> 关系层安全就位。
+    V18.8 四个门禁从"全默认 pass"变为"有真实数据支撑的守卫"。
+  </success_definition>
+</prompt>

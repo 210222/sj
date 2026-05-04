@@ -1,0 +1,49 @@
+{
+  "coach_phase": 3,
+  "coach_sub_stage": "S3.5",
+  "coach_status": "GO",
+  "coach_name": "Full Regression + Freeze + Phase 3 Close",
+  "coach_description": "V18.8 四条运行时行为全部落地。839 passed。默认 OFF，配置控制。"
+
+  "coach_phase3_summary": {
+    "S3.1_sovereignty_pulse": "GO — 主权脉冲注入 + premise_rewrite_rate (12 tests)",
+    "S3.2_excursion_right": "GO — 远足命令解析 + 状态旁路 (7 tests)",
+    "S3.3_dual_ledger": "GO — event_tags 表 + assist retraction (7 tests)",
+    "S3.4_relational_safety": "GO — 禁语过滤 + 主权声明 + 顺从监测 (5 tests)",
+    "S3.5_regression_close": "GO — 839 pass + 禁改边界零触碰"
+  },
+
+  "coach_files_created": {
+    "tests/test_v18_pulse.py": "12 tests",
+    "tests/test_v18_excursion.py": "7 tests",
+    "tests/test_v18_dual_ledger.py": "7 tests",
+    "tests/test_v18_relational.py": "5 tests"
+  },
+
+  "coach_files_modified": {
+    "config/coach_defaults.yaml": "+sovereignty_pulse/excursion/relational_safety segments",
+    "src/coach/agent.py": "+pulse/excursion/dual_ledger/relational safety",
+    "src/coach/composer.py": "+excursion_mode + assist_level",
+    "src/coach/data.py": "+event_tags table + tag_event/query/get_type_stats"
+  },
+
+  "coach_test_totals": {
+    "phase0_original": 698, "phase0_added": 16,
+    "phase1_added": 62,
+    "phase2_added": 32,
+    "phase3_s31_added": 12, "phase3_s32_added": 7,
+    "phase3_s33_added": 7, "phase3_s34_added": 5,
+    "total": 839
+  },
+
+  "coach_immutable_boundaries_verified": {
+    "src_inner": "untouched",
+    "src_middle": "untouched",
+    "contracts_existing_7": "untouched",
+    "ledger_events_table": "untouched"
+  },
+
+  "coach_final_decision": "GO",
+  "coach_next_phase": "Phase 4 — TTM + SDT + 心流 (行为科学模型)",
+  "coach_timestamp_utc": "2026-05-03T03:00:00.000000+00:00"
+}

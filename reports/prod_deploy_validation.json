@@ -59,5 +59,11 @@
   },
   "governance_note": "B entry is approved as early entry with explicit risk acceptance; this is not equivalent to P2 completed.",
   "timestamp_utc": "2026-05-02T05:10:00.000000+00:00",
-  "session_note": "重启后接手验证，portainer 占用 8000 端口已临时停止，coherence-outer 容器构建并运行成功，ExitCode=0"
+  "session_note": "重启后接手验证，portainer 占用 8000 端口已临时停止，coherence-outer 容器构建并运行成功，ExitCode=0",
+  "b_track_status": "COMPLETE",
+  "b_stage": "B6",
+  "b_final_decision": "GO",
+  "b_stage6_audit_ref": "reports/b_stage6_final_audit.json",
+  "b_signoff_ref": "reports/b_stage6_signoff.md",
+  "b_updated_at_utc": "2026-05-02T07:50:00.000000+00:00"
 }

@@ -1,0 +1,195 @@
+<prompt>
+  <name>Coherence Coach Track — S3.3 双账本分离</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>3</phase>
+  <sub_stage>S3.3</sub_stage>
+  <sub_stage_name>双账本分离 — Performance / Learning + Assist Retraction</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S3.3 实现者。
+    你的任务是实现 V18.8 双账本分离机制：
+    1) event_tags 表注解 ledger_type（performance / learning）
+    2) NoAssist 评估结果 → learning 类型事件
+    3) DSL 动作执行 → performance 类型事件
+    4) Assist Retraction：当 performance 上升但 learning 不升时，CoachAgent 自动降一级辅助强度
+  </role>
+
+  <context>
+    已存在的代码和设计：
+    - src/coach/data.py: MemoryStore 管理 entity_profiles 和 facts 表，与 EventStore 共用 data/coherence.db
+    - src/outer/orchestration/pipeline.py: _commit_to_ledger() 写 ledger.events 表（append-only，有 BEFORE UPDATE/DELETE trigger）
+    - src/inner/ledger/event_store.py: EventStore.append_event() 接受 p0 + p1 字段，不可修改
+    - src/inner/no_assist/evaluator.py: NoAssistEvaluator.evaluate() 输出 no_assist_score 和 no_assist_level
+    - src/inner/gates/engine.py Gate 3 Learning Gate 已就绪：消费 recent_no_assist_scores，检测连续下降趋势
+    - src/inner/gates/config.py: LEARNING_MAX_CONSECUTIVE_DECLINE=2
+    - ledger.events 表 schema 已有 tradeoff_reason TEXT 字段（JSON 字符串），可用于存 ledger_type
+    - 约束：ledger.events 表不可 ALTER（append-only trigger 不阻止 DDL 但为安全起见不修改此表）
+  </context>
+
+  <task>
+    1) MemoryStore 新增 event_tags 表 + 配套 CRUD
+    2) pipeline._commit_to_ledger() 支持 ledger_type 参数
+    3) CoachAgent 增加 Assist Retraction 逻辑
+    4) NoAssist evaluator 结果写入 learning ledger
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="event_tags 表">
+      在 src/coach/data.py 的 MemoryStore 中新增：
+
+      ```sql
+      CREATE TABLE IF NOT EXISTS event_tags (
+          tag_id          INTEGER PRIMARY KEY AUTOINCREMENT,
+          trace_id        TEXT NOT NULL,
+          ledger_type     TEXT NOT NULL CHECK(ledger_type IN ('performance', 'learning')),
+          session_id      TEXT,
+          action_type     TEXT,
+          no_assist_score REAL,
+          created_at_utc  TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_event_tags_trace_id ON event_tags(trace_id);
+      CREATE INDEX IF NOT EXISTS idx_event_tags_type ON event_tags(ledger_type);
+      CREATE INDEX IF NOT EXISTS idx_event_tags_created ON event_tags(created_at_utc);
+      ```
+
+      注意：此表是独立的标签表，不影响已有 ledger.events 表结构和触发器。
+
+      新增 MemoryStore 方法：
+      - `tag_event(trace_id, ledger_type, session_id=None, action_type=None, no_assist_score=None) → int`：插入标签，返回 tag_id
+      - `query_events_by_type(ledger_type, limit=20, offset=0) → list[dict]`：按类型查询
+      - `get_type_stats(ledger_type, since_utc=None) → dict`：统计 count, avg_score 等
+      - `create_tables()` 中增加对 event_tags 表的建表调用
+    </step>
+    <step id="2" name="pipeline ledger_type 支持">
+      修改 src/outer/orchestration/pipeline.py 中 _commit_to_ledger() 的签名，增加可选参数：
+      ```python
+      def _commit_to_ledger(
+          ..., ledger_type: str = "performance"
+      ) -> str:  # 返回 event_hash
+      ```
+
+      在 _commit_to_ledger() 中：
+      - 调用 EventStore.append_event() 获取返回的 event（含 event_hash）
+      - 获取 MemoryStore 实例（延迟加载，参考 _get_ledger() 单例模式）
+      - 调用 `MemoryStore.tag_event(event_hash, ledger_type)`
+      - 将 `ledger_type` 也嵌入 tradeoff_reason JSON 中（双重记录，向后兼容）：
+        ```python
+        tradeoff = json.loads(p1_values.get("tradeoff_reason", "{}"))
+        tradeoff["ledger_type"] = ledger_type
+        p1_values["tradeoff_reason"] = json.dumps(tradeoff)
+        ```
+
+      修改 run_pipeline() 签名增加可选参数 `ledger_type="performance"`，透传给 _commit_to_ledger。
+      保留 backward compatibility：不传则默认 "performance"。
+    </step>
+    <step id="3" name="CoachAgent 双账本标注">
+      修改 src/coach/agent.py 中 act() 调用 run_pipeline() 的地方：
+      - 普通 DSL 动作：`ledger_type="performance"`
+      - 如果是 pulse 动作：`ledger_type="performance"`（主权的行使属于 performance 范畴）
+      - 如果是 excursion 动作：`ledger_type="learning"`（远足属于学习/探索范畴）
+
+      在 CooperAgent 中新增方法 `record_no_assist(session_id, score, level, trace_id)`：
+      - 当外部（NoAssistEvaluator）完成评估后调用此方法
+      - 调用 MemoryStore.tag_event(trace_id, "learning", no_assist_score=score)
+      - 存储 score 到内部 `_recent_no_assist_scores: list[float]`（最多保留 20 条）
+    </step>
+    <step id="4" name="Assist Retraction 逻辑">
+      在 CoachAgent 中实现：
+
+      ```python
+      def _check_assist_retraction(self) -> dict:
+          """检查是否满足 Assist Retraction 条件。
+
+          Returns:
+              {"retract": bool, "reason": str,
+               "perf_trend": float, "learn_trend": float}
+          """
+          # 1. 从 _recent_no_assist_scores 计算 learning 趋势
+          #    如果不足 2 个数据点，不触发
+          # 2. 从 _pulse_history 或其他源计算 performance 趋势
+          #    简化版：检查最近 performance action 的 safety_allowed 趋势
+          # 3. 条件：perf_trend > 0 AND learn_trend <= 0 → retract=True
+          # 4. retract=True 时，降低 composer 的 assist_level
+      ```
+
+      PolicyComposer 增加 `assist_level` 属性（默认 "normal"，可设为 "reduced"）：
+      - normal: 正常 action_type 选择（scaffold/challenge/suggest 正常输出）
+      - reduced: 降级辅助（优先 reflect/probe，减少 scaffold/suggest 输出）
+
+      在 act() 末尾调用 _check_assist_retraction()：
+      - 若 retract=True，将 composer.assist_level 设为 "reduced"
+      - 在下一次 act() 调用生效
+      - 将 retraction 信息写入返回 dict（键: "assist_retraction"）
+
+      实现 `adjust_assist_level(level: str)` 方法供外部强制设置。
+    </step>
+    <step id="5" name="NoAssist → Learning 集成">
+      在 CoachAgent 中增加方法：
+      ```python
+      def evaluate_no_assist(
+          self, session_id: str, user_answer: str,
+          assist_used: bool, event_time_utc: str,
+          reference_answer: str | None = None
+      ) -> dict:
+          """执行 NoAssist 评估并标记为 learning 账本事件。"""
+          from src.inner.no_assist import NoAssistEvaluator
+          evaluator = NoAssistEvaluator()
+          result = evaluator.evaluate(
+              session_id, user_answer, assist_used, event_time_utc,
+              reference_answer,
+          )
+          # 写 ledger（通过 pipeline 的 ledger_type="learning" 模式）
+          # 简化：直接调用 MemoryStore.tag_event
+          self._facts.tag_event(
+              trace_id=result.get("session_id", session_id),
+              ledger_type="learning",
+              no_assist_score=result["no_assist_score"],
+          )
+          self._recent_no_assist_scores.append(result["no_assist_score"])
+          return result
+      ```
+    </step>
+    <step id="6" name="测试">
+      创建 tests/test_v18_dual_ledger.py：
+      ```python
+      def test_event_tags_table_created():
+          # MemoryStore 初始化后 event_tags 表存在
+
+      def test_tag_event_inserts_row():
+          # tag_event 返回正确 tag_id
+
+      def test_query_by_type():
+          # 按类型过滤返回正确结果
+
+      def test_assist_retraction_no_trigger_initially():
+          # 没有足够数据时不触发 retraction
+
+      def test_pipeline_ledger_type_default_performance():
+          # pipeline 默认 ledger_type="performance"
+
+      def test_no_assist_evaluation_records_learning():
+          # evaluate_no_assist 后 event_tags 有 learning 类型记录
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/data.py" type="modify">+60 行: event_tags 表 DDL + CRUD 方法</change>
+    <change file="src/outer/orchestration/pipeline.py" type="modify">+10 行: ledger_type 参数传递</change>
+    <change file="src/coach/agent.py" type="modify">+70 行: 双账本标注 + Assist Retraction + NoAssist 集成</change>
+    <change file="src/coach/composer.py" type="modify">+10 行: assist_level 属性</change>
+    <change file="tests/test_v18_dual_ledger.py" type="new">+80 行: 6 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. event_tags 表创建，tag_event/query_events_by_type 正常工作
+    2. pipeline 写入 ledger 时同时写入 event_tags 标签
+    3. DSL 动作默认 performance，NoAssist 评估标记为 learning
+    4. Assist Retraction：performance 上升且 learning 不升时，composer.assist_level 降为 "reduced"
+    5. 无足够数据时不误触发
+    6. 6 个测试全部通过
+    7. 808 + 前序新增测试无回归
+  </success_criteria>
+</prompt>

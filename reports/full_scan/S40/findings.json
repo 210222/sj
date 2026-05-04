@@ -1,6 +1,14 @@
 [
   {
     "severity": "P3",
-    "title": "5/5 contracts frozen and valid"
+    "type": "model_params",
+    "file": "src/coach/flow.py",
+    "detail": "BKT model: prior=0.3, guess=0.1, slip=0.1, learn=0.2 — verify against domain data"
+  },
+  {
+    "severity": "P3",
+    "type": "model_params",
+    "file": "tests/test_flow.py",
+    "detail": "BKT model: prior=0.3, guess=0.1, slip=0.1, learn=0.2 — verify against domain data"
   }
 ]

@@ -1,10 +1,82 @@
 {
   "step": "S20",
   "status": "GO",
-  "executed_at_utc": "2026-04-30T06:02:27.932Z",
-  "critical_path_tests_executed": true,
-  "observability_gaps_assessed": true,
-  "tests_passed": 669,
-  "tests_failed": 0,
-  "tests_total": 669
+  "executed_at_utc": "2026-05-04T07:24:29.721Z",
+  "layer": "B — Runtime Physiology",
+  "test_results": {
+    "total_passed": 1070,
+    "total_failed": 0,
+    "total_tests": 1070,
+    "by_module": {
+      "coach": {
+        "test_files": 4,
+        "passed": 80,
+        "failed": 0
+      },
+      "coach_composer": {
+        "test_files": 1,
+        "passed": 8,
+        "failed": 0
+      },
+      "coach_flow": {
+        "test_files": 1,
+        "passed": 14,
+        "failed": 0
+      },
+      "coach_phase5": {
+        "test_files": 5,
+        "passed": 35,
+        "failed": 0
+      },
+      "coach_sdt": {
+        "test_files": 1,
+        "passed": 8,
+        "failed": 0
+      },
+      "coach_ttm": {
+        "test_files": 1,
+        "passed": 12,
+        "failed": 0
+      },
+      "inner": {
+        "test_files": 6,
+        "passed": 224,
+        "failed": 0
+      },
+      "middle": {
+        "test_files": 6,
+        "passed": 274,
+        "failed": 0
+      },
+      "other": {
+        "test_files": 24,
+        "passed": 386,
+        "failed": 0
+      },
+      "outer": {
+        "test_files": 3,
+        "passed": 29,
+        "failed": 0
+      }
+    }
+  },
+  "fault_injection": {
+    "findings": 1
+  },
+  "cognitive_load": {
+    "comment_ratio": 0.0727,
+    "long_lines": 70,
+    "max_line_length": 190,
+    "cognitive_load_score": 10,
+    "assessment": "Healthy"
+  },
+  "accessibility": {
+    "accessibility_score": 1.0,
+    "checks": {
+      "user_rewrite_choice": true,
+      "user_accept_choice": true,
+      "fallback_paths": true
+    },
+    "note": "CLI-based system — WCAG audit scope limited to interaction model"
+  }
 }

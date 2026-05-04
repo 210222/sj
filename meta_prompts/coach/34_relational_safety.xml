@@ -1,0 +1,193 @@
+<prompt>
+  <name>Coherence Coach Track — S3.4 关系安全层</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>3</phase>
+  <sub_stage>S3.4</sub_stage>
+  <sub_stage_name>关系安全层 — Relational Safety Layer</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S3.4 实现者。
+    你的任务是实现 V18.8 关系安全层——四项保护机制：
+    1) 输出禁语过滤：禁止"我比你更了解你"等权威拟人语义
+    2) 每条建议强制标注 source_tag（rule/statistical/hypothesis）
+    3) 周期性插入主导权回收声明
+    4) 顺从信号监测 + 教练模式切换
+  </role>
+
+  <context>
+    已存在的代码和设计：
+    - src/outer/presentation/formatter.py: format_output() 将 Safety 结果格式化为 8 字段 schema。当前是纯格式化，无过滤逻辑。
+    - src/coach/agent.py: act() 返回 DSL packet + pipeline 结果。S3.1 已有脉冲 + _pulse_history。
+    - src/inner/gates/engine.py Gate 4 Relational Gate 已就绪：消费 passive_agreement_rate, rewrite_rate_decline, self_judgment_decline 三个信号
+    - src/inner/gates/config.py: COMPLIANCE_PASSIVE_AGREEMENT_MAX=0.3, COMPLIANCE_REWRITE_DECLINE_MAX=0.3, COMPLIANCE_SELF_JUDGMENT_DECLINE_MAX=0.3
+    - coach_dsl.json: domain_passport.source_tag 枚举已冻结（rule/statistical_model/hypothesis/user_history/domain_knowledge）
+  </context>
+
+  <task>
+    实现关系安全层的四个组件：输出过滤、source_tag 强制标注、主权声明、顺从信号监测。
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="配置扩展">
+      在 config/coach_defaults.yaml 的 V18.8 段追加：
+      ```yaml
+      # ── V18.8 关系安全层 ─────────────────────────
+      relational_safety:
+        enabled: false
+        forbidden_phrases:
+          - "我比你更了解你"
+          - "我比你更了解你自己"
+          - "相信我，我知道什么对你最好"
+          - "你只需要按我说的做"
+          - "我是最了解你的人"
+        sovereignty_declaration: "请记住，我是你的辅助工具，决策权始终在你手中。"
+        sovereignty_declaration_interval: 5   # 每 N 轮插入一次
+        compliance:
+          passive_agreement_threshold: 0.3
+          rewrite_decline_threshold: 0.3
+          self_judgment_decline_threshold: 0.3
+          coach_mode_intent: "教练模式"         # 切换后只做提问，不做处方
+      ```
+    </step>
+    <step id="2" name="Formatter 输出禁语过滤">
+      修改 src/outer/presentation/formatter.py 的 format_output()：
+
+      在返回 8 字段 dict 之前，增加过滤逻辑：
+      ```python
+      def _filter_forbidden_phrases(text: str, forbidden: list[str]) -> str:
+          """将输出文本中的禁语替换为安全替代。"""
+          for phrase in forbidden:
+              # 使用不区分大小写的替换
+              text = re.sub(re.escape(phrase), "[根据准则已过滤]", text, flags=re.IGNORECASE)
+          return text
+      ```
+
+      如果 output 中包含禁语，将 allowed 设为 False，reason_code 追加 "_RELATIONAL_FILTER"。
+
+      format_output() 新增可选参数 `forbidden_phrases: list[str] | None = None`。
+      不传则不执行过滤（向后兼容）。
+
+      注意：目前 format_output() 处理的 safety_result 是 SemanticSafetyEngine 的输出，
+      不包含 DSL payload 文本。实际的输出过滤需要在 CoachAgent.act() 返回前对 DSL packet
+      的 payload 字段进行过滤。因此实现分两层：
+      - format_output(): 对 safety_result 输出字段过滤（低优先级）
+      - agent.py: 对 DSL packet 的 payload 中所有字符串字段进行禁语扫描（高优先级）
+    </step>
+    <step id="3" name="source_tag 强制标注">
+      在 agent.py 的 act() 步骤 5（build DSL）后增加：
+
+      ```python
+      def _ensure_source_tag(packet: dict) -> dict:
+          """确保每个 DSL 动作包的 domain_passport 包含 source_tag。
+
+          建议(suggest)动作必须有 source_tag（rule/statistical/hypothesis 等）。
+          如缺失，默认标注为 "rule" 但附加 epistemic_warning。
+          """
+          dp = packet.get("domain_passport", {})
+          if not dp.get("source_tag"):
+              dp["source_tag"] = "rule"
+              dp["epistemic_warning"] = "此建议未标注来源类型，默认标记为 rule"
+          return packet
+      ```
+
+      在 coach 模式的最终返回前调用此函数。
+    </step>
+    <step id="4" name="主权声明插入">
+      在 agent.py 中实现周期性主权声明：
+
+      - CoachAgent 增加 `_turn_count: int = 0` 属性（每调用一次 act() 加 1）
+      - 当 `_turn_count % sovereignty_declaration_interval == 0` 且 interval > 0 时：
+        - 在返回的 packet 中附加 `"sovereignty_declaration"` 字段
+        - 值为 sovereignty_declaration 配置文本
+
+      注意：主权声明不是独立 action，而是附加到 DSL 返回包中的元信息字段。
+      上层（前端/接口层）负责展示此声明。
+    </step>
+    <step id="5" name="顺从信号监测">
+      在 agent.py 中实现顺从信号监测：
+
+      ```python
+      class CoachAgent:
+          def _monitor_compliance_signals(self, user_input: str, action: dict,
+                                          pulse_history: list[dict]) -> dict:
+              """监测三个顺从信号。
+
+              Returns:
+                  {"passive_agreement_rate": float,   # 被动同意率
+                   "rewrite_rate_decline": float,     # 改写率下降
+                   "self_judgment_decline": float,    # 自我判断减少
+                   "coach_mode_active": bool}         # 是否已切换
+              """
+          # 1. passive_agreement_rate：
+          #    从 pulse_history 中统计 accept/(accept+rewrite)
+          #    同时检测非脉冲场景的顺从：用户回复极短（<5字）且无质疑 → 记为被动同意
+          #
+          # 2. rewrite_rate_decline：
+          #    比较最近 N 个脉冲的改写率 vs 之前 N 个脉冲
+          #
+          # 3. self_judgment_decline：
+          #    检测用户是否越来越少使用"我觉得"、"我认为"等自主判断表达
+          #    通过 intent 中是否包含 "觉得/认为/我想/我看" 等自主表达关键词
+      ```
+
+        当任一信号超过阈值时：
+        - 将 `_coach_mode` 设为 True
+        - 相应的 signal 在返回 dict 中标记为 "BREACH"
+
+      实现 `_is_in_coach_mode() → bool`：
+      - 返回 self._coach_mode
+      - coach_mode 下，composer 优先输出 reflect 和 probe（不做建议/处方）
+
+      修改 composer.py 增加 coach_mode 支持：
+      - 当 compose() 的 user_state 中有 coach_mode=True 标志时
+      - 将 action_type 选择偏向 reflect/probe
+      - composer 的 _select_action_type 增加 coach_mode 参数
+    </step>
+    <step id="6" name="测试">
+      创建 tests/test_v18_relational.py：
+      ```python
+      def test_forbidden_phrases_filtered():
+          # 包含禁语的文本被正确过滤
+
+      def test_source_tag_ensured():
+          # 所有 DSL 包都有 source_tag
+
+      def test_sovereignty_declaration_inserted():
+          # 每 N 轮插入主权声明
+
+      def test_compliance_monitoring_returns_metrics():
+          # _monitor_compliance_signals 返回正确指标
+
+      def test_coach_mode_switched_on_breach():
+          # 信号超阈值后 coach_mode=True
+
+      def test_coach_mode_changes_action_type():
+          # coach_mode 下 composer 优先 reflect/probe
+      ```
+
+      注意：这些测试中，多个需要 mock 外部依赖（pipeline, SessionMemory 等）。
+      使用 CoachAgent(session_id="test_s3_4") 隔离测试数据。
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="config/coach_defaults.yaml" type="append">+20 行 relational_safety 配置段</change>
+    <change file="src/coach/agent.py" type="modify">+80 行: source_tag 强制、主权声明、顺从监测、coach_mode</change>
+    <change file="src/coach/composer.py" type="modify">+20 行: coach_mode 参数、action_type 偏好调整</change>
+    <change file="src/outer/presentation/formatter.py" type="modify">+40 行: 禁语过滤函数</change>
+    <change file="tests/test_v18_relational.py" type="new">+100 行: 6 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. 禁语过滤正确替换 forbidden_phrases，不误伤正常内容
+    2. 所有 DSL 包的 domain_passport 包含 source_tag
+    3. 主权声明按 interval 插入返回包
+    4. 顺从信号可监测并返回 metrics
+    5. 信号超阈值后 coach_mode 激活
+    6. coach_mode 下 composer action_type 偏向 reflect/probe
+    7. 6 个测试全部通过
+    8. 808 + 前序新增测试无回归
+  </success_criteria>
+</prompt>

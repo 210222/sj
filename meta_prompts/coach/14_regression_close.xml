@@ -1,0 +1,116 @@
+<prompt>
+  <name>S1.4 — 全量回归 + 合约冻结 + 阶段完结</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>1</phase>
+  <sub_stage>S1.4</sub_stage>
+
+  <role>
+    你是 S1.4 回归验收员 + 冻结器。
+    你的唯一目标是执行全量回归（714+ 新增 tests）、
+    将 coach_dsl.json 标记为 frozen、生成 Phase 1 完结报告。
+  </role>
+
+  <context>
+    S1.1→S1.3 完成了 Coach 引擎 + DSL 协议 + 双模式管线接入。
+    S1.4 是 Phase 1 的"关门"阶段——验证所有改动没有破坏任何东西，
+    然后冻结 DSL 合约，正式宣告 Phase 1 完成。
+  </context>
+
+  <inputs>
+    <required>
+      <file>contracts/coach_dsl.json</file>
+      <file>src/coach/agent.py</file>
+      <file>src/coach/dsl.py</file>
+      <file>src/coach/composer.py</file>
+      <file>src/coach/state.py</file>
+      <file>src/coach/memory.py</file>
+      <file>config/coach_defaults.yaml</file>
+      <file>src/outer/orchestration/pipeline.py</file>
+    </required>
+    <depends_on>
+      <file>reports/coach_phase1_s13_wiring.json</file>
+      <rule>S1.3 status == GO</rule>
+    </depends_on>
+  </inputs>
+
+  <preconditions>
+    <rule>coach_global_state.coach_stages.S1.3.status == GO</rule>
+    <rule>全量回归前期检查：src/coach/ 包 6 文件 + config/coach_defaults.yaml 全部存在</rule>
+    <rule>禁改边界持续生效</rule>
+  </preconditions>
+
+  <execution>
+    <step>1. 运行 python -m pytest tests/ -v --tb=short 2>&1 记录完整输出到日志</step>
+    <step>2. 统计结果：总 test 数、passed、failed、error、skipped</step>
+    <step>3. 若有失败：逐项诊断并修复，直到全部 pass</step>
+    <step>4. 检查禁改边界：grep 确认 src/inner/**、src/middle/**、已有 contracts/ 无修改</step>
+    <step>
+      5. 冻结 contracts/coach_dsl.json：
+      - 读取文件
+      - 将 "status": "draft" 改为 "status": "frozen"
+      - 写入文件
+    </step>
+    <step>6. 更新 reports/coach_global_state.json：Phase 1 所有子阶段 GO + coach_final_decision=GO</step>
+    <step>7. 更新 CLAUDE.md：将 "活动阶段" 改为 "阶段 1（教练引擎）"、"阶段状态" 改为 "GO"</step>
+    <step>8. 生成 Phase 1 完结报告 reports/coach_phase1_final.json</step>
+    <step>9. 输出 Phase 1 → GO 公告</step>
+  </execution>
+
+  <freeze_checklist>
+    <item checked="false">coach_dsl.json 中 status 从 draft → frozen</item>
+    <item checked="false">action_types 枚举已锁定（增删需明确版本升级）</item>
+    <item checked="false">required_fields 已锁定</item>
+    <item checked="false">domain_passport_levels 枚举已锁定</item>
+    <item checked="false">source_tags 枚举已锁定</item>
+    <item checked="false">全量回归 ≥ 714 passed</item>
+  </freeze_checklist>
+
+  <outputs>
+    <frozen_file>contracts/coach_dsl.json (status → frozen)</frozen_file>
+    <stage_report>reports/coach_phase1_s14_freeze.json</stage_report>
+    <phase1_report>reports/coach_phase1_final.json</phase1_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      全量回归（714 + 新增）全部 pass AND
+      contracts/coach_dsl.json status 为 frozen AND
+      S1.1→S1.3 新增测试仍然全部 pass AND
+      禁改区域零触碰 AND
+      不存在未跟踪文件包含对 src/inner/** 或 src/middle/** 的修改
+    </go_when>
+    <no_go_when>
+      哪怕 1 个 test 失败 / 合约冻结不完整 / 禁改区域被触碰
+    </no_go_when>
+  </decision_logic>
+
+  <test_cases>
+    <test>
+      <name>test_full_regression_passes</name>
+      <assert>pytest -q tests/ 输出所有 test passed</assert>
+    </test>
+    <test>
+      <name>test_dsl_contract_is_frozen</name>
+      <assert>coach_dsl.json 的 status 字段为 "frozen"</assert>
+    </test>
+    <test>
+      <name>test_coach_core_integration_still_passes</name>
+      <assert>tests/test_coach_agent.py 全部 pass</assert>
+    </test>
+    <test>
+      <name>test_dual_mode_still_passes</name>
+      <assert>tests/test_pipeline_dual_mode.py 全部 pass</assert>
+    </test>
+    <test>
+      <name>test_forbidden_boundaries_not_touched</name>
+      <assert>grep 确认 src/inner/**、src/middle/**、已有 contracts/ 无修改</assert>
+    </test>
+  </test_cases>
+
+  <safety>
+    <rule>冻结后不可再修改 action_types 枚举（需明确版本升级）</rule>
+    <rule>禁止以"跳过测试"方式绕过失败——必须修到通过</rule>
+    <rule>Phase 1 结束后，继承禁改边界进入 Phase 2</rule>
+  </safety>
+</prompt>

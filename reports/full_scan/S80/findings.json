@@ -1,0 +1,12 @@
+[
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/inner/ledger/__pycache__/db.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/inner/ledger/db.py"
+  }
+]

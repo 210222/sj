@@ -1,0 +1,182 @@
+<prompt>
+  <name>Coherence Coach Track — S3.5 全量回归与冻结</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>3</phase>
+  <sub_stage>S3.5</sub_stage>
+  <sub_stage_name>全量回归与配置冻结</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S3.5 实现者。
+    你的任务是执行 Phase 3 全量回归测试、冻结 V18.8 配置阈值、
+    更新 CLAUDE.md 和全局状态，完成阶段完结报告。
+  </role>
+
+  <context>
+    已完成的子阶段：
+    - S3.1 主权确认脉冲：agent.py 脉冲注入 + config/coach_defaults.yaml 配置
+    - S3.2 模型外远足权：agent.py 命令解析 + composer.py 历史旁路
+    - S3.3 双账本分离：data.py event_tags 表 + agent.py Assist Retraction + pipeline.py ledger_type
+    - S3.4 关系安全层：formatter.py 禁语过滤 + agent.py 顺从监测/coach_mode + composer.py 偏好调整
+
+    新增测试文件：
+    - tests/test_v18_pulse.py
+    - tests/test_v18_excursion.py
+    - tests/test_v18_dual_ledger.py
+    - tests/test_v18_relational.py
+
+    配置扩展：
+    - config/coach_defaults.yaml 新增了 sovereignty_pulse / excursion / dual_ledger / relational_safety 四段
+  </context>
+
+  <task>
+    1) 执行全量回归测试（808 基线 + 4 个新测试文件）
+    2) 验证禁改边界零触碰
+    3) 冻结 V18.8 配置阈值
+    4) 更新全局状态 + CLAUDE.md
+    5) 生成 Phase 3 完结报告
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="全量回归">
+      运行命令：
+      ```bash
+      cd D:/Claudedaoy/coherence && python -m pytest tests/ -q
+      ```
+
+      预期：808 + 新增 >= 860 pass，0 failed，0 error。
+
+      如果有失败：
+      - 记录失败的测试名和错误消息
+      - 如果是 V18.8 测试失败，修复对应代码
+      - 重新回归直到全部 pass
+      - 如果是已有 808 基线测试失败，这是回归——立即排查并修复
+    </step>
+    <step id="2" name="禁改边界验证">
+      运行 git diff 检查是否触碰禁改区：
+      ```bash
+      cd D:/Claudedaoy/coherence && git diff --stat
+      ```
+
+      确认以下路径零变更：
+      - contracts/（所有文件）
+      - src/inner/
+      - src/middle/
+      - src/outer/api/
+      - src/outer/safeguards/
+      - src/coach/dsl.py
+      - src/coach/state.py
+      - src/coach/__init__.py
+      - 已有 tests/（只新增，不修改）
+
+      同时验证：
+      - pipeline.py 的 Phase 0 接线流程（L0→L1→L2→Decision→GateEngine→Safety→Ledger→Audit 链）未改动
+      - legacy mode 输出格式未改变
+    </step>
+    <step id="3" name="配置阈值冻结">
+      检查 config/coach_defaults.yaml 中 V18.8 四段配置的阈值：
+      - sovereignty_pulse.high_intensity_threshold = 0.7 → 冻结
+      - excursion.excursion_duration_turns = 3 → 冻结
+      - relational_safety.sovereignty_declaration_interval = 5 → 冻结
+      - relational_safety.forbidden_phrases 列表 → 冻结
+
+      在 YAML 中为每个 V18.8 段增加注释：
+      ```yaml
+      # [Phase 3 frozen] S3.5 冻结后不可修改已有阈值，仅可新增参数
+      ```
+    </step>
+    <step id="4" name="全局状态更新">
+      读取 reports/coach_global_state.json，更新 Phase 3 状态：
+      ```json
+      {
+        "coach_track": "COACH",
+        "coach_phase": 3,
+        "coach_sub_stage": "S3.5",
+        "coach_stages": {
+          ...
+          "S3.1": {"status": "GO", "name": "主权确认脉冲", "tests": ..., "tests_passed": ...},
+          "S3.2": {"status": "GO", "name": "模型外远足权", "tests": ..., "tests_passed": ...},
+          "S3.3": {"status": "GO", "name": "双账本分离", "tests": ..., "tests_passed": ...},
+          "S3.4": {"status": "GO", "name": "关系安全层", "tests": ..., "tests_passed": ...},
+          "S3.5": {"status": "GO", "name": "Phase 3 冻结", "tests": ..., "tests_passed": ...}
+        },
+        "coach_final_decision": "GO",
+        "coach_test_totals": {
+          "phase0": 714,
+          "phase1": 62,
+          "phase2": 32,
+          "phase3": ...,
+          "total": ...
+        },
+        "coach_updated_at_utc": "<current UTC>"
+      }
+      ```
+
+      注意：
+      - 从测试结果中提取准确的测试计数填入 `tests` 和 `tests_passed`
+      - phase3 计数 = 新增的 V18.8 测试数
+      - total = 714 + 62 + 32 + phase3
+    </step>
+    <step id="5" name="CLAUDE.md 更新">
+      更新 cohernce/CLAUDE.md 的状态段（当前阶段标记）：
+      - 活动阶段: 阶段 3（V18.8 运行时行为）— **GO** ✅
+      - 已完成阶段:
+        - 阶段 0（接线）: GO ✅ (714 pass)
+        - 阶段 1（教练引擎）: GO ✅ (749 pass)
+        - 阶段 2（记忆与用户模型）: GO ✅ (808 pass)
+        - 阶段 3（V18.8 运行时行为）: GO ✅ (N pass)
+      - 下一阶段: 阶段 4（TTM + SDT + 心流），等待用户授权启动
+    </step>
+    <step id="6" name="完结报告">
+      创建报告文件（可选）或直接在全局状态中确认完结。
+
+      摘要输出（在最终消息中呈现给用户）：
+      ```
+      ════════════════════════════════════════
+      Phase 3 完结报告
+      ════════════════════════════════════════
+
+      ✅ 全量回归: XXXX tests passed in X.XXs
+      ✅ 禁改边界: 零触碰
+
+      S3.1 主权脉冲: GO
+        - HIGH intensity 自动插入 pulse
+        - premise_rewrite_rate 可计算
+
+      S3.2 远足权: GO
+        - /excursion 命令解析
+        - user_state 历史旁路
+
+      S3.3 双账本: GO
+        - event_tags 表（performance/learning）
+        - Assist Retraction 逻辑
+
+      S3.4 关系安全层: GO
+        - 禁语过滤
+        - source_tag 强制标注
+        - 主权声明插入
+        - 顺从监测 + 教练模式
+
+      所有 V18.8 特性默认 OFF，通过 config/coach_defaults.yaml 启用。
+
+      下一阶段: 阶段 4 — TTM + SDT + 心流
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="reports/coach_global_state.json" type="modify">Phase 3 状态更新 + GO</change>
+    <change file="CLAUDE.md" type="modify">当前阶段标记更新</change>
+    <change file="config/coach_defaults.yaml" type="modify">V18.8 段加冻结注释</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. 全量回归：808 基线 + 新增全部 pass
+    2. 禁改边界零触碰
+    3. config/coach_defaults.yaml V18.8 阈值已冻结
+    4. global_state.json 正确反映 Phase 3 GO
+    5. CLAUDE.md 状态更新
+    6. Phase 3 完结报告已生成
+  </success_criteria>
+</prompt>

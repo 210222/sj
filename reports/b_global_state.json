@@ -1,0 +1,87 @@
+{
+  "b_track": "B",
+  "b_baseline_ref": "outer_A_v1.0.0 (git tag outer_A_v1.0.0_frozen)",
+  "b_entry_mode": "EARLY_ENTRY_WITH_RISK_ACCEPTANCE",
+  "b_entry_note": "P2 observation completed 2/3 days; risk accepted by project_owner on 2026-05-02",
+  "b_current_stage": "B8",
+  "b_stages": {
+    "B1": {
+      "status": "GO",
+      "name": "Scope Lock",
+      "evidence": [
+        "reports/b_stage1_scope_lock.json",
+        "reports/b_stage1_manifest.json"
+      ]
+    },
+    "B2": {
+      "status": "GO",
+      "name": "Design Freeze",
+      "evidence": [
+        "reports/b_stage2_design_freeze.json",
+        "reports/b_stage2_change_plan.json"
+      ]
+    },
+    "B3": {
+      "status": "GO",
+      "name": "Implementation",
+      "evidence": [
+        "reports/b_stage3_impl_report.json"
+      ]
+    },
+    "B4": {
+      "status": "GO",
+      "name": "Gate Validation",
+      "evidence": [
+        "reports/b_stage4_gate_report.json",
+        "reports/b_stage4_qa_feedback.json"
+      ]
+    },
+    "B5": {
+      "status": "GO",
+      "name": "Observation Window",
+      "evidence": [
+        "reports/b_stage5_observation_report.json",
+        "reports/b_observation/b_observation_summary.json"
+      ]
+    },
+    "B6": {
+      "status": "GO",
+      "name": "Final Signoff",
+      "evidence": [
+        "reports/b_stage6_final_audit.json",
+        "reports/b_stage6_signoff.md"
+      ]
+    },
+    "B7": {
+      "status": "GO",
+      "name": "Release Hardening",
+      "evidence": [
+        "reports/b_stage7_release_hardening.json",
+        "reports/b_stage7_release_hardening.md"
+      ]
+    },
+    "B8": {
+      "status": "GO",
+      "name": "Operational Freeze",
+      "evidence": [
+        "reports/b_stage8_operational_freeze.json",
+        "reports/b_stage8_operational_freeze.md"
+      ]
+    }
+  },
+  "b_risk_acceptance": {
+    "b_accepted": true,
+    "b_accepted_by": "project_owner",
+    "b_accepted_at_utc": "2026-05-02T05:10:00.000000+00:00",
+    "b_reason": "Early entry into B before completing 3-day observation window",
+    "b_rollback_trigger": [
+      "Any P0 in B stage",
+      "Any P1 persisting > 1 cycle",
+      "Schema drift",
+      "Reason code drift"
+    ],
+    "b_rollback_action": "git checkout outer_A_v1.0.0_frozen"
+  },
+  "b_final_decision": "GO",
+  "b_updated_at_utc": "2026-05-02T09:48:02.275447+00:00"
+}

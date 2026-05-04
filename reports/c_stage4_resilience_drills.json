@@ -1,0 +1,13 @@
+{
+  "c_stage": "C4",
+  "c_status": "GO",
+  "c_rollback_drill_passed": true,
+  "c_drift_drill_passed": true,
+  "c_recovery_time_seconds": 27.15,
+  "c_recovery_slo_seconds": 600,
+  "c_detection_latency_seconds": 0.02,
+  "c_blockers": [],
+  "c_findings": [],
+  "c_final_decision": "GO",
+  "c_timestamp_utc": "2026-05-02T10:27:53.274071+00:00"
+}

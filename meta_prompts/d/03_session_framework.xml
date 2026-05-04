@@ -1,0 +1,137 @@
+<prompt>
+  <name>D3 Coach 会话框架</name>
+  <version>1.0.0</version>
+  <track>D</track>
+  <stage>D3</stage>
+
+  <role>
+    你是 D3 会话框架构建器。你的唯一目标是建立 AI Coach 与用户之间的
+    结构化会话管理基础设施：回合追踪、状态持久化、会话生命周期管理。
+  </role>
+
+  <context>
+    当前系统有完整的编排管道（L0→L1→L2→Decision→Safety）但无用户交互框架。
+    门禁数据管道（D2）提供了数据采集能力，但缺少"会话"这个组织单元。
+    本阶段建立会话管理器，使每次教练-用户交互成为可追踪、可审计的结构化流程。
+  </context>
+
+  <inputs>
+    <required>
+      <file>reports/d_global_state.json</file>
+      <file>reports/d_stage2_gate_pipeline.json</file>
+      <file>config/release_policy.yaml</file>
+    </required>
+  </inputs>
+
+  <preconditions>
+    <rule>d_global_state.d_stages.D2.status == GO</rule>
+    <rule>禁改边界持续生效</rule>
+  </preconditions>
+
+  <execution>
+    <step>实现 src/outer/coach/session.py — 会话生命周期管理</step>
+    <step>实现 src/outer/coach/turn.py — 回合（user_message → coach_response）追踪</step>
+    <step>实现 src/outer/coach/state.py — 会话状态持久化（SQLite 存储）</step>
+    <step>实现 src/outer/coach/engine.py — 教练引擎总入口（整合会话+回合+状态）</step>
+    <step>为每个模块编写单元测试</step>
+    <step>编写端到端测试：启动会话 → 多轮交互 → 关闭会话 → 恢复会话</step>
+    <step>生成 D3 阶段报告 reports/d_stage3_session_framework.json</step>
+  </execution>
+
+  <module_specs>
+    <session_manager>
+      <file>src/outer/coach/session.py</file>
+      <api>
+        - create_session(user_id: str, context: dict) -> Session
+        - get_session(session_id: str) -> Session | None
+        - close_session(session_id: str) -> None
+        - list_active_sessions() -> list[Session]
+      </api>
+      <storage>SQLite（复用 data/coherence.db 或新建 data/coach.db）</storage>
+      <fields>
+        session_id: str (UUID)
+        user_id: str
+        created_at_utc: str
+        closed_at_utc: str | None
+        turn_count: int
+        metadata: dict (自由扩展)
+      </fields>
+    </session_manager>
+    <turn_tracker>
+      <file>src/outer/coach/turn.py</file>
+      <api>
+        - record_turn(session_id, user_message, coach_response, metadata) -> Turn
+        - get_turns(session_id, limit=50) -> list[Turn]
+        - get_latest_turn(session_id) -> Turn | None
+      </api>
+      <fields>
+        turn_id: str (UUID)
+        session_id: str
+        sequence: int
+        user_message: str
+        coach_response: str
+        user_rewrote_premise: bool (供 agency_collector 使用)
+        agreement_type: str (passive|active|rewrite|self_judge, 供 compliance_detector 使用)
+        metadata: dict
+        created_at_utc: str
+      </fields>
+    </turn_tracker>
+    <state_persistence>
+      <file>src/outer/coach/state.py</file>
+      <api>
+        - save_state(session_id, key, value) -> None
+        - load_state(session_id, key) -> Any | None
+        - save_snapshot(session_id) -> dict (快照整个会话状态)
+        - load_snapshot(session_id) -> dict | None
+      </api>
+      <storage>SQLite key-value 存储</storage>
+    </state_persistence>
+    <coach_engine>
+      <file>src/outer/coach/engine.py</file>
+      <api>
+        - process_message(session_id, user_message) -> CoachResponse
+        - start_coaching(user_id, initial_context) -> Session
+        - end_coaching(session_id) -> SessionSummary
+      </api>
+      <integration>调用 D2 管道采集门禁数据，调用 pipeline.run_pipeline() 做状态估计</integration>
+    </coach_engine>
+  </module_specs>
+
+  <outputs>
+    <file>src/outer/coach/__init__.py</file>
+    <file>src/outer/coach/session.py</file>
+    <file>src/outer/coach/turn.py</file>
+    <file>src/outer/coach/state.py</file>
+    <file>src/outer/coach/engine.py</file>
+    <stage_report>reports/d_stage3_session_framework.json</stage_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      所有模块实现且通过单元测试 AND
+      端到端测试通过：创建→交互→关闭→恢复 AND
+      coach_engine 可调用 D2 管道和编排管道 AND
+      d_blockers is empty
+    </go_when>
+    <no_go_when>
+      任一模块不可运行、测试未通过、或与会话生命周期合约不一致。
+    </no_go_when>
+  </decision_logic>
+
+  <state_update>
+    <file>reports/d_global_state.json</file>
+    <mutations>
+      <field>d_current_stage = D3</field>
+      <field>d_stages.D3.status = GO|NO_GO</field>
+      <field>d_stages.D3.name = Coach 会话框架</field>
+      <field>d_stages.D3.evidence += [src/outer/coach/*.py, reports/d_stage3_session_framework.json]</field>
+      <field>d_updated_at_utc = now</field>
+    </mutations>
+  </state_update>
+
+  <safety>
+    <rule>禁止修改 contracts/**, src/inner/**, src/middle/**</rule>
+    <rule>会话数据中禁止存储用户明文密码、API key 等敏感信息</rule>
+    <rule>turn 记录必须包含足够信息供 D2 管道消费（rewrote_premise, agreement_type）</rule>
+  </safety>
+</prompt>

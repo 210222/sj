@@ -1,0 +1,15 @@
+{
+  "c_drill": "rollback",
+  "c_passed": true,
+  "c_baseline_ok": true,
+  "c_anchor_ok": true,
+  "c_refs_ok": true,
+  "c_post_drill_ok": true,
+  "c_recovery_time_seconds": 25.83,
+  "c_recovery_slo_seconds": 600,
+  "c_anchors_verified": [
+    "outer_A_v1.0.0_frozen",
+    "outer_B_v1.0.0_frozen"
+  ],
+  "c_timestamp_utc": "2026-05-02T10:37:41.751945+00:00"
+}

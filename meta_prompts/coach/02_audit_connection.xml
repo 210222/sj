@@ -1,0 +1,102 @@
+<prompt>
+  <name>S0.2 — Audit 接线</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>0</phase>
+  <sub_stage>S0.2</sub_stage>
+
+  <role>
+    你是 S0.2 Audit 接线器。你的唯一目标是在 ledger 写库之后、
+    format_output 之前调用 AuditClassifier 进行实时审计，
+    将审计等级写入 pipeline_result。
+  </role>
+
+  <context>
+    src/inner/audit/auditor.py 中有完整的 AuditClassifier
+    （P0/P1 字段级分析 + 批量阈值判断），但从未被生产管线调用。
+    当前 pipeline 的 audit_level 由 SemanticSafetyEngine 内部硬计算，
+    没有基于真实 ledger 数据的 P0/P1 审计。
+
+    本阶段要改变这一点：在 ledger 写入后，对当前窗口事件
+    执行 P0/P1 审计，产出独立于 Safety 引擎的 audit_level。
+  </context>
+
+  <inputs>
+    <required>
+      <file>src/outer/orchestration/pipeline.py</file>
+      <file>src/inner/audit/auditor.py</file>
+      <file>src/inner/audit/config.py</file>
+      <file>config/parameters.yaml</file>
+    </required>
+    <depends_on>
+      <file>reports/coach_phase0_s01_ledger.json</file>
+      <rule>必须先完成 S0.1（需要 ledger 中有事件数据）</rule>
+    </depends_on>
+  </inputs>
+
+  <preconditions>
+    <rule>coach_global_state.coach_stages.S0.1.status == GO</rule>
+    <rule>禁改边界持续生效</rule>
+    <rule>src/inner/audit/ 只读，仅调用不修改</rule>
+  </preconditions>
+
+  <execution>
+    <step>1. 在 pipeline.py 的 ledger 写入后、format_output 前，注入 audit 步骤</step>
+    <step>2. 从 ledger 读取当前窗口的所有事件（get_events_in_window）</step>
+    <step>3. 调用 compute_batch_stats() 计算 P0/P1 统计</step>
+    <step>4. 调用 generate_audit_report() 生成完整审计报告</step>
+    <step>5. 将 audit_level 注入 pipeline_result（作为 format_output 的安全上下文输入）</step>
+    <step>6. 注意：事件太少/无事件时的降级逻辑（默认 pass）</step>
+    <step>7. 编写 tests/test_pipeline_audit_integration.py 验证</step>
+    <step>8. 运行全量回归 pytest -q</step>
+  </execution>
+
+  <integration_spec>
+    <pipeline_addition>
+      # 在 S0.1 的 commit_to_ledger 之后、format_output 之前：
+      audit_result = _run_audit_on_current_window(ledger_db, window_id)
+      pipeline_result["audit_level"] = audit_result.get("batch_stats", {}).get("audit_level", "pass")
+
+      # audit_level 传递到 format_output（通过 safety_context 或直接传参）
+    </pipeline_addition>
+  </integration_spec>
+
+  <outputs>
+    <changed_file>src/outer/orchestration/pipeline.py (新增 audit 步骤)</changed_file>
+    <new_file>tests/test_pipeline_audit_integration.py</new_file>
+    <stage_report>reports/coach_phase0_s02_audit.json</stage_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      pipeline 执行后 auditing 能正确产出 audit_level AND
+      audit_level 与 Safety 引擎的审计结果一致（双源可交叉验证）AND
+      全量回归 698 pass AND
+      S0.1 测试依然全部 pass
+    </go_when>
+    <no_go_when>
+      audit 出错 / 全量测试失败 / 禁改区域被触碰
+    </no_go_when>
+  </decision_logic>
+
+  <test_cases>
+    <test>
+      <name>test_audit_runs_after_ledger_write</name>
+      <assert>pipeline 执行后 pipeline_result 中包含 audit_level 字段</assert>
+    </test>
+    <test>
+      <name>test_audit_returns_valid_level</name>
+      <assert>audit_level 是 {"pass", "p1_warn", "p1_freeze", "p0_block"} 之一</assert>
+    </test>
+    <test>
+      <name>test_audit_empty_window_does_not_crash</name>
+      <assert>窗口无事件时 audit 返回 pass + 标记 insufficient_data</assert>
+    </test>
+  </test_cases>
+
+  <safety>
+    <rule>禁止修改 src/inner/audit/** 任何文件</rule>
+    <rule>audit 失败不得阻断管线（降级为 pass + 日志）</rule>
+    <rule>pipeline 主流程的 L0→L1→L2→Decision→Safety → ledger 步骤不得被 audit 干涉</rule>
+  </safety>
+</prompt>

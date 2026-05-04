@@ -1,0 +1,140 @@
+<prompt>
+  <name>D2 V18.8 门禁数据管道</name>
+  <version>1.0.0</version>
+  <track>D</track>
+  <stage>D2</stage>
+
+  <role>
+    你是 D2 门禁数据管道构建器。你的唯一目标是为 V18.8 四个门禁
+    建立真实数据采集管道，终结"全默认 pass"状态。
+  </role>
+
+  <context>
+    当前 GateEngine 中 Agency/Excursion/Learning/Relational 四个门禁
+    的评估逻辑正确，但因 gate_inputs 中缺少对应数据而全部 _default_pass。
+    本阶段的目标是为每个门禁建立独立的数据采集器，使其能接收真实数据。
+  </context>
+
+  <inputs>
+    <required>
+      <file>reports/d_global_state.json</file>
+      <file>reports/d_stage1_scope_lock.json</file>
+      <file>src/inner/gates/engine.py</file>
+      <file>src/inner/gates/config.py</file>
+      <file>src/inner/no_assist/evaluator.py</file>
+      <file>config/release_policy.yaml</file>
+    </required>
+  </inputs>
+
+  <preconditions>
+    <rule>d_global_state.d_stages.D1.status == GO</rule>
+    <rule>禁改边界持续生效: contracts/**, src/inner/**, src/middle/**</rule>
+  </preconditions>
+
+  <execution>
+    <step>实现 src/outer/pipeline/agency_collector.py — 从会话记录中统计 premise_rewrite_rate</step>
+    <step>实现 src/outer/pipeline/excursion_tracker.py — 跟踪越界探索证据计数</step>
+    <step>实现 src/outer/pipeline/no_assist_sequencer.py — 从 NoAssistEvaluator 输出提取时间序列</step>
+    <step>实现 src/outer/pipeline/compliance_detector.py — 检测被动同意/改写率下降/自我判断减少</step>
+    <step>实现 src/outer/pipeline/gate_feeder.py — 聚合四个采集器输出并格式化喂入 GateEngine.evaluate()</step>
+    <step>为每个管道模块编写单元测试</step>
+    <step>运行所有测试验证管道可运行</step>
+    <step>生成 D2 阶段报告 reports/d_stage2_gate_pipeline.json</step>
+  </execution>
+
+  <collector_specs>
+    <agency_collector>
+      <file>src/outer/pipeline/agency_collector.py</file>
+      <input>session_logs: list[dict] (每个条目含 user_message, system_premise, user_rewrote_premise: bool)</input>
+      <output>{"premise_rewrite_rate": float, "total_decision_points": int, "rewrite_count": int}</output>
+      <edge_case>无会话记录时返回 rate=0.0 + 标记 insufficient_data</edge_case>
+      <test_cases>
+        完全服从 → rate=0.0
+        半数改写 → rate=0.5
+        全部改写 → rate=1.0
+        无记录 → rate=0.0 + insufficient_data=True
+      </test_cases>
+    </agency_collector>
+    <excursion_tracker>
+      <file>src/outer/pipeline/excursion_tracker.py</file>
+      <input>excursion_logs: list[dict] (每个条目含 excursion_id, exploration_actions: list, valid_evidence: bool)</input>
+      <output>{"exploration_evidence_count": int, "total_excursions": int, "valid_explorations": int}</output>
+      <edge_case>无 excursion 记录时返回 count=0</edge_case>
+      <test_cases>
+        有效探索 → count=1
+        无效探索 → count=0
+        无记录 → count=0
+        多次有效 → count=N
+      </test_cases>
+    </excursion_tracker>
+    <no_assist_sequencer>
+      <file>src/outer/pipeline/no_assist_sequencer.py</file>
+      <input>调用 NoAssistEvaluator.evaluate() 获得的结果序列（按时间排序）</input>
+      <output>{"recent_no_assist_scores": list[float], "latest_level": str, "score_trend": str}</output>
+      <edge_case>不足 2 个样本时标记 insufficient_data</edge_case>
+      <test_cases>
+        上升趋势 → trend=improving
+        下降趋势 → trend=declining
+        持平 → trend=stable
+        少于2样本 → insufficient_data=True
+      </test_cases>
+    </no_assist_sequencer>
+    <compliance_detector>
+      <file>src/outer/pipeline/compliance_detector.py</file>
+      <input>dialogue_history: list[dict] (每个条目含 user_message, agreement_type: passive|active|rewrite|self_judge)</input>
+      <output>{"passive_agreement_rate": float, "rewrite_rate_decline": float, "self_judgment_decline": float}</output>
+      <edge_case>无对话历史时返回全 0</edge_case>
+      <test_cases>
+        全部被动同意 → passive_agreement_rate=1.0
+        无对话 → 全 0
+        混合 → 按比例计算
+      </test_cases>
+    </compliance_detector>
+    <gate_feeder>
+      <file>src/outer/pipeline/gate_feeder.py</file>
+      <input>调用四个采集器，聚合结果</input>
+      <output>{"1_agency_gate": {...}, "2_excursion_gate": {...}, "3_learning_gate": {...}, "4_relational_gate": {...}}</output>
+      <integration>调用 GateEngine.evaluate(gate_inputs=output) 验证</integration>
+    </gate_feeder>
+  </collector_specs>
+
+  <outputs>
+    <agency_collector>src/outer/pipeline/agency_collector.py</agency_collector>
+    <excursion_tracker>src/outer/pipeline/excursion_tracker.py</excursion_tracker>
+    <no_assist_sequencer>src/outer/pipeline/no_assist_sequencer.py</no_assist_sequencer>
+    <compliance_detector>src/outer/pipeline/compliance_detector.py</compliance_detector>
+    <gate_feeder>src/outer/pipeline/gate_feeder.py</gate_feeder>
+    <test_script>scripts/d_test_pipeline.py (一键端到端测试)</test_script>
+    <stage_report>reports/d_stage2_gate_pipeline.json</stage_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      五个管道模块全部实现且通过单元测试 AND
+      gate_feeder 的输出可被 GateEngine.evaluate() 正确消费 AND
+      门禁不再默认 pass AND
+      d_blockers is empty
+    </go_when>
+    <no_go_when>
+      任一采集器无法运行、输出格式与 GateEngine 输入合约不匹配、或测试未通过。
+    </no_go_when>
+  </decision_logic>
+
+  <state_update>
+    <file>reports/d_global_state.json</file>
+    <mutations>
+      <field>d_current_stage = D2</field>
+      <field>d_stages.D2.status = GO|NO_GO</field>
+      <field>d_stages.D2.name = V18.8 门禁数据管道</field>
+      <field>d_stages.D2.evidence += [src/outer/pipeline/*.py, reports/d_stage2_gate_pipeline.json]</field>
+      <field>d_updated_at_utc = now</field>
+    </mutations>
+  </state_update>
+
+  <safety>
+    <rule>禁止修改 contracts/**, src/inner/**, src/middle/**</rule>
+    <rule>禁止覆盖 A/B/C 轨历史字段；D 轨新增字段必须使用 d_ 前缀</rule>
+    <rule>四个采集器各自独立可测，不互相依赖</rule>
+    <rule>gate_feeder 的输出 key 必须与 GateEngine 的 gate_inputs 参数名完全一致</rule>
+  </safety>
+</prompt>

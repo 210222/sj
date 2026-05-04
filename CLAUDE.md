@@ -76,17 +76,39 @@ coherence/
 │   ├── clock.json
 │   ├── resolver.json
 │   └── gates.json
-├── src/                   # 源代码（按内圈→中圈→外圈逐步生成）
-│   └── inner/
-│       ├── ledger/
-│       ├── audit/
-│       ├── clock/
-│       ├── resolver/
-│       ├── no_assist/
-│       └── gates/
-├── tests/                 # 单元测试
-├── config/                # 可调参数（阈值、权重等）
-│   └── parameters.yaml
+│   ├── coach_dsl.json     # ★ 新增（阶段1冻结）
+│   ├── user_profile.json  # ★ 新增（阶段2冻结）
+│   ├── ttm_stages.json    # ★ 新增（阶段4冻结）
+│   └── mapek_loop.json    # ★ 新增（阶段6冻结）
+├── src/                   # 源代码
+│   ├── inner/             # ✅ 已冻结，禁改
+│   │   ├── ledger/
+│   │   ├── audit/
+│   │   ├── clock/
+│   │   ├── resolver/
+│   │   ├── no_assist/
+│   │   └── gates/
+│   ├── middle/            # ✅ 已冻结，禁改
+│   ├── outer/             # ✅ 已冻结，禁改
+│   ├── coach/             # ★ 新增：教练引擎（阶段1）
+│   │   ├── agent.py       # CoachAgent 主类
+│   │   ├── dsl.py         # DSL 构建器+校验器
+│   │   ├── composer.py    # Policy Composer
+│   │   ├── state.py       # 用户状态追踪
+│   │   ├── memory.py      # 轻量会话记忆
+│   │   ├── ttm.py         # TTM 状态机（阶段4）
+│   │   ├── sdt.py         # SDT 动机评估（阶段4）
+│   │   └── flow.py        # 心流互信息计算（阶段4）
+│   ├── mapek/             # ★ 新增：MAPE-K 控制循环（阶段6）
+│   └── cohort/            # ★ 新增：量化自我数据聚合（阶段2接口占位）
+├── tests/                 # 单元测试（698 + 阶段性新增）
+├── config/
+│   ├── parameters.yaml    # 可调参数
+│   └── coach_defaults.yaml # ★ 新增：教练引擎参数（阶段1）
+├── reports/
+│   ├── full_implementation_roadmap.md  # ★ 完整落地方案
+│   ├── gap_analysis_vs_design_docs.md  # ★ 差距分析
+│   └── ... (已有报告)
 └── data/                  # 运行时数据（SQLite 等）
 ```
 
@@ -111,3 +133,121 @@ coherence/
 - 类型检查：mypy
 - 测试框架：pytest
 - 时区处理：所有时间统一 UTC
+
+---
+
+## A/B 双轨调度
+
+### A 轨 — 内圈/中圈/外圈 A 版（已冻结）
+
+| 命令 | 处理器 | 说明 |
+|------|--------|------|
+| `/run_node_1` | `meta_prompts/outer/01_product_outer.xml` | 产品角色，写 global_state.json |
+| `/run_node_2` | `meta_prompts/outer/02_architect_outer.xml` | 架构角色，生成 src/ 代码 |
+| `/run_node_3` | `meta_prompts/outer/03_qa_outer.xml` | QA 角色，审查 src/，输出 qa_feedback.json |
+| `/run_node_4` | `meta_prompts/outer/04_devops_outer.xml` | DevOps 角色，生成 Docker 部署文件 |
+
+### B 轨 — 外圈 B 版受控演进（当前活动）
+
+| 命令 | 处理器 | 阶段 |
+|------|--------|------|
+| `/run_b_stage_1` | `meta_prompts/b/01_scope_lock.xml` | B1 范围锁定 |
+| `/run_b_stage_2` | `meta_prompts/b/02_design_freeze.xml` | B2 设计冻结 |
+| `/run_b_stage_3` | `meta_prompts/b/03_implementation.xml` | B3 实现 |
+| `/run_b_stage_4` | `meta_prompts/b/04_gate_validation.xml` | B4 门禁验证 |
+| `/run_b_stage_5` | `meta_prompts/b/05_observation.xml` | B5 观测窗口 |
+| `/run_b_stage_6` | `meta_prompts/b/06_signoff.xml` | B6 最终签收 |
+| `/run_b_stage_7` | `meta_prompts/b/07_release_hardening.xml` | B7 发布加固 |
+| `/run_b_stage_8` | `meta_prompts/b/08_operational_freeze.xml` | B8 运营冻结 |
+
+**B 轨调度协议**：严格串行，上一阶段非 GO 不得进入下一阶段（B1→B8）。
+B 轨状态文件：`reports/b_global_state.json`（与 A 轨 `global_state.json` 隔离）。
+
+### C 轨 — 持续运营与演进治理（当前活动）
+
+| 命令 | 处理器 | 阶段 |
+|------|--------|------|
+| `/run_c_stage_1` | `meta_prompts/c/01_baseline_freeze.xml` | C1 基线封版 |
+| `/run_c_stage_2` | `meta_prompts/c/02_change_policy.xml` | C2 变更准入 |
+| `/run_c_stage_3` | `meta_prompts/c/03_continuous_observation.xml` | C3 持续观测 |
+| `/run_c_stage_4` | `meta_prompts/c/04_resilience_drills.xml` | C4 韧性演练 |
+| `/run_c_stage_5` | `meta_prompts/c/05_release_train.xml` | C5 发布列车 |
+| `/run_c_stage_6` | `meta_prompts/c/06_quarterly_signoff.xml` | C6 季度签收 |
+
+**C 轨调度协议**：严格串行（C1→C6），上一阶段非 GO 不得进入下一阶段。
+C 轨状态文件：`reports/c_global_state.json`（c_ 前缀命名空间隔离）。
+
+### 禁改边界（A/B 通用）
+
+- **禁止修改**：`contracts/**`、`src/inner/**`、`src/middle/**`
+- **禁止漂移**：8 字段输出 schema、reason_code 分层 (INVALID_INPUT / PIPELINE_ERROR / SEM_*)、编排链顺序
+- **B 轨报告**：所有字段使用 `b_` 前缀，不覆盖 A 轨历史字段
+- **A 回滚锚点**：git tag `outer_A_v1.0.0_frozen`，B 版出现 P0 时切回此 tag
+
+---
+
+## 教练系统落地方案（当前活动）
+
+当前执行计划：`reports/full_implementation_roadmap.md`（完整方案）
+
+### 阶段约束（严格执行）
+
+- **阶段推进必须严格串行**：阶段 N 未完成并经用户确认 GO，不得进入阶段 N+1
+- **全量回归**：每个阶段合并前必须 `python -m pytest tests/ -q` 且 698 tests 全部 pass
+- **源码边界**：`src/inner/**`、`src/middle/**`、`src/outer/**` 禁止修改；新代码只允许在 `src/coach/`、`src/mapek/`、`src/cohort/`
+- **合约冻结规则**：新合约一旦标记为 frozen，后续只能新增字段不可修改已有字段
+
+### 当前阶段
+
+- **活动阶段**: 阶段 5（语义安全三件套升级）— 等待用户授权启动
+- **已完成阶段**:
+  - 阶段 0（接线）: GO ✅ (714 pass)
+  - 阶段 1（教练引擎）: GO ✅ (749 pass)
+  - 阶段 2（记忆与用户模型）: GO ✅ (808 pass)
+  - 阶段 3（V18.8 运行时行为）: GO ✅ (839 pass)
+  - 阶段 4（行为科学模型 — TTM/SDT/心流）: GO ✅ (881 pass)
+- **阶段 4 交付物**:
+  - S4.1 TTM 合约: ttm_stages.json 五阶段+十过程+策略映射冻结 ✅
+  - S4.2 TTM 状态机: TTMStateMachine 五阶段检测+转移矩阵+策略推荐 ✅
+  - S4.3 SDT 评估: SDTAssessor 自主性/胜任感/关联性三轴评分 ✅
+  - S4.4 心流+BKT: FlowOptimizer 互信息 I(M;E) + 轻量 BKT 知识追踪 ✅
+  - S4.5 融合冻结: PolicyComposer 三模型融合 + CoachAgent 集成 ✅
+- **已完成阶段**:
+  - 阶段 0（接线）: GO ✅ (714 pass)
+  - 阶段 1（教练引擎）: GO ✅ (749 pass)
+  - 阶段 2（记忆与用户模型）: GO ✅ (808 pass)
+  - 阶段 3（V18.8 运行时行为）: GO ✅ (839 pass)
+  - 阶段 4（行为科学模型 — TTM/SDT/心流）: GO ✅ (881 pass)
+  - 阶段 5（语义安全三件套升级）: GO ✅ (916 pass)
+- **已完成阶段**:
+  - 阶段 0（接线）: GO ✅ (714 pass)
+  - 阶段 1（教练引擎）: GO ✅ (776 pass)
+  - 阶段 2（记忆与用户模型）: GO ✅ (808 pass)
+  - 阶段 3（V18.8 运行时）: GO ✅ (839 pass)
+  - 阶段 4（TTM/SDT/心流）: GO ✅ (881 pass)
+  - 阶段 5（语义安全三件套）: GO ✅ (916 pass)
+  - 阶段 6（MAPE-K + 向量记忆 + 多智能体）: GO ✅ (975 pass)
+  - 阶段 7（因果稳健 + MRT + 治理闭环）: GO ✅ (1034 pass)
+  - 阶段 8（最终签收 + 八门禁全链路）: GO ✅ (1070 pass)
+
+**Coach 轨全部 8 阶段已完成**
+
+### 三模型启用顺序
+
+Phase 4 的三个行为科学模型默认关闭（`enabled: false`）。推荐按以下顺序逐个启用：
+
+```
+TTM（阶段变化理论）→ SDT（自决理论）→ 心流互信息
+```
+
+**TTM 先开**：决定对话的大方向（"做什么"）——五阶段检测+策略粗筛，独立运行不依赖其他模型。  
+**SDT 再开**：在 TTM 选好 action_type 之后微调风格（"怎么做"）——低自主性→转 reflect，低胜任感→降难度。  
+**心流最后开**：在 TTM+SDT 都稳定后精调难度（"多难合适"）——无聊↔焦虑的动态难度调节。
+
+先定方向 → 再调风格 → 最后精调难度，逐层叠加便于定位问题。
+
+### 增量原则
+
+- 每轮只做一个模块（遵循现有单模块开发协议）
+- 用户指定本轮阶段 → 用户给出规则参数 → AI 生成代码 → 类型检查 → 测试 → 用户确认锁定
+- 当前阶段工作完成前，禁止提前实现后续阶段的模块

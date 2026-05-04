@@ -1,0 +1,12 @@
+{
+  "c_drill": "drift",
+  "c_passed": true,
+  "c_schema_stable": true,
+  "c_reason_stable": true,
+  "c_schema_drift_detectable": true,
+  "c_reason_drift_detectable": true,
+  "c_forbidden_paths_clean": true,
+  "c_detection_latency_seconds": 0.02,
+  "c_findings": [],
+  "c_timestamp_utc": "2026-05-02T10:38:07.822953+00:00"
+}

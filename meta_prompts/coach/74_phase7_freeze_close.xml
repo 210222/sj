@@ -1,0 +1,346 @@
+<prompt>
+  <name>Coherence Coach Track — S7.4 Phase 7 集成 + 冻结</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>7</phase>
+  <sub_stage>S7.4</sub_stage>
+  <sub_stage_name>Phase 7 管线集成 + MRT 布线 + 三诊断/四门禁接入 + 全量回归 + 合约冻结 + 状态更新</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S7.4 实现者。
+    你的任务是：将 S7.1-S7.3 的所有组件（MRT 框架 + 三诊断引擎 + 四门禁检查器）
+    集成到 CoachAgent 和审计管线中，完成全量回归测试、Phase 7 合约冻结和全局状态更新。
+    这是 Phase 7 的收尾子阶段。
+  </role>
+
+  <context>
+    已完成的子阶段：
+    - S7.1: src/coach/mrt.py — MRT 微随机实验框架（MRTExperiment + BayesianEstimator）
+    - S7.1: contracts/causal_governance.json — MRT + 三诊断合约（status=draft）
+    - S7.2: src/coach/diagnostics.py — 三诊断引擎（BalanceCheck + NegativeControlCheck + PlaceboWindowCheck + DiagnosticEngine）
+    - S7.3: src/coach/gates_v18_7.py — 四门禁检查器（V18GatesAuditor + 4 Gates）
+
+    Phase 7 完整管线：
+    ```
+    CoachAgent.act() [Phase 7 新增部分]
+      │
+      ├── [S7.1] MRT 微随机实验分配
+      │   ├── MRTExperiment.assign(action_type, trace_id)
+      │   ├── if is_variant → variant_id + delta 注入 DSL packet
+      │   └── BayesianEstimator 在后端运行因果效应估计
+      │
+      ├── [S7.2] 三诊断（升档前强制检查）
+      │   ├── DiagnosticEngine.run()
+      │   ├── BalanceCheck.evaluate()
+      │   ├── NegativeControlCheck.evaluate()
+      │   └── PlaceboWindowCheck.evaluate()
+      │
+      └── [S7.3] 四门禁审计
+          ├── V18GatesAuditor.audit()
+          ├── VerificationLoadGate
+          ├── SerendipityGate
+          ├── TrespassingGate
+          └── ManipulationGate
+    ```
+
+    已有 gate 5 (causal_gate) 在 contracts/gates.json 中定义为：
+    ```
+    "5_causal_gate": {
+      "metric": "causal_diagnostics_triple",
+      "rule": "平衡性检验 + 负对照 + 安慰剂窗口 全部通过"
+    }
+    ```
+
+    集成原则：
+    - MRT 默认 OFF（mrt.enabled=false），不影响已有 act() 行为
+    - 三诊断默认 OFF，通过 diagnostics.enabled 控制
+    - 四门禁作为审计只读检查器独立运行，不嵌入 act() 运行时
+    - 不修改 Phase 6 的 MAPE-K 循环代码
+  </context>
+
+  <task>
+    1) 将 MRT 框架集成到 CoachAgent（受 config mrt.enabled 控制）
+    2) 将三诊断引擎集成到 CoachAgent（gate 5 升档检查）
+    3) 将四门禁作为独立审计器，不嵌入 act() 运行时
+    4) 合约冻结：contracts/causal_governance.json status=draft → frozen
+    5) 全量回归：python -m pytest tests/ -q 全部 pass
+    6) 更新 reports/coach_global_state.json Phase 7 → GO
+    7) 输出 Phase 7 完结摘要报告
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="CoachAgent 集成 MRT">
+      修改 src/coach/agent.py，在 act() 中增加 MRT 变体分配（受 config mrt.enabled 控制）：
+
+      ```python
+      class CoachAgent:
+          def __init__(self, config: dict | None = None):
+              # ... 已有初始化（含 Phase 6 MAPE-K 组件）...
+
+              # ── S7.1: MRT 微随机实验 ──
+              self._mrt = None
+
+          def _ensure_mrt(self):
+              """延迟加载 MRT 实验框架。"""
+              mrt_cfg = self._config.get("mrt", {})
+              if not mrt_cfg.get("enabled", False):
+                  return
+              if self._mrt is None:
+                  from src.coach.mrt import MRTConfig, MRTExperiment
+                  cfg = MRTConfig.from_dict(mrt_cfg)
+                  self._mrt = MRTExperiment(config=cfg)
+
+          def act(self, user_input: str, context: dict | None = None) -> dict:
+              """CEO 入口：宏观判断 → MAPE-K（可选）→ MRT（可选）→ Manager → 返回。
+
+              Returns: dict (DSL action packet with execution metadata)
+              """
+              ctx = context or {}
+              mapek_enabled = self._config.get("mapek", {}).get("enabled", False)
+              mrt_enabled = self._config.get("mrt", {}).get("enabled", False)
+
+              # ── 1. CEO 宏观判断 ──
+              ceo_strategy = self._ceo_judge(user_input, ctx)
+
+              # ── 2. MAPE-K 循环（Phase 6 已有，不变）─
+              # ... (existing Phase 6 MAPE-K code, unchanged) ...
+
+              # ── 3. Manager 层：动作选择 + Handler 路由 ──
+              packet = self._composer.compose(ceo_strategy, ctx)
+
+              # ── 4. MRT 变体分配（可选） ─
+              if mrt_enabled:
+                  self._ensure_mrt()
+                  assignment = self._mrt.assign(
+                      action_type=packet.get("action_type", ""),
+                      trace_id=packet.get("trace_id"),
+                  )
+                  if assignment.is_variant:
+                      # 注入变体信息到 DSL packet
+                      packet["mrt_variant"] = {
+                          "variant_id": assignment.variant_id,
+                          "variant_name": assignment.variant_name,
+                          "delta": assignment.delta,
+                          "dimension": assignment.dimension,
+                      }
+                      packet["payload"]["style_delta"] = assignment.delta
+                  packet["mrt_assignment"] = assignment.to_dict()
+
+              # ── 5. Execute: 分发（MAPE-K 可选）─
+              if mapek_enabled:
+                  # ... (existing Phase 6 code, unchanged) ...
+
+              # ── 6. Coach 元信息 ──
+              packet["coach_meta"] = {
+                  "ceo_strategy": ceo_strategy.get("macro_strategy"),
+                  "ttm_stage": ceo_strategy.get("ttm_stage"),
+                  "mapek_enabled": mapek_enabled,
+                  "mrt_enabled": mrt_enabled,
+                  "phase6_integrated": mapek_enabled,  # 动态：MAPE-K 启用时为 True
+                  "phase7_integrated": mrt_enabled,     # 动态：MRT 启用时为 True
+              }
+              return packet
+      ```
+
+      关键 MRT 集成原则：
+      - MRT 变体分配在 Manager 层 compose() 之后、Execute 分发之前
+      - MRT 只修改 packet 中的 style_delta 字段，不修改 action_type
+      - mrt_assignment 始终写入 packet（即使未分配变体），供审计使用
+      - phase7_integrated 字段动态反映 MRT 是否启用
+    </step>
+
+    <step id="2" name="三诊断集成（审计级，非运行时）">
+      三诊断作为 audit 工具，不嵌入 CoachAgent.act() 运行时。
+      在三诊断获取调用数据时，从 CoachAgent 的运行时状态读取。
+
+      在 CoachAgent 中添加诊断接口方法：
+
+      ```python
+      class CoachAgent:
+          def run_diagnostics(
+              self,
+              treatment_covariates: list[dict] | None = None,
+              control_covariates: list[dict] | None = None,
+              sham_successes: int = 0,
+              sham_total: int = 0,
+              control_successes: int = 0,
+              control_total: int = 0,
+              pre_period_successes: int = 0,
+              pre_period_total: int = 0,
+          ) -> dict:
+              """运行三诊断。返回 DiagnosticsReport 的 dict 格式。
+
+              用于 gate 5 (causal_gate) 的升档前检查。
+              """
+              if not self._config.get("diagnostics", {}).get("enabled", False):
+                  return {"all_passed": True, "note": "diagnostics disabled, skipping"}
+
+              from src.coach.diagnostics import DiagnosticEngine
+              diag_cfg = self._config.get("diagnostics", {})
+              engine = DiagnosticEngine(
+                  smd_threshold=diag_cfg.get("balance_check", {}).get("smd_threshold", 0.25),
+                  overlap_threshold=diag_cfg.get("negative_control", {}).get(
+                      "overlap_threshold", 0.8),
+                  placebo_window_hours=diag_cfg.get("placebo_window", {}).get(
+                      "window_hours_before", 2.0),
+                  min_control_events=diag_cfg.get("negative_control", {}).get(
+                      "min_control_events", 5),
+              )
+              report = engine.run(
+                  treatment_covariates=treatment_covariates or [],
+                  control_covariates=control_covariates or [],
+                  sham_successes=sham_successes, sham_total=sham_total,
+                  control_successes=control_successes, control_total=control_total,
+                  pre_period_successes=pre_period_successes,
+                  pre_period_total=pre_period_total,
+              )
+              return report.to_dict()
+
+          def audit_v18_7_gates(
+              self,
+              verification_seconds: float = 0.0,
+              autonomous_seconds: float = 0.0,
+              exploratory_actions: int = 0,
+              total_excursions: int = 0,
+              circuit_breaker_triggered: int = 0,
+              leakage_after_trigger: int = 0,
+              choice_distributions: list[dict] | None = None,
+          ) -> dict:
+              """运行 V18.7 四门禁审计。返回 GatesReport 的 dict 格式。"""
+              from src.coach.gates_v18_7 import V18GatesAuditor
+              auditor = V18GatesAuditor()
+              report = auditor.audit(
+                  verification_seconds=verification_seconds,
+                  autonomous_seconds=autonomous_seconds,
+                  exploratory_actions=exploratory_actions,
+                  total_excursions=total_excursions,
+                  circuit_breaker_triggered=circuit_breaker_triggered,
+                  leakage_after_trigger=leakage_after_trigger,
+                  choice_distributions=choice_distributions or [],
+              )
+              return report.to_dict()
+      ```
+
+      关键设计决策：
+      - run_diagnostics() 是显式调用方法，不嵌入 act() 自动流
+      - audit_v18_7_gates() 类似——需要外部提供数据（读自有状态或参数传入）
+      - 数据源来自各已有组件（CoachAgent 计时、excursion 记录等）
+    </step>
+
+    <step id="3" name="合约冻结">
+      ```
+      # 标记 causal_governance.json → frozen
+      contracts/causal_governance.json:
+      - "status": "draft" → "status": "frozen"
+      - "frozen_at": null → "frozen_at": "<current_utc>"
+      - 不修改任何已有字段
+
+      # 标记 config/coach_defaults.yaml
+      - 确认 Phase 7 配置段已追加
+      - 不修改任何已有配置值
+      ```
+    </step>
+
+    <step id="4" name="全量回归">
+      执行：
+      ```bash
+      cd D:/Claudedaoy/coherence && python -m pytest tests/ -q
+      ```
+
+      期望：990+ 已有测试全部 pass + Phase 7 新增测试全部 pass。
+      如果失败，定位失败测试并修复，直到全绿。
+    </step>
+
+    <step id="5" name="全局状态更新">
+      更新 reports/coach_global_state.json，追加 Phase 7 状态：
+
+      ```json
+      {
+          "coach_track": "COACH",
+          "coach_phase": 7,
+          "coach_sub_stage": "S7.4",
+          "coach_stages": {
+              "Phase 0-5": {"status": "GO", "tests": 916},
+              "S6.1": {"status": "GO", "name": "MAPE-K Contract", "tests": 0},
+              "S6.2": {"status": "GO", "name": "Monitor + Analyze", "tests": 12},
+              "S6.3": {"status": "GO", "name": "Plan + Execute", "tests": 14},
+              "S6.4": {"status": "GO", "name": "Knowledge Warehouse", "tests": 8},
+              "S6.5": {"status": "GO", "name": "Vector Memory Upgrade", "tests": 13},
+              "S6.6": {"status": "GO", "name": "Multi-Agent Layering", "tests": 11},
+              "S6.7": {"status": "GO", "name": "Phase 6 Close", "tests": 975},
+              "S7.1": {"status": "GO", "name": "MRT Framework", "tests": 0},
+              "S7.2": {"status": "GO", "name": "Three Diagnostics", "tests": 0},
+              "S7.3": {"status": "GO", "name": "V18.7 Four Gates", "tests": 0},
+              "S7.4": {"status": "GO", "name": "Phase 7 Close", "tests": 0}
+          },
+          "coach_final_decision": "GO",
+          "coach_test_totals": {
+              "phase0_to_5": 916,
+              "phase6_added": 59,
+              "phase7_added": "<子阶段测试数之和>",
+              "total": 990
+          },
+          "coach_updated_at_utc": "<current_utc>"
+      }
+      ```
+
+      注意保持现有 global_state.json 中之前 phase 的字段完整。
+      S7.1-S7.3 的 tests 数填入实际新增数。
+      更新 coach_phase=7, coach_sub_stage="S7.4"。
+    </step>
+
+    <step id="6" name="完结报告">
+      输出到控制台或 reports/phase7_completion.md 的摘要：
+
+      ```
+      ════════════════════════════════════════
+        Phase 7 — 完结报告
+      ════════════════════════════════════════
+
+      子阶段:
+        [GO] S7.1 — MRT 微随机实验框架
+        [GO] S7.2 — 三诊断引擎
+        [GO] S7.3 — V18.7 四门禁
+        [GO] S7.4 — 集成 + 冻结
+
+      合约:
+        contracts/causal_governance.json → FROZEN v1.0.0
+
+      代码:
+        src/coach/mrt.py → MRTExperiment + BayesianEstimator
+        src/coach/diagnostics.py → 三诊断引擎（平衡性/负对照/安慰剂）
+        src/coach/gates_v18_7.py → 四门禁审计器
+        src/coach/agent.py → MRT 布线 + 诊断/审计接口
+
+      测试:
+        新增 <N> 测试 → 全部 pass
+        已有 990 测试 → 零回归
+
+      状态: PHASE 7 GO ✅
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/agent.py" type="modify">+60 行: MRT 集成 + 三诊断接口 + 四门禁接口</change>
+    <change file="contracts/causal_governance.json" type="modify">2 行: status draft → frozen, frozen_at 填充</change>
+    <change file="config/coach_defaults.yaml" type="modify">确认 Phase 7 配置段完整</change>
+    <change file="reports/coach_global_state.json" type="modify">Phase 7 → GO</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. src/coach/agent.py 中 MRT 通过 config mrt.enabled 控制，默认 OFF
+    2. MRT 启用时：action_type 不变，style_delta 注入 payload
+    3. mrt_assignment 始终写入 act() 返回字典
+    4. CoachAgent.run_diagnostics() 存在，返回 DiagnosticsReport dict
+    5. CoachAgent.audit_v18_7_gates() 存在，返回 GatesReport dict
+    6. 三诊断和四门禁不嵌入 act() 自动流，需显式调用
+    7. contracts/causal_governance.json status="frozen" + frozen_at 非空
+    8. Phase 6 MAPE-K 代码未修改
+    9. 全量回归：Phase 7 新增 + 已有 990 全部 pass
+    10. reports/coach_global_state.json Phase 7 → GO
+    11. 现有 act() 接口签名未改变
+    12. 被 config 禁用的行为与之前完全一致（零行为漂移）
+  </success_criteria>
+</prompt>

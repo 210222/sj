@@ -1,0 +1,128 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 8 最终门禁闭环与系统签收</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>8</phase>
+  <phase_name>最终门禁闭环 + 全链路验证 + 系统签收</phase_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence 项目 Coach 轨 Phase 8 总控调度器。
+    你的目标是：补齐 gates.json 中 gate 6 (audit_gate) 和 gate 8 (window_gate) 的运行时实现，
+    完成八门禁全链路集成验证，执行最终合约冻结与系统签收。
+    这是整个 Coach 轨的最终收尾阶段。
+  </role>
+
+  <mission>
+    1) 将 Phase 8 拆分为 S8.1→S8.4 四个子阶段并严格串行推进。
+    2) S8.1 实现 src/coach/audit_health.py：gate 6 (Audit Gate) 审计健康评分 + P0/P1 聚合。
+    3) S8.2 实现 src/coach/window_consistency.py：gate 8 (Window Gate) 窗口版本一致性检查。
+    4) S8.3 实现 tests/test_s8_full_chain_integration.py：8 门禁全链路集成验证测试。
+    5) S8.4 最终合约冻结 + 运营文档 + 系统签收报告。
+    6) 所有 Phase 1-7 组件保持零修改（合约已冻结，代码不触碰）。
+  </mission>
+
+  <project_boundaries>
+    <read_write_allowed>
+      <path>src/coach/audit_health.py (新建：审计分级门禁)</path>
+      <path>src/coach/window_consistency.py (新建：窗口一致性门禁)</path>
+      <path>src/coach/agent.py (有限修改：Phase 8 接口注入，新增方法不修改 act())</path>
+      <path>config/coach_defaults.yaml (新增 Phase 8 配置段)</path>
+      <path>contracts/operations_governance.json (新建：审计+窗口参数合约，S8.4 冻结)</path>
+      <path>meta_prompts/coach/**</path>
+      <path>reports/coach_global_state.json</path>
+      <path>tests/test_s8*.py (新增)</path>
+      <path>reports/phase8_completion.md (新建：系统签收报告)</path>
+    </read_write_allowed>
+    <forbidden_modification>
+      <path>contracts/ 已有冻结合约 (ledger/audit/clock/resolver/gates/coach_dsl/user_profile/ttm_stages/mapek_loop/causal_governance)</path>
+      <path>src/inner/**</path>
+      <path>src/middle/**</path>
+      <path>src/outer/**</path>
+      <path>src/mapek/** (Phase 6 冻结)</path>
+      <path>src/coach/mrt.py (Phase 7 冻结)</path>
+      <path>src/coach/diagnostics.py (Phase 7 冻结)</path>
+      <path>src/coach/gates_v18_7.py (Phase 7 冻结)</path>
+      <path>src/coach/ttm.py (Phase 4 冻结)</path>
+      <path>src/coach/sdt.py (Phase 4 冻结)</path>
+      <path>src/coach/flow.py (Phase 4 冻结)</path>
+      <path>src/coach/counterfactual.py (Phase 5 冻结)</path>
+      <path>src/coach/cross_track.py (Phase 5 冻结)</path>
+      <path>src/coach/precedent_intercept.py (Phase 5 冻结)</path>
+      <path>src/coach/memory.py (Phase 6 冻结)</path>
+      <path>src/coach/agent.py act() 方法体（扩展接口可新增方法，不修改 act() 已有逻辑）</path>
+      <path>已有 tests/ (只新增不修改)</path>
+    </forbidden_modification>
+  </project_boundaries>
+
+  <design_principles>
+    <principle>Phase 8 是收尾阶段——不引入新能力，只补齐剩余门禁 + 全链路验证 + 签收</principle>
+    <principle>gate 6 (audit_gate) 是只读审计评分器——聚合已有 P0/P1 finding，不修改审计流程</principle>
+    <principle>gate 8 (window_gate) 是数据一致性检查器——验证参与升档计算的数据版本一致</principle>
+    <principle>八门禁全链路测试覆盖所有 gate 的 pass/fail 组合——验证 gate 之间互不影响</principle>
+    <principle>S8.4 不写代码——只做合约冻结、文档生成、状态签收</principle>
+    <principle>所有 Phase 8 组件默认 OFF，不影响已有运行时</principle>
+  </design_principles>
+
+  <sub_stage_model>
+    <stage id="S8.1" name="审计分级门禁 (Audit Gate)">
+      <description>src/coach/audit_health.py：gate 6 audit_health 运行时实现</description>
+      <files>src/coach/audit_health.py (新建)</files>
+      <estimate>~150 行</estimate>
+    </stage>
+    <stage id="S8.2" name="窗口一致性门禁 (Window Gate)">
+      <description>src/coach/window_consistency.py：gate 8 window_schema_version_consistency 运行时实现</description>
+      <files>src/coach/window_consistency.py (新建)</files>
+      <estimate>~150 行</estimate>
+    </stage>
+    <stage id="S8.3" name="八门禁全链路集成验证">
+      <description>tests/test_s8_full_chain_integration.py：全部 8 道门禁端到端验证</description>
+      <files>tests/test_s8_full_chain_integration.py (新建)</files>
+      <estimate>~200 行测试</estimate>
+    </stage>
+    <stage id="S8.4" name="系统最终冻结与签收">
+      <description>合约冻结 + 运营文档 + 系统签收报告 + global state 更新</description>
+      <files>contracts/operations_governance.json (冻结), reports/coach_global_state.json, reports/phase8_completion.md</files>
+      <estimate>文档工作</estimate>
+    </stage>
+  </sub_stage_model>
+
+  <routing>
+    <command>/run_coach_s8_1</command>  →  81_audit_gate.xml
+    <command>/run_coach_s8_2</command>  →  82_window_gate.xml
+    <command>/run_coach_s8_3</command>  →  83_full_chain_integration.xml
+    <command>/run_coach_s8_4</command>  →  84_final_signoff.xml
+  </routing>
+
+  <state_management>
+    <state_file>reports/coach_global_state.json</state_file>
+    <status_flow>
+      <allowed>PENDING → IN_PROGRESS → GO | NO_GO</allowed>
+      <rule>上一子阶段非 GO，不得进入下一子阶段</rule>
+    </status_flow>
+  </state_management>
+
+  <safety_rules>
+    <rule>不得修改 contracts/ 已有冻结合约（只新增 operations_governance.json）</rule>
+    <rule>不得修改 src/inner/**、src/middle/**、src/outer/**</rule>
+    <rule>不得修改 src/mapek/**、src/coach/mrt.py、src/coach/diagnostics.py、src/coach/gates_v18_7.py</rule>
+    <rule>不得修改 Phase 4/5/6 任何已冻结文件</rule>
+    <rule>1034 个已有 tests 必须全程保持 pass</rule>
+    <rule>act() 方法体不修改——只通过新增方法扩展接口</rule>
+    <rule>所有 Phase 8 组件默认 OFF</rule>
+  </safety_rules>
+
+  <success_definition>
+    Phase 8 结束时：
+    1. contracts/operations_governance.json 已冻结
+    2. src/coach/audit_health.py 存在：P0/P1 聚合 + 审计健康评分
+    3. src/coach/window_consistency.py 存在：版本追踪 + 一致性检查 + 数据新鲜度
+    4. gate 6 (audit_gate) 的 audit_health 指标有运行时数据源
+    5. gate 8 (window_gate) 的 window_schema_version_consistency 指标有运行时数据源
+    6. tests/test_s8_full_chain_integration.py 存在并全部 pass
+    7. 1034 已有测试零回归
+    8. reports/coach_global_state.json Phase 8 → GO
+    9. reports/phase8_completion.md 系统签收报告已生成
+    10. Coach 轨所有 8 个 Phase 全部标记完成
+  </success_definition>
+</prompt>

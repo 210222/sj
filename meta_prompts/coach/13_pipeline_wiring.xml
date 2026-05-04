@@ -1,0 +1,154 @@
+<prompt>
+  <name>S1.3 — Pipeline 双模式接线</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>1</phase>
+  <sub_stage>S1.3</sub_stage>
+
+  <role>
+    你是 S1.3 Pipeline 双模式接线器。你的唯一目标是让 CoachAgent.act()
+    能调用 run_pipeline(mode="coach")，实现 DSL 转信号 + 安全闸门 + sanitized_dsl 输出。
+  </role>
+
+  <context>
+    S1.2 已创建 src/coach/ 包，CoachAgent.act() 可构建 DSL 动作包，
+    但还没有经过治理管线的安全校验——相当于"裸输出"。
+
+    本阶段要改变这一点：让 CoachAgent.act() 内部调用 run_pipeline() 时
+    传入 mode="coach"，管线自动从 DSL 包中提取 L0/L1/L2 信号，
+    走完 GateEngine → Safety → Ledger → Audit 全流程，
+    最终根据 Safety 结果裁定是否返回 sanitized_dsl。
+
+    legacy 模式必须不受影响——现有调用方看不到任何变化。
+  </context>
+
+  <inputs>
+    <required>
+      <file>src/outer/orchestration/pipeline.py</file>
+      <file>src/coach/agent.py</file>
+      <file>src/coach/dsl.py</file>
+      <file>contracts/coach_dsl.json</file>
+    </required>
+    <depends_on>
+      <file>reports/coach_phase1_s12_coach_core.json</file>
+      <rule>S1.2 status == GO（coach 引擎核心已就绪）</rule>
+    </depends_on>
+  </inputs>
+
+  <preconditions>
+    <rule>coach_global_state.coach_stages.S1.2.status == GO</rule>
+    <rule>Phase 0 接线流程（L0→L1→L2→Decision→GateEngine→Safety→Ledger→Audit）一行不改</rule>
+    <rule>src/inner/**、src/middle/**、已有 contracts/ 禁改</rule>
+  </preconditions>
+
+  <execution>
+    <step>
+      1. 在 pipeline.py 的 run_pipeline() 签名中增加 mode 参数：
+      def run_pipeline(..., mode: str = "legacy") -> dict
+      mode="coach" 时额外接收 dsl_packet: dict | None = None
+    </step>
+    <step>
+      2. mode="coach" 时的信号提取逻辑：
+      - 从 dsl_packet 的 intent 和 domain_passport 中提取 l0_signals
+      - 从 dsl_packet 的 payload 结构推断 l2_signals（可行性/不确定性）
+      - 映射规则保持简单：当前阶段 L0/L1/L2 用默认值填充（intensity=0.5, confidence=0.7）
+      - 真实信号映射在后续阶段完善
+    </step>
+    <step>
+      3. mode="coach" 时的输出格式：
+      - 保留原有 safety_result / stage_markers / audit_level
+      - 增加 sanitized_dsl: dict | None（为 None 表示被阻断）
+      - 增加 coach_trace: dict（CoachAgent 元数据）
+    </step>
+    <step>
+      4. mode="legacy" 时：保持完全不变（if mode == "legacy": 走原逻辑）
+    </step>
+    <step>
+      5. 在 src/coach/agent.py 的 act() 中集成管线调用：
+      ```python
+      def act(self, user_input, context):
+          intent = self._parse_intent(user_input)
+          user_state = self.state_tracker.get_state()
+          relevant = self.memory.recall(intent, user_state)
+          action = self.composer.compose(user_state, intent, relevant)
+          packet = self.dsl_builder.build(action)
+
+          # 调用管线做安全校验
+          pipeline_result = run_pipeline(
+              mode="coach",
+              dsl_packet=packet,
+              trace_id=packet["trace_id"],
+              ...
+          )
+
+          # 根据校验结果裁定
+          return self._finalize(packet, pipeline_result)
+      ```
+    </step>
+    <step>6. 更新 tests/test_coach_agent.py：验证 act() 后 pipeline_result 中有安全闸门结果</step>
+    <step>7. 创建 tests/test_pipeline_dual_mode.py：验证 legacy 与 coach 模式并行工作</step>
+    <step>8. 运行 python -m pytest tests/ -q 确认全部 pass</step>
+  </execution>
+
+  <pipeline_change_detail>
+    <mode_legacy>
+      完全不变。现有调用方传 mode="legacy"（默认值）或省略 mode 参数，
+      走 Phase 0 接线后的完整流程，返回 3 字段 {safety_result, stage_markers, audit_level}。
+    </mode_legacy>
+    <mode_coach>
+      接收 dsl_packet 参数，自动提取信号填充 l0_signals/l2_signals，
+      走 Phase 0 完整流程，额外返回 sanitized_dsl + coach_trace。
+      如果 Safety 阻断（allowed=False），sanitized_dsl=None。
+    </mode_coach>
+    <backward_compatibility>
+      现有 tests 全部传 mode="legacy" 或省略 mode（缺省 legacy），零改动。
+    </backward_compatibility>
+  </pipeline_change_detail>
+
+  <outputs>
+    <changed_file>src/outer/orchestration/pipeline.py (新增 mode 参数 + coach 分支)</changed_file>
+    <changed_file>src/coach/agent.py (act() 中集成管线调用)</changed_file>
+    <new_file>tests/test_pipeline_dual_mode.py</new_file>
+    <stage_report>reports/coach_phase1_s13_wiring.json</stage_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      run_pipeline(mode="coach", dsl_packet={...}) 返回 sanitized_dsl 字段 AND
+      run_pipeline(mode="legacy") 行为与 Phase 0 完全一致 AND
+      CoachAgent.act() 输出受安全闸门影响（阻断时 sanitized_dsl=None）AND
+      全量回归（714 + 新增）全部 pass AND
+      Phase 0 接线流程零改动 AND
+      禁改区域零触碰
+    </go_when>
+    <no_go_when>
+      双模式测试失败 / legacy 模式行为漂移 / 全量测试失败 / 禁改区域被触碰
+    </no_go_when>
+  </decision_logic>
+
+  <test_cases>
+    <test>
+      <name>test_legacy_mode_unchanged</name>
+      <assert>run_pipeline(mode="legacy", ...) 返回的 keys 与 Phase 0 完全一致</assert>
+    </test>
+    <test>
+      <name>test_coach_mode_has_sanitized_dsl</name>
+      <assert>run_pipeline(mode="coach", dsl_packet=合法包) 返回的 dict 包含 sanitized_dsl</assert>
+    </test>
+    <test>
+      <name>test_coach_agent_integrates_pipeline</name>
+      <assert>CoachAgent.act() 返回 DSLPacket 且其内部调用了 run_pipeline</assert>
+    </test>
+    <test>
+      <name>test_full_regression_still_passes</name>
+      <assert>pytest -q tests/ 输出 714 passed</assert>
+    </test>
+  </test_cases>
+
+  <safety>
+    <rule>Phase 0 的 L0→L1→L2→Decision→GateEngine→Safety→Ledger→Audit 一行不改</rule>
+    <rule>mode 分支只能在外层套，不能修改原流程内部</rule>
+    <rule>禁止修改 src/inner/**、src/middle/**、contracts/**</rule>
+    <rule>legacy 模式输出格式必须与 Phase 0 完全一致（测试断言对比）</rule>
+  </safety>
+</prompt>

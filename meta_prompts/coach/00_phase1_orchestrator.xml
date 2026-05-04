@@ -1,0 +1,148 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 1 教练引擎总控</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>1</phase>
+  <phase_name>教练引擎 — CCA-T + DSL 协议</phase_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence 项目 Coach 轨 Phase 1 总控调度器。
+    你的唯一目标是：将当前"输入 float 输出 pass/block 的门禁系统"
+    改造为"输入对话输出 DSL 动作包的教练系统"。
+    核心交付：CoachAgent 主类 + DSL 协议 + 双模式管线。
+  </role>
+
+  <mission>
+    1) 将 Phase 1 拆分为 S1.1→S1.4 四个子阶段并严格串行推进。
+    2) 每子阶段必须产出可验证的代码变更 + 通过测试。
+    3) S1.1 冻结 DSL 合约（8 action_types + 字段 schema）。
+    4) S1.2 建 src/coach/ 核心包（agent / dsl / composer / state / memory）。
+    5) S1.3 将 CoachAgent.act() 接入管线（mode="coach" 双模式）。
+    6) S1.4 全量回归 + 合约冻结 + Phase 1 完结报告。
+    7) 全程维持契约零漂移（src/inner/、src/middle/、contracts/(已有) 禁改）。
+    8) 任何子阶段失败必须阻断下游并输出 NO_GO + 修复建议。
+  </mission>
+
+  <project_boundaries>
+    <read_write_allowed>
+      <path>contracts/coach_dsl.json</path>
+      <path>src/coach/**</path>
+      <path>config/coach_defaults.yaml</path>
+      <path>src/outer/orchestration/pipeline.py (仅新增 mode 分支)</path>
+      <path>meta_prompts/coach/**</path>
+      <path>reports/coach_phase1_*.json</path>
+      <path>reports/coach_global_state.json</path>
+    </read_write_allowed>
+    <forbidden_modification>
+      <path>contracts/ledger.json</path>
+      <path>contracts/audit.json</path>
+      <path>contracts/clock.json</path>
+      <path>contracts/resolver.json</path>
+      <path>contracts/gates.json</path>
+      <path>src/inner/**</path>
+      <path>src/middle/**</path>
+      <path>src/outer/api/**</path>
+      <path>src/outer/presentation/**</path>
+      <path>src/outer/safeguards/**</path>
+      <path>reports/b_*/**</path>
+      <path>reports/c_*/**</path>
+      <path>reports/outer_stage*</path>
+      <path>scripts/release_gate.py</path>
+      <path>scripts/runtime_healthcheck.py</path>
+      <path>scripts/rollback_verify.py</path>
+      <path>pipeline.py 现有 Phase 0 接线流程（L0→L1→L2→Decision→GateEngine→Safety→Ledger→Audit）</path>
+    </forbidden_modification>
+  </project_boundaries>
+
+  <immutable_contracts>
+    <output_schema_keys>allowed, final_intensity, audit_level, reason_code, trace_id, event_time_utc, window_id, evaluated_at_utc</output_schema_keys>
+    <reason_code_layering>ORCH_INVALID_INPUT, ORCH_PIPELINE_ERROR, SEM_PASS, SEM_BLOCK_P0, SEM_BLOCK_LOW_SCORE, SEM_WARN_P1, SEM_WARN_GATE, SEM_FREEZE_GATE</reason_code_layering>
+    <phase0_pipeline_flow>L0→L1→L2→Decision→GateEngine→Safety→Ledger→Audit</phase0_pipeline_flow>
+    <rule>Phase 0 接线流程一行不改，只在其外套 mode 分支</rule>
+  </immutable_contracts>
+
+  <sub_stage_model>
+    <stage id="S1.1" name="DSL 合约冻结">
+      <description>新建 contracts/coach_dsl.json，定义 8 种 action_types、字段 schema、domain_passport_levels、source_tags</description>
+      <file>contracts/coach_dsl.json</file>
+      <estimate>+60 行</estimate>
+    </stage>
+    <stage id="S1.2" name="Coach 引擎核心">
+      <description>创建 src/coach/ 包：agent.py / dsl.py / composer.py / state.py / memory.py + config/coach_defaults.yaml</description>
+      <files>src/coach/__init__.py, agent.py, dsl.py, composer.py, state.py, memory.py, config/coach_defaults.yaml</files>
+      <estimate>+475 行</estimate>
+    </stage>
+    <stage id="S1.3" name="Pipeline 双模式接线">
+      <description>CoachAgent.act() 内部调用 run_pipeline(mode="coach")，DSL 转 signal + 输出 sanitized_dsl</description>
+      <file>src/outer/orchestration/pipeline.py</file>
+      <estimate>+30 行</estimate>
+    </stage>
+    <stage id="S1.4" name="全量回归 + 合约冻结">
+      <description>714 全量回归 pass → coach_dsl.json 标记 frozen → 更新 CLAUDE.md 状态 → Phase 1 完结报告</description>
+      <file>reports/coach_phase1_final.json</file>
+      <estimate>-</estimate>
+    </stage>
+  </sub_stage_model>
+
+  <routing>
+    <command>/run_coach_s1_1</command>
+    <handler>meta_prompts/coach/11_dsl_contract.xml</handler>
+    <command>/run_coach_s1_2</command>
+    <handler>meta_prompts/coach/12_coach_core.xml</handler>
+    <command>/run_coach_s1_3</command>
+    <handler>meta_prompts/coach/13_pipeline_wiring.xml</handler>
+    <command>/run_coach_s1_4</command>
+    <handler>meta_prompts/coach/14_regression_close.xml</handler>
+  </routing>
+
+  <state_management>
+    <state_file>reports/coach_global_state.json</state_file>
+    <required_fields>
+      <field>coach_track</field>
+      <field>coach_phase</field>
+      <field>coach_sub_stage</field>
+      <field>coach_stages.S1.1.status</field>
+      <field>coach_stages.S1.2.status</field>
+      <field>coach_stages.S1.3.status</field>
+      <field>coach_stages.S1.4.status</field>
+      <field>coach_final_decision</field>
+      <field>coach_updated_at_utc</field>
+    </required_fields>
+    <status_flow>
+      <allowed>PENDING → IN_PROGRESS → GO | NO_GO</allowed>
+      <rule>上一子阶段非 GO，不得进入下一子阶段</rule>
+    </status_flow>
+    <evidence_rule>每完成一个子阶段，在 coach_global_state.json 中追加该子阶段证据引用路径。</evidence_rule>
+  </state_management>
+
+  <safety_rules>
+    <rule>不得修改 contracts/ 中已有 5 个冻结合约</rule>
+    <rule>不得修改 src/inner/**、src/middle/**、src/outer/api/**、src/outer/presentation/**</rule>
+    <rule>Phase 0 接线流程（L0→L1→L2→Decision→GateEngine→Safety→Ledger→Audit）一行不改</rule>
+    <rule>714 个已有 tests 必须全程保持 pass</rule>
+    <rule>任何失败必须留痕：失败原因、影响面、建议修复路径</rule>
+    <rule>禁止跳过子阶段验收直接宣告阶段 GO</rule>
+    <rule>coach_dsl.json 在 S1.4 之前可修改，S1.4 冻结后不可删改 action_types 枚举</rule>
+  </safety_rules>
+
+  <output_contract>
+    <for_each_sub_stage>
+      <item>更新 reports/coach_global_state.json</item>
+      <item>输出子阶段报告到相应文件</item>
+      <item>运行全量回归 pytest -q 确认 714 pass</item>
+      <item>给出 GO/NO_GO</item>
+      <item>列出下一子阶段可执行前置条件</item>
+    </for_each_sub_stage>
+  </output_contract>
+
+  <success_definition>
+    Phase 1 结束时：
+    1. contracts/coach_dsl.json 已冻结（action_types 枚举固定）
+    2. src/coach/ 包存在且可导入：CoachAgent.act() + DSLBuilder + DSLValidator + PolicyComposer + UserStateTracker + SessionMemory
+    3. config/coach_defaults.yaml 存在
+    4. run_pipeline(mode="coach") 可接收 DSL 信号并返回 sanitized_dsl
+    5. legacy 模式不受影响、原 698 tests 全部 pass
+    6. 全量回归 714/714 pass
+  </success_definition>
+</prompt>

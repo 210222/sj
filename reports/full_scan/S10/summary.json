@@ -1,14 +1,304 @@
 {
   "step": "S10",
   "status": "GO",
-  "executed_at_utc": "2026-04-30T05:30:33.101Z",
-  "type_check_executed": true,
-  "static_scan_executed": true,
-  "license_inventory_generated": true,
-  "total_files": 50,
-  "total_lines": 10674,
-  "total_functions": 758,
-  "avg_complexity": 1.53,
-  "dependencies_count": 294,
-  "findings_count": 1
+  "executed_at_utc": "2026-05-04T07:24:28.709Z",
+  "layer": "A — Code Anatomy",
+  "module_stats": {
+    "layers": {
+      "coach": {
+        "files": 19,
+        "lines": 4006,
+        "functions": 196,
+        "classes": 48,
+        "avg_complexity": 2.64,
+        "high_complexity_count": 4,
+        "high_complexity_funcs": [
+          {
+            "file": "src/coach/agent.py",
+            "function": "act",
+            "line": 295,
+            "complexity": 41
+          },
+          {
+            "file": "src/coach/composer.py",
+            "function": "compose",
+            "line": 37,
+            "complexity": 12
+          },
+          {
+            "file": "src/coach/dsl.py",
+            "function": "validate",
+            "line": 23,
+            "complexity": 11
+          },
+          {
+            "file": "src/coach/flow.py",
+            "function": "compute_flow",
+            "line": 76,
+            "complexity": 15
+          }
+        ]
+      },
+      "cohort": {
+        "files": 2,
+        "lines": 18,
+        "functions": 2,
+        "classes": 1,
+        "avg_complexity": 1.0,
+        "high_complexity_count": 0,
+        "high_complexity_funcs": []
+      },
+      "inner": {
+        "files": 18,
+        "lines": 2261,
+        "functions": 67,
+        "classes": 6,
+        "avg_complexity": 2.91,
+        "high_complexity_count": 1,
+        "high_complexity_funcs": [
+          {
+            "file": "src/inner/ledger/event_store.py",
+            "function": "append_event",
+            "line": 225,
+            "complexity": 21
+          }
+        ]
+      },
+      "mapek": {
+        "files": 6,
+        "lines": 510,
+        "functions": 44,
+        "classes": 5,
+        "avg_complexity": 2.41,
+        "high_complexity_count": 0,
+        "high_complexity_funcs": []
+      },
+      "middle": {
+        "files": 15,
+        "lines": 1968,
+        "functions": 49,
+        "classes": 14,
+        "avg_complexity": 4.18,
+        "high_complexity_count": 3,
+        "high_complexity_funcs": [
+          {
+            "file": "src/middle/semantic_safety/engine.py",
+            "function": "_validate_inputs",
+            "line": 266,
+            "complexity": 22
+          },
+          {
+            "file": "src/middle/state_l1/estimator.py",
+            "function": "_validate_inputs",
+            "line": 150,
+            "complexity": 14
+          },
+          {
+            "file": "src/middle/state_l2/estimator.py",
+            "function": "_validate_inputs",
+            "line": 183,
+            "complexity": 15
+          }
+        ]
+      },
+      "other": {
+        "files": 1,
+        "lines": 1,
+        "functions": 0,
+        "classes": 0,
+        "avg_complexity": 0,
+        "high_complexity_count": 0,
+        "high_complexity_funcs": []
+      },
+      "outer": {
+        "files": 9,
+        "lines": 481,
+        "functions": 10,
+        "classes": 0,
+        "avg_complexity": 4.2,
+        "high_complexity_count": 1,
+        "high_complexity_funcs": [
+          {
+            "file": "src/outer/orchestration/pipeline.py",
+            "function": "run_pipeline",
+            "line": 136,
+            "complexity": 12
+          }
+        ]
+      },
+      "scripts": {
+        "files": 13,
+        "lines": 1279,
+        "functions": 29,
+        "classes": 0,
+        "avg_complexity": 3.97,
+        "high_complexity_count": 0,
+        "high_complexity_funcs": []
+      },
+      "tests": {
+        "files": 53,
+        "lines": 10436,
+        "functions": 1068,
+        "classes": 264,
+        "avg_complexity": 1.38,
+        "high_complexity_count": 1,
+        "high_complexity_funcs": [
+          {
+            "file": "tests/test_comprehensive_deep.py",
+            "function": "test_massive_random_chain_fuzz",
+            "line": 727,
+            "complexity": 17
+          }
+        ]
+      }
+    },
+    "totals": {
+      "files": 136,
+      "lines": 20960,
+      "funcs": 1465,
+      "classes": 338,
+      "high_cc_count": 10
+    }
+  },
+  "code_smells": {
+    "total": 91,
+    "by_severity": {
+      "P3": 30,
+      "P4": 61
+    }
+  },
+  "sbom": {
+    "packages": 3,
+    "license_issues": 0,
+    "vulnerabilities": 0
+  },
+  "tla_readiness": {
+    "tla_ready": true,
+    "candidates": [
+      [
+        "distributed_lock",
+        [
+          "src/coach/agent.py",
+          "src/coach/audit_health.py",
+          "src/coach/counterfactual.py",
+          "src/coach/precedent_intercept.py",
+          "src/coach/window_consistency.py",
+          "src/inner/audit/auditor.py",
+          "src/inner/clock/clock.py",
+          "src/inner/clock/__init__.py",
+          "src/inner/gates/engine.py",
+          "src/inner/ledger/db.py",
+          "src/inner/ledger/event_store.py",
+          "src/inner/no_assist/evaluator.py",
+          "src/inner/resolver/resolver.py",
+          "src/middle/decision/engine.py",
+          "src/middle/semantic_safety/engine.py",
+          "src/middle/shared/config.py",
+          "src/middle/shared/constants.py",
+          "src/middle/shared/types.py",
+          "src/middle/shared/__init__.py",
+          "src/middle/state_l0/estimator.py",
+          "src/middle/state_l1/estimator.py",
+          "src/middle/state_l2/estimator.py",
+          "src/outer/orchestration/pipeline.py",
+          "src/outer/presentation/formatter.py",
+          "src/outer/safeguards/policies.py",
+          "tests/test_audit.py",
+          "tests/test_clock.py",
+          "tests/test_comprehensive_deep.py",
+          "tests/test_decision_engine.py",
+          "tests/test_ledger.py",
+          "tests/test_middle_shared_adversarial.py",
+          "tests/test_middle_shared_config.py",
+          "tests/test_middle_shared_contract.py",
+          "tests/test_outer_api.py",
+          "tests/test_outer_orchestration.py",
+          "tests/test_outer_resilience.py",
+          "tests/test_pipeline_audit_integration.py",
+          "tests/test_pipeline_dual_mode.py",
+          "tests/test_pipeline_gates_integration.py",
+          "tests/test_precedent_intercept.py",
+          "tests/test_resolver.py",
+          "tests/test_s5_safety_integration.py",
+          "tests/test_s7_diagnostics.py",
+          "tests/test_s7_gates.py",
+          "tests/test_s8_audit_health.py",
+          "tests/test_s8_full_chain_integration.py",
+          "tests/test_semantic_safety_engine.py",
+          "tests/test_state_l0.py",
+          "tests/test_state_l1.py",
+          "tests/test_state_l2.py",
+          "tests/test_v18_pulse.py"
+        ]
+      ],
+      [
+        "state_machine",
+        [
+          "src/coach/agent.py",
+          "src/coach/composer.py",
+          "src/coach/memory.py",
+          "src/coach/state.py",
+          "src/coach/ttm.py",
+          "src/inner/resolver/config.py",
+          "src/inner/resolver/resolver.py",
+          "src/mapek/analyze.py",
+          "src/middle/decision/engine.py",
+          "src/middle/semantic_safety/engine.py",
+          "src/middle/shared/config.py",
+          "src/middle/shared/exceptions.py",
+          "src/middle/shared/types.py",
+          "src/middle/shared/__init__.py",
+          "src/middle/state_l0/estimator.py",
+          "src/middle/state_l0/__init__.py",
+          "src/middle/state_l1/estimator.py",
+          "src/middle/state_l2/estimator.py",
+          "src/outer/orchestration/pipeline.py",
+          "tests/test_coach_agent.py",
+          "tests/test_coach_agent_deep.py",
+          "tests/test_comprehensive_deep.py",
+          "tests/test_decision_engine.py",
+          "tests/test_middle_shared_adversarial.py",
+          "tests/test_middle_shared_config.py",
+          "tests/test_middle_shared_contract.py",
+          "tests/test_resolver.py",
+          "tests/test_semantic_safety_engine.py",
+          "tests/test_state_l0.py",
+          "tests/test_state_l1.py",
+          "tests/test_state_l2.py",
+          "tests/test_ttm.py",
+          "tests/test_v18_relational.py",
+          "scripts/c_drill_rollback.py"
+        ]
+      ],
+      [
+        "consensus",
+        [
+          "src/coach/agent.py",
+          "src/inner/audit/auditor.py",
+          "src/inner/gates/config.py",
+          "src/inner/gates/engine.py",
+          "src/inner/ledger/db.py",
+          "src/inner/ledger/event_store.py",
+          "src/inner/resolver/config.py",
+          "src/inner/resolver/resolver.py",
+          "src/inner/resolver/__init__.py",
+          "tests/test_audit.py",
+          "tests/test_comprehensive_deep.py",
+          "tests/test_gates.py",
+          "tests/test_resolver.py",
+          "tests/test_s8_full_chain_integration.py"
+        ]
+      ],
+      [
+        "replication",
+        [
+          "src/coach/data.py",
+          "src/coach/memory.py",
+          "src/inner/ledger/db.py"
+        ]
+      ]
+    ],
+    "note": "TLA+ recommended for state machine verification. AWS S3/DynamoDB and Azure Cosmos DB used TLA+ to find design-level bugs that stress tests cannot catch."
+  },
+  "findings_count": 164
 }

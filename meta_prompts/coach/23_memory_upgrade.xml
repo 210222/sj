@@ -1,0 +1,161 @@
+<prompt>
+  <name>S2.3 — SessionMemory SQLite 升级</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>2</phase>
+  <sub_stage>S2.3</sub_stage>
+
+  <role>
+    你是 S2.3 SessionMemory 升级器。你的唯一目标是将 src/coach/memory.py
+    从内存 dict 实现重构为 SQLite 持久化 + FTS5 全文搜索，store/recall 接口保持不变。
+  </role>
+
+  <context>
+    S2.2 创建了 entity_profiles + facts 表的基础数据模型。
+    现在要将 CoachAgent 使用的 SessionMemory 从"进程内存"升级为"SQLite 持久化"，
+    使得记忆可以在多次对话之间保留。
+
+    SessionMemory 的 store()/recall() 接口签名必须保持与 Phase 1 兼容——
+    CoachAgent.act() 调用不受影响。
+
+    同时需要在 facts 表中建立事实层级关系：记忆条目可被提升为 facts。
+  </context>
+
+  <reference_libraries>
+    <library name="SQLite FTS5" purpose="全文搜索">
+      <url>https://www.sqlite.org/fts5.html</url>
+      <usage>sessions_fts 虚拟表的建表语法、MATCH 查询语法、content= 同步选项</usage>
+      <read_first>FTS5 的 CREATE VIRTUAL TABLE 语法（content=、content_rowid=）、MATCH 操作符、排序（bm25）</read_first>
+    </library>
+    <library name="Letta / MemGPT" purpose="记忆架构参考">
+      <url>https://github.com/letta-ai/letta</url>
+      <usage>参考 Letta 的 Recall Storage + Archival Storage 分层设计，指导 Phase 2 的 sessions 表（短期）+ facts 表（长期）分层</usage>
+      <read_first>Letta 的 memory.py 中 RecallMemory 的 store/search 接口设计、ArchivalStorage 的 insert/query 模式</read_first>
+      <note>Phase 2 不引入向量库，只参考分层思路；向量搜索在 Phase 6 对接</note>
+    </library>
+  </reference_libraries>
+
+  <inputs>
+    <required>
+      <file>src/coach/memory.py (现有 Phase 1 内存实现)</file>
+      <file>src/coach/data.py (S2.2 数据模型)</file>
+      <file>contracts/user_profile.json</file>
+    </required>
+    <depends_on>
+      <file>reports/coach_phase2_s22_data.json</file>
+      <rule>S2.2 status == GO</rule>
+    </depends_on>
+  </inputs>
+
+  <preconditions>
+    <rule>MemoryStore（src/coach/data.py）已就绪且 CRUD 通过测试</rule>
+    <rule>store()/recall() 接口签名必须与 Phase 1 一致</rule>
+  </preconditions>
+
+  <execution>
+    <step>
+      1. 重构 SessionMemory（src/coach/memory.py）：
+      - 添加 sessions 表（SQLite）：session_id, turn_index, intent, action_type, user_input, safety_allowed, created_at_utc
+      - 初始化时检查表是否存在并创建
+      - store() 改为写 SQLite（而非内存 dict）
+      - recall() 改为从 SQLite 查询（而非内存遍历）
+    </step>
+    <step>
+      2. FTS5 搜索支持：
+      ```sql
+      CREATE VIRTUAL TABLE IF NOT EXISTS sessions_fts USING fts5(
+          session_id, intent, action_type, user_input, content=sessions, content_rowid=rowid
+      );
+      ```
+      - store() 时同步写入 FTS 索引
+      - recall() 支持关键词匹配（使用 FTS5 MATCH 替代 Phase 1 的 Python 词重叠算法）
+      - 保留 Phase 1 的按时间倒序排序
+    </step>
+    <step>
+      3. 记忆→事实提升接口：
+      - promote_to_fact(session_id, turn_index, claim, confidence, ttl_seconds, context_scope) → str fact_id
+      - 从 sessions 表取指定 turn 的数据，构建事实并写入 facts 表
+      - 返回新创建的 fact_id
+    </step>
+    <step>
+      4. 保持外部兼容性：
+      - SessionMemory.__init__ 不需要 database_path 参数（自动使用 data/coherence.db）
+      - store(session_id, turn_data) 签名不变
+      - recall(intent, user_state, limit) 签名不变
+      - 返回格式与 Phase 1 一致
+    </step>
+    <step>5. 更新 tests/test_coach_agent.py 中与 memory 相关的测试用例</step>
+    <step>6. 创建 tests/test_coach_memory_upgrade.py 验证持久化行为</step>
+    <step>7. 运行 python -m pytest tests/ -q 确认 749 + 新增全部 pass</step>
+  </execution>
+
+  <api_contract>
+    <session_memory_store>
+      store(session_id: str, turn_data: dict) -> None
+      参数和返回与 Phase 1 完全一致。
+    </session_memory_store>
+    <session_memory_recall>
+      recall(intent: str, user_state: dict | None = None, limit: int | None = None) -> list[dict]
+      参数和返回与 Phase 1 完全一致。内部从 SQLite 查询，关键词用 FTS5 MATCH。
+    </session_memory_recall>
+    <new_method>
+      promote_to_fact(session_id, turn_index, claim, confidence, ttl, scope) -> str
+      新建方法，将一轮对话提升为持久事实。
+    </new_method>
+  </api_contract>
+
+  <outputs>
+    <changed_file>src/coach/memory.py (从内存→SQLite 重构)</changed_file>
+    <new_file>tests/test_coach_memory_upgrade.py</new_file>
+    <stage_report>reports/coach_phase2_s23_memory.json</stage_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      SessionMemory 使用 SQLite 持久化且 store/recall 正常工作 AND
+      store/recall 接口签名与 Phase 1 完全兼容 AND
+      FTS5 关键词搜索返回正确结果 AND
+      promote_to_fact 能创建 facts 表记录 AND
+      CoachAgent.act() 不受影响（不需要修改 agent.py）AND
+      全量回归 749 + 新增全部 pass AND
+      禁改区域零触碰
+    </go_when>
+    <no_go_when>
+      store/recall 签名改变 / FTS5 搜索不工作 / CoachAgent 需要修改才能兼容 / 全量测试失败
+    </no_go_when>
+  </decision_logic>
+
+  <test_cases>
+    <test>
+      <name>test_memory_store_and_recall_persistent</name>
+      <assert>多次 SessionMemory 实例之间 store/recall 数据可跨实例保留（持久化验证）</assert>
+    </test>
+    <test>
+      <name>test_memory_recall_signature_unchanged</name>
+      <assert>recall(intent) 返回格式与 Phase 1 一致（字段名相同）</assert>
+    </test>
+    <test>
+      <name>test_memory_fts_search</name>
+      <assert>FTS5 关键词搜索返回正确匹配的条目</assert>
+    </test>
+    <test>
+      <name>test_promote_to_fact</name>
+      <assert>promote_to_fact 返回的 fact_id 可在 facts 表中查到</assert>
+    </test>
+    <test>
+      <name>test_coach_agent_unchanged</name>
+      <assert>CoachAgent 使用新的 memory 后 act() 行为与 Phase 1 一致</assert>
+    </test>
+    <test>
+      <name>test_full_regression_passes</name>
+      <assert>pytest -q tests/ 输出 ≥ 749 passed</assert>
+    </test>
+  </test_cases>
+
+  <safety>
+    <rule>store()/recall() 接口签名禁止改变（CoachAgent 调用方不修改）</rule>
+    <rule>data/coherence.db 中已有 ledger.events 表不受影响</rule>
+    <rule>禁止修改 src/inner/**、src/middle/**、已有 contracts/</rule>
+    <rule>SQLite WAL 模式，保证并发安全</rule>
+  </safety>
+</prompt>

@@ -1,3 +1,55 @@
-SAST 2026-04-30T06:02:38.131Z
-Files: 34
-
+SAST Extended | 2026-05-04T07:26:06.296Z
+Files: 136
+Findings: 52 (P0:0 P1:0 P2:53)
+  [P2] tests/test_audit.py:83 — assert statement — disabled with -O flag
+  [P2] tests/test_clock.py:32 — assert statement — disabled with -O flag
+  [P2] tests/test_coach_agent.py:22 — assert statement — disabled with -O flag
+  [P2] tests/test_coach_agent_deep.py:24 — assert statement — disabled with -O flag
+  [P2] tests/test_coach_data.py:32 — assert statement — disabled with -O flag
+  [P2] tests/test_coach_memory_upgrade.py:36 — assert statement — disabled with -O flag
+  [P2] tests/test_composer_upgrade.py:17 — assert statement — disabled with -O flag
+  [P2] tests/test_comprehensive_deep.py:113 — assert statement — disabled with -O flag
+  [P2] tests/test_counterfactual.py:10 — assert statement — disabled with -O flag
+  [P2] tests/test_cross_track.py:10 — assert statement — disabled with -O flag
+  [P2] tests/test_decision_engine.py:55 — assert statement — disabled with -O flag
+  [P2] tests/test_flow.py:10 — assert statement — disabled with -O flag
+  [P2] tests/test_gates.py:40 — assert statement — disabled with -O flag
+  [P2] tests/test_ledger.py:32 — assert statement — disabled with -O flag
+  [P2] tests/test_mapek_knowledge.py:14 — assert statement — disabled with -O flag
+  [P2] tests/test_mapek_monitor_analyze.py:13 — assert statement — disabled with -O flag
+  [P2] tests/test_mapek_plan_execute.py:15 — assert statement — disabled with -O flag
+  [P2] tests/test_middle_shared_adversarial.py:23 — assert statement — disabled with -O flag
+  [P2] tests/test_middle_shared_config.py:52 — assert statement — disabled with -O flag
+  [P2] tests/test_middle_shared_contract.py:29 — assert statement — disabled with -O flag
+  [P2] tests/test_multi_agent_layering.py:15 — assert statement — disabled with -O flag
+  [P2] tests/test_no_assist.py:45 — assert statement — disabled with -O flag
+  [P2] tests/test_outer_api.py:24 — assert statement — disabled with -O flag
+  [P2] tests/test_outer_orchestration.py:20 — assert statement — disabled with -O flag
+  [P2] tests/test_outer_resilience.py:25 — assert statement — disabled with -O flag
+  [P2] tests/test_passport.py:12 — assert statement — disabled with -O flag
+  [P2] tests/test_pipeline_audit_integration.py:27 — assert statement — disabled with -O flag
+  [P2] tests/test_pipeline_dual_mode.py:26 — assert statement — disabled with -O flag
+  [P2] tests/test_pipeline_gates_integration.py:21 — assert statement — disabled with -O flag
+  [P2] tests/test_pipeline_ledger_integration.py:29 — assert statement — disabled with -O flag
+  [P2] tests/test_precedent_intercept.py:27 — assert statement — disabled with -O flag
+  [P2] tests/test_qs_collector.py:8 — assert statement — disabled with -O flag
+  [P2] tests/test_resolver.py:52 — assert statement — disabled with -O flag
+  [P2] tests/test_s5_safety_integration.py:13 — assert statement — disabled with -O flag
+  [P2] tests/test_s6_mapek_integration.py:12 — assert statement — disabled with -O flag
+  [P2] tests/test_s7_diagnostics.py:18 — assert statement — disabled with -O flag
+  [P2] tests/test_s7_gates.py:14 — assert statement — disabled with -O flag
+  [P2] tests/test_s7_mrt.py:10 — assert statement — disabled with -O flag
+  [P2] tests/test_s8_audit_health.py:10 — assert statement — disabled with -O flag
+  [P2] tests/test_s8_full_chain_integration.py:50 — assert statement — disabled with -O flag
+  [P2] tests/test_s8_window_consistency.py:22 — assert statement — disabled with -O flag
+  [P2] tests/test_sdt.py:10 — assert statement — disabled with -O flag
+  [P2] tests/test_semantic_safety_engine.py:42 — assert statement — disabled with -O flag
+  [P2] tests/test_state_l0.py:33 — assert statement — disabled with -O flag
+  [P2] tests/test_state_l1.py:34 — assert statement — disabled with -O flag
+  [P2] tests/test_state_l2.py:40 — assert statement — disabled with -O flag
+  [P2] tests/test_ttm.py:10 — assert statement — disabled with -O flag
+  [P2] tests/test_v18_dual_ledger.py:20 — assert statement — disabled with -O flag
+  [P2] tests/test_v18_excursion.py:26 — assert statement — disabled with -O flag
+  [P2] tests/test_v18_pulse.py:12 — assert statement — disabled with -O flag
+  [P2] tests/test_v18_relational.py:36 — assert statement — disabled with -O flag
+  [P2] tests/test_vector_memory.py:27 — assert statement — disabled with -O flag

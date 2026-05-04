@@ -1,0 +1,22 @@
+{
+  "b_stage": "B7",
+  "b_status": "GO",
+  "b_release_gate_passed": true,
+  "b_release_gate_details": {
+    "smoke": "12/12",
+    "outer_tests": "29/29",
+    "full_regression": "698/698"
+  },
+  "b_healthcheck_passed": true,
+  "b_healthcheck_details": {
+    "total": 11,
+    "passed": 11,
+    "failed": 0
+  },
+  "b_rollback_verify_passed": true,
+  "b_schema_drift": false,
+  "b_reason_code_drift": false,
+  "b_hardening_findings": [],
+  "b_final_decision": "GO",
+  "b_timestamp_utc": "2026-05-02T09:45:23.062305+00:00"
+}

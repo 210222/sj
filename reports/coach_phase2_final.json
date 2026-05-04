@@ -1,0 +1,57 @@
+{
+  "coach_phase": 2,
+  "coach_sub_stage": "S2.5",
+  "coach_status": "GO",
+  "coach_name": "Full Regression + Contract Freeze + Phase 2 Close",
+  "coach_description": "全量回归 808 pass，user_profile.json frozen，Phase 2 完结",
+
+  "coach_phase2_summary": {
+    "S2.1_user_profile_contract": "GO — contracts/user_profile.json frozen (entity 6 fields + facts 12 fields)",
+    "S2.2_memory_store": "GO — src/coach/data.py MemoryStore CRUD (20 tests)",
+    "S2.3_memory_upgrade": "GO — SessionMemory SQLite + FTS5 + promote_to_fact (9 tests)",
+    "S2.4_qs_collector": "GO — src/cohort/QSCollector stub + state tracking fix verified (3 tests)",
+    "S2.5_regression_close": "GO — 808 pass + user_profile.json frozen"
+  },
+
+  "coach_files_created": {
+    "contracts/user_profile.json": "frozen — entity_profiles 6 fields + facts 12 fields + 2 enums",
+    "src/coach/data.py": "MemoryStore — entity CRUD + facts CRUD + expire_facts",
+    "src/cohort/__init__.py": "QSCollector export",
+    "src/cohort/collector.py": "QSCollector 占位壳",
+    "tests/test_coach_data.py": "20 tests",
+    "tests/test_coach_memory_upgrade.py": "9 tests",
+    "tests/test_qs_collector.py": "3 tests"
+  },
+
+  "coach_files_modified": {
+    "src/coach/memory.py": "重构: 内存→SQLite sessions + FTS5 + promote_to_fact",
+    "tests/test_coach_agent.py": "SessionMemory 测试改为 temp DB",
+    "tests/test_coach_agent_deep.py": "SessionMemory 测试改为 temp DB"
+  },
+
+  "coach_pipeline_flow_final": {
+    "legacy": "L0→L1→L2→Decision→GateEngine→Safety→Ledger→Audit→format_output",
+    "coach": "DSL→L0/L1/L2→Decision→GateEngine→Safety→Ledger→Audit→sanitized_dsl+coach_trace"
+  },
+
+  "coach_test_totals": {
+    "phase0_total": 714,
+    "phase1_added": 62,
+    "phase2_s22_added": 20,
+    "phase2_s23_added": 9,
+    "phase2_s24_added": 3,
+    "phase2_total": 808
+  },
+
+  "coach_immutable_boundaries_verified": {
+    "contracts_existing_6": "untouched",
+    "src/inner": "untouched",
+    "src/middle": "untouched",
+    "src/outer/api": "untouched",
+    "ledger_events_table": "untouched (sessions/facts are new tables, same DB)"
+  },
+
+  "coach_final_decision": "GO",
+  "coach_next_phase": "Phase 3 — V18.8 运行时行为 (主权脉冲/远足/双账本/关系层)",
+  "coach_timestamp_utc": "2026-05-03T00:00:00.000000+00:00"
+}

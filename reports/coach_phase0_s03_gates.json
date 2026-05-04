@@ -1,0 +1,39 @@
+{
+  "coach_phase": 0,
+  "coach_sub_stage": "S0.3",
+  "coach_status": "GO",
+  "coach_name": "Gates Wiring",
+  "coach_description": "GateEngine.evaluate() 取代外部传入的 gate_decision 字符串，产出实时门禁决策",
+  "coach_changes": {
+    "modified": ["src/outer/orchestration/pipeline.py"],
+    "added": ["tests/test_pipeline_gates_integration.py"],
+    "lines_added": 20
+  },
+  "coach_pipeline_flow_after": "L0→L1→L2→Decision→GateEngine→Safety→Ledger→Audit",
+  "coach_gate_inputs": {
+    "6_audit_gate": "p0_count from safety_context",
+    "1_agency_gate": "default pass (no data)",
+    "2_excursion_gate": "default pass (no data)",
+    "3_learning_gate": "default pass (no data)",
+    "4_relational_gate": "default pass (no data)",
+    "5_causal_gate": "default pass (no data)",
+    "7_framing_gate": "default pass (no data)",
+    "8_window_gate": "default pass (no data)"
+  },
+  "coach_test_results": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0
+  },
+  "coach_acceptance": {
+    "test_pipeline_uses_gate_engine": "PASSED",
+    "test_gate_goes_warn_with_p0": "PASSED",
+    "test_safety_receives_live_gate_decision": "PASSED",
+    "test_pipeline_result_has_audit_level": "PASSED",
+    "test_no_input_returns_go": "PASSED",
+    "test_gate_failure_defaults_to_go": "PASSED"
+  },
+  "coach_full_regression": "708/708 pass",
+  "coach_decision": "GO",
+  "coach_timestamp_utc": "2026-05-02T12:10:00.000000+00:00"
+}

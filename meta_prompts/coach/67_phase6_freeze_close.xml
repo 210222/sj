@@ -1,0 +1,371 @@
+<prompt>
+  <name>Coherence Coach Track — S6.7 Phase 6 集成 + 冻结</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>6</phase>
+  <sub_stage>S6.7</sub_stage>
+  <sub_stage_name>Phase 6 管线集成 + MAPE-K 布线 + 全量回归 + 合约冻结 + 状态更新</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S6.7 实现者。
+    你的任务是：将 S6.1-S6.6 的所有组件（MAPE-K 五组件 + 三类向量记忆 + 三层多智能体）
+    集成到 CoachAgent.act() 管线中，完成全量回归测试、Phase 6 合约冻结和全局状态更新。
+    这是 Phase 6 的收尾子阶段。
+  </role>
+
+  <context>
+    已完成的子阶段：
+    - S6.1: contracts/mapek_loop.json — MAPE-K 五组件接口合约
+    - S6.2: src/mapek/monitor.py + analyze.py — 感知层与分析层
+    - S6.3: src/mapek/plan.py + execute.py — 规划层与执行层
+    - S6.4: src/mapek/knowledge.py — 知识仓库 CRUD + 置信度管理
+    - S6.5: src/coach/memory.py 升级 — ArchivalMemory + WorkingMemory + RMM
+    - S6.6: src/coach/handlers.py + composer/agent 升级 — 三层多智能体
+
+    集成后的 CoachAgent.act() 完整管线：
+    ```
+    CoachAgent.act() [CEO 层]
+      ├── _ceo_judge() → macro_strategy + suggested_action_type  [S6.6]
+      │
+      ├── Monitor.ingest(user_input, context)  [S6.2]  ← 感知输入
+      ├── Analyze.diagnose(Monitor.snapshot()) [S6.2]  ← 深层诊断
+      ├── Plan.generate(analysis_report)       [S6.3]  ← 策略生成
+      │
+      ├── PolicyComposer.compose(plan, context) [S6.6]  ← Manager 层
+      │   ├── HandlerRegistry.handle()         [S6.6]  ← Specialist 层
+      │   └── Domain Passport (Phase 5)        [S5.4]  ← 跨域保护
+      │
+      ├── (Phase 5 三件套闸门)                  [S5.1-S5.3]
+      │
+      ├── Execute.dispatch(dsl_packet)         [S6.3]  ← 分发执行
+      ├── Knowledge.record(execution)          [S6.4]  ← 记录证据
+      │
+      ├── WorkingMemory.set(key, dsl_packet)   [S6.5]  ← 工作记忆
+      ├── ArchivalMemory.store(dsl_packet)     [S6.5]  ← 档案归档
+      └── RMM.run() (每 N 轮)                  [S6.5]  ← 后台整理
+    ```
+
+    注意：MAPE-K 组件默认 OFF（enabled=false）。启用后作为外循环运行在 act() 中。
+    Phase 5 三件套的集成已经在 Phase 5 完成，S6.7 不修改它们。
+  </context>
+
+  <task>
+    1) 在 CoachAgent.act() 中集成 MAPE-K 五组件（受 config enabled 控制）
+    2) 在 CoachAgent.act() 中集成向量记忆（WorkingMemory 写入 + ArchivalMemory 归档 + RMM）
+    3) 确认 Execute.dispatch() 对 CoachAgent / Ledger / Audit 的真实调用
+    4) 标记 contracts/mapek_loop.json → frozen
+    5) 标记 config/coach_defaults.yaml Phase 6 → frozen: true
+    6) 全量回归：python -m pytest tests/ -q 全部 pass
+    7) 更新 reports/coach_global_state.json Phase 6 → GO
+    8) 输出 Phase 6 完结摘要报告
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="CoachAgent 集成 MAPE-K">
+      修改 src/coach/agent.py，在 act() 中增加 MAPE-K 循环（受 enabled 控制）：
+
+      ```python
+      class CoachAgent:
+          def __init__(self, config: dict | None = None):
+              # ... 已有初始化 ...
+
+              # ── S6.2-S6.4: MAPE-K 组件（延迟加载）──
+              self._monitor = None
+              self._analyze = None
+              self._plan = None
+              self._execute = None
+              self._knowledge = None
+
+              # ── S6.5: 向量记忆 ──
+              self._archival_memory = None
+              self._working_memory = None
+              self._rmm = None
+
+          def _ensure_mapek(self):
+              """延迟加载 MAPE-K 组件。"""
+              mapek_cfg = self._config.get("mapek", {})
+              if not mapek_cfg.get("enabled", False):
+                  return
+
+              if self._monitor is None:
+                  from src.mapek import Monitor, Analyze, Plan, Execute, Knowledge
+                  self._monitor = Monitor(
+                      buffer_size=mapek_cfg.get("monitor", {}).get("buffer_size", 100),
+                      dedup_window_s=mapek_cfg.get("monitor", {}).get("dedup_window_s", 5),
+                  )
+                  self._analyze = Analyze(
+                      min_confidence=mapek_cfg.get("analyze", {}).get("min_confidence", 0.3),
+                  )
+                  self._plan = Plan(
+                      max_horizon_steps=mapek_cfg.get("plan", {}).get("max_horizon_steps", 5),
+                  )
+                  self._execute = Execute(
+                      max_retries=mapek_cfg.get("execute", {}).get("max_retries", 2),
+                  )
+                  self._knowledge = Knowledge(
+                      confidence_decay_rate=mapek_cfg.get("knowledge", {}).get(
+                          "confidence_decay_rate", 0.05),
+                      archival_after_days=mapek_cfg.get("knowledge", {}).get(
+                          "archival_after_days", 30),
+                  )
+
+          def _ensure_memory_ext(self):
+              """延迟加载 S6.5 向量记忆组件。"""
+              if self._archival_memory is None:
+                  from src.coach.memory import ArchivalMemory, WorkingMemory, \
+                      ReflectiveMemoryManager
+                  self._archival_memory = ArchivalMemory()
+                  self._working_memory = WorkingMemory()
+                  self._rmm = ReflectiveMemoryManager(
+                      self._archival_memory,
+                      decay_rate=self._config.get("mapek", {}).get("knowledge", {}).get(
+                          "confidence_decay_rate", 0.05),
+                  )
+
+          def act(self, user_input: str, context: dict | None = None) -> dict:
+              """CEO 入口：宏观判断 → MAPE-K（可选）→ Manager → 返回。
+
+              Returns: dict (DSL action packet with execution metadata)
+              """
+              ctx = context or {}
+              mapek_enabled = self._config.get("mapek", {}).get("enabled", False)
+
+              # ── 1. CEO 宏观判断 ──
+              ceo_strategy = self._ceo_judge(user_input, ctx)
+
+              # ── 2. MAPE-K 循环（可选）─
+              if mapek_enabled:
+                  self._ensure_mapek()
+                  self._ensure_memory_ext()
+
+                  # 2a. Monitor: 感知
+                  self._monitor.ingest({
+                      "content": user_input,
+                      "source": "user",
+                      "timestamp": self._now_utc(),
+                      **ctx,
+                  })
+                  snapshot = self._monitor.snapshot()
+
+                  # 2b. Analyze: 诊断
+                  analysis = self._analyze.diagnose(snapshot)
+
+                  # 2c. Plan: 策略
+                  plan_result = self._plan.generate(analysis)
+                  self._knowledge.record_strategy(plan_result)
+
+                  # 2d. 将 Plan 结果注入 CEO 策略和 context
+                  ceo_strategy["mapek_plan"] = plan_result
+                  ctx["plan_result"] = plan_result
+                  ctx["analysis_report"] = analysis
+
+              # ── 3. Manager 层：动作选择 + Handler 路由 ──
+              packet = self._composer.compose(ceo_strategy, ctx)
+
+              # ── 4. Execute: 分发（可选）─
+              if mapek_enabled:
+                  execution = self._execute.dispatch(packet, ctx)
+                  self._knowledge.record_experiment({
+                      "variant_id": packet.get("trace_id"),
+                      "action_type": packet.get("action_type"),
+                      "outcome": execution.get("all_success"),
+                      "ceo_strategy": ceo_strategy.get("macro_strategy"),
+                  })
+                  packet["execution"] = execution
+
+                  # 5. 向量记忆：WorkingMemory + ArchivalMemory
+                  self._working_memory.set("last_action", packet)
+                  archived_id = self._archival_memory.store(
+                      content=str(packet),
+                      source_tag=f"action:{packet.get('action_type')}",
+                      metadata=str({
+                          "trace_id": packet.get("trace_id"),
+                          "intent": packet.get("intent"),
+                      }),
+                  )
+                  packet["archived_id"] = archived_id
+
+                  # 6. RMM: 每 N 轮触发
+                  rmm_result = self._rmm.run()
+                  if rmm_result.get("decayed", 0) > 0:
+                      packet["rmm_result"] = rmm_result
+
+              # ── 7. Coach 元信息 ──
+              packet["coach_meta"] = {
+                  "ceo_strategy": ceo_strategy.get("macro_strategy"),
+                  "ttm_stage": ceo_strategy.get("ttm_stage"),
+                  "mapek_enabled": mapek_enabled,
+                  "phase6_integrated": True,
+              }
+              return packet
+
+          def _now_utc(self) -> str:
+              from datetime import datetime, timezone
+              return datetime.now(timezone.utc).strftime(
+                  '%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+      ```
+
+      关键集成原则：
+      - MAPE-K 受 config mapek.enabled 控制，默认 OFF。不影响 act() 既有行为
+      - 所有 MAPE-K 组件延迟加载（_ensure_mapek()），第一次使能时初始化
+      - 向量记忆同属延迟加载（_ensure_memory_ext()）
+      - Phase 5 三件套的闸门已经在 S5.5 集成，S6.7 不修改
+    </step>
+
+    <step id="2" name="Execute 真实调用">
+      修改 src/mapek/execute.py 中的 _call_coach_agent() 等方法，
+      从占位返回改为真实调用：
+
+      ```python
+      def _call_coach_agent(self, plan: dict, context: dict) -> dict:
+          """委托 CoachAgent 生成 DSL 动作包（当前已在 act() 中完成，此处记录）。"""
+          return {
+              "target": "CoachAgent",
+              "success": True,
+              "action": plan.get("target_action_type", "suggest"),
+              "note": "CoachAgent.act() handles DSL generation — Execute records outcome",
+          }
+
+      def _write_ledger(self, plan: dict) -> dict:
+          """真实写入 ledger（通过 EventStore.append_event）。"""
+          try:
+              from src.inner.ledger.event_store import EventStore
+              store = EventStore()
+              # 写入 MAPE-K Plan 事件
+              store.append_event(
+                  event_type="mapek_plan",
+                  payload={
+                      "target_action_type": plan.get("target_action_type"),
+                      "intensity": plan.get("intensity"),
+                      "horizon": plan.get("horizon_steps"),
+                      "confidence": plan.get("confidence"),
+                  },
+              )
+              return {"target": "Ledger", "success": True}
+          except Exception as e:
+              return {"target": "Ledger", "success": False, "error": str(e)}
+      ```
+
+      注意：如果 EventStore.append_event() 的签名与实际不符，适配为实际签名。
+      参考 src/inner/ledger/event_store.py。
+    </step>
+
+    <step id="3" name="合约冻结">
+      ```
+      # 标记 mapek_loop.json → frozen
+      contracts/mapek_loop.json:
+      - "status": "draft" → "status": "frozen"
+      - "frozen_at": null → "frozen_at": "<current_utc>"
+      - 不修改任何已有字段
+
+      # 标记 coach_defaults.yaml Phase 6 → frozen
+      config/coach_defaults.yaml:
+      - 在 mapek 段下追加 frozen: true
+      - 不修改任何已有配置值
+      ```
+    </step>
+
+    <step id="4" name="全量回归">
+      执行：
+      ```bash
+      cd D:/Claudedaoy/coherence && python -m pytest tests/ -q
+      ```
+
+      期望：916+ 已有测试全部 pass + Phase 6 新增 55+ 测试全部 pass
+      如果失败，定位失败测试并修复，直到全绿。
+    </step>
+
+    <step id="5" name="全局状态更新">
+      更新 reports/coach_global_state.json：
+
+      ```json
+      "phase_6": {
+          "status": "GO",
+          "executed_at_utc": "<current_utc>",
+          "sub_stages": {
+              "S6.1": "GO",
+              "S6.2": "GO",
+              "S6.3": "GO",
+              "S6.4": "GO",
+              "S6.5": "GO",
+              "S6.6": "GO",
+              "S6.7": "GO"
+          },
+          "deliverables": {
+              "contract_mapek_loop": "frozen",
+              "src_mapek_package": "5 components",
+              "vector_memory": "ArchivalMemory+WorkingMemory+RMM",
+              "multi_agent_layering": "CEO+Manager+Specialist",
+              "new_tests": 55,
+              "total_tests": "971+"
+          },
+          "phase_5": {
+              "status": "GO",
+              "note": "Phase 5 — semantic safety triple completed prior to Phase 6"
+          }
+      }
+      ```
+
+      注意保持现有 global_state.json 中之前 phase 的字段完整。
+    </step>
+
+    <step id="6" name="完结报告">
+      输出到控制台或 reports/phase6_completion.md 的摘要：
+
+      ```
+      ════════════════════════════════════════
+        Phase 6 — 完结报告
+      ════════════════════════════════════════
+
+      子阶段:
+        [GO] S6.1 — MAPE-K 合约冻结
+        [GO] S6.2 — Monitor + Analyze
+        [GO] S6.3 — Plan + Execute
+        [GO] S6.4 — Knowledge 仓库
+        [GO] S6.5 — 向量记忆升级
+        [GO] S6.6 — 多智能体分层
+        [GO] S6.7 — 集成 + 冻结
+
+      合约:
+        contracts/mapek_loop.json → FROZEN v1.0.0
+
+      代码:
+        src/mapek/ → 5 个组件
+        src/coach/memory.py → +3 记忆类
+        src/coach/handlers.py → 4 个 Handler
+        src/coach/agent.py → CEO 层
+        src/coach/composer.py → Manager 层
+
+      测试:
+        新增 55+ 测试 → 全部 pass
+        已有 916 测试 → 零回归
+
+      状态: PHASE 6 GO ✅
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/agent.py" type="modify">+80 行: MAPE-K 集成 + 向量记忆布线 + CEO 增强</change>
+    <change file="src/mapek/execute.py" type="modify">+15 行: Execute 真实 ledger 调用</change>
+    <change file="contracts/mapek_loop.json" type="modify">2 行: status draft → frozen, frozen_at 填充</change>
+    <change file="config/coach_defaults.yaml" type="modify">+1 行: mapek 段追加 frozen: true</change>
+    <change file="reports/coach_global_state.json" type="modify">Phase 6 → GO</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. CoachAgent.act() 在 mapek.enabled=false 时行为与之前完全一致
+    2. CoachAgent.act() 在 mapek.enabled=true 时走完 Monitor→Analyze→Plan→Execute→Knowledge 全链路
+    3. WorkingMemory 和 ArchivalMemory 在 MAPE-K 启用时自动写入
+    4. RMM.run() 每 N 次 act() 调用后触发
+    5. Execute._write_ledger() 真实调用 EventStore.append_event()
+    6. contracts/mapek_loop.json status="frozen" + frozen_at 非空
+    7. config/coach_defaults.yaml mapek 段 frozen: true
+    8. 全量回归：新增 55+ + 已有 916+ 全部 pass
+    9. reports/coach_global_state.json Phase 6 → GO
+    10. Phase 5 三件套不受影响
+    11. Phase 4 三个模型不受影响
+    12. 现有 act() 接口签名未改变
+  </success_criteria>
+</prompt>

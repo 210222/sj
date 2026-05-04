@@ -1,0 +1,525 @@
+<prompt>
+  <name>Coherence Coach Track — S7.2 三诊断</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>7</phase>
+  <sub_stage>S7.2</sub_stage>
+  <sub_stage_name>三诊断引擎 — 平衡性检验 + 负对照排除 + 安慰剂窗口</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S7.2 实现者。
+    你的任务是：实现 src/coach/diagnostics.py，包含三项因果诊断：
+    平衡性检验（balance check）、负对照显著性排除（negative control）、
+    安慰剂窗口（placebo window）。
+    这三项诊断是 gate 5 (causal_gate) 升档前的强制检查。
+  </role>
+
+  <context>
+    已有相关代码和数据源：
+    - contracts/causal_governance.json: S7.1 已定义诊断阈值合约
+    - contracts/gates.json: gate 5 (causal_gate) 已定义 causal_diagnostics_triple 指标
+    - src/coach/mrt.py: MRTExperiment + BayesianEstimator（S7.1 已实现）
+    - src/coach/state.py: UserStateTracker — 用户状态和会话上下文
+    - src/coach/data.py: facts/entity_profiles/events 表
+    - src/inner/ledger/event_store.py: EventStore — 事件记录
+
+    三诊断理论（来自 ai教练.txt V18.7 §7.2）：
+    ```
+    升档前三诊断（强制）：
+    1. 平衡性检验：变体组与对照组的基线协变量可比
+       - 方法：标准化均值差 (SMD)，阈值 SMD < 0.25 即通过
+       - 超过阈值 → 标记不可靠估计，阻止升档
+
+    2. 负对照显著性排除：已知无效干预不应检测出"效果"
+       - 方法：选取一个已知无效的伪干预，运行与正干预相同的估计流程
+       - 如果伪干预显示显著"效果" → 估计流程不可信，阻止升档
+
+    3. 安慰剂窗口：在真实干预前的窗口不应检测出效果
+       - 方法：取干预前 2 小时数据，运行相同估计流程
+       - 如果安慰剂窗口显示显著"效果" → 有时间混淆，阻止升档
+    ```
+
+    三诊断的输出通过 gate 5 (causal_gate) 的 causal_diagnostics_triple 指标反馈。
+  </context>
+
+  <task>
+    1) 实现 src/coach/diagnostics.py：三诊断引擎
+    2) 新增 tests/test_s7_diagnostics.py
+    3) 不实现 MRT 框架（S7.1）或四门禁（S7.3），不集成到 CoachAgent（S7.4）
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="实现 diagnostics.py — 三诊断引擎">
+      新建 src/coach/diagnostics.py：
+
+      ```python
+      """S7.2 三诊断引擎。
+
+      升档（Gate → GO）前的强制三诊断：
+      1. 平衡性检验 — 变体组 vs 对照组基线可比
+      2. 负对照排除 — 已知无效干预不应检测出"效果"
+      3. 安慰剂窗口 — 真实干预前窗口不应检测出效果
+      """
+
+      from dataclasses import dataclass, field
+      from datetime import datetime, timedelta, timezone
+      from typing import Any
+
+
+      @dataclass
+      class DiagnosticResult:
+          """单次诊断结果。"""
+          name: str                       # 诊断名称
+          passed: bool                    # 是否通过
+          metric_value: float             # 当前指标值
+          threshold: float                # 阈值
+          detail: str = ""                # 详细说明
+          data: dict = field(default_factory=dict)  # 额外数据
+
+          def to_dict(self) -> dict:
+              return {
+                  "name": self.name,
+                  "passed": self.passed,
+                  "metric_value": self.metric_value,
+                  "threshold": self.threshold,
+                  "detail": self.detail,
+                  "data": self.data,
+              }
+
+
+      @dataclass
+      class DiagnosticsReport:
+          """三诊断综合报告。"""
+          all_passed: bool
+          balance: DiagnosticResult
+          negative_control: DiagnosticResult
+          placebo_window: DiagnosticResult
+          evaluated_at_utc: str = ""
+
+          def to_dict(self) -> dict:
+              return {
+                  "all_passed": self.all_passed,
+                  "balance": self.balance.to_dict(),
+                  "negative_control": self.negative_control.to_dict(),
+                  "placebo_window": self.placebo_window.to_dict(),
+                  "evaluated_at_utc": self.evaluated_at_utc,
+              }
+
+          def causal_diagnostics_triple(self) -> dict:
+              """返回 gate 5 (causal_gate) 所需的指标值。"""
+              return {
+                  "all_passed": self.all_passed,
+                  "balance_smd": self.balance.metric_value,
+                  "balance_pass": self.balance.passed,
+                  "negative_control_overlap": self.negative_control.metric_value,
+                  "negative_control_pass": self.negative_control.passed,
+                  "placebo_effect": self.placebo_window.metric_value,
+                  "placebo_pass": self.placebo_window.passed,
+              }
+
+
+      class BalanceCheck:
+          """平衡性检验：变体组 vs 对照组基线可比性。
+
+          使用标准化均值差 (SMD) 度量。
+          SMD = (mean_treatment - mean_control) / pooled_std
+          阈值：|SMD| < threshold 即通过。
+          """
+
+          def __init__(self, smd_threshold: float = 0.25):
+              self.threshold = smd_threshold
+
+          def evaluate(
+              self,
+              treatment_covariates: list[dict],
+              control_covariates: list[dict],
+          ) -> DiagnosticResult:
+              """评估两组协变量平衡性。
+
+              Args:
+                  treatment_covariates: 变体组协变量列表，每个元素含各协变量值
+                  control_covariates: 对照组协变量列表
+
+              Returns:
+                  DiagnosticResult
+              """
+              if not treatment_covariates or not control_covariates:
+                  return DiagnosticResult(
+                      name="balance_check",
+                      passed=False,
+                      metric_value=1.0,
+                      threshold=self.threshold,
+                      detail="样本不足：变体组或对照组为空",
+                  )
+
+              # 计算所有协变量的 SMD
+              covariates = list(treatment_covariates[0].keys()) if treatment_covariates else []
+              smd_values = {}
+
+              for cov in covariates:
+                  t_vals = [d.get(cov, 0) for d in treatment_covariates if cov in d]
+                  c_vals = [d.get(cov, 0) for d in control_covariates if cov in d]
+
+                  if len(t_vals) < 2 or len(c_vals) < 2:
+                      continue
+
+                  mean_t = sum(t_vals) / len(t_vals)
+                  mean_c = sum(c_vals) / len(c_vals)
+
+                  var_t = sum((x - mean_t) ** 2 for x in t_vals) / (len(t_vals) - 1)
+                  var_c = sum((x - mean_c) ** 2 for x in c_vals) / (len(c_vals) - 1)
+                  pooled_std = ((var_t + var_c) / 2) ** 0.5
+
+                  smd = abs(mean_t - mean_c) / pooled_std if pooled_std > 1e-8 else 0.0
+                  smd_values[cov] = round(smd, 4)
+
+              max_smd = max(smd_values.values()) if smd_values else 1.0
+              passed = max_smd < self.threshold
+
+              return DiagnosticResult(
+                  name="balance_check",
+                  passed=passed,
+                  metric_value=round(max_smd, 4),
+                  threshold=self.threshold,
+                  detail=f"最大 SMD={max_smd:.4f} (阈值={self.threshold}), "
+                         f"{'通过' if passed else '不通过'}",
+                  data={"covariates": smd_values, "n_treatment": len(treatment_covariates),
+                        "n_control": len(control_covariates)},
+              )
+
+
+      class NegativeControlCheck:
+          """负对照显著性排除。
+
+          选取已知无效的伪干预，运行相同的估计流程。
+          如果后验重叠低于阈值 → 估计流程不可信。
+          """
+
+          def __init__(self, overlap_threshold: float = 0.8, min_events: int = 5):
+              self.threshold = overlap_threshold
+              self.min_events = min_events
+
+          def evaluate(
+              self,
+              sham_successes: int, sham_total: int,
+              control_successes: int, control_total: int,
+          ) -> DiagnosticResult:
+              """评估负对照。
+
+              Args:
+                  sham_successes: 伪干预组成功次数
+                  sham_total: 伪干预组总次数
+                  control_successes: 对照组成功次数
+                  control_total: 对照组总次数
+
+              Returns:
+                  DiagnosticResult
+              """
+              if sham_total < self.min_events or control_total < self.min_events:
+                  return DiagnosticResult(
+                      name="negative_control",
+                      passed=True,  # 样本不足时 pass（不阻止升档）
+                      metric_value=1.0,
+                      threshold=self.threshold,
+                      detail=f"样本不足（sham={sham_total}, control={control_total}），"
+                             f"跳过负对照检查",
+                  )
+
+              # 使用贝叶斯估计
+              from src.coach.mrt import BayesianEstimator
+              est = BayesianEstimator()
+              result = est.estimate_binary(sham_successes, sham_total,
+                                            control_successes, control_total)
+
+              overlap = result["posterior_overlap"]
+              passed = overlap >= self.threshold
+
+              return DiagnosticResult(
+                  name="negative_control",
+                  passed=passed,
+                  metric_value=round(overlap, 4),
+                  threshold=self.threshold,
+                  detail=f"后验重叠={overlap:.4f} (阈值={self.threshold}), "
+                         f"{'通过' if passed else '不通过 — 估计流程不可信'}",
+                  data={"bayesian_result": result},
+              )
+
+
+      class PlaceboWindowCheck:
+          """安慰剂窗口检查。
+
+          在真实干预前的时间窗口运行相同估计流程。
+          如果安慰剂窗口显示显著效果 → 存在时间混淆。
+          """
+
+          def __init__(self, window_hours: float = 2.0, p_threshold: float = 0.05):
+              self.window_hours = window_hours
+              self.threshold = p_threshold
+
+          def evaluate(
+              self,
+              pre_period_successes: int, pre_period_total: int,
+              control_successes: int, control_total: int,
+          ) -> DiagnosticResult:
+              """评估安慰剂窗口。
+
+              Args:
+                  pre_period_successes: 安慰剂窗口（干预前）成功次数
+                  pre_period_total: 安慰剂窗口总次数
+                  control_successes: 同一窗口对照组成功次数
+                  control_total: 同一窗口对照组总次数
+
+              Returns:
+                  DiagnosticResult
+              """
+              if pre_period_total < 3 or control_total < 3:
+                  return DiagnosticResult(
+                      name="placebo_window",
+                      passed=True,
+                      metric_value=0.0,
+                      threshold=self.threshold,
+                      detail=f"样本不足，跳过安慰剂窗口检查",
+                  )
+
+              from src.coach.mrt import BayesianEstimator
+              est = BayesianEstimator()
+              result = est.estimate_binary(pre_period_successes, pre_period_total,
+                                            control_successes, control_total)
+
+              # 使用 effect_size 的绝对值 + 后验重叠综合判断
+              effect = abs(result["effect_size"])
+              overlap = result["posterior_overlap"]
+
+              # 安慰剂窗口不应有显著效果
+              # effect < 0.1 或者 overlap > 0.8 视为无显著效果
+              passed = effect < 0.1 or overlap > 0.8
+
+              return DiagnosticResult(
+                  name="placebo_window",
+                  passed=passed,
+                  metric_value=round(effect, 4),
+                  threshold=0.1,
+                  detail=f"安慰剂效应={effect:.4f}, 后验重叠={overlap:.4f}, "
+                         f"{'通过' if passed else '不通过 — 存在时间混淆'}",
+                  data={"bayesian_result": result, "window_hours": self.window_hours},
+              )
+
+
+      class DiagnosticEngine:
+          """三诊断引擎 — 组合三种诊断并输出综合报告。"""
+
+          def __init__(
+              self,
+              smd_threshold: float = 0.25,
+              overlap_threshold: float = 0.8,
+              placebo_window_hours: float = 2.0,
+              min_control_events: int = 5,
+          ):
+              self.balance = BalanceCheck(smd_threshold)
+              self.negative_control = NegativeControlCheck(overlap_threshold, min_control_events)
+              self.placebo = PlaceboWindowCheck(placebo_window_hours)
+
+          def run(
+              self,
+              treatment_covariates: list[dict],
+              control_covariates: list[dict],
+              sham_successes: int = 0, sham_total: int = 0,
+              control_successes: int = 0, control_total: int = 0,
+              pre_period_successes: int = 0, pre_period_total: int = 0,
+          ) -> DiagnosticsReport:
+              """运行全部三诊断。
+
+              Args:
+                  treatment_covariates: 变体组协变量
+                  control_covariates: 对照组协变量
+                  sham_successes/sham_total: 负对照（伪干预）数据
+                  control_successes/control_total: 负对照/安慰剂的对照组数据
+                  pre_period_successes/pre_period_total: 安慰剂窗口数据
+
+              Returns:
+                  DiagnosticsReport
+              """
+              balance_result = self.balance.evaluate(treatment_covariates, control_covariates)
+              negative_result = self.negative_control.evaluate(
+                  sham_successes, sham_total, control_successes, control_total)
+              placebo_result = self.placebo.evaluate(
+                  pre_period_successes, pre_period_total,
+                  control_successes, control_total)
+
+              all_passed = all([
+                  balance_result.passed,
+                  negative_result.passed,
+                  placebo_result.passed,
+              ])
+
+              return DiagnosticsReport(
+                  all_passed=all_passed,
+                  balance=balance_result,
+                  negative_control=negative_result,
+                  placebo_window=placebo_result,
+                  evaluated_at_utc=datetime.now(timezone.utc).isoformat(),
+              )
+      ```
+
+      关键设计决策：
+      - BalanceCheck 使用 SMD（标准化均值差），阈值 0.25（Cohen 小效应标准）
+      - NegativeControlCheck 样本不足时 pass（不阻止升档，避免冷启动问题）
+      - PlaceboWindowCheck 使用 effect_size + posterior_overlap 双重判断
+      - DiagnosticEngine.run() 一次性输出完整 DiagnosticsReport
+      - 所有诊断通过 BayesianEstimator（来自 S7.1）统一做贝叶斯计算
+    </step>
+
+    <step id="2" name="新增测试 test_s7_diagnostics.py">
+      新建 tests/test_s7_diagnostics.py：
+
+      ```python
+      """S7.2 三诊断引擎测试。"""
+
+      import pytest
+      from src.coach.diagnostics import (
+          BalanceCheck, NegativeControlCheck, PlaceboWindowCheck,
+          DiagnosticEngine, DiagnosticsReport,
+      )
+
+
+      class TestBalanceCheck:
+          def test_balanced_groups_pass(self):
+              check = BalanceCheck(smd_threshold=0.25)
+              treatment = [{"skill": 0.5, "engagement": 0.6}] * 10
+              control = [{"skill": 0.52, "engagement": 0.58}] * 10
+              result = check.evaluate(treatment, control)
+              assert result.passed is True
+              assert result.metric_value < 0.25
+
+          def test_imbalanced_groups_fail(self):
+              check = BalanceCheck(smd_threshold=0.25)
+              treatment = [{"skill": 0.9, "engagement": 0.9}] * 10
+              control = [{"skill": 0.1, "engagement": 0.1}] * 10
+              result = check.evaluate(treatment, control)
+              assert result.passed is False
+              assert result.metric_value >= 0.25
+
+          def test_empty_groups_returns_fail(self):
+              check = BalanceCheck()
+              result = check.evaluate([], [])
+              assert result.passed is False
+
+          def test_single_covariate(self):
+              check = BalanceCheck()
+              treatment = [{"score": 0.5}] * 5
+              control = [{"score": 0.51}] * 5
+              result = check.evaluate(treatment, control)
+              assert result.passed is True
+
+
+      class TestNegativeControlCheck:
+          def test_sham_no_effect_passes(self):
+              check = NegativeControlCheck(overlap_threshold=0.8)
+              result = check.evaluate(5, 10, 5, 10)  # 伪干预无差异
+              assert result.passed is True
+
+          def test_sham_large_effect_fails(self):
+              check = NegativeControlCheck(overlap_threshold=0.8)
+              result = check.evaluate(9, 10, 2, 10)  # 伪干预有显著差异
+              assert result.passed is False
+
+          def test_insufficient_data_skips(self):
+              check = NegativeControlCheck(min_events=10)
+              result = check.evaluate(1, 3, 1, 3)  # 样本不足
+              assert result.passed is True  # 样本不足时 pass
+
+
+      class TestPlaceboWindowCheck:
+          def test_no_pre_effect_passes(self):
+              check = PlaceboWindowCheck()
+              result = check.evaluate(5, 10, 5, 10)  # 安慰剂窗口无差异
+              assert result.passed is True
+
+          def test_large_pre_effect_fails(self):
+              check = PlaceboWindowCheck()
+              result = check.evaluate(9, 10, 2, 10)  # 安慰剂窗口有显著效应
+              assert result.passed is False
+
+          def test_insufficient_data_skips(self):
+              check = PlaceboWindowCheck()
+              result = check.evaluate(1, 2, 1, 2)  # 样本不足
+              assert result.passed is True
+
+
+      class TestDiagnosticEngine:
+          def test_all_pass(self):
+              engine = DiagnosticEngine()
+              report = engine.run(
+                  treatment_covariates=[{"skill": 0.5}] * 10,
+                  control_covariates=[{"skill": 0.51}] * 10,
+                  sham_successes=5, sham_total=10,
+                  control_successes=5, control_total=10,
+                  pre_period_successes=5, pre_period_total=10,
+              )
+              assert isinstance(report, DiagnosticsReport)
+              assert report.all_passed is True
+              assert report.balance.passed is True
+              assert report.negative_control.passed is True
+              assert report.placebo_window.passed is True
+
+          def test_balance_fails_blocks_all(self):
+              engine = DiagnosticEngine()
+              report = engine.run(
+                  treatment_covariates=[{"skill": 0.9}] * 10,
+                  control_covariates=[{"skill": 0.1}] * 10,
+                  sham_successes=5, sham_total=10,
+                  control_successes=5, control_total=10,
+                  pre_period_successes=5, pre_period_total=10,
+              )
+              assert report.all_passed is False
+
+          def test_causal_diagnostics_triple_format(self):
+              engine = DiagnosticEngine()
+              report = engine.run(
+                  treatment_covariates=[{"skill": 0.5}] * 10,
+                  control_covariates=[{"skill": 0.51}] * 10,
+                  sham_successes=5, sham_total=10,
+                  control_successes=5, control_total=10,
+                  pre_period_successes=5, pre_period_total=10,
+              )
+              triple = report.causal_diagnostics_triple()
+              for key in ("all_passed", "balance_smd", "balance_pass",
+                           "negative_control_overlap", "negative_control_pass",
+                           "placebo_effect", "placebo_pass"):
+                  assert key in triple, f"Missing key: {key}"
+
+          def test_to_dict_serializable(self):
+              engine = DiagnosticEngine()
+              report = engine.run(
+                  treatment_covariates=[{"skill": 0.5}] * 10,
+                  control_covariates=[{"skill": 0.51}] * 10,
+                  sham_successes=5, sham_total=10,
+                  control_successes=5, control_total=10,
+                  pre_period_successes=5, pre_period_total=10,
+              )
+              d = report.to_dict()
+              assert d["all_passed"] is True
+              assert "evaluated_at_utc" in d
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/diagnostics.py" type="new">~250 行: 三诊断引擎</change>
+    <change file="tests/test_s7_diagnostics.py" type="new">~100 行: 三诊断测试</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. src/coach/diagnostics.py 存在，包含 BalanceCheck/NegativeControlCheck/PlaceboWindowCheck/DiagnosticEngine
+    2. BalanceCheck 使用 SMD 方法，正确识别平衡/不平衡的组
+    3. NegativeControlCheck 使用 BayesianEstimator（S7.1）的后验重叠
+    4. PlaceboWindowCheck 正确识别安慰剂窗口效应
+    5. DiagnosticEngine.run() 输出 DiagnosticsReport 包含完整三诊断
+    6. DiagnosticsReport.causal_diagnostics_triple() 输出格式匹配 gate 5 需求
+    7. 样本不足时优雅降级（pass 而非 fail）
+    8. 新增 tests/test_s7_diagnostics.py 全部 pass
+    9. 990 已有 tests 全部 pass
+    10. 不修改 src/coach/mrt.py 和任何已冻结的文件
+  </success_criteria>
+</prompt>

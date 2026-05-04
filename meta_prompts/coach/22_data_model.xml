@@ -1,0 +1,149 @@
+<prompt>
+  <name>S2.2 — 三层图谱数据模型</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>2</phase>
+  <sub_stage>S2.2</sub_stage>
+
+  <role>
+    你是 S2.2 三层图谱数据模型构建器。你的唯一目标是创建 src/coach/data.py，
+    实现 entity_profiles 表和 facts 表的 SQLite 建表 + CRUD 操作。
+  </role>
+
+  <context>
+    S2.1 已冻结 contracts/user_profile.json，定义了 entity_profiles 和 facts 表 schema。
+    现在需要实现这两个表的创建和读写操作，与 Coherence 现有 SQLite 数据库共存。
+
+    现有 data/coherence.db 已有 ledger.events 表（由 EventStore 管理）。
+    新增的表必须使用同一数据库文件，不破坏已有表。
+  </context>
+
+  <inputs>
+    <required>
+      <file>contracts/user_profile.json</file>
+      <reference>src/inner/ledger/db.py (参考现有 SQLite 连接模式)</reference>
+    </required>
+    <depends_on>
+      <rule>S2.1 status == GO</rule>
+    </depends_on>
+  </inputs>
+
+  <execution>
+    <step>
+      1. 创建 src/coach/data.py，核心类 MemoryStore：
+      - 使用与 EventStore 相同的 data/coherence.db
+      - SQLite 线程安全（WAL 模式 + BEGIN IMMEDIATE）
+      - 延迟初始化（lazy init）
+    </step>
+    <step>
+      2. 实现 create_tables()：
+      ```sql
+      CREATE TABLE IF NOT EXISTS entity_profiles (
+          entity_id      TEXT PRIMARY KEY,
+          timeline       TEXT NOT NULL DEFAULT '[]',
+          session_tags   TEXT NOT NULL DEFAULT '[]',
+          device_id      TEXT,
+          created_at_utc TEXT NOT NULL,
+          updated_at_utc TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS facts (
+          fact_id           TEXT PRIMARY KEY,
+          claim             TEXT NOT NULL,
+          evidence_ids      TEXT DEFAULT '[]',
+          confidence        REAL CHECK(confidence >= 0 AND confidence <= 1),
+          timestamp_utc     TEXT NOT NULL,
+          ttl_seconds       INTEGER,
+          context_scope     TEXT,
+          reversibility_flag INTEGER DEFAULT 1 CHECK(reversibility_flag IN (0,1)),
+          source_tag        TEXT,
+          lifecycle_status  TEXT NOT NULL DEFAULT 'active'
+                            CHECK(lifecycle_status IN ('active','frozen','archived')),
+          created_at_utc    TEXT NOT NULL,
+          updated_at_utc    TEXT NOT NULL
+      );
+      ```
+    </step>
+    <step>
+      3. 实现 entity_profiles CRUD：
+      - upsert_entity(entity_id, timeline, session_tags, device_id) → None
+      - get_entity(entity_id) → dict | None
+    </step>
+    <step>
+      4. 实现 facts CRUD：
+      - insert_fact(fact_id, claim, confidence, ttl_seconds, context_scope, source_tag) → None
+      - get_fact(fact_id) → dict | None
+      - query_facts(context_scope=None, source_tag=None, lifecycle_status="active", limit=20) → list[dict]
+      - update_fact_lifecycle(fact_id, new_status) → None
+      - expire_facts() → int (将 ttl 过期的 facts 标记为 archived，返回过期数)
+    </step>
+    <step>
+      5. 异常处理：
+      - 所有写操作使用 try/except，失败记录日志不冒泡
+      - 数据库连接错误时降级返回空结果 + 日志
+    </step>
+    <step>
+      6. 创建 tests/test_coach_data.py：
+      - 测试建表不报错
+      - 测试 entity_profiles 的 upsert + get 往返
+      - 测试 facts 的 insert + query + lifecycle update
+      - 测试 expire_facts 的正确性
+      - 测试异常降级
+    </step>
+    <step>7. 运行 python -m pytest tests/ -q 确认 749 + 新增全部 pass</step>
+  </execution>
+
+  <outputs>
+    <new_file>src/coach/data.py</new_file>
+    <new_file>tests/test_coach_data.py</new_file>
+    <stage_report>reports/coach_phase2_s22_data.json</stage_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      src/coach/data.py 可导入且 create_tables 不报错 AND
+      entity_profiles 的 upsert+get 往返正确 AND
+      facts 的 insert/query/update/expire 全部正确 AND
+      已有 ledger.events 表不受影响 AND
+      全量回归 749 + 新增全部 pass AND
+      禁改区域零触碰
+    </go_when>
+    <no_go_when>
+      表创建失败 / CRUD 操作错误 / 损害已有 ledger 表 / 全量测试失败 / 禁改区域被触碰
+    </no_go_when>
+  </decision_logic>
+
+  <test_cases>
+    <test>
+      <name>test_create_tables_success</name>
+      <assert>MemoryStore().create_tables() 不抛出异常</assert>
+    </test>
+    <test>
+      <name>test_entity_upsert_get_roundtrip</name>
+      <assert>upsert_entity 后 get_entity 返回相同数据</assert>
+    </test>
+    <test>
+      <name>test_fact_insert_query</name>
+      <assert>insert_fact 后 query_facts 能检索到</assert>
+    </test>
+    <test>
+      <name>test_fact_lifecycle_update</name>
+      <assert>update_fact_lifecycle("archived") 后 query_facts 不再返回该 fact</assert>
+    </test>
+    <test>
+      <name>test_expire_facts</name>
+      <assert>expire_facts 返回过期的 fact 数量</assert>
+    </test>
+    <test>
+      <name>test_full_regression_passes</name>
+      <assert>pytest -q tests/ 输出 ≥ 749 passed</assert>
+    </test>
+  </test_cases>
+
+  <safety>
+    <rule>禁止修改 contracts/ 中已有合约</rule>
+    <rule>禁止修改 src/inner/**、src/middle/**</rule>
+    <rule>禁止修改已有 SQLite 表（只新增，不改已有 schema）</rule>
+    <rule>data/coherence.db 中的 ledger.events 表不受影响</rule>
+  </safety>
+</prompt>

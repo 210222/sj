@@ -1,0 +1,143 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 4 行为科学模型总控</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>4</phase>
+  <phase_name>行为科学模型 — TTM + SDT + 心流互信息</phase_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence 项目 Coach 轨 Phase 4 总控调度器。
+    你的目标是：将自适应AI教练系统从"关键词规则驱动"升级为"行为科学模型驱动"。
+    落地 自适应AI伴学.txt 和 ai教练.txt 中 TTM（阶段变化理论）、
+    SDT（自决理论）和心流互信息三个核心行为科学模型。
+  </role>
+
+  <mission>
+    1) 将 Phase 4 拆分为 S4.1→S4.5 五个子阶段并严格串行推进。
+    2) S4.1 冻结 contracts/ttm_stages.json（TTM 五阶段枚举 + 十改变过程 + 策略映射）。
+    3) S4.2 实现 src/coach/ttm.py TTM 状态机核心（阶段检测 + 转移 + 策略推荐）。
+    4) S4.3 实现 src/coach/sdt.py SDT 三需求评估（自主性/胜任感/关联性）。
+    5) S4.4 实现 src/coach/flow.py 心流互信息计算 + 轻量 BKT 知识追踪。
+    6) S4.5 升级 PolicyComposer + CoachAgent 集成三模型 + 全量回归 + 合约冻结。
+    7) 不触碰 contracts/已有合约、src/inner/、src/middle/ 等禁改区域。
+  </mission>
+
+  <project_boundaries>
+    <read_write_allowed>
+      <path>contracts/ttm_stages.json (新建、S4.5 冻结)</path>
+      <path>src/coach/ttm.py (新建：TTM 状态机)</path>
+      <path>src/coach/sdt.py (新建：SDT 动机评估)</path>
+      <path>src/coach/flow.py (新建：心流互信息 + BKT)</path>
+      <path>src/coach/composer.py (修改：PolicyComposer 三模型集成)</path>
+      <path>src/coach/agent.py (有限修改：集成 TTM/SDT/Flow)</path>
+      <path>config/coach_defaults.yaml (新增 TTM/SDT/Flow 配置段)</path>
+      <path>meta_prompts/coach/**</path>
+      <path>reports/coach_global_state.json</path>
+      <path>tests/test_ttm*.py, tests/test_sdt*.py, tests/test_flow*.py (新增)</path>
+    </read_write_allowed>
+    <forbidden_modification>
+      <path>contracts/ 已有合约 (ledger/audit/clock/resolver/gates/coach_dsl/user_profile)</path>
+      <path>src/inner/**</path>
+      <path>src/middle/**</path>
+      <path>src/outer/**</path>
+      <path>src/coach/dsl.py (合约对齐代码不可修改)</path>
+      <path>src/coach/state.py (状态追踪接口不可修改)</path>
+      <path>src/coach/data.py (Phase 2 三层图谱不可修改)</path>
+      <path>src/coach/memory.py (Phase 2 记忆引擎不可修改)</path>
+      <path>已有 tests/ (只新增不修改)</path>
+    </forbidden_modification>
+  </project_boundaries>
+
+  <reference_libraries>
+    <library name="pyBKT" purpose="贝叶斯知识追踪模型参考">
+      <url>https://github.com/CAHLR/pyBKT</url>
+      <usage>S4.4 参考 pyBKT 的 fit/predict 接口实现轻量 BKT</usage>
+      <read_first>models.py 中 BKT.fit/predict 签名、参数含义 (prior/guess/slip/learn)</read_first>
+    </library>
+    <library name="Letta (MemGPT)" purpose="反思性记忆管理 RMM 参考">
+      <url>https://github.com/letta-ai/letta</url>
+      <usage>S4.4 参考 Letta 的 sleep-time agent 反思压缩机制，指导 TTM stage 检测和 facts 压缩策略</usage>
+      <read_first>letta/agent.py 中 sleep() 函数的反思性记忆管理 loop</read_first>
+    </library>
+  </reference_libraries>
+
+  <design_principles>
+    <principle>三个模型是正交的阅读理解引擎——TTM 看阶段、SDT 看动机、心流看难度匹配</principle>
+    <principle>PolicyComposer 是三模型的"融合层"：TTM 粗筛 action_type → SDT 微调风格 → 心流定难度</principle>
+    <principle>pyBKT 仅做接口参考，不引入外部依赖——用纯 Python 实现 1-skill 轻量 BKT</principle>
+    <principle>三模型默认 OFF（通过配置启用），不影响已有 V18.8 运行时行为</principle>
+    <principle>只冻结 TTM 合约（枚举映射），SDT 和心流是内部实现细节</principle>
+  </design_principles>
+
+  <sub_stage_model>
+    <stage id="S4.1" name="TTM 合约冻结">
+      <description>新建 contracts/ttm_stages.json：TTM 五阶段枚举 + 十改变过程 + 策略→action_type 映射</description>
+      <file>contracts/ttm_stages.json</file>
+      <estimate>~120 行</estimate>
+    </stage>
+    <stage id="S4.2" name="TTM 状态机核心">
+      <description>实现 src/coach/ttm.py：TTMStateMachine — 阶段检测 + 转移验证 + 策略推荐</description>
+      <files>src/coach/ttm.py</files>
+      <estimate>~200 行</estimate>
+    </stage>
+    <stage id="S4.3" name="SDT 动机评估">
+      <description>实现 src/coach/sdt.py：SDTAssessor — 自主性/胜任感/关联性三轴评分</description>
+      <files>src/coach/sdt.py</files>
+      <estimate>~180 行</estimate>
+    </stage>
+    <stage id="S4.4" name="心流 + BKT">
+      <description>实现 src/coach/flow.py：FlowOptimizer — 互信息计算 + 轻量 BKT 知识追踪 + 难度调节</description>
+      <files>src/coach/flow.py</files>
+      <estimate>~200 行</estimate>
+    </stage>
+    <stage id="S4.5" name="Composer 升级 + 冻结">
+      <description>composer.py 集成三模型 + agent.py 布线 + 全量回归 + ttm_stages.json 冻结</description>
+      <files>composer.py, agent.py, contracts/ttm_stages.json</files>
+      <estimate>~180 行</estimate>
+    </stage>
+  </sub_stage_model>
+
+  <routing>
+    <command>/run_coach_s4_1</command>
+    <handler>meta_prompts/coach/41_ttm_contract.xml</handler>
+    <command>/run_coach_s4_2</command>
+    <handler>meta_prompts/coach/42_ttm_state_machine.xml</handler>
+    <command>/run_coach_s4_3</command>
+    <handler>meta_prompts/coach/43_sdt_assessment.xml</handler>
+    <command>/run_coach_s4_4</command>
+    <handler>meta_prompts/coach/44_flow_bkt.xml</handler>
+    <command>/run_coach_s4_5</command>
+    <handler>meta_prompts/coach/45_composer_upgrade_close.xml</handler>
+  </routing>
+
+  <state_management>
+    <state_file>reports/coach_global_state.json</state_file>
+    <status_flow>
+      <allowed>PENDING → IN_PROGRESS → GO | NO_GO</allowed>
+      <rule>上一子阶段非 GO，不得进入下一子阶段</rule>
+    </status_flow>
+  </state_management>
+
+  <safety_rules>
+    <rule>不得修改 contracts/ 已有 7 个冻结合约</rule>
+    <rule>不得修改 src/inner/**、src/middle/**、src/outer/**</rule>
+    <rule>ttm_stages.json 在 S4.5 之前可修改，之后不可删改字段</rule>
+    <rule>SDT 和心流不产生新合约——它们是内部实现</rule>
+    <rule>839 个已有 tests 必须全程保持 pass</rule>
+    <rule>三模型默认 OFF（通过 config 启用），不影响已有运行时</rule>
+    <rule>pyBKT 只做接口参考，不引入 pip 依赖</rule>
+  </safety_rules>
+
+  <success_definition>
+    Phase 4 结束时：
+    1. contracts/ttm_stages.json 已冻结（TTM 五阶段枚举 + 十改变过程 + 策略映射锁定）
+    2. src/coach/ttm.py 存在：TTMStateMachine 可做五阶段检测、转移验证、策略推荐
+    3. src/coach/sdt.py 存在：SDTAssessor 可评估自主性/胜任感/关联性三轴
+    4. src/coach/flow.py 存在：FlowOptimizer 可计算互信息和轻量 BKT 知识追踪
+    5. PolicyComposer.compose() 升级为三模型融合入口
+    6. CoachAgent 自动调用 TTM/SDT/Flow（通过配置启停）
+    7. 三模型默认 OFF，启用后不影响已有 V18.8 行为
+    8. 新增测试全部 pass + 839 已有测试零回归
+  </success_definition>
+</prompt>

@@ -1,0 +1,498 @@
+<prompt>
+  <name>Coherence Coach Track — S6.6 多智能体分层</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>6</phase>
+  <sub_stage>S6.6</sub_stage>
+  <sub_stage_name>多智能体分层 — CEO(CoachAgent) → Manager(Composer) → Specialist(Handlers)</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S6.6 实现者。
+    你的任务是：实现 CoachAgent 的三层次分层架构——
+    CoachAgent(CEO 层)、PolicyComposer(Manager 层)、专项处理器(Specialist 层)。
+    这是自适应AI伴学.txt 中多智能体 HiPlan 架构的精简落地。
+  </role>
+
+  <context>
+    已存在的代码和数据源：
+    - src/coach/agent.py: CoachAgent 类（当前为单层架构）
+    - src/coach/composer.py: PolicyComposer（当前直接输出 DSL 动作）
+    - src/coach/dsl.py: DSLBuilder 构建 DSL 动作包
+    - src/coach/state.py: UserStateTracker 用户状态
+    - src/coach/memory.py: SessionMemory（S6.5 升级后含三记忆）
+    - src/coach/ttm.py: TTMStateMachine（Phase 4）
+    - src/coach/sdt.py: SDTAssessor（Phase 4）
+    - src/coach/flow.py: FlowOptimizer（Phase 4）
+    - src/mapek/plan.py: Plan 策略生成（S6.3）
+    - contracts/coach_dsl.json: action_types 枚举
+
+    当前架构（单层）：
+    ```
+    CoachAgent.act()
+      → 读取状态 → 选择 action → compose → build DSL → 返回
+    ```
+
+    目标架构（三层）：
+    ```
+    CoachAgent (CEO 层):
+      → 读取 TTM 当前阶段 + 用户状态
+      → 判断宏观策略（维持 / 推进 / 回退 / 切换阶段）
+      → 传递策略意图给 PolicyComposer
+
+    PolicyComposer (Manager 层):
+      → 接收 CEO 策略 + Analyze 报告 + Memory 上下文
+      → 选择 action_type + 填充 payload
+      → 检查 Domain Passport → 跨域缴纳迁移税（Phase 5）
+      → 路由到对应 Handler
+
+    Handler (Specialist 层):
+      → ProbeHandler: 生成 probing prompt, 设置难度
+      → ChallengeHandler: 构建任务 objective, 设定评分标准
+      → ReflectHandler: 构建反思问题链
+      → ScaffoldHandler: 生成 step-by-step 支架
+      → 返回完整 DSL 动作包的 payload
+    ```
+
+    三层的职责边界：
+    - CEO 决定"做什么"（宏观方向）
+    - Manager 决定"怎么做"（动作选择 + 路由）
+    - Specialist 决定"具体做"（payload 填充）
+  </context>
+
+  <task>
+    1) 新建 src/coach/handlers.py：四个 Handler 类
+    2) 修改 src/coach/composer.py：PolicyComposer 升级为 Manager 层（动作选择 + Handler 路由）
+    3) 修改 src/coach/agent.py：CoachAgent 升级为 CEO 层（宏观判断 + 策略传递）
+    4) 新增 tests/test_multi_agent_layering.py
+    5) 不破坏现有 act() 接口签名
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="Handler 基类 + 四个专项处理器">
+      新建 src/coach/handlers.py：
+
+      ```python
+      """专项处理器层 (Specialist) — 每个 action_type 的 payload 生成逻辑。"""
+
+      class BaseHandler:
+          """Handler 基类。"""
+          def can_handle(self, action_type: str) -> bool:
+              raise NotImplementedError
+
+          def handle(self, action_type: str, context: dict) -> dict:
+              """生成 DSL 动作包的 payload 部分。"""
+              raise NotImplementedError
+
+
+      class ProbeHandler(BaseHandler):
+          """探查处理器：生成 probing prompt + 设置难度。"""
+          def can_handle(self, action_type: str) -> bool:
+              return action_type == "probe"
+
+          def handle(self, action_type: str, context: dict) -> dict:
+              intent = context.get("intent", "general")
+              return {
+                  "prompt": f"explore:{intent}",
+                  "expected_skill": context.get("skill_level", "beginner"),
+                  "max_duration_s": context.get("max_duration", 30),
+                  "adaptive_difficulty": True,
+              }
+
+
+      class ChallengeHandler(BaseHandler):
+          """挑战任务处理器：构建任务 objective + 评分标准。"""
+          def can_handle(self, action_type: str) -> bool:
+              return action_type == "challenge"
+
+          def handle(self, action_type: str, context: dict) -> dict:
+              return {
+                  "objective": context.get("objective", "Complete the task"),
+                  "difficulty": context.get("difficulty", "medium"),
+                  "hints_allowed": context.get("hints_allowed", 2),
+                  "scoring_criteria": context.get("criteria", ["correctness", "efficiency"]),
+              }
+
+
+      class ReflectHandler(BaseHandler):
+          """反思处理器：构建反思问题链。"""
+          def can_handle(self, action_type: str) -> bool:
+              return action_type == "reflect"
+
+          def handle(self, action_type: str, context: dict) -> dict:
+              return {
+                  "question": context.get("question", "What did you learn?"),
+                  "context_ids": context.get("context_ids", []),
+                  "format": context.get("format", "open"),
+                  "chain_depth": context.get("chain_depth", 1),
+              }
+
+
+      class ScaffoldHandler(BaseHandler):
+          """脚手架处理器：生成 step-by-step 支架。"""
+          def can_handle(self, action_type: str) -> bool:
+              return action_type == "scaffold"
+
+          def handle(self, action_type: str, context: dict) -> dict:
+              return {
+                  "step": context.get("step", 1),
+                  "support_level": context.get("support_level", "medium"),
+                  "next_step": context.get("next_step", "observe"),
+                  "fallback_step": context.get("fallback_step", "simplify"),
+              }
+
+
+      class HandlerRegistry:
+          """Handler 注册表：路由 action_type → Handler。"""
+
+          def __init__(self):
+              self._handlers: list[BaseHandler] = [
+                  ProbeHandler(),
+                  ChallengeHandler(),
+                  ReflectHandler(),
+                  ScaffoldHandler(),
+              ]
+
+          def get_handler(self, action_type: str) -> BaseHandler | None:
+              """根据 action_type 找到对应的 Handler。"""
+              for h in self._handlers:
+                  if h.can_handle(action_type):
+                      return h
+              return None
+
+          def handle(self, action_type: str, context: dict) -> dict | None:
+              """分发到对应 Handler。没有匹配时返回 None。"""
+              handler = self.get_handler(action_type)
+              if handler:
+                  return handler.handle(action_type, context)
+              return None
+
+          def register(self, handler: BaseHandler) -> None:
+              """注册额外的 Handler（扩展点）。"""
+              self._handlers.append(handler)
+      ```
+
+      设计说明：
+      - BaseHandler 接口定义了 can_handle() + handle()
+      - HandlerRegistry 管理路由，支持扩展注册
+      - 四个 Handler 对应四个 action_type（probe/challenge/reflect/scaffold）
+      - suggest/pulse/excursion/defer 由 PolicyComposer 直接处理（不需要 Specialist）
+    </step>
+
+    <step id="2" name="PolicyComposer 升级为 Manager 层">
+      修改 src/coach/composer.py：
+
+      ```python
+      # 在文件开头新增 imports
+      from src.coach.handlers import HandlerRegistry
+      from src.coach.dsl import DSLBuilder
+
+      class PolicyComposer:
+          """Manager 层：策略组合 → DSL 动作选择 + Handler 路由。
+
+          原 compose() 接口保持不变，内部增加三层调度逻辑。
+          """
+
+          def __init__(self, config: dict | None = None):
+              self._config = config or {}
+              self._handler_registry = HandlerRegistry()
+              self._dsl_builder = DSLBuilder()
+
+          def compose(self, ceo_strategy: dict | None = None,
+                      context: dict | None = None) -> dict:
+              """从 CEO 策略生成完整 DSL 动作包。
+
+              Args:
+                  ceo_strategy: CoachAgent(CEO) 的宏观策略输出
+                  context: 运行时上下文（用户状态 + memory + plan）
+
+              Returns: dict (action DSL packet)
+              """
+              ctx = context or {}
+              strategy = ceo_strategy or {}
+
+              # 1. 确定 action_type（来自 CEO 策略 或 回退到 context）
+              action_type = strategy.get("suggested_action_type") or \
+                            ctx.get("action_type", "suggest")
+
+              # 2. 构建 DSL 动作包 payload
+              handler_payload = self._handler_registry.handle(action_type, ctx)
+
+              # 3. 组装 DSL 动作包
+              packet = {
+                  "action_type": action_type,
+                  "payload": handler_payload or {},
+                  "intent": strategy.get("intent", ctx.get("intent", "general")),
+                  "domain_passport": self._build_passport(ctx),
+                  "trace_id": ctx.get("trace_id", self._gen_trace_id()),
+                  "meta": {
+                      "source": "PolicyComposer(Manager)",
+                      "ceo_strategy": strategy.get("macro_strategy", "maintain"),
+                      "handler_used": handler_payload is not None,
+                  },
+              }
+              return packet
+
+          def _build_passport(self, context: dict) -> dict:
+              """构建 Domain Competence Passport (Phase 5)。"""
+              return {
+                  "domain": context.get("domain", "general"),
+                  "evidence_level": context.get("evidence_level", "low"),
+                  "source_tag": context.get("source_tag", "rule"),
+                  "epistemic_warning": context.get("epistemic_warning"),
+              }
+
+          def _gen_trace_id(self) -> str:
+              import uuid
+              return f"trace_{uuid.uuid4().hex[:12]}"
+
+          # 保留原 compose() 兼容接口（单参数形式在 S6.7 前保持可用）
+          def compose_deprecated(self, user_state: dict, context: dict) -> dict:
+              """旧版 compose 接口 — 在 S6.7 集成后废弃。"""
+              return self.compose(ceo_strategy=None, context={**context, **user_state})
+      ```
+
+      重要：现有 composer.py 的 compose(user_state, context) 签名需要过渡。
+      建议方案：改为 compose(ceo_strategy=None, context=None) 新签名，
+      旧签名通过包装保留兼容。
+    </step>
+
+    <step id="3" name="CoachAgent 升级为 CEO 层">
+      修改 src/coach/agent.py：
+
+      ```python
+      # 新增 imports
+      from src.coach.composer import PolicyComposer
+
+      class CoachAgent:
+          """CEO 层：宏观阶段判断 + TTM 阶段切换 + 长期目标分解。
+
+          原 act() 接口签名保持不变。内部分为 CEO 判断 + Manager 执行两步。
+          """
+
+          def __init__(self, config: dict | None = None):
+              self._config = config or {}
+              self._composer = PolicyComposer(config)
+
+              # Phase 4 模型（延迟加载）
+              self._ttm = None
+              self._sdt = None
+              self._flow = None
+
+              # Phase 5 三件套（延迟加载）
+              self._counterfactual = None
+              self._cross_track = None
+              self._precedent = None
+
+              # S6.6 新增：Mapper 引用
+              self._handler_registry = self._composer._handler_registry
+
+          def act(self, user_input: str, context: dict | None = None) -> dict:
+              """CEO 入口：宏观判断 → 委托 Manager 生成 DSL 包 → 返回。
+
+              Returns: dict (DSL action packet with metadata)
+              """
+              ctx = context or {}
+
+              # ── CEO 层：宏观判断 ──
+              ceo_strategy = self._ceo_judge(user_input, ctx)
+
+              # ── Manager 层：动作选择 + Handler 路由 ──
+              packet = self._composer.compose(ceo_strategy, ctx)
+
+              # ── Coach 元信息 ──
+              packet["coach_meta"] = {
+                  "ceo_strategy": ceo_strategy.get("macro_strategy"),
+                  "ttm_stage": ceo_strategy.get("ttm_stage"),
+                  "phase6_enabled": self._config.get("mapek", {}).get("enabled", False),
+              }
+              return packet
+
+          def _ceo_judge(self, user_input: str, context: dict) -> dict:
+              """CEO 宏观判断逻辑。
+
+              阅读 TTM 当前阶段 + 用户状态 → 输出宏观策略 + 建议 action_type。
+              """
+              # 1. 获取当前 TTM 阶段（如果已启用）
+              ttm_stage = None
+              if self._ttm is not None:
+                  try:
+                      ttm_result = self._ttm.assess(context.get("user_data", {}))
+                      ttm_stage = ttm_result.get("stage")
+                  except Exception:
+                      pass
+
+              # 2. 宏观策略判断
+              macro = self._decide_macro_strategy(user_input, context, ttm_stage)
+
+              # 3. 建议 action_type（Manager 层最终决定）
+              suggested_action = self._suggest_action_type(macro, ttm_stage)
+
+              return {
+                  "macro_strategy": macro,
+                  "ttm_stage": ttm_stage,
+                  "suggested_action_type": suggested_action,
+                  "intent": context.get("intent", self._infer_intent(user_input)),
+                  "confidence": context.get("confidence", 0.5),
+              }
+
+          def _decide_macro_strategy(self, user_input: str,
+                                      context: dict,
+                                      ttm_stage: str | None) -> str:
+              """宏观策略：maintain | advance | retreat | switch_track"""
+              # 当前简单实现——优先使用 context 中的信号
+              if context.get("frustration_signal"):
+                  return "retreat"
+              if context.get("boredom_signal"):
+                  return "advance"
+              if ttm_stage == "precontemplation":
+                  return "maintain"
+              if ttm_stage == "maintenance":
+                  return "switch_track"
+              return "maintain"
+
+          def _suggest_action_type(self, macro: str,
+                                    ttm_stage: str | None) -> str:
+              """根据宏观策略推荐 action_type。"""
+              mapping = {
+                  "maintain": "suggest",
+                  "advance": "challenge",
+                  "retreat": "scaffold",
+                  "switch_track": "reflect",
+              }
+              return mapping.get(macro, "suggest")
+
+          def _infer_intent(self, user_input: str) -> str:
+              """从用户输入推断意图（轻量版本）。"""
+              user_lower = user_input.lower()
+              if any(w in user_lower for w in ("why", "how", "explain", "what")):
+                  return "inquiry"
+              if any(w in user_lower for w in ("help", "stuck", "can't", "confused")):
+                  return "help_request"
+              if any(w in user_lower for w in ("boring", "easy", "repeat")):
+                  return "boredom"
+              return "general"
+      ```
+
+      重要：现有 act() 签名为 act(self, user_input: str, context: dict | None = None)。
+      请保持与现有接口完全兼容。如果当前 coach/agent.py 的 act() 签名有差异，请适配而不是强制改写。
+
+      关键改动说明：
+      - act() 内部拆分为 _ceo_judge() → self._composer.compose()
+      - CEO 层输出 macro_strategy + ttm_stage + suggested_action_type
+      - Manager 层（PolicyComposer.compose）消费 CEO strategy + context → 产出 DSL 包
+      - 三件套加载保持延迟加载（与 Phase 5 兼容）
+      - TTM/SDT/Flow 保持延迟加载（Phase 4 兼容）
+    </step>
+
+    <step id="4" name="测试">
+      创建 tests/test_multi_agent_layering.py：
+
+      ```python
+      import pytest
+      from src.coach.handlers import (
+          ProbeHandler, ChallengeHandler, ReflectHandler,
+          ScaffoldHandler, HandlerRegistry,
+      )
+      from src.coach.composer import PolicyComposer
+
+      class TestHandlers:
+          def test_probe_handler(self):
+              h = ProbeHandler()
+              assert h.can_handle("probe") is True
+              assert h.can_handle("challenge") is False
+              payload = h.handle("probe", {"intent": "math", "skill_level": "intermediate"})
+              assert "prompt" in payload
+              assert payload["expected_skill"] == "intermediate"
+
+          def test_challenge_handler(self):
+              h = ChallengeHandler()
+              result = h.handle("challenge", {"objective": "Solve equation"})
+              assert result["objective"] == "Solve equation"
+
+          def test_reflect_handler(self):
+              h = ReflectHandler()
+              result = h.handle("reflect", {"question": "What?"})
+              assert result["question"] == "What?"
+
+          def test_scaffold_handler(self):
+              h = ScaffoldHandler()
+              result = h.handle("scaffold", {"step": 2})
+              assert result["step"] == 2
+
+      class TestHandlerRegistry:
+          def test_route_probe(self):
+              reg = HandlerRegistry()
+              handler = reg.get_handler("probe")
+              assert isinstance(handler, ProbeHandler)
+
+          def test_route_challenge(self):
+              reg = HandlerRegistry()
+              handler = reg.get_handler("challenge")
+              assert isinstance(handler, ChallengeHandler)
+
+          def test_route_unknown_returns_none(self):
+              reg = HandlerRegistry()
+              assert reg.get_handler("nonexistent") is None
+
+          def test_register_custom_handler(self):
+              reg = HandlerRegistry()
+              class CustomHandler(BaseHandler):
+                  def can_handle(self, at): return at == "custom"
+                  def handle(self, at, ctx): return {"custom": True}
+              reg.register(CustomHandler())
+              assert reg.get_handler("custom") is not None
+
+      class TestComposerManager:
+          def test_compose_with_ceo_strategy(self):
+              composer = PolicyComposer()
+              strategy = {
+                  "macro_strategy": "advance",
+                  "suggested_action_type": "challenge",
+                  "intent": "growth",
+              }
+              result = composer.compose(strategy, {"objective": "Level up"})
+              assert result["action_type"] == "challenge"
+              assert result["meta"]["ceo_strategy"] == "advance"
+
+          def test_compose_fallback_to_context(self):
+              composer = PolicyComposer()
+              result = composer.compose(None, {"action_type": "probe"})
+              assert result["action_type"] == "probe"
+
+          def test_compose_always_has_required_fields(self):
+              composer = PolicyComposer()
+              result = composer.compose(None, {})
+              for key in ("action_type", "payload", "intent",
+                          "domain_passport", "trace_id"):
+                  assert key in result, f"Missing key: {key}"
+      ```
+
+      说明：
+      - TestHandlers: 4 个测试，验证每个 Handler 的 can_handle 和 handle
+      - TestHandlerRegistry: 4 个测试，路由查找 + 未知类型 + 扩展注册
+      - TestComposerManager: 3 个测试，CEO 策略消费 + 回退 + 字段完整性
+      - 未包含 CoachAgent CEO 层测试（这些在 S6.7 集成时测试）
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/handlers.py" type="new">~120 行: BaseHandler + 4 个 Handler + HandlerRegistry</change>
+    <change file="src/coach/composer.py" type="modify">+80 行: PolicyComposer Manager 层升级 + Handler 路由</change>
+    <change file="src/coach/agent.py" type="modify">+100 行: CoachAgent CEO 层升级 + 三层调度</change>
+    <change file="tests/test_multi_agent_layering.py" type="new">~80 行: 11 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. src/coach/handlers.py 存在：BaseHandler + 4 个 Handler + HandlerRegistry
+    2. 每个 Handler 正确响应 can_handle 和 handle
+    3. HandlerRegistry 能匹配已知 action_type，未知时返回 None
+    4. HandlerRegistry.register() 支持扩展
+    5. PolicyComposer.compose(ceo_strategy, context) 返回完整 DSL 动作包
+    6. CEO 策略中的 suggested_action_type 被 Manager 消费
+    7. 没有 CEO 策略时回退到 context
+    8. 11 个测试全部通过
+    9. 916 已有测试无回归
+    10. 现有 act() 接口签名保持不变
+  </success_criteria>
+</prompt>

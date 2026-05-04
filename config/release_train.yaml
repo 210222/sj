@@ -1,0 +1,68 @@
+# C-Track Release Train — v1.0.0
+# Defines release cadence, freeze windows, intake rules, and exception policy.
+
+release_train:
+  version: "1.0.0"
+  effective_date: "2026-05-02"
+  cadence: "biweekly"
+  release_day_utc: "Wednesday"
+  release_cutoff_hours: 24
+
+  window:
+    description: "Freeze window: 24h before release cutoff. Only P0 emergency fixes and approved exceptions allowed."
+    freeze_start_before_release_h: 48
+    freeze_end_after_release_h: 2
+    window_rules:
+      allowed_during_freeze:
+        - "P0 emergency fixes with full gate suite"
+        - "Pre-approved exceptions with valid exception_id"
+      deferred_during_freeze:
+        - "P1 standard changes"
+        - "P2 minor changes"
+
+  intake_rules:
+    P0_critical:
+      min_gates: [release_gate, runtime_healthcheck, rollback_verify]
+      required_tests: "full (698 tests)"
+      approval: "project_owner"
+    P1_standard:
+      min_gates: [release_gate, runtime_healthcheck]
+      recommended_gates: [rollback_verify]
+      required_tests: "outer (29) + targeted module tests"
+      approval: "project_owner"
+    P2_minor:
+      min_gates: [release_gate]
+      recommended_gates: [runtime_healthcheck]
+      required_tests: "smoke (12) min; recommended: smoke + outer (41)"
+      approval: "auto"
+
+  exception_policy:
+    approval_required: "project_owner"
+    max_validity_days: 7
+    required_fields:
+      - exception_id
+      - requested_by
+      - approved_by
+      - reason
+      - tier_override
+      - expires_at_utc
+    audit_rule: "Every exception must be recorded in the release batch evidence."
+
+  rollback_policy:
+    anchors:
+      - outer_A_v1.0.0_frozen
+      - outer_B_v1.0.0_frozen
+    triggers:
+      - "P0 gate failure during release"
+      - "Schema drift detected post-release"
+      - "Reason code drift detected post-release"
+    action: "git checkout <anchor_tag>"
+    post_rollback: "Run release_gate + healthcheck + rollback_verify to confirm recovery."
+
+  evidence_requirements:
+    per_release:
+      - "release_gate output"
+      - "runtime_healthcheck output"
+      - "rollback_verify output"
+      - "c_observation_daily for release day"
+      - "exception log (if any exceptions used)"

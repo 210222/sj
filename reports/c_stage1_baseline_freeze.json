@@ -1,0 +1,32 @@
+{
+  "c_stage": "C1",
+  "c_status": "GO",
+  "c_baseline_ref": "outer_B_v1.0.0_frozen",
+  "c_source_state_ref": "reports/b_global_state.json",
+  "c_b8_signoff_ref": "reports/b_stage8_operational_freeze.json",
+  "c_evidence_chain_complete": true,
+  "c_freeze_scope": {
+    "forbidden": [
+      "contracts/**",
+      "src/inner/**",
+      "src/middle/**"
+    ],
+    "namespace_rule": "C track additions must use c_ prefix; do not overwrite A/B track historical fields",
+    "rollback_anchor": "outer_A_v1.0.0_frozen"
+  },
+  "c_blockers": [],
+  "c_final_decision": "GO",
+  "c_timestamp_utc": "2026-05-02T10:01:45.961436+00:00",
+  "c_freeze_verify": {
+    "c_release_gate_passed": true,
+    "c_release_gate_details": {
+      "smoke": "12/12",
+      "outer_tests": "29/29",
+      "full_regression": "698/698"
+    },
+    "c_schema_drift": false,
+    "c_reason_code_drift": false,
+    "c_verified_at_utc": "2026-05-02T10:07:06.143443+00:00",
+    "c_verified_by": "release_gate.py full run"
+  }
+}

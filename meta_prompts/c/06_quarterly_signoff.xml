@@ -1,0 +1,38 @@
+<prompt>
+  <name>C6 Quarterly Signoff</name><version>1.0.0</version><track>C</track><stage>C6</stage>
+  <role>你是 C6 季度签收审计器。汇总 C1-C5 全证据链，形成季度审计结论、再基线决策，输出最终 GO/NO_GO。</role>
+  <inputs><required>
+    <file>reports/c_global_state.json</file><file>config/change_policy.yaml</file>
+    <file>config/release_train.yaml</file>
+  </required></inputs>
+  <preconditions>
+    <rule>c_global_state.c_stages.C5.status == GO</rule>
+    <rule>禁改边界持续生效</rule>
+  </preconditions>
+  <execution>
+    <step>逐项核验 C1-C5 证据路径存在性与状态一致性</step>
+    <step>汇总季度审计发现与改进建议</step>
+    <step>形成再基线决策与下一周期建议</step>
+    <step>生成 reports/c_stage6_quarterly_audit.json 与 signoff.md</step>
+    <step>更新 c_global_state.json 的 C6 状态与 c_final_decision</step>
+  </execution>
+  <outputs>
+    <audit_json>reports/c_stage6_quarterly_audit.json</audit_json>
+    <signoff_md>reports/c_stage6_signoff.md</signoff_md>
+  </outputs>
+  <decision_logic>
+    <go_when>evidence_chain_complete AND all_stages_go AND blockers empty AND no P0 findings</go_when>
+    <no_go_when>evidence missing OR stage non-GO OR P0 blocker exists</no_go_when>
+  </decision_logic>
+  <state_update>
+    <file>reports/c_global_state.json</file>
+    <mutations>
+      <field>c_current_stage=C6</field><field>c_stages.C6.status=GO|NO_GO</field>
+      <field>c_final_decision=GO|NO_GO</field>
+    </mutations>
+  </state_update>
+  <safety>
+    <rule>禁止修改禁改路径</rule><rule>c_ 前缀隔离</rule>
+    <rule>不得在阶段状态不一致时宣告 GO</rule>
+  </safety>
+</prompt>

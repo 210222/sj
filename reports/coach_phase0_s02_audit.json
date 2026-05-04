@@ -1,0 +1,28 @@
+{
+  "coach_phase": 0,
+  "coach_sub_stage": "S0.2",
+  "coach_status": "GO",
+  "coach_name": "Audit Wiring",
+  "coach_description": "ledger 写入后调用 generate_audit_report()，输出 audit_level 字段",
+  "coach_changes": {
+    "modified": ["src/outer/orchestration/pipeline.py"],
+    "added": ["tests/test_pipeline_audit_integration.py"],
+    "lines_added": 25
+  },
+  "coach_pipeline_flow_after": "L0→L1→L2→Decision→Safety→Ledger→Audit",
+  "coach_test_results": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0
+  },
+  "coach_acceptance": {
+    "test_audit_level_present": "PASSED",
+    "test_audit_level_is_valid": "PASSED",
+    "test_first_run_audits_self": "PASSED",
+    "test_audit_with_no_events_returns_pass": "PASSED",
+    "test_audit_failure_does_not_crash": "PASSED"
+  },
+  "coach_full_regression": "703/703 pass",
+  "coach_decision": "GO",
+  "coach_timestamp_utc": "2026-05-02T12:05:00.000000+00:00"
+}

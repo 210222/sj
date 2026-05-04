@@ -72,9 +72,11 @@ class LedgerDB:
         """创建数据库文件、表结构和触发器。"""
         Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(self.db_path)
-        conn.executescript(SCHEMA_SQL)
-        conn.commit()
-        conn.close()
+        try:
+            conn.executescript(SCHEMA_SQL)
+            conn.commit()
+        finally:
+            conn.close()
 
     def get_connection(self) -> sqlite3.Connection:
         """获取数据库连接。"""
@@ -88,9 +90,11 @@ class LedgerDB:
         if not os.path.exists(self.db_path):
             return False
         conn = sqlite3.connect(self.db_path)
-        cursor = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='events'"
-        )
-        exists = cursor.fetchone() is not None
-        conn.close()
-        return exists
+        try:
+            cursor = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='events'"
+            )
+            exists = cursor.fetchone() is not None
+            return exists
+        finally:
+            conn.close()

@@ -1,0 +1,339 @@
+<prompt>
+  <name>Coherence Coach Track — S6.4 Knowledge 仓库</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>6</phase>
+  <sub_stage>S6.4</sub_stage>
+  <sub_stage_name>MAPE-K Knowledge 仓库 — Facts CRUD + 策略历史 + 证据存储</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S6.4 实现者。
+    你的任务是：实现 src/mapek/knowledge.py，封装 MAPE-K 的 Knowledge 组件。
+    这是 MAPE-K 循环的第五环，负责知识的存储、查询、置信度管理和生命周期维护。
+  </role>
+
+  <context>
+    已存在的代码和数据源：
+    - contracts/mapek_loop.json: Knowledge 接口定义
+    - src/coach/data.py: facts 表 schema（只读，不可修改）
+    - src/inner/ledger/db.py: SQLite 数据库连接
+
+    facts 表 schema（来自 ai教练.txt 三层图谱，Phase 2 已锁定）：
+    ```sql
+    CREATE TABLE IF NOT EXISTS facts (
+        fact_id           TEXT PRIMARY KEY,
+        claim             TEXT NOT NULL,
+        evidence_ids      TEXT,
+        confidence        REAL CHECK(confidence >= 0 AND confidence <= 1),
+        timestamp_utc     TEXT NOT NULL,
+        ttl_seconds       INTEGER,
+        context_scope     TEXT,
+        reversibility_flag INTEGER DEFAULT 1,
+        source_tag        TEXT,
+        lifecycle_status  TEXT DEFAULT 'active',
+        created_at_utc    TEXT NOT NULL,
+        updated_at_utc    TEXT NOT NULL
+    );
+    ```
+
+    mapek_loop.json 接口定义：
+    - Knowledge stores=["facts", "strategy_history", "experiment_evidence"]
+    - Knowledge query_methods=["exact_match", "semantic_search", "temporal_range"]
+    - Knowledge confidence_decay_rate=0.05
+    - Knowledge archival_after_days=30
+
+    Knowledge 组件的三个仓库：
+    1. facts: 封装现有 facts 表的 CRUD，附加置信度管理
+    2. strategy_history: 新建内存存储（或 facts 表扩展），记录每次 MAPE-K Plan 的策略
+    3. experiment_evidence: 新建内存存储，记录实验证据（为 Phase 7 MRT 做准备）
+  </context>
+
+  <task>
+    1) 新建 src/mapek/knowledge.py：Knowledge 类（三个仓库的 CRUD + 置信度衰减 + 查询接口）
+    2) 新增 tests/test_mapek_knowledge.py
+    3) 不修改 src/coach/data.py 或任何已有 facts 表 schema
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="Knowledge 类">
+      src/mapek/knowledge.py：
+
+      ```python
+      class Knowledge:
+          """MAPE-K 知识仓库：Facts CRUD + 策略历史 + 实验证据。
+
+          三个仓库：
+          - facts: 封装现有 facts 表 schema 的内存镜像
+          - strategy_history: MAPE-K Plan 输出历史记录
+          - experiment_evidence: 实验证据存储（为 Phase 7 MRT 准备）
+
+          职责：存储、查询、置信度衰减、生命周期管理。
+          """
+
+          def __init__(self, confidence_decay_rate: float = 0.05,
+                       archival_after_days: int = 30):
+              self._decay_rate = confidence_decay_rate
+              self._archival_days = archival_after_days
+              self._facts: dict[str, dict] = {}         # fact_id → fact
+              self._strategy_history: list[dict] = []    # 策略历史
+              self._experiments: list[dict] = []         # 实验证据
+
+          # ── Facts 操作 ───────────────────────────
+
+          def add_fact(self, fact: dict) -> str:
+              """添加事实。自动生成 fact_id 和时间戳。"""
+              import uuid
+              from datetime import datetime, timezone
+
+              now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+              fid = fact.get("fact_id") or f"fact_{uuid.uuid4().hex[:12]}"
+
+              entry = {
+                  "fact_id": fid,
+                  "claim": fact.get("claim", ""),
+                  "evidence_ids": fact.get("evidence_ids", "[]"),
+                  "confidence": fact.get("confidence", 0.5),
+                  "timestamp_utc": fact.get("timestamp_utc", now),
+                  "ttl_seconds": fact.get("ttl_seconds"),
+                  "context_scope": fact.get("context_scope"),
+                  "reversibility_flag": fact.get("reversibility_flag", 1),
+                  "source_tag": fact.get("source_tag", "hypothesis"),
+                  "lifecycle_status": "active",
+                  "created_at_utc": now,
+                  "updated_at_utc": now,
+              }
+              self._facts[fid] = entry
+              return fid
+
+          def get_fact(self, fact_id: str) -> dict | None:
+              return self._facts.get(fact_id)
+
+          def query_facts(self, query: dict) -> list[dict]:
+              """按条件查询 facts。支持 tag/scope/status 过滤。"""
+              results = list(self._facts.values())
+              if "source_tag" in query:
+                  results = [f for f in results
+                             if f.get("source_tag") == query["source_tag"]]
+              if "context_scope" in query:
+                  results = [f for f in results
+                             if f.get("context_scope") == query["context_scope"]]
+              if "lifecycle_status" in query:
+                  results = [f for f in results
+                             if f.get("lifecycle_status") == query["lifecycle_status"]]
+              if "min_confidence" in query:
+                  min_c = query["min_confidence"]
+                  results = [f for f in results if (f.get("confidence") or 0) >= min_c]
+              return results
+
+          def update_fact(self, fact_id: str, updates: dict) -> bool:
+              """更新事实字段。"""
+              if fact_id not in self._facts:
+                  return False
+              from datetime import datetime, timezone
+              now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+              for key in ("claim", "confidence", "evidence_ids",
+                          "context_scope", "lifecycle_status"):
+                  if key in updates:
+                      self._facts[fact_id][key] = updates[key]
+              self._facts[fact_id]["updated_at_utc"] = now
+              return True
+
+          # ── 策略历史 ────────────────────────────
+
+          def record_strategy(self, strategy: dict) -> None:
+              """记录一次 MAPE-K Plan 的策略输出。"""
+              from datetime import datetime, timezone
+              entry = dict(strategy)
+              entry["recorded_at"] = datetime.now(timezone.utc).strftime(
+                  '%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+              self._strategy_history.append(entry)
+
+          def get_strategy_history(self, limit: int = 10) -> list[dict]:
+              """获取最近的策略历史。"""
+              return self._strategy_history[-limit:]
+
+          # ── 实验证据 (Phase 7 MRT 准备) ───────────
+
+          def record_experiment(self, experiment: dict) -> None:
+              """记录一次实验证据。"""
+              from datetime import datetime, timezone
+              entry = dict(experiment)
+              entry["recorded_at"] = datetime.now(timezone.utc).strftime(
+                  '%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+              self._experiments.append(entry)
+
+          def get_experiments(self, variant_id: str | None = None) -> list[dict]:
+              """按 variant_id 查询实验证据。"""
+              if variant_id:
+                  return [e for e in self._experiments
+                          if e.get("variant_id") == variant_id]
+              return list(self._experiments)
+
+          # ── 置信度管理 ──────────────────────────
+
+          def decay_confidence(self) -> int:
+              """对所有 active facts 执行置信度衰减。返回受影响的事实数。"""
+              count = 0
+              for fid, fact in self._facts.items():
+                  if fact.get("lifecycle_status") != "active":
+                      continue
+                  old_conf = fact.get("confidence", 0.5)
+                  new_conf = max(0.0, old_conf - self._decay_rate)
+                  fact["confidence"] = round(new_conf, 4)
+                  count += 1
+              return count
+
+          def archive_expired(self) -> int:
+              """归档过期事实（TTL 到期 或 超过 archival_days 未更新）。"""
+              from datetime import datetime, timezone
+              import dateutil.parser  # 可选：或用简单字符串比较
+
+              now = datetime.now(timezone.utc)
+              count = 0
+              for fid, fact in list(self._facts.items()):
+                  if fact.get("lifecycle_status") != "active":
+                      continue
+
+                  # TTL 检查
+                  ttl = fact.get("ttl_seconds")
+                  if ttl is not None:
+                      ts = fact.get("timestamp_utc", "")
+                      try:
+                          created = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                          if (now - created).total_seconds() > ttl:
+                              fact["lifecycle_status"] = "archived"
+                              count += 1
+                              continue
+                      except Exception:
+                          pass
+
+                  # 超过 archival_days 未更新
+                  updated_str = fact.get("updated_at_utc", "")
+                  try:
+                      updated = datetime.fromisoformat(updated_str.replace("Z", "+00:00"))
+                      if (now - updated).days > self._archival_days:
+                          fact["lifecycle_status"] = "archived"
+                          count += 1
+                      except Exception:
+                          pass
+              return count
+
+          # ── 统计 ────────────────────────────────
+
+          def stats(self) -> dict:
+              """返回知识仓库统计。"""
+              active = sum(1 for f in self._facts.values()
+                           if f.get("lifecycle_status") == "active")
+              archived = sum(1 for f in self._facts.values()
+                             if f.get("lifecycle_status") == "archived")
+              return {
+                  "total_facts": len(self._facts),
+                  "active_facts": active,
+                  "archived_facts": archived,
+                  "strategy_records": len(self._strategy_history),
+                  "experiment_records": len(self._experiments),
+              }
+      ```
+
+      设计说明：
+      - 当前使用内存存储（dict/list），未来可迁移到 SQLite
+      - facts 的 schema 与 data.py 的 facts 表对齐，便于后续持久化
+      - strategy_history 和 experiment_evidence 目前是内存列表
+      - archive_expired() 同时检查 TTL 和未更新时间
+      - dateutil.parser 为非必需依赖：当前使用 str.replace + fromisoformat，免安装
+    </step>
+
+    <step id="2" name="测试">
+      创建 tests/test_mapek_knowledge.py：
+
+      ```python
+      import pytest
+      from src.mapek.knowledge import Knowledge
+
+      class TestKnowledgeFacts:
+          def test_add_and_get_fact(self):
+              k = Knowledge()
+              fid = k.add_fact({"claim": "User prefers short sessions",
+                                "source_tag": "user_history"})
+              assert k.get_fact(fid) is not None
+
+          def test_query_by_source_tag(self):
+              k = Knowledge()
+              k.add_fact({"claim": "A", "source_tag": "rule"})
+              k.add_fact({"claim": "B", "source_tag": "hypothesis"})
+              results = k.query_facts({"source_tag": "rule"})
+              assert len(results) == 1
+              assert results[0]["claim"] == "A"
+
+          def test_update_fact(self):
+              k = Knowledge()
+              fid = k.add_fact({"claim": "Old claim"})
+              k.update_fact(fid, {"claim": "New claim"})
+              assert k.get_fact(fid)["claim"] == "New claim"
+
+          def test_update_nonexistent_fact(self):
+              k = Knowledge()
+              assert k.update_fact("nonexistent", {"claim": "X"}) is False
+
+      class TestStrategyHistory:
+          def test_record_and_retrieve(self):
+              k = Knowledge()
+              k.record_strategy({"target_action_type": "probe", "intensity": "low"})
+              history = k.get_strategy_history()
+              assert len(history) == 1
+              assert history[0]["target_action_type"] == "probe"
+
+      class TestConfidenceManagement:
+          def test_decay_reduces_confidence(self):
+              k = Knowledge(decay_rate=0.1)
+              fid = k.add_fact({"claim": "Test", "confidence": 0.9})
+              k.decay_confidence()
+              assert k.get_fact(fid)["confidence"] == 0.8
+
+          def test_archive_expired_by_ttl(self):
+              k = Knowledge()
+              from datetime import datetime, timezone
+              old = datetime.now(timezone.utc).isoformat()
+              fid = k.add_fact({"claim": "Old fact", "timestamp_utc": old,
+                                "ttl_seconds": 1})
+              import time
+              time.sleep(1.1)
+              count = k.archive_expired()
+              assert count >= 1
+              assert k.get_fact(fid)["lifecycle_status"] == "archived"
+
+      class TestStats:
+          def test_stats_counts(self):
+              k = Knowledge()
+              k.add_fact({"claim": "A"})
+              k.add_fact({"claim": "B"})
+              k.record_strategy({"action": "probe"})
+              s = k.stats()
+              assert s["total_facts"] == 2
+              assert s["strategy_records"] == 1
+      ```
+
+      说明：
+      - 8 个测试覆盖：添加/查询/更新事实、策略历史、置信度衰减、TTL 过期、统计
+      - TTL 测试含 time.sleep(1.1)，这是有意为之：验证真实到期判定
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/mapek/knowledge.py" type="new">~140 行: Knowledge 三个仓库 + 置信度管理 + 过期归档</change>
+    <change file="tests/test_mapek_knowledge.py" type="new">~70 行: 8 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. src/mapek/knowledge.py 存在
+    2. add_fact() + get_fact() + query_facts() + update_fact() 全部可用
+    3. record_strategy() + get_strategy_history() 可用
+    4. record_experiment() + get_experiments() 可用（为 Phase 7 准备）
+    5. decay_confidence() 按 rate 降低 active facts 的置信度
+    6. archive_expired() 同时检查 TTL 和未更新时间
+    7. stats() 返回准确计数
+    8. 8 个测试全部通过
+    9. 916 已有测试无回归
+  </success_criteria>
+</prompt>

@@ -1,0 +1,309 @@
+<prompt>
+  <name>Coherence Coach Track — S4.2 TTM 状态机核心</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>4</phase>
+  <sub_stage>S4.2</sub_stage>
+  <sub_stage_name>TTM 状态机 — 阶段检测 + 转移验证 + 策略推荐</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S4.2 实现者。
+    你的任务是：实现 src/coach/ttm.py，包含 TTMStateMachine 类，
+    提供五阶段检测、阶段间转移验证、阶段→策略推荐三大能力。
+    S4.1 的 contracts/ttm_stages.json 是此模块的只读数据源。
+  </role>
+
+  <context>
+    已存在的合约和代码：
+    - contracts/ttm_stages.json: 五阶段枚举、十改变过程、stage_strategy_map（S4.1 已冻结）
+    - src/coach/state.py: UserStateTracker 提供 6 字段用户状态（state/confidence/correction/magnitude/feasible/uncertainty）
+    - src/coach/memory.py: SessionMemory 提供 recall() 历史会话记忆
+    - config/coach_defaults.yaml: 已有 Phase 1-3 配置段
+
+    TTM 转移规则（来自 自适应AI伴学.txt）：
+    - 允许的转移：相邻正向 (PC→C, C→P, P→A, A→M)，维持状态，回退到前一阶段
+    - 不允许的跳跃：PC→A, PC→M, C→M（至少跨越一个阶段）
+    - 前意向(PC)→意向(C): 当认知指标上升超过阈值
+    - 意向(C)→准备(P): 当用户开始设定目标/请求具体方法
+    - 准备(P)→行动(A): 当用户开始执行具体行为
+    - 行动(A)→维持(M): 当行为持续 >30 天 或 连续成功 >10 次
+    - 任何阶段可回退（relapse）到前一阶段
+  </context>
+
+  <task>
+    实现 TTMStateMachine 类，提供阶段检测、转移验证、策略推荐。
+    新增 config/coach_defaults.yaml TTM 配置段。
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="配置段">
+      在 config/coach_defaults.yaml 新增 TTM 配置段：
+      ```yaml
+      # ── Phase 4: TTM 阶段变化理论 ────────────────
+      ttm:
+        enabled: false
+        detect:
+          confidence_threshold: 0.6       # 阶段检测置信度阈值
+          min_interactions: 5              # 最小检测交互次数
+        transition:
+          allow_forward_jump: false       # 是否允许跨阶段跳跃
+          action_to_maintenance_turns: 10  # 行动→维持所需回合数
+        weights:
+          cognitive: 0.3                   # 认知指标权重
+          behavioral: 0.3                 # 行为指标权重
+          emotional: 0.2                  # 情绪指标权重
+          social: 0.2                     # 社交指标权重
+      ```
+    </step>
+    <step id="2" name="TTMStateMachine 核心类">
+      在 src/coach/ttm.py 中实现：
+
+      ```python
+      import json
+      from pathlib import Path
+
+      CONTRACT_PATH = Path(__file__).resolve().parent.parent.parent / "contracts" / "ttm_stages.json"
+      with open(CONTRACT_PATH, encoding="utf-8") as f:
+          _CONTRACT = json.load(f)
+
+      STAGES = [s["id"] for s in _CONTRACT["stages"]]
+      STAGE_STRATEGY_MAP = _CONTRACT["stage_strategy_map"]
+
+
+      class TTMResult:
+          """TTM 状态机输出。"""
+          def __init__(self, current_stage: str, confidence: float,
+                       valid_transitions: list[str],
+                       recommended_strategy: dict):
+              self.current_stage = current_stage
+              self.confidence = confidence
+              self.valid_transitions = valid_transitions
+              self.recommended_strategy = recommended_strategy
+
+
+      class TTMStateMachine:
+          """TTM 五阶段状态机。
+
+          核心方法：
+          - assess(user_data, history) → TTMResult
+          - validate_transition(from_stage, to_stage) → bool
+          - get_strategy(stage) → dict
+          """
+
+          STAGES = STAGES
+          # 有效转移矩阵：forward one step, stay, backward one step
+          _VALID_TRANSITIONS = {
+              "precontemplation": ["precontemplation", "contemplation"],
+              "contemplation": ["precontemplation", "contemplation", "preparation"],
+              "preparation": ["contemplation", "preparation", "action"],
+              "action": ["preparation", "action", "maintenance"],
+              "maintenance": ["action", "maintenance"],
+          }
+
+          def __init__(self, config: dict | None = None):
+              self._config = config or {}
+              self._current_stage: str = "precontemplation"
+              self._stage_confidence: float = 0.0
+      ```
+    </step>
+    <step id="3" name="阶段检测 assess()">
+      实现 assess() 方法：
+
+      ```python
+      def assess(self, user_data: dict, history: list[dict] | None = None) -> dict:
+          """根据用户数据判断当前 TTM 阶段。
+
+          Args:
+              user_data: dict with:
+                  - cognitive_indicators: list[float] 认知指标
+                  - behavioral_indicators: list[float] 行为指标
+                  - emotional_indicators: list[float] 情绪指标
+                  - session_count: int 会话数
+              history: 历史 TTMResult 列表（可选）
+
+          Returns: {
+              "current_stage": str,
+              "confidence": float,
+              "valid_transitions": list[str],
+              "recommended_strategy": dict,
+              "next_stage_candidates": list[dict]
+          }
+          """
+      ```
+
+      检测逻辑：
+      - 从 user_data 计算加权综合得分（用 config weights）
+      - 根据得分分布判断最可能的阶段
+      - 如果提供了 history，结合 transition 约束做平滑（避免阶段跳跃）
+      - confidence 基于得分与阶段阈值的距离计算
+      - 返回中包含 recommended_strategy（从 STAGE_STRATEGY_MAP 读取）
+    </step>
+    <step id="4" name="转移验证 + 策略推荐">
+      ```python
+      def validate_transition(self, to_stage: str) -> bool:
+          """从当前阶段转移到 to_stage 是否合法。"""
+          valid = self._VALID_TRANSITIONS.get(self._current_stage, [])
+          return to_stage in valid
+
+      def get_strategy(self, stage: str | None = None) -> dict:
+          """获取指定阶段的策略映射（来自合约 stage_strategy_map）。"""
+          target = stage or self._current_stage
+          return dict(STAGE_STRATEGY_MAP.get(target, {}))
+
+      def transition_to(self, to_stage: str) -> dict:
+          """执行阶段转移（如合法）。返回结果 dict。"""
+          if not self.validate_transition(to_stage):
+              return {"success": False, "reason": f"Invalid transition: {self._current_stage} → {to_stage}"}
+          self._current_stage = to_stage
+          return {
+              "success": True,
+              "from_stage": self._current_stage,  # 注意：此处 state 已更新
+              "to_stage": to_stage,
+              "strategy": self.get_strategy(to_stage),
+          }
+      ```
+
+      注意：transition_to 返回的 from_stage 实现有个小问题——需要在更新之前记住旧值。
+      正确实现：先保存旧阶段，再设置新阶段。
+    </step>
+    <step id="5" name="阶段检测辅助方法">
+      ```python
+      def _compute_stage_scores(self, user_data: dict) -> dict[str, float]:
+          """对每个阶段计算匹配分数 [0,1]。"""
+          # 从 user_data 中提取各指标
+          cog = user_data.get("cognitive_indicators", [])
+          beh = user_data.get("behavioral_indicators", [])
+          emo = user_data.get("emotional_indicators", [])
+          soc = user_data.get("social_indicators", [])
+
+          w = self._config.get("weights", {})
+          w_cog = w.get("cognitive", 0.3)
+          w_beh = w.get("behavioral", 0.3)
+          w_emo = w.get("emotional", 0.2)
+          w_soc = w.get("social", 0.2)
+
+          # 基础得分（简化实现：用指标均值）
+          # 阶段特定的得分逻辑
+          scores = {}
+          for stage in self.STAGES:
+              s = 0.0
+              # PC: 低认知 → 高得分
+              if stage == "precontemplation":
+                  s = 1.0 - (sum(cog[-3:]) / max(len(cog[-3:]), 1)) if cog else 0.5
+              # C: 中等认知 + 低行为
+              elif stage == "contemplation":
+                  avg_cog = sum(cog[-3:]) / max(len(cog[-3:]), 1) if cog else 0.5
+                  avg_beh = sum(beh[-3:]) / max(len(beh[-3:]), 1) if beh else 0.0
+                  s = avg_cog * 0.7 + (1.0 - avg_beh) * 0.3
+              # P: 高认知 + 开始计划
+              elif stage == "preparation":
+                  s = (sum(cog[-3:]) / max(len(cog[-3:]), 1)) if cog else 0.3
+              # A: 高行为
+              elif stage == "action":
+                  s = sum(beh[-5:]) / max(len(beh[-5:]), 1) if beh else 0.0
+              # M: 持续行为 + 社交支持
+              elif stage == "maintenance":
+                  s = (sum(beh[-10:]) / max(len(beh[-10:]), 1)) * 0.6 + \
+                      (sum(soc[-5:]) / max(len(soc[-5:]), 1)) * 0.4 if (beh or soc) else 0.0
+              scores[stage] = round(max(0.0, min(1.0, s)), 4)
+          return scores
+      ```
+    </step>
+    <step id="6" name="测试">
+      创建 tests/test_ttm.py：
+
+      ```python
+      import pytest
+      from src.coach.ttm import TTMStateMachine
+
+      class TestTTMBasics:
+          def test_stages_loaded_from_contract(self):
+              ttm = TTMStateMachine()
+              assert ttm.STAGES == ["precontemplation", "contemplation",
+                                    "preparation", "action", "maintenance"]
+
+          def test_default_stage_precontemplation(self):
+              ttm = TTMStateMachine()
+              assert ttm._current_stage == "precontemplation"
+
+      class TestTTMAssess:
+          def test_low_cognitive_scores_precontemplation(self):
+              ttm = TTMStateMachine()
+              result = ttm.assess({
+                  "cognitive_indicators": [0.1, 0.2],
+                  "behavioral_indicators": [0.0],
+              })
+              assert result["current_stage"] == "precontemplation"
+
+          def test_high_behavioral_scores_action(self):
+              ttm = TTMStateMachine()
+              result = ttm.assess({
+                  "cognitive_indicators": [0.7, 0.8],
+                  "behavioral_indicators": [0.8, 0.9, 0.85, 0.9, 0.95],
+              })
+              assert result["current_stage"] == "action"
+
+          def test_assess_returns_strategy(self):
+              ttm = TTMStateMachine()
+              result = ttm.assess({"cognitive_indicators": [0.5], "behavioral_indicators": [0.1]})
+              assert "recommended_strategy" in result
+              assert "recommended_action_types" in result["recommended_strategy"]
+
+      class TestTTMTransition:
+          def test_valid_adjacent_forward(self):
+              ttm = TTMStateMachine()
+              ttm._current_stage = "contemplation"
+              assert ttm.validate_transition("preparation")
+
+          def test_invalid_jump(self):
+              ttm = TTMStateMachine()
+              ttm._current_stage = "precontemplation"
+              assert not ttm.validate_transition("action")
+
+          def test_transition_to_executes(self):
+              ttm = TTMStateMachine()
+              ttm._current_stage = "contemplation"
+              result = ttm.transition_to("preparation")
+              assert result["success"]
+              assert ttm._current_stage == "preparation"
+
+          def test_invalid_transition_returns_false(self):
+              ttm = TTMStateMachine()
+              ttm._current_stage = "precontemplation"
+              result = ttm.transition_to("action")
+              assert not result["success"]
+
+      class TestTTMStrategy:
+          def test_strategy_for_stage(self):
+              ttm = TTMStateMachine()
+              s = ttm.get_strategy("precontemplation")
+              assert "recommended_action_types" in s
+              assert "avoid_action_types" in s
+
+          def test_strategy_changes_per_stage(self):
+              ttm = TTMStateMachine()
+              pc = ttm.get_strategy("precontemplation")
+              act = ttm.get_strategy("action")
+              assert pc["recommended_action_types"] != act["recommended_action_types"]
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/ttm.py" type="new">~150 行: TTMStateMachine + TTMResult + assess/validate_transition/get_strategy/transition_to</change>
+    <change file="config/coach_defaults.yaml" type="append">+15 行: ttm 配置段 (detect/transition/weights)</change>
+    <change file="tests/test_ttm.py" type="new">~70 行: 12 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. TTMStateMachine 从 contracts/ttm_stages.json 读取阶段定义
+    2. assess() 返回正确阶段（低认知→前意向，高行为→行动）
+    3. validate_transition() 正确拦截跨阶段跳跃
+    4. transition_to() 执行合法转移、拒绝非法转移
+    5. get_strategy() 返回合约中的策略映射
+    6. 配置段可独立启停三模型
+    7. 12 个测试全部通过
+    8. 839 + 前序新增测试无回归
+  </success_criteria>
+</prompt>

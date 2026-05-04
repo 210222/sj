@@ -1,0 +1,19 @@
+{
+  "b_stage": "B1",
+  "b_inputs": [
+    "reports/prod_deploy_validation.json",
+    "reports/b_global_state.json",
+    "config/release_policy.yaml"
+  ],
+  "b_outputs": [
+    "reports/b_stage1_scope_lock.json",
+    "reports/b_stage1_manifest.json"
+  ],
+  "b_operator_mode": "B_TRACK_CONTROLLED_EVOLUTION",
+  "b_evidence_refs": [
+    "reports/b_stage1_scope_lock.json"
+  ],
+  "b_next_stage": "B2",
+  "b_next_stage_prompt": "meta_prompts/b/02_design_freeze.xml",
+  "b_timestamp_utc": "2026-05-02T06:15:00.000000+00:00"
+}

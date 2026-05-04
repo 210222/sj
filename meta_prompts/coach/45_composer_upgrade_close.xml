@@ -1,0 +1,341 @@
+<prompt>
+  <name>Coherence Coach Track — S4.5 Composer 升级 + 冻结</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>4</phase>
+  <sub_stage>S4.5</sub_stage>
+  <sub_stage_name>PolicyComposer 三模型融合 + CoachAgent 布线 + 全量回归</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S4.5 实现者。
+    你的任务是：将 TTM 状态机、SDT 动机评估、心流互信息三个模型
+    集成到 PolicyComposer 和 CoachAgent 中，完成三模型融合。
+    然后执行全量回归、冻结 TTM 合约、更新全局状态。
+  </role>
+
+  <context>
+    已完成的子阶段：
+    - S4.1: contracts/ttm_stages.json 已冻结
+    - S4.2: src/coach/ttm.py TTMStateMachine（阶段检测 + 转移 + 策略）
+    - S4.3: src/coach/sdt.py SDTAssessor（三轴动机评估）
+    - S4.4: src/coach/flow.py FlowOptimizer（心流 + BKT）
+
+    当前 composer.py (103 行) 的状态：
+    - PolicyComposer.compose() 接收 user_state, intent, relevant, excursion_mode
+    - _select_action_type 通过关键词匹配
+    - 辅助功能: assist_level, _infer_domain
+    - 是一个"简单关键词→action_type"映射器
+
+    CoachAgent 当前状态（421 行）：
+    - act() 步骤 4 调用 `self.composer.compose(user_state, intent, relevant, excursion_mode)`
+    - 已有 V18.8 V18.8 运行时绑定（脉冲/远足/双账本/关系层）
+    - _no_assist_scores 记录
+    - _pulse_history 记录
+
+    融合策略层级（三模型如何协作）：
+    ```
+    TTM: 粗筛 action_type（"用户处于什么阶段→应该做什么类型的动作"）
+      ↓
+    SDT: 微调风格（"三需求满足程度→对话策略和辅助强度"）
+      ↓
+    心流: 定难度（"当前技能 vs 难度匹配状态→调节难度"）
+      ↓
+    compose(): 输出最终的 action dict
+    ```
+  </context>
+
+  <task>
+    1) PolicyComposer 升级为三模型融合入口
+    2) CoachAgent.act() 集成 TTM + SDT + Flow
+    3) 全量回归
+    4) ttm_stages.json 冻结标记 + config 冻结标记
+    5) coach_global_state.json 更新
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="Config Phase 4 完整化">
+      确保 config/coach_defaults.yaml 包含完整的 Phase 4 配置：
+
+      ```yaml
+      # ── Phase 4: TTM 阶段变化理论 ────────────────
+      ttm:
+        enabled: false
+        # ... (S4.2 已添加)
+
+      # ── Phase 4: SDT 自决理论 ────────────────────
+      sdt:
+        enabled: false
+        # ... (S4.3 已添加)
+
+      # ── Phase 4: 心流 + BKT ──────────────────────
+      flow:
+        enabled: false
+        # ... (S4.4 已添加)
+      ```
+
+      各模型默认 `enabled: false`。启用顺序（推荐）：先 TTM → 再 SDT → 最后心流。
+    </step>
+    <step id="2" name="PolicyComposer 升级">
+      修改 src/coach/composer.py：
+
+      ```python
+      class PolicyComposer:
+          def compose(
+              self,
+              user_state: dict | None = None,
+              intent: str = "",
+              relevant: list[dict] | None = None,
+              excursion_mode: bool = False,
+              ttm_strategy: dict | None = None,      # ★ 新增
+              sdt_profile: dict | None = None,        # ★ 新增
+              flow_result: dict | None = None,         # ★ 新增
+          ) -> dict:
+      ```
+
+      融合逻辑：
+
+      ```python
+      # 1. TTM 粗筛 action_type
+      if ttm_strategy:
+          recommended = ttm_strategy.get("recommended_action_types", [])
+          avoided = ttm_strategy.get("avoid_action_types", [])
+          # 如果当前 intent 匹配的 action_type 在被避免列表中，重定向到推荐的第一个
+          if action_type in avoided:
+              action_type = recommended[0] if recommended else action_type
+      ```
+
+      ```python
+      # 2. SDT 微调风格
+      if sdt_profile:
+          advice = sdt_profile.get("advice", {})
+          # 低自主性 → 增加 reflect（让用户做更多选择）
+          if advice.get("adjust_autonomy_support"):
+              if action_type in ("suggest", "scaffold"):
+                  action_type = "reflect"
+          # 低胜任感 → 降低难度（domain_passport.evidence_level 降一级）
+          if advice.get("adjust_difficulty") == "lower":
+              self._adjust_difficulty_down(payload)
+      ```
+
+      ```python
+      # 3. 心流定难度
+      if flow_result:
+          adjust = flow_result.get("adjust_difficulty", 0.0)
+          # 调整 payload 中的 difficulty 字段（如 challenge 有 difficulty 槽位）
+          if adjust != 0.0 and "difficulty" in payload:
+              levels = ["low", "medium", "high"]
+              current = payload.get("difficulty", "medium")
+              idx = levels.index(current) if current in levels else 1
+              new_idx = max(0, min(2, idx + (1 if adjust > 0 else -1)))
+              payload["difficulty"] = levels[new_idx]
+      ```
+
+      添加辅助方法：
+      ```python
+      @staticmethod
+      def _adjust_difficulty_down(payload: dict) -> None:
+          """降低 payload 中的难度级别。"""
+          if "difficulty" in payload:
+              levels = ["low", "medium", "high"]
+              current = payload.get("difficulty", "medium")
+              idx = levels.index(current) if current in levels else 1
+              payload["difficulty"] = levels[max(0, idx - 1)]
+      ```
+    </step>
+    <step id="3" name="CoachAgent 三模型集成">
+      修改 src/coach/agent.py：
+
+      在 __init__ 中：
+      ```python
+      # Phase 4: 行为科学模型（默认 None，首次使用时延迟加载）
+      self._ttm: "TTMStateMachine | None" = None
+      self._sdt: "SDTAssessor | None" = None
+      self._flow: "FlowOptimizer | None" = None
+      self._interaction_history: list[dict] = []  # 用于 TTM/SDT 分析
+      ```
+
+      新增延迟加载方法：
+      ```python
+      @property
+      def ttm(self):
+          if self._ttm is None:
+              from src.coach.ttm import TTMStateMachine
+              cfg = _coach_cfg.get("ttm", {})
+              self._ttm = TTMStateMachine(cfg) if cfg.get("enabled", False) else None
+          return self._ttm
+
+      @property
+      def sdt(self):
+          if self._sdt is None:
+              from src.coach.sdt import SDTAssessor
+              cfg = _coach_cfg.get("sdt", {})
+              self._sdt = SDTAssessor(cfg) if cfg.get("enabled", False) else None
+          return self._sdt
+
+      @property
+      def flow(self):
+          if self._flow is None:
+              from src.coach.flow import FlowOptimizer
+              cfg = _coach_cfg.get("flow", {})
+              bkt_params = cfg.get("bkt", {}) if cfg else {}
+              self._flow = FlowOptimizer(bkt_params, cfg) if cfg and cfg.get("enabled", False) else None
+          return self._flow
+      ```
+
+      在 act() 的步骤 4（compose）前插入模型调用：
+      ```python
+      # 4a. TTM 阶段检测
+      ttm_strategy = None
+      if self.ttm:
+          self._interaction_history.append({
+              "intent": intent, "action_type": packet["action_type"],
+              "state": user_state,
+          })
+          ttm_result = self.ttm.assess({
+              "cognitive_indicators": [user_state.get("confidence", 0.5)],
+              "behavioral_indicators": [user_state.get("feasible", 1.0)],
+              "session_count": len(self._interaction_history),
+          }, history=self._interaction_history)
+          ttm_strategy = ttm_result.get("recommended_strategy")
+          # 记录当前 TTM 阶段到返回结果
+          result["ttm_stage"] = ttm_result.get("current_stage")
+
+      # 4b. SDT 评估
+      sdt_profile = None
+      if self.sdt:
+          sdt_result = self.sdt.assess({
+              "rewrite_rate": self._get_premise_rewrite_rate(),
+              "excursion_use_count": len(self._excursion_evidence),
+              "initiation_rate": 0.5,  # 简化版——Phase 5 升级
+              "no_assist_scores": self._no_assist_scores,
+              "session_count": len(self._interaction_history),
+          })
+          sdt_profile = sdt_result.to_dict()
+          result["sdt_profile"] = sdt_profile
+
+      # 4c. 心流计算
+      flow_result = None
+      if self.flow:
+          flow_result = self.flow.compute_flow(
+              skill_probs=[0.5],  # 简化版——BKT 需要观测序列
+              task_difficulty=0.5,
+          )
+          result["flow_channel"] = flow_result.get("flow_channel")
+
+      # 4d. 合成 compose 调用（传入三模型输出）
+      action = self.composer.compose(
+          user_state, intent, relevant,
+          excursion_mode=self._excursion_active,
+          ttm_strategy=ttm_strategy,
+          sdt_profile=sdt_profile,
+          flow_result=flow_result,
+      )
+      ```
+
+      注意：所有模型调用包裹在 try/except 中，防止模型异常阻断主流程。
+      三模型输出附加到 act() 返回的 dict 中，供上层（前端/分析层）消费。
+    </step>
+    <step id="4" name="全量回归">
+      运行命令：
+      ```bash
+      cd D:/Claudedaoy/coherence && python -m pytest tests/ -q
+      ```
+
+      预期：839 + 新增（ttm 12 + sdt 6 + flow 14 + integration）>= 880 pass。
+
+      如果有失败：
+      - 区分已有测试回归 vs 新增测试失败
+      - 回归立即排查
+      - 新增测试失败修复代码
+      - 反复直到全部 pass
+    </step>
+    <step id="5" name="合约冻结 + 配置标记">
+      - 在 contracts/ttm_stages.json 的 description 中确认 `"status": "frozen"`
+      - 在 config/coach_defaults.yaml 每个 Phase 4 段追加：
+        ```yaml
+        # [Phase 4 frozen] S4.5 冻结后不可修改已有阈值，仅可新增参数
+        ```
+      - 确保已有 V18.8 Phase 3 段也标记了冻结注释
+    </step>
+    <step id="6" name="全局状态更新">
+      更新 reports/coach_global_state.json：
+
+      ```json
+      {
+        "coach_track": "COACH",
+        "coach_phase": 4,
+        "coach_sub_stage": "S4.5",
+        "coach_stages": {
+          ...（保留 Phase 0-3 的 stages）,
+          "S4.1": {"status": "GO", "name": "TTM 合约冻结", "tests": ..., "tests_passed": ...},
+          "S4.2": {"status": "GO", "name": "TTM 状态机核心", "tests": ..., "tests_passed": ...},
+          "S4.3": {"status": "GO", "name": "SDT 动机评估", "tests": ..., "tests_passed": ...},
+          "S4.4": {"status": "GO", "name": "心流 + BKT", "tests": ..., "tests_passed": ...},
+          "S4.5": {"status": "GO", "name": "Phase 4 冻结", "tests": ..., "tests_passed": ...}
+        },
+        "coach_final_decision": "GO",
+        "coach_test_totals": {
+          "phase0": 714,
+          "phase1": 62,
+          "phase2": 32,
+          "phase3": 31,
+          "phase4": ...,
+          "total": ...
+        },
+        "coach_updated_at_utc": "<current UTC>"
+      }
+      ```
+
+      注意：
+      - 保留 Phase 0-3 的所有 stage 条目
+      - phase4 计数 = 新增的 TTM/SDT/Flow 测试数
+      - total = 714 + 62 + 32 + 31 + phase4
+    </step>
+    <step id="7" name="完结摘要">
+      在最终消息中呈现：
+
+      ```
+      ════════════════════════════════════════
+      Phase 4 完结报告
+      ════════════════════════════════════════
+
+      ✅ 全量回归: XXXX tests passed
+      ✅ 禁改边界: 零触碰
+
+      S4.1 TTM 合约: GO — ttm_stages.json 冻结
+      S4.2 TTM 状态机: GO — 五阶段检测+转移+策略
+      S4.3 SDT 评估: GO — 三轴动机评分
+      S4.4 心流+BKT: GO — 互信息计算+知识追踪
+      S4.5 融合冻结: GO — Composer 升级+全量回归
+
+      三模型默认 OFF，通过 config 启用。
+      推荐启用顺序: TTM → SDT → 心流
+
+      下一阶段: 阶段 5 — 语义安全三件套升级
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/composer.py" type="modify">+50 行: 三模型参数、融合逻辑、_adjust_difficulty_down</change>
+    <change file="src/coach/agent.py" type="modify">+80 行: 三模型延迟加载、act() 集成、返回结果扩展</change>
+    <change file="contracts/ttm_stages.json" type="modify">status 确认 frozen</change>
+    <change file="config/coach_defaults.yaml" type="modify">Phase 4 段加冻结注释</change>
+    <change file="reports/coach_global_state.json" type="modify">Phase 4 GO 更新</change>
+    <change file="tests/test_composer_upgrade.py" type="new">+50 行: 三模型融合集成测试</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. PolicyComposer.compose() 接收 ttm_strategy/sdt_profile/flow_result 参数
+    2. TTM 粗筛：avoid_action_types 中的 action_type 被重定向
+    3. SDT 微调：低自主性时 suggest/scaffold 被 reflect 替代
+    4. 心流定难度：adjust_difficulty 改变 payload.difficulty
+    5. CoachAgent 延迟加载三模型（不启用时不创建实例）
+    6. 三模型输出附加到 act() 返回 dict
+    7. 全量回归通过（839 基线 + 新增全部 pass）
+    8. ttm_stages.json 状态为 frozen
+    9. config Phase 4 段标记冻结
+    10. coach_global_state.json Phase 4 GO
+  </success_criteria>
+</prompt>

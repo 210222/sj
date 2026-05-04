@@ -1,0 +1,175 @@
+<prompt>
+  <name>D6 关系层安全与签收</name>
+  <version>1.0.0</version>
+  <track>D</track>
+  <stage>D6</stage>
+
+  <role>
+    你是 D6 关系层安全实现与 D 轨签收控制器。你的唯一目标是在 AI Coach 中
+    实现 V18.8 §4 的 Relational Safety Layer 全部机制，
+    并完成 D 轨最终签收审计。
+  </role>
+
+  <context>
+    V18.8 §4 要求：
+    - 禁止权威拟人暗示
+    - 强制"来源外显"：建议必须标注来源
+    - 周期性"主导权回收提示"
+    - 监测顺从信号并自动降级为"教练模式"
+    现有 Relational Gate 有阈值检测但无数据源和实现层。
+  </context>
+
+  <inputs>
+    <required>
+      <file>reports/d_global_state.json</file>
+      <file>reports/d_stage5_dual_ledger.json</file>
+      <file>src/outer/coach/engine.py</file>
+      <file>src/outer/pipeline/compliance_detector.py</file>
+      <file>src/outer/pipeline/gate_feeder.py</file>
+      <file>src/inner/gates/engine.py</file>
+      <file>src/inner/gates/config.py</file>
+      <file>config/release_policy.yaml</file>
+    </required>
+  </inputs>
+
+  <preconditions>
+    <rule>d_global_state.d_stages.D5.status == GO</rule>
+    <rule>D2-D5 所有模块可正常运行</rule>
+  </preconditions>
+
+  <execution>
+    <step>实现 src/outer/safety/source_attribution.py — "来源外显"标注系统</step>
+    <step>实现 src/outer/safety/sovereignty_prompt.py — 周期性主导权回收提示</step>
+    <step>实现 src/outer/safety/compliance_monitor.py — 顺从信号趋势监控</step>
+    <step>实现 src/outer/safety/coach_mode.py — 教练模式自动降级（多提问少处方）</step>
+    <step>实现 src/outer/safety/authority_filter.py — 禁止权威拟人暗示过滤器</step>
+    <step>实现 scripts/d_safety_report.py — 安全层审计报告</step>
+    <step>为每个模块编写单元测试</step>
+    <step>运行 D 轨全系统集成测试</span>
+    <step>生成 D6 阶段报告 reports/d_stage6_relational_safety.json</step>
+    <step>生成 D 轨签收报告 reports/d_stage6_signoff.md</step>
+  </execution>
+
+  <module_specs>
+    <source_attribution>
+      <file>src/outer/safety/source_attribution.py</file>
+      <description>强制来源外显：每条建议标注来源类别</description>
+      <categories>
+        rule: 来自规则引擎的硬性建议
+        statistics: 基于用户历史数据的统计推论
+        hypothesis: 系统的推测性判断（非确定性）
+        user_provided: 用户自身提供的信息
+      </categories>
+      <api>attribution: annotate(text: str, source: str, evidence: str | None = None) -> str</api>
+      <integration>在 coach_engine.process_message() 输出前调用</integration>
+    </source_attribution>
+    <sovereignty_prompt>
+      <file>src/outer/safety/sovereignty_prompt.py</file>
+      <description>周期性声明"你可拒绝、改写、退出画像"</description>
+      <schedule>每 N 个回合（默认 10）或在检测到连续被动同意时触发</schedule>
+      <templates>
+        "你可以拒绝我的建议，这完全由你决定。"
+        "如果你觉得这个方向不适合你，你可以随时改写目标。"
+        "你的画像数据你可以随时查看和清除。"
+      </templates>
+      <api>should_prompt(turn_count, passive_agreement_rate) -> bool</api>
+    </sovereignty_prompt>
+    <compliance_monitor>
+      <file>src/outer/safety/compliance_monitor.py</file>
+      <description>顺从信号趋势监控，命中阈值时报警</description>
+      <metrics>
+        passive_agreement_trend: float (最近 N 回合被动同意率变化)
+        rewrite_rate_trend: float (改写率变化)
+        self_judgment_trend: float (自我判断语句变化)
+      </metrics>
+      <output>
+        compliance_score: float [0,1] (越高越顺从)
+        alert: bool (是否命中告警阈值)
+        trend: str (rising|stable|declining)
+      </output>
+    </compliance_monitor>
+    <coach_mode>
+      <file>src/outer/safety/coach_mode.py</file>
+      <description>过量顺从时自动降级为"教练模式"（多提问少处方）</description>
+      <modes>
+        normal: 正常提供建议和方案
+        socratic: 主要使用苏格拉底式提问，减少直接建议
+        probe: 主要使用 No-Assist Probe 评估独立能力
+      </modes>
+      <trigger>compliance_score 连续上升超过 3 个检查点</trigger>
+      <api>get_current_mode(session_id) -> str</api>
+    </coach_mode>
+    <authority_filter>
+      <file>src/outer/safety/authority_filter.py</file>
+      <description>检测并过滤权威拟人暗示</description>
+      <blocked_patterns>
+        "我比你更了解你"
+        "这是唯一正确的做法"
+        "你应该无条件相信我"
+        "我判断你的..."
+      </blocked_patterns>
+      <api>filter(text: str) -> tuple[str, bool]</api>
+    </authority_filter>
+  </module_specs>
+
+  <final_signoff>
+    <tests>
+      <test>python scripts/d_test_pipeline.py (D2 管道测试)</test>
+      <test>python -m pytest tests/test_outer_coach.py (D3 会话测试)</test>
+      <test>python -m pytest tests/test_outer_signals.py (D4 信号测试)</test>
+      <test>python -m pytest tests/test_outer_ledger.py (D5 账本测试)</test>
+      <test>python -m pytest tests/test_outer_safety.py (D6 安全测试)</test>
+      <test>python scripts/d_safety_report.py --verify (安全层审计)</test>
+    </tests>
+    <signoff_criteria>
+      所有测试通过 AND
+      V18.8 四个门禁全部有真实数据输入（不再默认 pass）AND
+      双账本可正常运行 AND
+      关系层安全线全部就位 AND
+      生成最终签收报告
+    </signoff_criteria>
+  </final_signoff>
+
+  <outputs>
+    <file>src/outer/safety/__init__.py</file>
+    <file>src/outer/safety/source_attribution.py</file>
+    <file>src/outer/safety/sovereignty_prompt.py</file>
+    <file>src/outer/safety/compliance_monitor.py</file>
+    <file>src/outer/safety/coach_mode.py</file>
+    <file>src/outer/safety/authority_filter.py</file>
+    <file>scripts/d_safety_report.py</file>
+    <stage_report>reports/d_stage6_relational_safety.json</stage_report>
+    <signoff_report>reports/d_stage6_signoff.md</signoff_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      所有安全模块实现且通过单元测试 AND
+      全系统集成测试通过 AND
+      最终签收报告完成 AND
+      d_blockers is empty
+    </go_when>
+    <no_go_when>
+      任一安全模块不可运行、集成测试失败、或签收标准未满足。
+    </no_go_when>
+  </decision_logic>
+
+  <state_update>
+    <file>reports/d_global_state.json</file>
+    <mutations>
+      <field>d_current_stage = D6</field>
+      <field>d_stages.D6.status = GO|NO_GO</field>
+      <field>d_stages.D6.name = 关系层安全与签收</field>
+      <field>d_stages.D6.evidence += [src/outer/safety/*.py, reports/d_stage6_relational_safety.json, reports/d_stage6_signoff.md]</field>
+      <field>d_final_decision = GO|NO_GO</field>
+      <field>d_updated_at_utc = now</field>
+    </mutations>
+  </state_update>
+
+  <safety>
+    <rule>禁止修改 contracts/**, src/inner/**, src/middle/**</rule>
+    <rule>authority_filter 使用正向匹配（拦截已知模式）而非负向阻断</rule>
+    <rule>sovereignty_prompt 不可被用户关闭（硬性安全机制）</rule>
+    <rule>降级为教练模式后必须有明确的恢复条件，不可永久锁定</rule>
+  </safety>
+</prompt>

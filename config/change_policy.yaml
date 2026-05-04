@@ -1,0 +1,65 @@
+# C-Track Change Policy — v1.0.0
+# Effective: 2026-05-02
+# Defines change tiers, required gates (min + recommended), and approval rules.
+
+change_policy:
+  version: "1.1.0"
+  effective_date: "2026-05-02"
+  scope: "C-track continuous operations and evolutionary governance"
+  gate_semantics:
+    min: "Must pass to declare GO. Failure = NO_GO."
+    recommended: "Should pass for best practice. Failure = GO_WITH_NOTE, documented in report."
+
+  tiers:
+    P0_critical:
+      label: "High Risk — Schema/Reason/Chain boundary change"
+      examples:
+        - "Modification to OUTPUT_SCHEMA_KEYS"
+        - "Modification to reason_code layering"
+        - "Modification to orchestration chain order"
+        - "Modification to contracts/, src/inner/, src/middle/"
+      min_gates: [release_gate, runtime_healthcheck, rollback_verify]
+      recommended_gates: [release_gate, runtime_healthcheck, rollback_verify]
+      required_tests: "full (698 tests)"
+      approval: "project_owner"
+      freeze_window: "none (emergency)"
+      block_on: [schema_drift, reason_code_drift, orchestration_chain_drift, any_gate_failure]
+
+    P1_standard:
+      label: "Medium Risk — Outer logic, scripts, governance flow"
+      examples:
+        - "Modification to src/outer/**"
+        - "Modification to scripts/**"
+        - "Modification to governance report generation"
+        - "Modification to observation scripts"
+      min_gates: [release_gate, runtime_healthcheck]
+      recommended_gates: [release_gate, runtime_healthcheck, rollback_verify]
+      required_tests: "outer (29 tests) + targeted module tests"
+      approval: "project_owner"
+      freeze_window: "24h after observation GO"
+      block_on: [schema_drift, reason_code_drift, release_gate_failure]
+
+    P2_minor:
+      label: "Low Risk — Docs, config, report, prompts"
+      examples:
+        - "Documentation updates"
+        - "Config parameter tuning within allowed ranges"
+        - "Report generation"
+        - "Prompt file updates (meta_prompts/**)"
+      min_gates: [release_gate]
+      recommended_gates: [release_gate, runtime_healthcheck]
+      required_tests: "smoke (12 tests) min; recommended: smoke + outer (41 tests)"
+      approval: "auto"
+      freeze_window: "none"
+      block_on: [release_gate_failure]
+
+  block_rules:
+    universal:
+      - "Any schema drift (8-field mismatch) = immediate NO_GO"
+      - "Any reason_code drift = immediate NO_GO"
+      - "Any forbidden_path modification = immediate NO_GO with rollback"
+      - "Evidence missing for min_gates = cannot declare GO"
+      - "Recommended gate failure = GO_WITH_NOTE (not NO_GO)"
+    escalation:
+      - "P1 repeated > 1 cycle => escalate to P0 treatment"
+      - "P2 accumulated > 5 per cycle => escalate to P1 treatment"

@@ -1,0 +1,85 @@
+<prompt>
+  <name>C4 Resilience Drills</name>
+  <version>1.0.0</version>
+  <track>C</track>
+  <stage>C4</stage>
+
+  <role>
+    你是 C4 韧性演练执行器。你的唯一目标是通过回滚演练与漂移演练，
+    验证系统恢复能力与检测能力，并输出可审计 GO/NO_GO 结论。
+  </role>
+
+  <inputs>
+    <required>
+      <file>reports/c_global_state.json</file>
+      <file>reports/c_stage3_continuous_observation.json</file>
+      <file>reports/c_observation/weekly_summary.json</file>
+      <file>config/change_policy.yaml</file>
+    </required>
+  </inputs>
+
+  <preconditions>
+    <rule>c_global_state.c_stages.C3.status == GO</rule>
+    <rule>禁改边界持续生效: contracts/**, src/inner/**, src/middle/**</rule>
+    <rule>演练允许模拟信号注入，但禁止写入禁改路径</rule>
+  </preconditions>
+
+  <execution>
+    <step>执行回滚演练 scripts/c_drill_rollback.py：基线门禁→验证双锚点→回滚校验→恢复复测→记录恢复时长</step>
+    <step>执行漂移演练 scripts/c_drill_drift.py：当前态确认→模拟信号注入→drift检测→清理→复测→记录检测时延</step>
+    <step>演练后复跑 release_gate/runtime_healthcheck/rollback_verify 确保无残留影响</step>
+    <step>生成阶段报告 reports/c_stage4_resilience_drills.json 与 md 摘要</step>
+    <step>更新 reports/c_global_state.json 的 C4 状态与证据引用</step>
+  </execution>
+
+  <outputs>
+    <rollback_script>scripts/c_drill_rollback.py</rollback_script>
+    <drift_script>scripts/c_drill_drift.py</drift_script>
+    <stage_report_json>reports/c_stage4_resilience_drills.json</stage_report_json>
+    <stage_report_md>reports/c_stage4_resilience_drills.md</stage_report_md>
+    <required_fields>
+      <field>c_stage</field>
+      <field>c_status</field>
+      <field>c_rollback_drill_passed</field>
+      <field>c_drift_drill_passed</field>
+      <field>c_recovery_time_seconds</field>
+      <field>c_recovery_slo_seconds</field>
+      <field>c_detection_latency_seconds</field>
+      <field>c_blockers</field>
+      <field>c_findings</field>
+      <field>c_final_decision</field>
+      <field>c_timestamp_utc</field>
+    </required_fields>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      c_rollback_drill_passed == true AND
+      c_drift_drill_passed == true AND
+      c_recovery_time_seconds &lt;= c_recovery_slo_seconds AND
+      c_blockers is empty
+    </go_when>
+    <no_go_when>
+      任一演练失败、恢复超SLO、检测失效、或存在未关闭 blocker。
+    </no_go_when>
+  </decision_logic>
+
+  <state_update>
+    <file>reports/c_global_state.json</file>
+    <mutations>
+      <field>c_current_stage = C4</field>
+      <field>c_stages.C4.status = GO|NO_GO</field>
+      <field>c_stages.C4.name = Resilience Drills</field>
+      <field>c_stages.C4.evidence += [reports/c_stage4_resilience_drills.json,
+  reports/c_stage4_resilience_drills.md]</field>
+      <field>c_updated_at_utc = now</field>
+    </mutations>
+  </state_update>
+
+  <safety>
+    <rule>禁止修改 contracts/**, src/inner/**, src/middle/**</rule>
+    <rule>演练允许模拟信号注入（仅测试输入），不得写入禁改边界</rule>
+    <rule>演练后必须跑 release_gate 复测，确认无残留影响</rule>
+    <rule>发现阻断项必须写入 c_blockers，不得跳过并宣告 GO</rule>
+  </safety>
+</prompt>

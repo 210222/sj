@@ -1,0 +1,162 @@
+<prompt>
+  <name>S2.4 — QSCollector 壳 + 状态追踪修复 + 全量回归</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>2</phase>
+  <sub_stage>S2.4</sub_stage>
+
+  <role>
+    你是 S2.4 QSCollector + 状态修复器。你的目标是：
+    (1) 创建 src/cohort/collector.py 量化自我数据聚合空壳接口
+    (2) 修复 Phase 1 S1.2 的状态追踪 bug
+    (3) 全量回归验证
+  </role>
+
+  <context>
+    S2.1→S2.3 完成了三层图谱数据模型和持久化记忆。
+    本阶段做两件"收尾"工作：
+    1. 新建 src/cohort/ 占位目录（自适应 AI 伴学.txt 的量化自我数据聚合接口）
+    2. 修复 Phase 1 审计发现的状态追踪 bug：
+       - agent.py 中 state 被硬编码为 "stable"
+       - L1 结果从未传入 state_tracker.update()
+       - safety_score 字段确认
+
+    这两件事功能独立但行数少（约 100 行），合并在一个子阶段。
+  </context>
+
+  <inputs>
+    <required>
+      <file>src/coach/agent.py</file>
+      <file>src/coach/state.py</file>
+      <file>src/outer/orchestration/pipeline.py</file>
+    </required>
+    <depends_on>
+      <file>reports/coach_phase2_s23_memory.json</file>
+      <rule>S2.3 status == GO</rule>
+    </depends_on>
+  </inputs>
+
+  <execution>
+    <step>
+      1. 创建 src/cohort/__init__.py:
+      ```python
+      """量化自我数据聚合 — 阶段 2 接口占位，阶段 6 对接外部 API。"""
+      from .collector import QSCollector
+      __all__ = ["QSCollector"]
+      ```
+    </step>
+    <step>
+      2. 创建 src/cohort/collector.py:
+      ```python
+      class QSCollector:
+          """量化自我数据聚合。阶段 2 为接口占位，阶段 6 对接外部 API。"""
+          def pull_health_data(self, source: str = "") -> dict:
+              raise NotImplementedError("阶段 6 实现")
+          def pull_productivity_data(self, source: str = "") -> dict:
+              raise NotImplementedError("阶段 6 实现")
+      ```
+    </step>
+    <step>
+      3. 修复 agent.py 状态追踪 bug（问题 1 + 问题 2）：
+      - 当前代码（~line 71-76）：
+        ```python
+        sr = pipeline_result["safety_result"]
+        self.state_tracker.update(
+            l0_result={"state": "stable", "confidence": sr.get("safety_score", 0.5)},
+            l2_result={"feasible": sr.get("allowed", True), "uncertainty": 0.5},
+        )
+        ```
+      - 修复为：从 pipeline_result 获取真实 L0/L1/L2 输出传入 update
+        ```python
+        # 从 pipeline_result 获取各层真实输出
+        l0_result = pipeline_result.get("l0_result", {})
+        l1_result = pipeline_result.get("l1_result", {})
+        l2_result = pipeline_result.get("l2_result", {})
+        self.state_tracker.update(
+            l0_result=l0_result,
+            l1_result=l1_result,
+            l2_result=l2_result,
+        )
+        ```
+    </step>
+    <step>
+      4. 确保 pipeline.py 的返回值包含 l0_result/l1_result/l2_result 字段：
+      - 检查 run_pipeline() 的返回字典，确认是否已包含各层结果
+      - 如果不包含，在 coach 模式的返回结果中增加这些字段
+      - legacy 模式不能修改
+    </step>
+    <step>
+      5. 创建 tests/test_qs_collector.py（验证空壳可导入）：
+      - test_import_qs_collector
+      - test_qs_collector_raises_not_implemented
+    </step>
+    <step>6. 更新 tests/test_coach_agent.py 中的状态测试：验证 state 不再是固定 "stable"</step>
+    <step>7. 运行 python -m pytest tests/ -q 确认全部 pass</step>
+  </execution>
+
+  <bug_fix_detail>
+    <issue number="1">
+      <title>agent.py 状态硬编码为 "stable"</title>
+      <file>src/coach/agent.py</file>
+      <fix>使用 pipeline_result 中的真实 L0 state 字段替代硬编码 "stable"</fix>
+    </issue>
+    <issue number="2">
+      <title>L1 结果从未传入 update()</title>
+      <file>src/coach/agent.py</file>
+      <fix>从 pipeline_result 获取 l1_result 并传入 update</fix>
+    </issue>
+    <issue number="3">
+      <title>safety_score 字段存在性确认</title>
+      <file>src/coach/agent.py</file>
+      <fix>检查 SemanticSafetyEngine 输出中是否有 safety_score；如无可改用 confidence 或其他合理字段</fix>
+    </issue>
+  </bug_fix_detail>
+
+  <outputs>
+    <new_file>src/cohort/__init__.py</new_file>
+    <new_file>src/cohort/collector.py</new_file>
+    <new_file>tests/test_qs_collector.py</new_file>
+    <changed_file>src/coach/agent.py (状态追踪修复)</changed_file>
+    <changed_file>src/outer/orchestration/pipeline.py (如有必要增加各层结果输出)</changed_file>
+    <stage_report>reports/coach_phase2_s24_qs_fix.json</stage_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      src/cohort/collector.py 空壳可导入且 pull_health_data 抛出 NotImplementedError AND
+      agent.py 状态追踪不再硬编码 "stable"（使用真实 L0 state）AND
+      L1 结果传入 update AND
+      全量回归 749 + 新增全部 pass AND
+      legacy 模式输出不受影响 AND
+      禁改区域零触碰
+    </go_when>
+    <no_go_when>
+      状态仍未修复 / 全量测试失败 / legacy 模式漂移 / 禁改区域被触碰
+    </no_go_when>
+  </decision_logic>
+
+  <test_cases>
+    <test>
+      <name>test_qs_collector_imports</name>
+      <assert>from src.cohort import QSCollector 不报错</assert>
+    </test>
+    <test>
+      <name>test_qs_collector_raises</name>
+      <assert>QSCollector().pull_health_data("") 抛出 NotImplementedError</assert>
+    </test>
+    <test>
+      <name>test_coach_state_no_longer_hardcoded</name>
+      <assert>CoachAgent.act() 后 state_tracker 的 state 值随管线输出变化（非固定 "stable"）</assert>
+    </test>
+    <test>
+      <name>test_full_regression_passes</name>
+      <assert>pytest -q tests/ 输出 ≥ 749 passed</assert>
+    </test>
+  </test_cases>
+
+  <safety>
+    <rule>legacy 模式的 pipeline 输出格式不能修改（已存在的 tests 会失败）</rule>
+    <rule>禁止修改 src/inner/**、src/middle/**、已有 contracts/</rule>
+    <rule>QSCollector 只建壳，不引入外部依赖</rule>
+  </safety>
+</prompt>

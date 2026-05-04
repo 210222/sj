@@ -1,0 +1,39 @@
+{
+  "d_track": "D",
+  "d_baseline_ref": "A/B/C_tracks_frozen",
+  "d_current_stage": "D1",
+  "d_stages": {
+    "D1": {
+      "status": "PENDING",
+      "name": "Scope Lock & 管道设计",
+      "evidence": []
+    },
+    "D2": {
+      "status": "PENDING",
+      "name": "V18.8 门禁数据管道",
+      "evidence": []
+    },
+    "D3": {
+      "status": "PENDING",
+      "name": "Coach 会话框架",
+      "evidence": []
+    },
+    "D4": {
+      "status": "PENDING",
+      "name": "用户状态感知集成",
+      "evidence": []
+    },
+    "D5": {
+      "status": "PENDING",
+      "name": "双账本实践运行",
+      "evidence": []
+    },
+    "D6": {
+      "status": "PENDING",
+      "name": "关系层安全与签收",
+      "evidence": []
+    }
+  },
+  "d_final_decision": "PENDING",
+  "d_updated_at_utc": "2026-05-02T10:46:23.409479+00:00"
+}

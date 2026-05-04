@@ -1,0 +1,129 @@
+<prompt>
+  <name>S0.1 — Ledger 接线</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>0</phase>
+  <sub_stage>S0.1</sub_stage>
+
+  <role>
+    你是 S0.1 Ledger 接线器。你的唯一目标是将 EventStore 接入 pipeline 末尾，
+    让每次管线执行都能将全过程数据写入 SQLite 证据账本。
+  </role>
+
+  <context>
+    当前 src/inner/ledger/event_store.py 中有完整的 EventStore 实现
+    （append-only、SHA-256 哈希链、并发安全），但从未被生产管线调用。
+    pipeline.py 执行完 L0→L1→L2→Decision→Safety 后直接 format_output，
+    所有过程数据丢失——从不落库。
+
+    本阶段要改变这一点：pipeline 末尾追加写 ledger 步骤。
+  </context>
+
+  <inputs>
+    <required>
+      <file>src/outer/orchestration/pipeline.py</file>
+      <file>src/inner/ledger/event_store.py</file>
+      <file>src/inner/ledger/db.py</file>
+      <file>config/parameters.yaml</file>
+    </required>
+  </inputs>
+
+  <preconditions>
+    <rule>禁改边界持续生效</rule>
+    <rule>src/inner/ledger/ 只读，仅调用不修改</rule>
+  </preconditions>
+
+  <execution>
+    <step>1. 读取 pipeline.py 完整代码，理解 run_pipeline() 的返回值和内部数据</step>
+    <step>2. 在 pipeline.py 中实现函数 _pipeline_to_ledger_fields(pipeline_result: dict) -> dict</step>
+    <step>3. 该映射函数将 pipeline 各阶段输出映射为 EventStore.append_event() 所需的 P0/P1 字段</step>
+    <step>4. 在 run_pipeline() 的 try 块末尾（format_output 之前）添加 EventStore 初始化 + create_genesis_event（如无）+ append_event 调用</step>
+    <step>5. 添加异常捕获：ledger 写入失败不应阻塞主管线，降级为日志告警</step>
+    <step>6. 编写 tests/test_pipeline_ledger_integration.py 验证</step>
+    <step>7. 运行全量回归 pytest -q</step>
+  </execution>
+
+  <field_mapping>
+    <description>
+      pipeline 各阶段结果 → EventStore P0/P1 字段的映射规则
+    </description>
+    <mapping>
+      <pipeline_field>trace_id</pipeline_field>
+      <ledger_field>trace_id (P0)</ledger_field>
+      <rule>直接透传</rule>
+    </mapping>
+    <mapping>
+      <pipeline_field>pipeline stage_markers 版本</pipeline_field>
+      <ledger_field>policy_version (P0)</ledger_field>
+      <rule>固定值 "coach_pipeline_v1.0.0"</rule>
+    </mapping>
+    <mapping>
+      <pipeline_field>L0 estimator model_version</pipeline_field>
+      <ledger_field>counterfactual_ranker_version (P0)</ledger_field>
+      <rule>暂用 L0 版本占位</rule>
+    </mapping>
+    <mapping>
+      <pipeline_field>Safety model_version</pipeline_field>
+      <ledger_field>counterfactual_feature_schema_version (P0)</ledger_field>
+      <rule>暂用 Safety 版本占位</rule>
+    </mapping>
+    <mapping>
+      <pipeline_field>L0/L1/L2/Decision 各层 reason_code</pipeline_field>
+      <ledger_field>tradeoff_reason (P1)</ledger_field>
+      <rule>JSON 序列化所有 reason_code</rule>
+    </mapping>
+    <mapping>
+      <pipeline_field>decision_result.conflict_level</pipeline_field>
+      <ledger_field>meta_conflict_score (P1)</ledger_field>
+      <rule>low=0.0, mid=0.5, high=1.0 映射</rule>
+    </mapping>
+    <mapping>
+      <pipeline_field>safety_result.allowed + safety_result.audit_level</pipeline_field>
+      <ledger_field>meta_conflict_alert_flag (P1)</ledger_field>
+      <rule>not allowed → 1</rule>
+    </mapping>
+  </field_mapping>
+
+  <outputs>
+    <changed_file>src/outer/orchestration/pipeline.py (新增 _pipeline_to_ledger_fields + 末尾调用)</changed_file>
+    <new_file>tests/test_pipeline_ledger_integration.py</new_file>
+    <stage_report>reports/coach_phase0_s01_ledger.json</stage_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      pipeline 执行后 EventStore 中能查到对应的链事件 AND
+      chain_integrity 验证通过 AND
+      全量回归 698 pass AND
+      测试 test_pipeline_ledger_integration 通过
+    </go_when>
+    <no_go_when>
+      ledger 无法写入 / 全量测试失败 / 禁改区域被触碰
+    </no_go_when>
+  </decision_logic>
+
+  <test_cases>
+    <test>
+      <name>test_ledger_has_event_after_pipeline</name>
+      <assert>run_pipeline() 后 EventStore.get_latest_event() 不返回 None</assert>
+    </test>
+    <test>
+      <name>test_ledger_event_has_trace_id</name>
+      <assert>写入的事件 trace_id 与传入 pipeline 的一致</assert>
+    </test>
+    <test>
+      <name>test_ledger_chain_integrity</name>
+      <assert>EventStore.verify_chain_integrity() 返回 valid=True</assert>
+    </test>
+    <test>
+      <name>test_ledger_write_failure_does_not_crash_pipeline</name>
+      <assert>即使 ledger 写入失败（如权限错误），pipeline 仍返回合法 8 字段输出</assert>
+    </test>
+  </test_cases>
+
+  <safety>
+    <rule>禁止修改 src/inner/ledger/** 任何文件</rule>
+    <rule>pipeline.py 的现有 L0→L1→L2→Decision→Safety 逻辑一行不改，只追加末尾</rule>
+    <rule>ledger 写异常不得冒泡到调用方（捕获后记录日志 + 继续 format_output）</rule>
+  </safety>
+</prompt>

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract": "operations_governance",
+  "version": "1.0.0",
+  "status": "frozen",
+  "description": "运营治理合约 — Phase 8 冻结。Audit Gate + Window Gate 运行时阈值。",
+
+  "audit_health": {
+    "description": "审计健康评分 — gate 6 数据源",
+    "p1_threshold": 3,
+    "trend_window": 10,
+    "score_rules": {
+      "p0_gt_0": {"score_max": 0.5, "gate": "BLOCK"},
+      "p0_eq_0_p1_eq_0": {"score": 1.0, "gate": "PASS"},
+      "p0_eq_0_p1_le_threshold": {"score_min": 0.8, "gate": "PASS"},
+      "p0_eq_0_p1_gt_threshold": {"score_range": "0.3-0.7", "gate": "BLOCK"}
+    }
+  },
+
+  "window_consistency": {
+    "description": "窗口一致性检查 — gate 8 数据源",
+    "max_version_drift": 0,
+    "max_age_seconds": 3600,
+    "checks": ["schema_version_consistency", "window_id_consistency", "data_freshness"]
+  },
+
+  "frozen_constraints": {
+    "audit_health_p1_threshold": "不可删改",
+    "window_consistency_max_version_drift": "不可删改",
+    "window_consistency_max_age_seconds": "不可删改",
+    "contract_version": "1.0.0"
+  },
+
+  "frozen_at": "2026-05-04T08:00:00.000Z"
+}

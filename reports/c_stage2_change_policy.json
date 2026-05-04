@@ -1,0 +1,12 @@
+{
+  "c_stage": "C2",
+  "c_status": "GO",
+  "c_policy_file": "config/change_policy.yaml",
+  "c_policy_version": "1.0.0",
+  "c_risk_tiers_defined": true,
+  "c_gate_mapping_complete": true,
+  "c_block_rules_defined": true,
+  "c_blockers": [],
+  "c_final_decision": "GO",
+  "c_timestamp_utc": "2026-05-02T10:12:41.586667+00:00"
+}

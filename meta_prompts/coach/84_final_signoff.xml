@@ -1,0 +1,330 @@
+<prompt>
+  <name>Coherence Coach Track — S8.4 系统最终冻结与签收</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>8</phase>
+  <sub_stage>S8.4</sub_stage>
+  <sub_stage_name>最终合约冻结 + 运营文档 + 系统签收报告 + Coach 轨完结</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S8.4 实现者。
+    这是整个 Coach 轨的最终收尾子阶段。
+    你的任务是：冻结 Phase 8 合约、生成运营手册、生成系统签收报告、
+    更新全局状态、输出 Coach 轨完结摘要。
+    S8.4 不写代码——只做文档、冻结、签收。
+  </role>
+
+  <context>
+    已完成全部 8 个 Phase：
+
+    | Phase | 名称 | 状态 | 测试 |
+    |-------|------|------|------|
+    | 0 | 接线 | ✅ GO | 714 |
+    | 1 | 教练引擎 (CCA-T) | ✅ GO | 776 |
+    | 2 | 记忆与用户模型 | ✅ GO | 808 |
+    | 3 | V18.8 运行时行为 | ✅ GO | 839 |
+    | 4 | 行为科学模型 (TTM/SDT/Flow) | ✅ GO | 881 |
+    | 5 | 语义安全三件套 | ✅ GO | 916 |
+    | 6 | MAPE-K + 向量记忆 + 多智能体 | ✅ GO | 975 |
+    | 7 | 因果稳健 + 治理闭环 | ✅ GO | 1034 |
+    | 8 | 门禁闭环 + 全链路验证 + 签收 | 🏁 当前 | 1034+ |
+
+    已有冻结合约清单：
+    - contracts/ledger.json ✅
+    - contracts/audit.json ✅
+    - contracts/clock.json ✅
+    - contracts/resolver.json ✅
+    - contracts/gates.json ✅
+    - contracts/coach_dsl.json ✅ (Phase 1)
+    - contracts/user_profile.json ✅ (Phase 2)
+    - contracts/ttm_stages.json ✅ (Phase 4)
+    - contracts/mapek_loop.json ✅ (Phase 6)
+    - contracts/causal_governance.json ✅ (Phase 7)
+
+    待冻结：
+    - contracts/operations_governance.json (Phase 8, S8.4 冻结)
+
+    系统签收报告需包含：
+    - 教练系统能力全景图
+    - 全部 8 阶段交付物清单
+    - 合约冻结审计
+    - 禁改边界验证
+    - 测试统计与趋势
+    - 已知风险与缓解措施
+    - 运营要点
+  </context>
+
+  <task>
+    1) 冻结 contracts/operations_governance.json (status draft → frozen)
+    2) 验证所有 11 个合约全部冻结（ledger/audit/clock/resolver/gates/coach_dsl/user_profile/ttm_stages/mapek_loop/causal_governance/operations_governance）
+    3) 运行全量回归（1034+ 全部 pass）
+    4) 更新 reports/coach_global_state.json Phase 8 → GO
+    5) 生成 reports/phase8_completion.md 系统签收报告
+    6) 输出 Coach 轨完结摘要
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="合约冻结">
+      操作 contracts/operations_governance.json：
+
+      ```json
+      {
+        "contract": "operations_governance",
+        "version": "1.0.0",
+        "status": "frozen",
+        "description": "运营治理合约 — Phase 8 冻结",
+        "audit_health": {
+          "p1_threshold": 3,
+          "history_window": 10,
+          "scoring": "P0=0 且 P1≤threshold → gate_pass, P0>0 → gate_block"
+        },
+        "window_consistency": {
+          "max_version_drift": 0,
+          "max_age_seconds": 3600,
+          "rule": "所有组件必须使用同一 schema_version 和 window_id"
+        },
+        "frozen_constraints": {
+          "p1_threshold": "不可删改",
+          "max_version_drift": "不可删改"
+        },
+        "frozen_at": "<current_utc>"
+      }
+      ```
+
+      冻结前必须验证：
+      1. JSON 格式有效
+      2. 所有字段完整
+      3. status 从 "draft" → "frozen"
+      4. frozen_at 填充当前 UTC 时间
+    </step>
+
+    <step id="2" name="全量回归">
+      执行：
+      ```bash
+      cd D:/Claudedaoy/coherence && python -m pytest tests/ -q
+      ```
+
+      期望：1034+ 全部 pass。
+      如果失败，定位失败测试并修复，直到全绿。
+    </step>
+
+    <step id="3" name="系统签收报告">
+      生成 reports/phase8_completion.md：
+
+      ```markdown
+      # Coach 轨 — 最终系统签收报告
+
+      **签收日期**: <current_utc>
+      **总测试**: <N> passed, 0 failed
+      **总合约**: 11 份全部冻结
+
+      ## 1. 系统能力全景图
+
+      ```
+      用户对话
+          │
+          ▼
+      ┌──────────────────────────────────────────────┐
+      │         CCA-T 教练引擎 (CoachAgent.act())      │
+      │  ├── 意图解析 (Phase 1)                       │
+      │  ├── 用户状态追踪 (Phase 2)                   │
+      │  ├── 会话记忆 (Phase 2)                       │
+      │  ├── TTM 阶段检测 (Phase 4)                   │
+      │  ├── SDT 动机评估 (Phase 4)                   │
+      │  ├── 心流互信息 (Phase 4)                     │
+      │  ├── 主权脉冲 (Phase 3)                       │
+      │  ├── 远足权 (Phase 3)                         │
+      │  ├── 关系安全层 (Phase 3)                     │
+      │  ├── 语义安全三件套 (Phase 5)                 │
+      │  ├── MAPE-K 外循环 (Phase 6)                  │
+      │  ├── 多智能体分层 (Phase 6)                   │
+      │  ├── 向量记忆 (Phase 6)                       │
+      │  ├── MRT 微随机实验 (Phase 7)                 │
+      │  └── 门禁闭环 (Phase 8)                       │
+      └──────────────────┬───────────────────────────┘
+                         │ DSL action packet
+                         ▼
+      ┌──────────────────────────────────────────────┐
+      │          8 道门禁升档闸门                       │
+      │  1. Agency Gate    (改写率)                   │
+      │  2. Excursion Gate (远足证据)                  │
+      │  3. Learning Gate  (No-Assist 趋势)            │
+      │  4. Relational Gate (顺从信号)                 │
+      │  5. Causal Gate    (三诊断)                   │
+      │  6. Audit Gate     (审计健康)                  │
+      │  7. Framing Gate   (选择架构)                  │
+      │  8. Window Gate    (版本一致性)                 │
+      │  规则: AND — 全部通过才允许升档                 │
+      └──────────────────┬───────────────────────────┘
+                         │ pass/block
+                         ▼
+      ┌──────────────────────────────────────────────┐
+      │         治理管线 + Ledger + Audit              │
+      └──────────────────────────────────────────────┘
+      ```
+
+      ## 2. 交付物清单
+
+      | 阶段 | 交付物 | 文件 | 合约 |
+      |------|--------|------|------|
+      | 0 | 接线 | clock/resolver/gates/no_assist | — |
+      | 1 | 教练引擎 | agent.py / dsl.py / composer.py / state.py | coach_dsl.json |
+      | 2 | 记忆与用户模型 | memory.py / data.py | user_profile.json |
+      | 3 | V18.8 运行时 | 主权脉冲/远足/双账本/关系安全 | — |
+      | 4 | 行为科学 | ttm.py / sdt.py / flow.py | ttm_stages.json |
+      | 5 | 语义安全 | counterfactual/cross_track/precedent | — |
+      | 6 | MAPE-K + 多智能体 | mapek/ + handlers.py + memory 升级 | mapek_loop.json |
+      | 7 | 因果稳健 + 治理 | mrt.py / diagnostics.py / gates_v18_7.py | causal_governance.json |
+      | 8 | 门禁闭环 + 签收 | audit_health.py / window_consistency.py | operations_governance.json |
+
+      ## 3. 合约冻结审计
+
+      | 合约 | 版本 | 冻结阶段 | 冻结日期 |
+      |------|------|---------|---------|
+      | ledger.json | 1.0.0 | — | — |
+      | audit.json | 1.0.0 | — | — |
+      | clock.json | 1.0.0 | — | — |
+      | resolver.json | 1.0.0 | — | — |
+      | gates.json | 1.0.0 | — | — |
+      | coach_dsl.json | 1.0.0 | Phase 1 | — |
+      | user_profile.json | 1.0.0 | Phase 2 | — |
+      | ttm_stages.json | 1.0.0 | Phase 4 | — |
+      | mapek_loop.json | 1.0.0 | Phase 6 | — |
+      | causal_governance.json | 1.0.0 | Phase 7 | — |
+      | operations_governance.json | 1.0.0 | Phase 8 | <date> |
+
+      ## 4. 禁改边界验证
+
+      - src/inner/**: 零修改
+      - src/middle/**: 零修改
+      - src/outer/**: 零修改
+      - contracts/ 已有冻结合约: 零修改（只新增）
+      - 已有 tests/: 零修改（只新增）
+
+      ## 5. 测试统计
+
+      | 阶段 | 新增测试 | 累计 |
+      |------|---------|------|
+      | Phase 0-5 | 916 | 916 |
+      | Phase 6 | 59 | 975 |
+      | Phase 7 | 44 | 1034 |
+      | Phase 8 | <N> | <N> |
+      | **总计** | | **<N> passed, 0 failed** |
+
+      ## 6. 已知风险与缓解
+
+      | 风险 | 缓解 |
+      |------|------|
+      | MRT 随机化在超低流量环境下可能窗口利用率不足 | 可调 randomization_rate 参数 |
+      | 三诊断在小样本下灵敏度有限 | 样本不足时 pass（不阻塞升档） |
+      | ManipulationGate 依赖 scipy | ImportError 时优雅 pass |
+      | MAPE-K 组件默认 OFF，启用需主动配置 | 按需启用，渐进式部署 |
+
+      ## 7. 运营要点
+
+      - 全量回归: `python -m pytest tests/ -q`
+      - 白金审计: `python run_platinum_audit.py`
+      - 快审模式: `python run_platinum_audit.py --quick`
+      - config 调整: `config/coach_defaults.yaml`（各组件的 enabled/disabled 及阈值）
+      - 合约只读: `contracts/*.json` 已冻结，修改需版本升级
+
+      ---
+      **Coach 轨全部 8 阶段完成 🏁**
+      ```
+
+      关键签收标准：
+      1. 11 份合约全部冻结（status=frozen + frozen_at 非空）
+      2. 1034+ 测试全部 pass
+      3. 禁改边界零违反
+      4. 全景图完整
+      5. 风险已知且可视化
+    </step>
+
+    <step id="4" name="全局状态更新">
+      更新 reports/coach_global_state.json：
+
+      ```json
+      {
+          "coach_track": "COACH",
+          "coach_phase": 8,
+          "coach_sub_stage": "S8.4",
+          "coach_stages": {
+              "Phase 0-5": {"status": "GO", "tests": 916},
+              "Phase 6": {"status": "GO", "tests": 59, "sub": "S6.1-S6.7"},
+              "Phase 7": {"status": "GO", "tests": 44, "sub": "S7.1-S7.4"},
+              "S8.1": {"status": "GO", "name": "Audit Gate", "tests": "<N>"},
+              "S8.2": {"status": "GO", "name": "Window Gate", "tests": "<N>"},
+              "S8.3": {"status": "GO", "name": "Full Chain Integration", "tests": "<N>"},
+              "S8.4": {"status": "GO", "name": "Final Sign-off", "tests": "<TOTAL>"}
+          },
+          "coach_final_decision": "GO",
+          "coach_test_totals": {
+              "phase0_to_5": 916,
+              "phase6_added": 59,
+              "phase7_added": 44,
+              "phase8_added": "<N>",
+              "total": "<TOTAL>"
+          },
+          "coach_track_completed": true,
+          "coach_completed_at_utc": "<current_utc>",
+          "coach_updated_at_utc": "<current_utc>"
+      }
+      ```
+
+      注意保持现有 global_state.json 中之前 phase 的字段完整。
+      新增 `coach_track_completed: true` 和 `coach_completed_at_utc` 标记轨完结。
+    </step>
+
+    <step id="5" name="完结摘要">
+      输出到控制台：
+
+      ```
+      ════════════════════════════════════════════════════
+        COACH 轨 — 全部 8 阶段完结
+      ════════════════════════════════════════════════════
+
+      阶段:
+        [GO] Phase 0 — 接线
+        [GO] Phase 1 — 教练引擎 (CCA-T)
+        [GO] Phase 2 — 记忆与用户模型
+        [GO] Phase 3 — V18.8 运行时行为
+        [GO] Phase 4 — 行为科学模型 (TTM/SDT/Flow)
+        [GO] Phase 5 — 语义安全三件套
+        [GO] Phase 6 — MAPE-K + 向量记忆 + 多智能体
+        [GO] Phase 7 — 因果稳健 + 治理闭环
+        [GO] Phase 8 — 门禁闭环 + 全链路验证 + 签收
+
+      合约:
+        11 份全部冻结
+
+      测试:
+        1034+ 全部 pass, 0 failed
+
+      代码:
+        src/coach/ → 15+ 文件
+        src/mapek/ → 5 组件
+
+      状态: COACH TRACK COMPLETE 🏁
+      报告: reports/phase8_completion.md
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="contracts/operations_governance.json" type="modify">status draft → frozen + frozen_at 填充</change>
+    <change file="reports/coach_global_state.json" type="modify">Phase 8 → GO + coach_track_completed</change>
+    <change file="reports/phase8_completion.md" type="new">系统签收报告</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. contracts/operations_governance.json status="frozen" + frozen_at 非空
+    2. 11 份合约全部冻结验证
+    3. 全量回归：新增 S8.3 测试 + 已有 1034 全部 pass
+    4. reports/coach_global_state.json Phase 8 → GO
+    5. coach_global_state.json 新增 coach_track_completed=true + coach_completed_at_utc
+    6. reports/phase8_completion.md 系统签收报告（含全景图/交付物清单/合约审计/测试统计/风险/运营）
+    7. 不修改任何已有代码或测试文件
+    8. 输出 Coach 轨完结摘要
+  </success_criteria>
+</prompt>

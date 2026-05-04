@@ -1,0 +1,325 @@
+<prompt>
+  <name>Coherence Coach Track — S5.5 语义安全集成 + 冻结</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>5</phase>
+  <sub_stage>S5.5</sub_stage>
+  <sub_stage_name>语义安全三件套管线集成 + CoachAgent 布线 + 全量回归 + 冻结</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S5.5 实现者。
+    你的任务是：将 S5.1-S5.4 的三个引擎（CounterfactualSimulator / CrossTrackChecker / PrecedentInterceptor）
+    和 Passport（PolicyComposer 升级）集成到 CoachAgent.act() 管线中。
+    完成全量回归测试、Phase 5 冻结标记和全局状态更新。
+  </role>
+
+  <context>
+    已完成的子阶段：
+    - S5.1: src/coach/counterfactual.py — 三假设反事实仿真引擎
+    - S5.2: src/coach/cross_track.py — 跨轨一致性检查器
+    - S5.3: src/coach/precedent_intercept.py — 失败先例拦截器
+    - S5.4: composer.py 升级 — Domain Competence Passport + 越权熔断 + 迁移税
+
+    语义安全三件套在 CoachAgent 管线中的位置：
+    ```
+    用户对话 → CoachAgent.act()
+      → 4a-d: Phase 4 三模型（TTM/SDT/心流）[可选]
+      → 4e:   compose() → action dict + Passport [S5.4]
+      → 4f:   CounterfactualSimulator [S5.1]   ← 第一道闸
+      → 4g:   CrossTrackChecker [S5.2]         ← 第二道闸
+      → 4h:   PrecedentInterceptor [S5.3]       ← 第三道闸
+      → 5-7:  DSL 构建 + 管线 + 返回
+    ```
+
+    三件套的输出附加到 act() 返回 dict 中：
+    - counterfactual_result: dict | None
+    - cross_track_result: dict | None
+    - precedent_result: dict | None
+  </context>
+
+  <task>
+    1) CoachAgent 延迟加载语义安全三件套
+    2) act() 步骤 4e-4h 集成
+    3) 三件套阻断时降级处理
+    4) 全量回归
+    5) config Phase 5 冻结标记
+    6) coach_global_state.json Phase 5 GO 更新
+    7) 完结报告
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="CoachAgent 延迟加载三件套">
+      在 src/coach/agent.py 的 __init__ 中添加：
+
+      ```python
+      # Phase 5: 语义安全三件套（延迟加载）
+      self._counterfactual = None
+      self._cross_track = None
+      self._precedent = None
+      self._data_source = None  # facts 表查询用
+      ```
+
+      新增属性方法：
+      ```python
+      @property
+      def counterfactual(self):
+          if self._counterfactual is None:
+              cfg = _coach_cfg.get("counterfactual", {})
+              if cfg.get("enabled", False):
+                  from src.coach.counterfactual import CounterfactualSimulator
+                  self._counterfactual = CounterfactualSimulator(cfg)
+          return self._counterfactual
+
+      @property
+      def cross_track(self):
+          if self._cross_track is None:
+              from src.coach.cross_track import CrossTrackChecker
+              self._cross_track = CrossTrackChecker()
+          return self._cross_track
+
+      @property
+      def precedent(self):
+          if self._precedent is None:
+              cfg = _coach_cfg.get("precedent_intercept", {})
+              if cfg.get("enabled", False):
+                  from src.coach.precedent_intercept import PrecedentInterceptor
+                  from src.coach.data import TripleLayerGraph
+                  self._data_source = TripleLayerGraph()
+                  self._precedent = PrecedentInterceptor(cfg, data_source=self._data_source)
+          return self._precedent
+      ```
+
+      注意：cross_track 始终可用（不依赖 enabled 配置，因为跨轨检查是轻量纯函数）。
+      counterfactual 和 precedent 遵循 enable 配置。
+    </step>
+    <step id="2" name="act() 步骤 4e-4h 集成">
+      在 act() 中 compose() 调用之后、DSL 构建之前插入：
+
+      ```python
+      # 4e. compose() 已在步骤 4 完成
+      #    此时 action 已包含升级后的 domain_passport
+
+      # 4f. Phase 5: 反事实仿真（默认关闭）
+      counterfactual_result = None
+      try:
+          if self.counterfactual:
+              user_ctx = {"state": user_state}
+              counterfactual_result = self.counterfactual.simulate(action, user_ctx)
+              # 高风险动作：降级处理
+              if counterfactual_result.get("recommendation") == "block":
+                  action["action_type"] = "reflect"
+                  action["payload"] = {
+                      "question": f"这个动作风险较高，是否确认？{intent}",
+                      "context_ids": [],
+                      "format": "text",
+                  }
+      except Exception:
+          pass
+
+      # 4g. Phase 5: 跨轨一致性检查（始终可用）
+      cross_track_result = None
+      try:
+          dominant_layer = user_state.get("dominant_layer", "L0")
+          cross_track_result = self.cross_track.check(
+              action.get("action_type", ""), dominant_layer,
+          )
+          # 高严重度偏离：记录告警
+          if cross_track_result.get("severity") == "high":
+              correction = self.cross_track.suggest_correction(
+                  action.get("action_type", ""), dominant_layer,
+              )
+              if correction.get("needs_correction") and correction.get("suggested_action"):
+                  action["action_type"] = correction["suggested_action"]
+      except Exception:
+          pass
+
+      # 4h. Phase 5: 失败先例拦截（默认关闭）
+      precedent_result = None
+      try:
+          if self.precedent:
+              passport = action.get("domain_passport", {})
+              precedent_result = self.precedent.intercept(
+                  intent=intent,
+                  domain=passport.get("domain", "general"),
+                  action_type=action.get("action_type", ""),
+              )
+              # 命中断：阻止当前动作
+              if precedent_result.get("hit") and precedent_result.get("action") == "block":
+                  action["action_type"] = "defer"
+                  action["payload"] = {
+                      "reason": precedent_result.get("reason", "命中失败先例"),
+                      "fallback_intensity": "minimal",
+                      "resume_condition": "用户主动要求恢复",
+                  }
+      except Exception:
+          pass
+      ```
+
+      将三件套输出附加到 result dict：
+      ```python
+      result = {
+          ...
+          "counterfactual_result": counterfactual_result,
+          "cross_track_result": cross_track_result,
+          "precedent_result": precedent_result,
+      }
+      ```
+
+      注意：所有调用包裹在 try/except 中，防止模型异常阻断主流程。
+    </step>
+    <step id="3" name="config 配置段追加">
+      确保 config/coach_defaults.yaml 包含完整的 Phase 5 配置段：
+
+      ```yaml
+      # ── Phase 5: 语义安全三件套 [Phase 5 frozen] ──
+      counterfactual:
+        enabled: false
+        simulation:
+          deterioration_threshold: 0.3
+          stabilization_factor: 0.2
+          max_hypotheses: 3
+        weights:
+          best_case: 0.3
+          worst_case: 0.4
+          alt_path: 0.3
+
+      precedent_intercept:
+        enabled: false
+        matching:
+          min_confidence: 0.3
+          max_results: 5
+          text_similarity_threshold: 0.4
+        action:
+          on_hit: "block"
+      ```
+
+      CrossTrackChecker 无启用配置——始终可用（纯函数，无副作用）。
+
+      在所有 Phase 5 段的起始行追加 `[Phase 5 frozen]` 标记。
+    </step>
+    <step id="4" name="全量回归">
+      运行命令：
+      ```bash
+      cd D:/Claudedaoy/coherence && python -m pytest tests/ -q
+      ```
+
+      预期：881 + 新增（counterfactual 8 + cross_track 8 + precedent 6 + passport 10 + integration）>= 913 pass。
+
+      如果有失败：
+      - 区分已有测试回归 vs 新增测试失败
+      - 回归立即排查
+      - 新增测试失败修复代码
+      - 反复直到全部 pass
+    </step>
+    <step id="5" name="配置冻结 + 全局状态更新">
+      更新 config/coach_defaults.yaml 确保：
+      - 全部 Phase 5 段标记 `[Phase 5 frozen]`
+      - Phase 0-4 段的冻结标记保留
+
+      更新 reports/coach_global_state.json：
+
+      ```json
+      {
+        "coach_phase": 5,
+        "coach_sub_stage": "S5.5",
+        "coach_stages": {
+          ...（保留 Phase 0-4 所有 stage）,
+          "S5.1": {"status": "GO", "name": "Counterfactual Simulation", "tests": 8},
+          "S5.2": {"status": "GO", "name": "Cross-Track Check", "tests": 8},
+          "S5.3": {"status": "GO", "name": "Precedent Interception", "tests": 6},
+          "S5.4": {"status": "GO", "name": "Passport + Fusor", "tests": 10},
+          "S5.5": {"status": "GO", "name": "Phase 5 Close", "tests": ...}
+        },
+        "coach_final_decision": "GO",
+        "coach_test_totals": {
+          "phase0": 714, "phase1": 62, "phase2": 32,
+          "phase3": 31, "phase4": 42, "phase5": ...,
+          "total": ...
+        },
+        "coach_updated_at_utc": "<current UTC>"
+      }
+      ```
+
+      注意：
+      - 保留全部的 Phase 0-4 stage 条目
+      - phase5 计数 = 新增测试数
+      - total = 881 + phase5
+    </step>
+    <step id="6" name="集成测试（S5.5 新增）">
+      创建 tests/test_s5_safety_integration.py：
+
+      ```python
+      import pytest
+      from src.coach import CoachAgent
+
+      class TestSafetyIntegration:
+          def test_agent_returns_phase5_fields(self):
+              agent = CoachAgent(session_id="test_s5_5")
+              result = agent.act("给个建议")
+              for key in ("counterfactual_result", "cross_track_result",
+                           "precedent_result"):
+                  assert key in result, f"Missing Phase 5 key: {key}"
+
+          def test_cross_track_in_result(self):
+              agent = CoachAgent(session_id="test_s5_5_ct")
+              result = agent.act("给个建议")
+              ct = result.get("cross_track_result")
+              assert ct is not None
+              assert "consistent" in ct
+
+          def test_safety_off_does_not_block(self):
+              agent = CoachAgent(session_id="test_s5_5_off")
+              result = agent.act("教教我怎么调试")
+              # 默认配置下 counterfactual 和 precedent 关闭
+              assert result.get("counterfactual_result") is None
+              assert result.get("precedent_result") is None
+      ```
+
+      基线 3 个集成测试。
+    </step>
+    <step id="7" name="完结报告">
+      在最终消息中呈现：
+
+      ```
+      ════════════════════════════════════════
+      Phase 5 完结报告
+      ════════════════════════════════════════
+
+      ✅ 全量回归: XXXX tests passed
+      ✅ 禁改边界: 零触碰
+
+      S5.1 反事实仿真: GO — 三假设推演+风险标记
+      S5.2 跨轨检查: GO — action_type↔dominant_layer 一致性
+      S5.3 先例拦截: GO — facts 表失败先例检索+阻断
+      S5.4 Passport+熔断: GO — 证据标注+越权熔断+迁移税
+      S5.5 集成冻结: GO — CoachAgent 三件套管线+冻结
+
+      三件套默认 OFF，通过 config 启用。
+      三件套作用顺序: 反事实仿真 → 跨轨检查 → 先例拦截
+
+      全部 Phase 5 完成 — 进入阶段 6
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/agent.py" type="modify">+60 行: 三件套延迟加载 + act() 步骤 4f-4h + 返回结果扩展</change>
+    <change file="config/coach_defaults.yaml" type="modify">Phase 5 段追加 [Phase 5 frozen] 标记</change>
+    <change file="reports/coach_global_state.json" type="modify">Phase 5 GO 更新</change>
+    <change file="tests/test_s5_safety_integration.py" type="new">+50 行: 3 个集成测试</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. CoachAgent.counterfactual/cross_track/precedent 延迟加载正确
+    2. act() 返回结果包含 counterfactual_result/cross_track_result/precedent_result
+    3. cross_track_result 不为 None（始终可用）
+    4. counterfactual 和 precedent 配置关闭时返回 None
+    5. 反事实仿真高风险时 action_type 降级为 reflect
+    6. 跨轨高严重度偏离时自动修正 action_type
+    7. 先例命中时 action_type 降级为 defer
+    8. 全量回归通过（881 + 新增全部 pass）
+    9. config Phase 5 段标记 [Phase 5 frozen]
+    10. coach_global_state.json Phase 5 GO
+  </success_criteria>
+</prompt>

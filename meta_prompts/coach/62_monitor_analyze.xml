@@ -1,0 +1,316 @@
+<prompt>
+  <name>Coherence Coach Track — S6.2 Monitor + Analyze 组件</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>6</phase>
+  <sub_stage>S6.2</sub_stage>
+  <sub_stage_name>MAPE-K Monitor + Analyze — 感知层与分析层实现</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S6.2 实现者。
+    你的任务是：实现 src/mapek/ 包的 Monitor（感知层）和 Analyze（分析层）组件。
+    这是 MAPE-K 循环的前两个环节，负责信号收集与深层诊断。
+  </role>
+
+  <context>
+    已存在的代码和数据源：
+    - contracts/mapek_loop.json: MAPE-K 五组件接口合约（S6.1 已冻结）
+    - src/coach/agent.py: CoachAgent 提供 act() 运行时上下文
+    - src/coach/state.py: UserStateTracker 提供用户状态数据
+    - src/coach/memory.py: SessionMemory 提供历史会话
+
+    MAPE-K 理论（来自自适应AI伴学.txt）：
+    ```
+    Monitor 阶段:
+      收集所有相关信号 → 缓冲 → 去重 → 格式化 → 输出 snapshot
+
+    Analyze 阶段:
+      接收 snapshot → 趋势检测（上升/下降/平稳）
+      → 异常检测（偏离基线超过阈值）
+      → 因果信号提取（相关性分析）
+      → 输出 analysis_report
+    ```
+
+    mapek_loop.json 接口定义：
+    - Monitor: inputs=["user_input", "dsl_feedback", "external_signals"], output="monitor_snapshot", buffer_size=100, dedup_window_s=5
+    - Analyze: inputs=["monitor_snapshot"], output="analysis_report", methods=["trend_detection", "anomaly_detection", "causal_signal"], min_confidence=0.3
+  </context>
+
+  <task>
+    1) 新建 src/mapek/__init__.py：包导出
+    2) 新建 src/mapek/monitor.py：Monitor 类（信号收集 + 缓冲 + 去重 + 格式化）
+    3) 新建 src/mapek/analyze.py：Analyze 类（趋势检测 + 异常检测 + 因果信号）
+    4) 新增 config/coach_defaults.yaml monitor + analyze 配置段
+    5) 新增 tests/test_mapek_monitor_analyze.py
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="包初始化">
+      src/mapek/__init__.py:
+      ```python
+      """MAPE-K 控制循环包 — Monitor → Analyze → Plan → Execute → Knowledge"""
+
+      from .monitor import Monitor
+      from .analyze import Analyze
+      ```
+    </step>
+
+    <step id="2" name="Monitor 类">
+      src/mapek/monitor.py:
+
+      ```python
+      class Monitor:
+          """MAPE-K 感知层：信号收集 + 缓冲 + 去重 + 格式化。
+
+          ingest(signal) → 缓冲
+          snapshot() → 返回当前窗口的 monitor_snapshot
+          flush() → 清空缓冲区
+          """
+
+          def __init__(self, buffer_size: int = 100, dedup_window_s: int = 5):
+              self._buffer: list[dict] = []
+              self._buffer_size = buffer_size
+              self._dedup_win = dedup_window_s
+
+          def ingest(self, signal: dict) -> None:
+              """收集一个信号，自动去重和缓冲管理。"""
+              if self._is_duplicate(signal):
+                  return
+              if len(self._buffer) >= self._buffer_size:
+                  self._buffer.pop(0)  # 丢弃最旧
+              self._buffer.append(signal)
+
+          def snapshot(self) -> dict:
+              """返回当前缓冲区的快照。"""
+              return {
+                  "signals": list(self._buffer),
+                  "count": len(self._buffer),
+                  "earliest": self._buffer[0].get("timestamp") if self._buffer else None,
+                  "latest": self._buffer[-1].get("timestamp") if self._buffer else None,
+              }
+
+          def flush(self) -> list[dict]:
+              """清空缓冲区并返回历史信号。"""
+              data = list(self._buffer)
+              self._buffer.clear()
+              return data
+
+          def _is_duplicate(self, signal: dict) -> bool:
+              """检查是否与最近信号重复（基于 content + timestamp 窗口）。"""
+              if not self._buffer:
+                  return False
+              last = self._buffer[-1]
+              # 相同内容 + 时间窗口内 → 去重
+              if signal.get("content") == last.get("content"):
+                  from datetime import datetime, timezone
+                  now = datetime.now(timezone.utc).timestamp()
+                  last_ts = self._parse_ts(last.get("timestamp"))
+                  if last_ts and (now - last_ts) < self._dedup_win:
+                      return True
+              return False
+
+          def _parse_ts(self, ts_str: str | None) -> float | None:
+              if not ts_str:
+                  return None
+              try:
+                  from datetime import datetime
+                  return datetime.fromisoformat(ts_str.replace("Z", "+00:00")).timestamp()
+              except Exception:
+                  return None
+      ```
+    </step>
+
+    <step id="3" name="Analyze 类">
+      src/mapek/analyze.py:
+
+      ```python
+      class Analyze:
+          """MAPE-K 分析层：状态深层诊断 + 趋势检测 + 异常识别。
+
+          diagnose(monitor_snapshot) → analysis_report
+          """
+
+          def __init__(self, min_confidence: float = 0.3):
+              self._min_conf = min_confidence
+
+          def diagnose(self, snapshot: dict) -> dict:
+              """对 Monitor snapshot 做分析诊断。"""
+              signals = snapshot.get("signals", [])
+              return {
+                  "trends": self._detect_trends(signals),
+                  "anomalies": self._detect_anomalies(signals),
+                  "causal_signals": self._extract_causal_signals(signals),
+                  "confidence": self._compute_confidence(signals),
+                  "summary": self._summarize(signals),
+              }
+
+          def _detect_trends(self, signals: list[dict]) -> list[dict]:
+              """简单趋势检测：计算最近窗口均值变化方向。"""
+              if len(signals) < 4:
+                  return [{"metric": "insufficient_data", "direction": "unknown"}]
+
+              half = len(signals) // 2
+              recent = signals[half:]
+              older = signals[:half]
+
+              trends = []
+              for metric in self._detectable_metrics(signals):
+                  older_avg = self._avg_metric(older, metric)
+                  recent_avg = self._avg_metric(recent, metric)
+                  if recent_avg > older_avg * 1.1:
+                      direction = "rising"
+                  elif recent_avg < older_avg * 0.9:
+                      direction = "falling"
+                  else:
+                      direction = "stable"
+                  trends.append({"metric": metric, "direction": direction,
+                                 "older_avg": older_avg, "recent_avg": recent_avg})
+              return trends
+
+          def _detect_anomalies(self, signals: list[dict]) -> list[dict]:
+              """简单异常检测：偏离均值超过 2 倍标准差。"""
+              if len(signals) < 3:
+                  return []
+              anomalies = []
+              for metric in self._detectable_metrics(signals):
+                  values = [s.get(metric, 0) for s in signals if metric in s]
+                  if not values:
+                      continue
+                  avg = sum(values) / len(values)
+                  var = sum((v - avg) ** 2 for v in values) / len(values)
+                  std = var ** 0.5 if var > 0 else 0.1
+                  for i, s in enumerate(signals):
+                      val = s.get(metric, 0)
+                      if abs(val - avg) > 2 * std:
+                          anomalies.append({"index": i, "metric": metric,
+                                            "value": val, "expected": avg,
+                                            "deviation_std": round(abs(val - avg) / std, 2)})
+              return anomalies
+
+          def _extract_causal_signals(self, signals: list[dict]) -> list[dict]:
+              """提取可能的因果信号（相关性不等于因果，仅做方向排序）。"""
+              return [{"note": "Lightweight correlation analysis — requires MRT for causal claims"}]
+
+          def _compute_confidence(self, signals: list[dict]) -> float:
+              """基于信号量计算分析置信度。"""
+              if len(signals) < 2:
+                  return 0.0
+              return round(min(1.0, len(signals) / 20.0 * 0.5 + 0.3), 4)
+
+          def _summarize(self, signals: list[dict]) -> str:
+              count = len(signals)
+              anomaly_count = len(self._detect_anomalies(signals))
+              if anomaly_count > count * 0.3:
+                  return f"High anomaly ratio ({anomaly_count}/{count}) — recommend intervention"
+              elif anomaly_count > 0:
+                  return f"Acceptable state with {anomaly_count} minor anomalies"
+              return "Normal operation — no anomalies detected"
+
+          def _detectable_metrics(self, signals: list[dict]) -> list[str]:
+              """提取所有信号中共有的数值型指标。"""
+              if not signals:
+                  return []
+              # 取第一个信号的数值键作为可检测指标
+              numeric_keys = []
+              for k, v in signals[0].items():
+                  if isinstance(v, (int, float)):
+                      numeric_keys.append(k)
+              return numeric_keys
+
+          def _avg_metric(self, signals: list[dict], metric: str) -> float:
+              vals = [s.get(metric, 0) for s in signals if metric in s]
+              return sum(vals) / len(vals) if vals else 0.0
+      ```
+
+      设计说明：
+      - Analyze 使用简单统计方法（均值/标准差），不做复杂 ML
+      - 因果信号提取是占位（return placeholder），真实因果推断在 Phase 7 的 MRT 中实现
+      - min_confidence 决定分析结果是否值得送给 Plan 组件
+    </step>
+
+    <step id="4" name="测试">
+      创建 tests/test_mapek_monitor_analyze.py：
+
+      ```python
+      import pytest
+      from src.mapek.monitor import Monitor
+      from src.mapek.analyze import Analyze
+
+      class TestMonitor:
+          def test_ingest_adds_signal(self):
+              m = Monitor()
+              m.ingest({"content": "hello", "timestamp": "2026-05-03T00:00:00Z"})
+              snap = m.snapshot()
+              assert snap["count"] == 1
+
+          def test_dedup_same_content_within_window(self):
+              m = Monitor(dedup_window_s=10)
+              m.ingest({"content": "dup", "timestamp": "2026-05-03T00:00:00Z"})
+              m.ingest({"content": "dup", "timestamp": "2026-05-03T00:00:01Z"})
+              assert m.snapshot()["count"] == 1
+
+          def test_buffer_cap(self):
+              m = Monitor(buffer_size=3)
+              for i in range(5):
+                  m.ingest({"content": f"msg_{i}", "value": i})
+              assert m.snapshot()["count"] == 3
+
+          def test_flush_clears_buffer(self):
+              m = Monitor()
+              m.ingest({"content": "x"})
+              assert len(m.flush()) == 1
+              assert m.snapshot()["count"] == 0
+
+      class TestAnalyze:
+          def test_diagnose_returns_required_keys(self):
+              a = Analyze()
+              result = a.diagnose({"signals": []})
+              for key in ("trends", "anomalies", "causal_signals",
+                          "confidence", "summary"):
+                  assert key in result
+
+          def test_anomaly_detection_works(self):
+              a = Analyze()
+              signals = [{"value": i} for i in [1, 1, 1, 1, 10, 1, 1]]
+              result = a.diagnose({"signals": signals})
+              assert len(result["anomalies"]) > 0
+
+          def test_low_signal_confidence(self):
+              a = Analyze()
+              result = a.diagnose({"signals": [{"value": 1}]})
+              assert result["confidence"] < 0.3
+
+          def test_sufficient_signals_confidence(self):
+              a = Analyze()
+              signals = [{"value": i} for i in range(20)]
+              result = a.diagnose({"signals": signals})
+              assert result["confidence"] >= 0.3
+      ```
+
+      说明：
+      - Monitor 4 个测试：写入、去重、缓冲上限、清空
+      - Analyze 4 个测试：返回键完整、异常检测、低置信度、高置信度
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/mapek/__init__.py" type="new">~8 行: 包导出 Monitor + Analyze</change>
+    <change file="src/mapek/monitor.py" type="new">~80 行: Monitor 信号收集 + 缓冲 + 去重</change>
+    <change file="src/mapek/analyze.py" type="new">~100 行: Analyze 趋势/异常/因果信号检测</change>
+    <change file="tests/test_mapek_monitor_analyze.py" type="new">~70 行: 8 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. src/mapek/__init__.py 存在，导出 Monitor 和 Analyze
+    2. Monitor.ingest(signal) 正常写入缓冲
+    3. Monitor 去重机制有效（相同内容 + 窗口内不重复计数）
+    4. Monitor 缓冲区达到 buffer_size 后自动丢弃最旧信号
+    5. Monitor.flush() 清空缓冲区
+    6. Analyze.diagnose() 返回 5 个键全部存在
+    7. Analyze 能检出明显异常（10 偏离 1,1,1 序列）
+    8. 置信度随信号量增长
+    9. 8 个测试全部通过
+    10. 916 已有测试无回归
+  </success_criteria>
+</prompt>

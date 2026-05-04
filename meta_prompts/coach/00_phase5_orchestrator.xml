@@ -1,0 +1,127 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 5 语义安全三件套总控</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>5</phase>
+  <phase_name>语义安全三件套升级 — 反事实仿真 + 跨轨检查 + 先例拦截 + Passport</phase_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence 项目 Coach 轨 Phase 5 总控调度器。
+    你的目标是：将教练引擎从"语法 DSL 校验"升级为"语义安全三件套"。
+    落地 ai教练.txt V18.7 §5 的语义安全校验层：
+    情境反事实仿真、跨轨一致性检查、失败先例拦截、Domain Competence Passport。
+  </role>
+
+  <mission>
+    1) 将 Phase 5 拆分为 S5.1→S5.5 五个子阶段并严格串行推进。
+    2) S5.1 实现 src/coach/counterfactual.py：三假设反事实仿真引擎。
+    3) S5.2 实现 src/coach/cross_track.py：action_type↔dominant_layer 跨轨一致性检查。
+    4) S5.3 实现 src/coach/precedent_intercept.py：基于 facts 表的失败先例拦截。
+    5) S5.4 升级 composer.py：Domain Competence Passport + 越权熔断器 + 迁移税。
+    6) S5.5 集成到 CoachAgent 管线 + 全量回归 + Phase 5 冻结。
+    7) 不触碰 contracts/已有合约、src/inner/、src/middle/ 等禁改区域。
+  </mission>
+
+  <project_boundaries>
+    <read_write_allowed>
+      <path>src/coach/counterfactual.py (新建：反事实仿真引擎)</path>
+      <path>src/coach/cross_track.py (新建：跨轨一致性检查)</path>
+      <path>src/coach/precedent_intercept.py (新建：失败先例拦截)</path>
+      <path>src/coach/composer.py (修改：Passport 升级 + 越权熔断 + 迁移税)</path>
+      <path>src/coach/agent.py (有限修改：语义安全管线集成)</path>
+      <path>src/coach/dsl.py (有限修改：新增 action_type↔dominant_layer 映射)</path>
+      <path>config/coach_defaults.yaml (新增 Phase 5 配置段)</path>
+      <path>meta_prompts/coach/**</path>
+      <path>reports/coach_global_state.json</path>
+      <path>tests/test_s5*.py (新增)</path>
+    </read_write_allowed>
+    <forbidden_modification>
+      <path>contracts/ 所有冻结合约 (ledger/audit/clock/resolver/gates/coach_dsl/user_profile/ttm_stages)</path>
+      <path>src/inner/**</path>
+      <path>src/middle/**</path>
+      <path>src/outer/**</path>
+      <path>src/coach/state.py (状态追踪接口不可修改)</path>
+      <path>src/coach/data.py (三层图谱 schema 不可修改)</path>
+      <path>src/coach/memory.py (记忆引擎不可修改)</path>
+      <path>src/coach/ttm.py (Phase 4 冻结不可修改)</path>
+      <path>src/coach/sdt.py (Phase 4 实现不可修改)</path>
+      <path>src/coach/flow.py (Phase 4 实现不可修改)</path>
+      <path>已有 tests/ (只新增不修改)</path>
+    </forbidden_modification>
+  </project_boundaries>
+
+  <design_principles>
+    <principle>语义安全三件套是 CoachAgent 动作发出前的"三道闸"：反事实仿真→跨轨检查→先例拦截</principle>
+    <principle>Domain Competence Passport 是每个 DSL 动作包的强制附加字段，跨域建议自动缴纳迁移税</principle>
+    <principle>越权熔断器：当"高置信语气 + 低证据覆盖"共现时，动作降级为提问/澄清</principle>
+    <principle>三件套默认 OFF，通过配置启停，不影响已有运行时行为</principle>
+    <principle>facts 表只读查询，不修改 data.py 的 schema</principle>
+  </design_principles>
+
+  <sub_stage_model>
+    <stage id="S5.1" name="情境反事实仿真">
+      <description>src/coach/counterfactual.py：三假设反事实仿真引擎，对每个 DSL 动作推演假设历史下的结果</description>
+      <file>src/coach/counterfactual.py</file>
+      <estimate>~180 行</estimate>
+    </stage>
+    <stage id="S5.2" name="跨轨一致性检查">
+      <description>src/coach/cross_track.py：action_type ↔ dominant_layer 匹配检查</description>
+      <files>src/coach/cross_track.py</files>
+      <estimate>~120 行</estimate>
+    </stage>
+    <stage id="S5.3" name="失败先例拦截">
+      <description>src/coach/precedent_intercept.py：基于 facts 表的历史失败先例检索+阻断</description>
+      <files>src/coach/precedent_intercept.py</files>
+      <estimate>~150 行</estimate>
+    </stage>
+    <stage id="S5.4" name="Passport + 越权熔断器">
+      <description>composer.py 升级：Domain Competence Passport 附加 + 越权熔断 + 迁移税</description>
+      <files>src/coach/composer.py</files>
+      <estimate>~120 行</estimate>
+    </stage>
+    <stage id="S5.5" name="语义安全集成 + 冻结">
+      <description>agent.py 集成三件套管线 + 全量回归 + Phase 5 冻结 + 全局状态更新</description>
+      <files>src/coach/agent.py, reports/coach_global_state.json</files>
+      <estimate>~120 行</estimate>
+    </stage>
+  </sub_stage_model>
+
+  <routing>
+    <command>/run_coach_s5_1</command>  →  51_counterfactual_simulation.xml
+    <command>/run_coach_s5_2</command>  →  52_cross_track_check.xml
+    <command>/run_coach_s5_3</command>  →  53_precedent_intercept.xml
+    <command>/run_coach_s5_4</command>  →  54_passport_fusor.xml
+    <command>/run_coach_s5_5</command>  →  55_safety_freeze_close.xml
+  </routing>
+
+  <state_management>
+    <state_file>reports/coach_global_state.json</state_file>
+    <status_flow>
+      <allowed>PENDING → IN_PROGRESS → GO | NO_GO</allowed>
+      <rule>上一子阶段非 GO，不得进入下一子阶段</rule>
+    </status_flow>
+  </state_management>
+
+  <safety_rules>
+    <rule>不得修改 contracts/ 已有冻结合约</rule>
+    <rule>不得修改 src/inner/**、src/middle/**、src/outer/**</rule>
+    <rule>src/coach/data.py 的 facts 表 schema 不可修改（只读查询）</rule>
+    <rule>Phase 4 三个模型文件（ttm/sdt/flow）不可修改</rule>
+    <rule>881 个已有 tests 必须全程保持 pass</rule>
+    <rule>三件套默认 OFF（通过 config 启用），不影响已有运行时</rule>
+    <rule>反事实仿真不做真实的因果推断，仅做"方向性风险排序"</rule>
+    <rule>越权熔断器仅阻断"高置信语气+低证据"共现，不阻断正常低置信建议</rule>
+  </safety_rules>
+
+  <success_definition>
+    Phase 5 结束时：
+    1. src/coach/counterfactual.py 存在：三假设反事实仿真引擎
+    2. src/coach/cross_track.py 存在：action_type↔dominant_layer 跨轨一致性检查
+    3. src/coach/precedent_intercept.py 存在：facts 表先例检索+阻断
+    4. composer.py 输出附带 Domain Competence Passport + 越权熔断 + 迁移税
+    5. CoachAgent 动作发出前经过语义安全三件套管线
+    6. 三件套默认 OFF，启用后不影响已有行为
+    7. 新增测试全部 pass + 881 已有测试零回归
+  </success_definition>
+</prompt>

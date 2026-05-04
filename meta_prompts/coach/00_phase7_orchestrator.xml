@@ -1,0 +1,133 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 7 因果稳健 + 治理闭环总控</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>7</phase>
+  <phase_name>因果稳健 + 治理闭环 — MRT 微随机实验 + 三诊断 + V18.7四门禁</phase_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence 项目 Coach 轨 Phase 7 总控调度器。
+    你的目标是：将教练系统从"Phase 6 MAPE-K 闭环控制"升级为"因果稳健 + 完整治理闭环"。
+    落地 ai教练.txt V18.7 的因果推理层和升档治理层，包含：
+    MRT 微随机实验框架、三诊断（平衡性/负对照/安慰剂）、V18.7 四门禁通关。
+  </role>
+
+  <mission>
+    1) 将 Phase 7 拆分为 S7.1→S7.4 四个子阶段并严格串行推进。
+    2) S7.1 实现 src/coach/mrt.py：MRT 微随机实验框架（随机分配+贝叶斯因果估计）。
+    3) S7.1 新建 contracts/causal_governance.json：MRT 实验设计 + 三诊断阈值合约（draft）。
+    4) S7.2 实现 src/coach/diagnostics.py：平衡性检验 + 负对照排除 + 安慰剂窗口。
+    5) S7.3 实现 src/coach/gates_v18_7.py：Verification Load / Serendipity / Trespassing / Manipulation 四门禁。
+    6) S7.4 集成三组件到 CoachAgent + 全量回归 + 合约冻结 + 全局状态更新。
+    7) 不触碰 contracts/已有冻结合约、src/inner/、src/middle/、src/outer/ 等禁改区域。
+  </mission>
+
+  <project_boundaries>
+    <read_write_allowed>
+      <path>contracts/causal_governance.json (新建：MRT 实验 + 诊断阈值合约)</path>
+      <path>src/coach/mrt.py (新建：MRT 微随机实验框架)</path>
+      <path>src/coach/diagnostics.py (新建：三诊断引擎)</path>
+      <path>src/coach/gates_v18_7.py (新建：四门禁实现)</path>
+      <path>src/coach/agent.py (有限修改：Phase 7 组件集成)</path>
+      <path>src/coach/composer.py (有限修改：可选 MRT 路由集成)</path>
+      <path>config/coach_defaults.yaml (新增 Phase 7 配置段)</path>
+      <path>meta_prompts/coach/**</path>
+      <path>reports/coach_global_state.json</path>
+      <path>tests/test_s7*.py (新增)</path>
+    </read_write_allowed>
+    <forbidden_modification>
+      <path>contracts/ 已有冻结合约 (ledger/audit/clock/resolver/gates/coach_dsl/user_profile/ttm_stages/mapek_loop)</path>
+      <path>src/inner/**</path>
+      <path>src/middle/**</path>
+      <path>src/outer/**</path>
+      <path>src/coach/state.py (状态追踪接口不可修改)</path>
+      <path>src/coach/data.py (三层图谱 schema 不可修改)</path>
+      <path>src/coach/memory.py (Phase 6 记忆引擎不可修改)</path>
+      <path>src/coach/ttm.py (Phase 4 冻结不可修改)</path>
+      <path>src/coach/sdt.py (Phase 4 实现不可修改)</path>
+      <path>src/coach/flow.py (Phase 4 实现不可修改)</path>
+      <path>src/coach/counterfactual.py (Phase 5 冻结不可修改)</path>
+      <path>src/coach/cross_track.py (Phase 5 冻结不可修改)</path>
+      <path>src/coach/precedent_intercept.py (Phase 5 冻结不可修改)</path>
+      <path>src/mapek/** (Phase 6 MAPE-K 包不可修改)</path>
+      <path>已有 tests/ (只新增不修改)</path>
+    </forbidden_modification>
+  </project_boundaries>
+
+  <design_principles>
+    <principle>MRT 微随机实验在低风险 flow 动作上实施，每 24 小时窗口最多 20% 的动作被分配为变体</principle>
+    <principle>因果效应估计使用贝叶斯更新——不做频率学派 p 值检验，使用后验分布重叠度量信度</principle>
+    <principle>三诊断是 Gate→GO 升档前的强制检查：三诊断全绿 = Causal Gate (gate 5) 通过</principle>
+    <principle>四门禁是审计级检查，不修改运行时行为——只报告通过/不通过状态</principle>
+    <principle>MRT 变体只影响"如何提供建议"（风格/措辞/时机），不影响"提供什么建议"（内容安全）</principle>
+    <principle>所有 Phase 7 组件默认 OFF，通过配置启停</principle>
+    <principle>四门禁的数据源来自已有组件：CoachAgent 计时、excursion 记录、语义安全审计、选择架构审计</principle>
+  </design_principles>
+
+  <sub_stage_model>
+    <stage id="S7.1" name="MRT 微随机实验框架">
+      <description>src/coach/mrt.py：MRT 微随机分配 + 贝叶斯因果效应估计 + 实验合约</description>
+      <files>src/coach/mrt.py (新建), contracts/causal_governance.json (新建, draft)</files>
+      <estimate>~200 行</estimate>
+    </stage>
+    <stage id="S7.2" name="三诊断">
+      <description>src/coach/diagnostics.py：平衡性检验 + 负对照排除 + 安慰剂窗口</description>
+      <files>src/coach/diagnostics.py (新建)</files>
+      <estimate>~250 行</estimate>
+    </stage>
+    <stage id="S7.3" name="V18.7 四门禁通关">
+      <description>src/coach/gates_v18_7.py：Verification Load / Serendipity / Trespassing / Manipulation 四门禁</description>
+      <files>src/coach/gates_v18_7.py (新建)</files>
+      <estimate>~200 行</estimate>
+    </stage>
+    <stage id="S7.4" name="Phase 7 集成 + 冻结">
+      <description>三组件集成到 CoachAgent + 全量回归 + 合约冻结 + 全局状态更新</description>
+      <files>src/coach/agent.py, contracts/causal_governance.json, reports/coach_global_state.json</files>
+      <estimate>~100 行</estimate>
+    </stage>
+  </sub_stage_model>
+
+  <routing>
+    <command>/run_coach_s7_1</command>  →  71_mrt_framework.xml
+    <command>/run_coach_s7_2</command>  →  72_three_diagnostics.xml
+    <command>/run_coach_s7_3</command>  →  73_four_gates.xml
+    <command>/run_coach_s7_4</command>  →  74_phase7_freeze_close.xml
+  </routing>
+
+  <state_management>
+    <state_file>reports/coach_global_state.json</state_file>
+    <status_flow>
+      <allowed>PENDING → IN_PROGRESS → GO | NO_GO</allowed>
+      <rule>上一子阶段非 GO，不得进入下一子阶段</rule>
+    </status_flow>
+  </state_management>
+
+  <safety_rules>
+    <rule>不得修改 contracts/ 已有冻结合约（只新增 causal_governance.json）</rule>
+    <rule>不得修改 src/inner/**、src/middle/**、src/outer/**</rule>
+    <rule>不得修改 src/mapek/**（Phase 6 MAPE-K 包已冻结）</rule>
+    <rule>Phase 4 三个模型文件（ttm/sdt/flow）不可修改</rule>
+    <rule>Phase 5 三个安全文件（counterfactual/cross_track/precedent_intercept）不可修改</rule>
+    <rule>src/coach/memory.py 记忆引擎不可修改</rule>
+    <rule>990 个已有 tests 必须全程保持 pass</rule>
+    <rule>所有 Phase 7 组件默认 OFF，不影响已有 act() 行为</rule>
+    <rule>MRT 变体不改变动作类型——只改变"如何提供"（风格/时机），不改变"提供什么"（内容/动作类型）</rule>
+    <rule>四门禁是审计只读检查——不熔断、不降级、不修改运行时行为</rule>
+    <rule>贝叶斯因果估计不做频率学派 p 值报告——只报告后验均值 + 可信区间</rule>
+  </safety_rules>
+
+  <success_definition>
+    Phase 7 结束时：
+    1. contracts/causal_governance.json 已冻结（frozen + v1.0.0）
+    2. src/coach/mrt.py 存在：MRT 随机分配 + 贝叶斯因果估计 + 实验记录
+    3. src/coach/diagnostics.py 存在：平衡性/负对照/安慰剂 三诊断
+    4. src/coach/gates_v18_7.py 存在：四门禁检查器
+    5. 三组件通过配置启停，不影响已有 act() 行为
+    6. MRT 变体分配依据 20%/24h 窗口规则
+    7. 三诊断检查接口可供 gate 5 (causal_gate) 调用
+    8. 四门禁检查接口可供 gate 6-8 调用
+    9. 新增测试全部 pass + 990 已有测试零回归
+    10. reports/coach_global_state.json Phase 7 → GO
+  </success_definition>
+</prompt>

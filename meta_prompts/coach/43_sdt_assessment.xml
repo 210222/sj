@@ -1,0 +1,330 @@
+<prompt>
+  <name>Coherence Coach Track — S4.3 SDT 动机评估</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>4</phase>
+  <sub_stage>S4.3</sub_stage>
+  <sub_stage_name>SDT 动机评估 — Autonomy / Competence / Relatedness</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S4.3 实现者。
+    你的任务是：实现 src/coach/sdt.py，包含 SDTAssessor 类，
+    从用户交互行为推断自主性(Autonomy)、胜任感(Competence)、
+    关联性(Relatedness)三需求的满足程度。
+    这是 CoachAgent 策略微调的"动机传感器"。
+  </role>
+
+  <context>
+    已存在的代码和数据源：
+    - src/coach/ttm.py: TTMStateMachine（S4.2 已完成）——TTM 提供大阶段的策略粗筛
+    - src/coach/agent.py: CoachAgent 包含 V18.8 运行时数据：
+      - _pulse_history: 脉冲追踪（rewrite_rate → Autonomy 指标）
+      - _excursion_evidence: 远足记录 → Autonomy 指标
+      - _no_assist_scores: No-Assist 分数 → Competence 指标
+    - src/inner/no_assist/ evaluator.py: NoAssistEvaluator 评分 → Competence 指标
+    - src/coach/memory.py: SessionMemory.recall() → 交互频次 → Relatedness 指标
+    - config/coach_defaults.yaml: 已有 Phase 1-3 配置
+
+    SDT 理论基础（来自 自适应AI伴学.txt）：
+    ```
+    自决理论(SDT)三基本需求:
+    1. Autonomy（自主性）: 行为发自内在意愿的程度
+       - 指标: 主动发起率 / 改写率 / 拒绝率
+    2. Competence（胜任感）: 对任务可控感的程度
+       - 指标: 任务完成率 / No-Assist 得分趋势 / 难度选择趋势
+    3. Relatedness（关联性）: 与他人连接感的程度
+       - 指标: 交互时长 / 主动返回率 / 交互深度
+    ```
+
+    SDT 工作方式：SDT 不产生独立合约——它是 PolicyComposer 的内部信号。
+    TTM 决定「做什么」，SDT 决定「怎么做」（对话风格和辅助强度）。
+  </context>
+
+  <task>
+    实现 src/coach/sdt.py SDTAssessor 类，从 CoachAgent 运行时数据评估三需求。
+    输出可供 PolicyComposer 消费的 SDTProfile。
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="配置段">
+      在 config/coach_defaults.yaml Phase 4 段追加：
+
+      ```yaml
+      # ── Phase 4: SDT 自决理论 ────────────────────
+      sdt:
+        enabled: false
+        weights:
+          autonomy: 0.35          # 自主性权重（综合得分中占比）
+          competence: 0.35        # 胜任感权重
+          relatedness: 0.30       # 关联性权重
+        thresholds:
+          autonomy_low: 0.3       # 低于此值 → 增加自主性支持
+          competence_low: 0.3     # 低于此值 → 降低难度
+          relatedness_low: 0.3    # 低于此值 → 增加社交互动
+        signal_decay: 0.9         # 历史信号衰减因子
+      ```
+    </step>
+    <step id="2" name="SDTAssessor 类">
+      在 src/coach/sdt.py 中实现：
+
+      ```python
+      """自决理论三需求评估 — 交互行为 → Autonomy/Competence/Relatedness 评分。"""
+
+      import time
+      import logging
+
+      _logger = logging.getLogger(__name__)
+
+      class SDTProfile:
+          """SDT 评估输出。"""
+          def __init__(self, autonomy: float, competence: float, relatedness: float,
+                       advice: dict | None = None):
+              self.autonomy = round(max(0.0, min(1.0, autonomy)), 4)
+              self.competence = round(max(0.0, min(1.0, competence)), 4)
+              self.relatedness = round(max(0.0, min(1.0, relatedness)), 4)
+              self.advice = advice or {}
+
+          def to_dict(self) -> dict:
+              return {
+                  "autonomy": self.autonomy,
+                  "competence": self.competence,
+                  "relatedness": self.relatedness,
+                  "advice": self.advice,
+              }
+
+
+      class SDTAssessor:
+          """从交互行为推断三需求满足程度。
+
+          assess(session_data) → SDTProfile（含三轴评分 + 策略建议）
+          """
+
+          def __init__(self, config: dict | None = None):
+              self._config = config or {}
+              self._signal_history: dict[str, list[float]] = {
+                  "autonomy": [],
+                  "competence": [],
+                  "relatedness": [],
+              }
+      ```
+    </step>
+    <step id="3" name="三轴评分方法">
+      实现三个核心评分方法：
+
+      ```python
+      def _score_autonomy(self, data: dict) -> float:
+          """自主性评分 [0,1]。
+
+          数据源:
+          - rewrite_rate: pulse 改写率（高改写→高 Autonomy）
+          - excursion_use_count: 远足使用次数（高使用→高 Autonomy）
+          - command_initiation_rate: 用户主动发起率
+          """
+          rewrite_rate = data.get("rewrite_rate", 0.0)
+          excursion_count = data.get("excursion_use_count", 0)
+          initiation_rate = data.get("initiation_rate", 0.5)
+
+          # 无数据时返回中性 0.5
+          if all(v == 0.0 for v in [rewrite_rate, initiation_rate]) and excursion_count == 0:
+              return 0.5
+
+          # 改写率 → 最高贡献 0.4
+          auto_score = rewrite_rate * 0.4
+          # 远足使用 → 最高贡献 0.3（clamp: >=1次即满）
+          exc_score = min(excursion_count / 3.0, 1.0) * 0.3
+          # 主动发起 → 最高贡献 0.3
+          init_score = initiation_rate * 0.3
+
+          return auto_score + exc_score + init_score
+
+
+      def _score_competence(self, data: dict) -> float:
+          """胜任感评分 [0,1]。
+
+          数据源:
+          - no_assist_scores: list[float] No-Assist 评估分数
+          - task_completion_rate: 任务完成率
+          - difficulty_trend: 难度选择趋势（正→挑战更多）
+          """
+          nas = data.get("no_assist_scores", [])
+          tcr = data.get("task_completion_rate", 0.5)
+          diff_trend = data.get("difficulty_trend", 0.0)
+
+          if not nas and tcr == 0.5 and diff_trend == 0.0:
+              return 0.5
+
+          # No-Assist 均值（最多 3 个最近值）
+          nas_avg = sum(nas[-3:]) / max(len(nas[-3:]), 1) if nas else 0.5
+          nas_score = nas_avg * 0.5
+          # 任务完成率 × 0.3
+          tcr_score = tcr * 0.3
+          # 难度上升趋势 × 0.2（正向→用户主动寻求挑战→胜任感较高）
+          diff_score = max(0.0, min(1.0, diff_trend * 2.0)) * 0.2
+
+          return nas_score + tcr_score + diff_score
+
+
+      def _score_relatedness(self, data: dict) -> float:
+          """关联性评分 [0,1]。
+
+          数据源:
+          - session_count: 总会话数
+          - return_rate: 主动返回率
+          - interaction_depth: 平均交互深度（回合数）
+          """
+          sessions = data.get("session_count", 0)
+          return_rate = data.get("return_rate", 0.5)
+          depth = data.get("interaction_depth", 0.0)
+
+          if sessions == 0 and return_rate == 0.5 and depth == 0.0:
+              return 0.5
+
+          # 会话量 → 对数映射到 [0, 0.3]
+          sess_score = min(sessions / 20.0, 1.0) * 0.3
+          # 返回率 → × 0.4
+          ret_score = return_rate * 0.4
+          # 交互深度 → × 0.3
+          depth_score = min(depth / 10.0, 1.0) * 0.3
+
+          return sess_score + ret_score + depth_score
+      ```
+    </step>
+    <step id="4" name="assess 主方法">
+      ```python
+      def assess(self, session_data: dict | None = None) -> SDTProfile:
+          """评估三需求满足程度。
+
+          Args:
+              session_data: dict 包含上述所有指标字段
+
+          Returns: SDTProfile
+          """
+          if session_data is None:
+              session_data = {}
+
+          auto = self._score_autonomy(session_data)
+          comp = self._score_competence(session_data)
+          rel = self._score_relatedness(session_data)
+
+          # 更新信号历史
+          self._signal_history["autonomy"].append(auto)
+          self._signal_history["competence"].append(comp)
+          self._signal_history["relatedness"].append(rel)
+
+          # 生成策略建议
+          advice = self._generate_advice(auto, comp, rel)
+
+          return SDTProfile(auto, comp, rel, advice)
+      ```
+    </step>
+    <step id="5" name="策略建议生成">
+      ```python
+      def _generate_advice(self, auto: float, comp: float, rel: float) -> dict:
+          """根据三轴评分生成对话策略建议。
+
+          Returns: {
+              "adjust_autonomy_support": bool,    # 低自主性→需要更多选择权
+              "adjust_difficulty": str,            # "lower"|"maintain"|"raise"
+              "increase_relatedness": bool,         # 低关联性→增加社交互动
+              "dominant_needs": list[str],          # 最需关注的 1-2 个维度
+          }
+          """
+          cfg = self._config.get("thresholds", {})
+          auto_low = cfg.get("autonomy_low", 0.3)
+          comp_low = cfg.get("competence_low", 0.3)
+          rel_low = cfg.get("relatedness_low", 0.3)
+
+          advice = {
+              "adjust_autonomy_support": auto < auto_low,
+              "adjust_difficulty": "lower" if comp < comp_low else "raise" if comp > 0.7 else "maintain",
+              "increase_relatedness": rel < rel_low,
+          }
+
+          needs = []
+          if auto < auto_low:
+              needs.append("autonomy")
+          if comp < comp_low:
+              needs.append("competence")
+          if rel < rel_low:
+              needs.append("relatedness")
+          advice["dominant_needs"] = needs if needs else ["none"]
+
+          return advice
+      ```
+    </step>
+    <step id="6" name="测试">
+      创建 tests/test_sdt.py：
+
+      ```python
+      import pytest
+      from src.coach.sdt import SDTAssessor, SDTProfile
+
+      class TestSDTProfile:
+          def test_profile_clamps_range(self):
+              p = SDTProfile(1.5, -0.1, 0.5)
+              assert p.autonomy == 1.0
+              assert p.competence == 0.0
+              assert p.relatedness == 0.5
+
+          def test_to_dict(self):
+              p = SDTProfile(0.8, 0.6, 0.7, {"hint": "increase autonomy"})
+              d = p.to_dict()
+              assert d["autonomy"] == 0.8
+              assert "hint" in d["advice"]
+
+      class TestSDTAssessor:
+
+          def test_default_neutral_when_no_data(self):
+              sdt = SDTAssessor()
+              p = sdt.assess({})
+              assert p.autonomy == 0.5
+              assert p.competence == 0.5
+              assert p.relatedness == 0.5
+
+          def test_high_autonomy_from_rewrites(self):
+              sdt = SDTAssessor()
+              p = sdt.assess({"rewrite_rate": 0.8, "excursion_use_count": 3, "initiation_rate": 0.7})
+              assert p.autonomy > 0.5
+
+          def test_low_autonomy(self):
+              sdt = SDTAssessor()
+              p = sdt.assess({"rewrite_rate": 0.0, "excursion_use_count": 0, "initiation_rate": 0.1})
+              assert p.autonomy < 0.5
+
+          def test_high_competence(self):
+              sdt = SDTAssessor()
+              p = sdt.assess({"no_assist_scores": [0.8, 0.9, 0.85],
+                              "task_completion_rate": 0.9, "difficulty_trend": 0.5})
+              assert p.competence > 0.5
+
+          def test_low_competence_generates_advice(self):
+              sdt = SDTAssessor({"thresholds": {"competence_low": 0.5}})
+              p = sdt.assess({"no_assist_scores": [0.1, 0.2], "task_completion_rate": 0.3})
+              assert "lower" in p.advice.get("adjust_difficulty", "")
+
+          def test_advice_dominant_needs(self):
+              sdt = SDTAssessor()
+              p = sdt.assess({"rewrite_rate": 0.0, "no_assist_scores": [0.1], "session_count": 0})
+              assert len(p.advice["dominant_needs"]) >= 1
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/sdt.py" type="new">~150 行: SDTAssessor + SDTProfile + 三轴评分 + 策略建议</change>
+    <change file="config/coach_defaults.yaml" type="append">+15 行: sdt 配置段 (weights/thresholds/signal_decay)</change>
+    <change file="tests/test_sdt.py" type="new">~50 行: 6 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. SDTAssessor 无数据时返回中性 0.5（不误判）
+    2. 高改写率/远足使用 → 高 Autonomy 得分
+    3. 高 No-Assist 分数 → 高 Competence 得分
+    4. 多会话/高返回率 → 高 Relatedness 得分
+    5. 低 Competence 触发 advice.adjust_difficulty="lower"
+    6. dominant_needs 正确识别最需关注的维度
+    7. 6 个测试全部通过
+    8. 839 + 前序新增测试无回归
+  </success_criteria>
+</prompt>

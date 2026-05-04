@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract": "coach_dsl",
+  "version": "1.0.0",
+  "status": "frozen",
+  "description": "CCA-T 教练引擎 DSL 动作协议。定义教练系统输出的 8 种动作类型及其字段 schema，后续模块只读。",
+
+  "action_types": [
+    {
+      "id": "probe",
+      "purpose": "无辅助能力探查",
+      "slots": ["prompt", "expected_skill", "max_duration_s"],
+      "max_repeat": 1
+    },
+    {
+      "id": "challenge",
+      "purpose": "挑战性任务",
+      "slots": ["objective", "difficulty", "hints_allowed", "evidence_id"],
+      "max_repeat": 1
+    },
+    {
+      "id": "reflect",
+      "purpose": "引导反思",
+      "slots": ["question", "context_ids", "format"],
+      "max_repeat": 1
+    },
+    {
+      "id": "scaffold",
+      "purpose": "搭建脚手架",
+      "slots": ["step", "support_level", "next_step", "fallback_step"],
+      "max_repeat": 1
+    },
+    {
+      "id": "suggest",
+      "purpose": "系统建议",
+      "slots": ["option", "alternatives", "evidence_id", "source_tag"],
+      "max_repeat": 1
+    },
+    {
+      "id": "pulse",
+      "purpose": "主权确认脉冲 (V18.8)",
+      "slots": ["statement", "accept_label", "rewrite_label"],
+      "max_repeat": 3
+    },
+    {
+      "id": "excursion",
+      "purpose": "模型外远足 (V18.8)",
+      "slots": ["domain", "options", "bias_disabled"],
+      "max_repeat": 1
+    },
+    {
+      "id": "defer",
+      "purpose": "暂缓/降级",
+      "slots": ["reason", "fallback_intensity", "resume_condition"],
+      "max_repeat": 1
+    }
+  ],
+
+  "required_fields": [
+    "action_type",
+    "payload",
+    "trace_id",
+    "intent",
+    "domain_passport"
+  ],
+
+  "optional_fields": [
+    "evidence_ids",
+    "uncertainty",
+    "user_response_expected"
+  ],
+
+  "domain_passport_levels": ["high", "medium", "low", "none"],
+
+  "source_tags": ["rule", "statistical_model", "hypothesis", "user_history", "domain_knowledge"],
+
+  "frozen_constraints": {
+    "action_types_enum": "S1.4 冻结后，action_types.id 枚举不可增删，仅可扩展 slots 和参数",
+    "domain_passport_levels": "枚举固定，不可变更顺序",
+    "source_tags": "枚举固定，不可删改"
+  }
+}

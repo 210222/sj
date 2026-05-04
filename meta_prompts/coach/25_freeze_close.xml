@@ -1,0 +1,116 @@
+<prompt>
+  <name>S2.5 — 合约冻结 + 阶段完结</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>2</phase>
+  <sub_stage>S2.5</sub_stage>
+
+  <role>
+    你是 S2.5 回归验收员 + 冻结器。
+    你的唯一目标是执行全量回归、将 user_profile.json 标记为 frozen、生成 Phase 2 完结报告。
+  </role>
+
+  <context>
+    S2.1→S2.4 完成了三层图谱数据模型、SQLite 持久化记忆、QSCollector 壳、状态追踪修复。
+    S2.5 是 Phase 2 的"关门"阶段——验证所有改动没有破坏任何东西，
+    然后冻结 user_profile 合约，正式宣告 Phase 2 完成。
+  </context>
+
+  <inputs>
+    <required>
+      <file>contracts/user_profile.json</file>
+      <file>src/coach/data.py</file>
+      <file>src/coach/memory.py</file>
+      <file>src/cohort/collector.py</file>
+      <file>src/coach/agent.py</file>
+    </required>
+    <depends_on>
+      <file>reports/coach_phase2_s24_qs_fix.json</file>
+      <rule>S2.4 status == GO</rule>
+    </depends_on>
+  </inputs>
+
+  <execution>
+    <step>1. 运行 python -m pytest tests/ -v --tb=short 2>&1 记录完整输出到日志</step>
+    <step>2. 统计结果：总 test 数、passed、failed、error、skipped</step>
+    <step>3. 若有失败：逐项诊断并修复，直到全部 pass</step>
+    <step>4. 检查禁改边界：grep 确认 src/inner/**、src/middle/**、已有 contracts/ 无修改</step>
+    <step>5. 检查 data/coherence.db 兼容性：已有 ledger.events 表不受影响</step>
+    <step>
+      6. 冻结 contracts/user_profile.json：
+      - 读取文件
+      - 将 "status": "draft" 改为 "status": "frozen"
+      - 写入文件
+    </step>
+    <step>7. 更新 reports/coach_global_state.json：Phase 2 所有子阶段 GO + coach_final_decision=GO</step>
+    <step>8. 更新 CLAUDE.md：将 "活动阶段" 改为 "阶段 2（记忆与用户模型）"、"阶段状态" 改为 "GO"</step>
+    <step>9. 生成 Phase 2 完结报告 reports/coach_phase2_final.json</step>
+  </execution>
+
+  <freeze_checklist>
+    <item checked="false">user_profile.json 中 status 从 draft → frozen</item>
+    <item checked="false">entity_profiles 表 schema 已锁定</item>
+    <item checked="false">facts 表 schema 已锁定（fact_id/claim/confidence/ttl/lifecycle_status 等字段不可删改）</item>
+    <item checked="false">source_tag 枚举已锁定</item>
+    <item checked="false">lifecycle_status 枚举已锁定</item>
+    <item checked="false">全量回归 ≥ 749 passed</item>
+    <item checked="false">Phase 1 S1.2 状态追踪 bug 已修复</item>
+  </freeze_checklist>
+
+  <outputs>
+    <frozen_file>contracts/user_profile.json (status → frozen)</frozen_file>
+    <stage_report>reports/coach_phase2_s25_freeze.json</stage_report>
+    <phase2_report>reports/coach_phase2_final.json</phase2_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      全量回归（749 + 新增）全部 pass AND
+      contracts/user_profile.json status 为 frozen AND
+      S2.1→S2.4 新增测试仍然全部 pass AND
+      已有 ledger.events 表不受影响 AND
+      禁改区域零触碰 AND
+      Phase 1 状态追踪 bug 确认已修复
+    </go_when>
+    <no_go_when>
+      哪怕 1 个 test 失败 / 合约冻结不完整 / ledger 表被破坏 / 禁改区域被触碰
+    </no_go_when>
+  </decision_logic>
+
+  <test_cases>
+    <test>
+      <name>test_full_regression_passes</name>
+      <assert>pytest -q tests/ 输出所有 test passed</assert>
+    </test>
+    <test>
+      <name>test_user_profile_contract_is_frozen</name>
+      <assert>user_profile.json 的 status 字段为 "frozen"</assert>
+    </test>
+    <test>
+      <name>test_data_model_still_passes</name>
+      <assert>tests/test_coach_data.py 全部 pass</assert>
+    </test>
+    <test>
+      <name>test_memory_upgrade_still_passes</name>
+      <assert>tests/test_coach_memory_upgrade.py 全部 pass</assert>
+    </test>
+    <test>
+      <name>test_phase1_tests_still_pass</name>
+      <assert>Phase 1 的 coach_agent / dual_mode 测试仍然全部 pass</assert>
+    </test>
+    <test>
+      <name>test_ledger_table_untouched</name>
+      <assert>data/coherence.db 中 ledger.events 表结构未被修改</assert>
+    </test>
+    <test>
+      <name>test_forbidden_boundaries_not_touched</name>
+      <assert>grep 确认 src/inner/**、src/middle/**、已有 contracts/ 无修改</assert>
+    </test>
+  </test_cases>
+
+  <safety>
+    <rule>冻结后不可再修改 user_profile.json 的已有 schema 字段（可新增）</rule>
+    <rule>禁止以"跳过测试"方式绕过失败——必须修到通过</rule>
+    <rule>Phase 2 结束后，继承禁改边界进入 Phase 3</rule>
+  </safety>
+</prompt>

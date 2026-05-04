@@ -1,0 +1,327 @@
+<prompt>
+  <name>Coherence Coach Track — S8.1 审计分级门禁 (Audit Gate)</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>8</phase>
+  <sub_stage>S8.1</sub_stage>
+  <sub_stage_name>审计分级门禁 — Audit Health 评分 + P0/P1 聚合</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S8.1 实现者。
+    你的任务是：实现 src/coach/audit_health.py，为 gate 6 (audit_gate) 提供运行时
+    audit_health 指标——P0/P1 finding 聚合、审计健康评分、历史趋势追踪。
+  </role>
+
+  <context>
+    gates.json 中 gate 6 定义：
+    ```json
+    "6_audit_gate": {
+        "metric": "audit_health",
+        "rule": "P0=0 且 P1 低于告警阈值"
+    }
+    ```
+
+    已有审计和数据源：
+    - src/inner/audit/ — 底层审计模块（冻结，只读）
+    - src/coach/mrt.py — Phase 7 MRT 实验记录
+    - src/coach/diagnostics.py — Phase 7 三诊断
+    - src/coach/gates_v18_7.py — Phase 7 四门禁
+    - reports/full_scan/ — S10-S90 白金审计报告（含 findings）
+    - contracts/gates.json — 8 门禁定义（冻结，只读引用）
+
+    设计要点：
+    - AuditHealthScorer 是只读评分器——聚合已有审计 finding，不修改审计流程
+    - P0 = 阻断性缺陷（安全违规、数据丢失、合约违反）
+    - P1 = 非阻断性告警（性能退化、覆盖不足、配置偏差）
+    - 历史趋势用简单滑动窗口（最近 N 次审计的 P0/P1 计数）
+  </context>
+
+  <task>
+    1) 实现 src/coach/audit_health.py
+    2) 新增 tests/test_s8_audit_health.py
+    3) 追加 Phase 8 配置段到 config/coach_defaults.yaml
+    4) 不实现 window_gate、全链路测试、签收
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="实现 audit_health.py">
+
+      新建 src/coach/audit_health.py：
+
+      ```python
+      """S8.1 审计分级门禁 — gate 6 (audit_gate) 运行时实现。
+
+      只读审计评分器——聚合已有 P0/P1 finding，计算审计健康评分。
+      不修改审计流程，不熔断，不降级。
+      """
+      from dataclasses import dataclass, field
+      from datetime import datetime, timezone
+      from typing import Any
+
+
+      @dataclass
+      class AuditFinding:
+          """单条审计发现。"""
+          severity: str               # "P0" | "P1" | "P2" | "P3"
+          category: str               # "security" | "quality" | "coverage" | "drift" | "contract"
+          detail: str
+          source: str = ""            # 审计来源（S10/S20/S30/...）
+          timestamp: str = ""
+
+          def is_blocking(self) -> bool:
+              return self.severity == "P0"
+
+          def is_warning(self) -> bool:
+              return self.severity == "P1"
+
+
+      @dataclass
+      class AuditHealthScore:
+          """审计健康评分。"""
+          score: float                # 0.0 (最差) - 1.0 (最佳)
+          p0_count: int
+          p1_count: int
+          p0_blocking: bool           # P0 > 0 → blocking
+          p1_above_threshold: bool    # P1 > threshold → warning
+          p1_threshold: int
+          detail: str = ""
+
+          def to_dict(self) -> dict:
+              return {
+                  "score": self.score,
+                  "p0_count": self.p0_count,
+                  "p1_count": self.p1_count,
+                  "p0_blocking": self.p0_blocking,
+                  "p1_above_threshold": self.p1_above_threshold,
+                  "p1_threshold": self.p1_threshold,
+                  "detail": self.detail,
+              }
+
+          def audit_health(self) -> dict:
+              """返回 gate 6 (audit_gate) 所需的 audit_health 指标。"""
+              return {
+                  "audit_health_score": self.score,
+                  "p0_count": self.p0_count,
+                  "p1_count": self.p1_count,
+                  "p0_blocking": self.p0_blocking,
+                  "gate_pass": not self.p0_blocking and not self.p1_above_threshold,
+              }
+
+
+      class AuditHealthScorer:
+          """审计健康评分器——聚合 finding 并计算评分。
+
+          评分规则：
+          - P0=0 且 P1=0 → score=1.0 (完美)
+          - P0=0 且 P1≤threshold → score=0.8+ (良好)
+          - P0=0 且 P1>threshold → score=0.5+ (告警)
+          - P0>0 → score<0.5 (阻断)
+          """
+
+          def __init__(self, p1_threshold: int = 3, history_window: int = 10):
+              self.p1_threshold = p1_threshold
+              self.history_window = history_window
+              self._history: list[AuditHealthScore] = []
+
+          def evaluate(self, findings: list[AuditFinding]) -> AuditHealthScore:
+              p0_count = sum(1 for f in findings if f.is_blocking())
+              p1_count = sum(1 for f in findings if f.is_warning())
+
+              p0_blocking = p0_count > 0
+              p1_above = p1_count > self.p1_threshold
+
+              if p0_blocking:
+                  # P0 阻断：score = 0.1 + 衰减
+                  base = max(0.0, 0.3 - p0_count * 0.1)
+              elif p1_above:
+                  # P1 超标：score = 0.5~0.7
+                  excess = p1_count - self.p1_threshold
+                  base = max(0.3, 0.7 - excess * 0.05)
+              else:
+                  # 健康：score = 0.8~1.0
+                  base = 0.9 + (self.p1_threshold - p1_count) * 0.03
+                  base = min(1.0, base)
+
+              score = round(base, 4)
+              result = AuditHealthScore(
+                  score=score, p0_count=p0_count, p1_count=p1_count,
+                  p0_blocking=p0_blocking, p1_above_threshold=p1_above,
+                  p1_threshold=self.p1_threshold,
+                  detail=self._compose_detail(p0_count, p1_count, p0_blocking, p1_above),
+              )
+
+              self._history.append(result)
+              if len(self._history) > self.history_window:
+                  self._history.pop(0)
+              return result
+
+          def trend(self) -> dict:
+              """返回历史评分趋势。"""
+              if not self._history:
+                  return {"scores": [], "trend": "stable", "average": 1.0}
+              scores = [h.score for h in self._history]
+              avg = sum(scores) / len(scores)
+              if len(scores) >= 3:
+                  first_half = sum(scores[:len(scores)//2]) / (len(scores)//2)
+                  second_half = sum(scores[len(scores)//2:]) / (len(scores) - len(scores)//2)
+                  if second_half - first_half > 0.05:
+                      trend = "improving"
+                  elif first_half - second_half > 0.05:
+                      trend = "declining"
+                  else:
+                      trend = "stable"
+              else:
+                  trend = "stable"
+              return {
+                  "scores": [round(s, 4) for s in scores],
+                  "trend": trend,
+                  "average": round(avg, 4),
+                  "window": len(scores),
+              }
+
+          @staticmethod
+          def _compose_detail(p0: int, p1: int, p0_block: bool, p1_above: bool) -> str:
+              parts = []
+              if p0 > 0:
+                  parts.append(f"P0={p0}(阻断)")
+              if p1 > 0:
+                  parts.append(f"P1={p1}")
+              if p0_block:
+                  parts.append("门禁阻断")
+              elif p1_above:
+                  parts.append("P1 超阈值告警")
+              else:
+                  parts.append("健康")
+              return " | ".join(parts) if parts else "无 finding, 健康"
+
+      ```
+
+      关键设计决策：
+      - P0 > 0 直接阻断 gate（score < 0.5）
+      - P1 超过阈值触发告警但不阻断（0.5 ≤ score < 0.7）
+      - P0=0, P1=0 → score=1.0 (完美)
+      - 历史滑动窗口追踪趋势（improving/declining/stable）
+    </step>
+
+    <step id="2" name="追加 coach_defaults.yaml 配置段">
+      在 config/coach_defaults.yaml 追加：
+
+      ```yaml
+      # ── Phase 8: 门禁闭环与系统签收 ──────────────────
+      audit_health:
+        enabled: false
+        p1_threshold: 3
+        history_window: 10
+
+      window_consistency:
+        enabled: false
+        max_version_drift: 1
+      ```
+    </step>
+
+    <step id="3" name="新增测试 test_s8_audit_health.py">
+      ```python
+      """S8.1 审计分级门禁测试。"""
+      import pytest
+      from src.coach.audit_health import AuditFinding, AuditHealthScorer
+
+
+      class TestAuditFinding:
+          def test_is_blocking(self):
+              assert AuditFinding(severity="P0", category="security", detail="x").is_blocking()
+              assert not AuditFinding(severity="P1", category="quality", detail="x").is_blocking()
+
+          def test_is_warning(self):
+              assert AuditFinding(severity="P1", category="quality", detail="x").is_warning()
+              assert not AuditFinding(severity="P2", category="info", detail="x").is_warning()
+
+
+      class TestAuditHealthScorer:
+          def test_no_findings_perfect_score(self):
+              scorer = AuditHealthScorer()
+              result = scorer.evaluate([])
+              assert result.score == 1.0
+              assert result.p0_count == 0
+              assert result.p0_blocking is False
+
+          def test_p0_blocks_gate(self):
+              scorer = AuditHealthScorer()
+              findings = [AuditFinding("P0", "security", "SQL injection")]
+              result = scorer.evaluate(findings)
+              assert result.p0_blocking is True
+              assert result.score < 0.5
+
+          def test_p1_under_threshold_ok(self):
+              scorer = AuditHealthScorer(p1_threshold=3)
+              findings = [AuditFinding("P1", "quality", "low coverage") for _ in range(2)]
+              result = scorer.evaluate(findings)
+              assert result.p0_blocking is False
+              assert result.p1_above_threshold is False
+              assert result.score >= 0.8
+
+          def test_p1_above_threshold_warns(self):
+              scorer = AuditHealthScorer(p1_threshold=2)
+              findings = [AuditFinding("P1", "quality", "low coverage") for _ in range(5)]
+              result = scorer.evaluate(findings)
+              assert result.p1_above_threshold is True
+              assert 0.3 <= result.score < 0.8
+
+          def test_mixed_p0_p1(self):
+              scorer = AuditHealthScorer()
+              findings = [
+                  AuditFinding("P0", "security", "breach"),
+                  AuditFinding("P1", "quality", "coverage"),
+                  AuditFinding("P1", "quality", "coverage"),
+              ]
+              result = scorer.evaluate(findings)
+              assert result.p0_blocking is True
+              assert result.p0_count == 1
+              assert result.p1_count == 2
+
+          def test_trend_tracking(self):
+              scorer = AuditHealthScorer()
+              scorer.evaluate([])
+              scorer.evaluate([])
+              trend = scorer.trend()
+              assert len(trend["scores"]) == 2
+              assert trend["average"] == 1.0
+
+          def test_audit_health_output_format(self):
+              scorer = AuditHealthScorer()
+              result = scorer.evaluate([])
+              ah = result.audit_health()
+              for key in ("audit_health_score", "p0_count", "p1_count",
+                           "p0_blocking", "gate_pass"):
+                  assert key in ah, f"Missing {key}"
+              assert ah["gate_pass"] is True
+
+          def test_to_dict_serializable(self):
+              scorer = AuditHealthScorer()
+              result = scorer.evaluate([])
+              d = result.to_dict()
+              assert "score" in d
+              assert "p0_count" in d
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/audit_health.py" type="new">~130 行: 审计分级门禁</change>
+    <change file="config/coach_defaults.yaml" type="append">+7 行: Phase 8 配置段</change>
+    <change file="tests/test_s8_audit_health.py" type="new">~80 行: 审计门禁测试</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. src/coach/audit_health.py 存在：AuditFinding/AuditHealthScore/AuditHealthScorer
+    2. P0=0,P1=0 → score=1.0, gate_pass=True
+    3. P0>0 → p0_blocking=True, score<0.5, gate_pass=False
+    4. P1≤threshold → p1_above_threshold=False, score≥0.8
+    5. P1>threshold → p1_above_threshold=True, 0.3≤score<0.8
+    6. audit_health() 输出 5 字段匹配 gate 6 需求
+    7. trend() 历史趋势追踪
+    8. to_dict() JSON 可序列化
+    9. 新增测试全部 pass + 1034 已有测试零回归
+    10. 不修改任何已冻结文件
+  </success_criteria>
+</prompt>

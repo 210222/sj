@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract": "user_profile",
+  "version": "1.0.0",
+  "status": "frozen",
+  "description": "三层图谱用户模型合约：Entity 层 (entity_profiles) + Fact 层 (facts) schema 定义。S2.5 冻结后字段不可删改。",
+
+  "entity_profiles": {
+    "description": "用户身份+时间线+标签。Content 层之上、Fact 层之下。",
+    "fields": {
+      "entity_id": "TEXT PRIMARY KEY",
+      "timeline": "TEXT NOT NULL DEFAULT '[]'",
+      "session_tags": "TEXT NOT NULL DEFAULT '[]'",
+      "device_id": "TEXT",
+      "created_at_utc": "TEXT NOT NULL",
+      "updated_at_utc": "TEXT NOT NULL"
+    }
+  },
+
+  "facts": {
+    "description": "结构化断言+生命周期。从会话记忆 promote 或统计推断生成。",
+    "fields": {
+      "fact_id": "TEXT PRIMARY KEY",
+      "claim": "TEXT NOT NULL",
+      "evidence_ids": "TEXT DEFAULT '[]'",
+      "confidence": "REAL CHECK(confidence >= 0 AND confidence <= 1)",
+      "timestamp_utc": "TEXT NOT NULL",
+      "ttl_seconds": "INTEGER",
+      "context_scope": "TEXT",
+      "reversibility_flag": "INTEGER DEFAULT 1 CHECK(reversibility_flag IN (0,1))",
+      "source_tag": "TEXT",
+      "lifecycle_status": "TEXT NOT NULL DEFAULT 'active' CHECK(lifecycle_status IN ('active','frozen','archived'))",
+      "created_at_utc": "TEXT NOT NULL",
+      "updated_at_utc": "TEXT NOT NULL"
+    },
+    "source_tag_enum": ["rule", "statistical_model", "hypothesis", "user_history", "domain_knowledge"],
+    "lifecycle_status_enum": ["active", "frozen", "archived"]
+  },
+
+  "frozen_constraints": {
+    "entity_profiles_fields": "6 字段不可删改，仅可新增可选字段",
+    "facts_fields": "12 字段不可删改，仅可新增可选字段",
+    "source_tag_enum": "枚举固定，不可删改",
+    "lifecycle_status_enum": "枚举固定，不可删改"
+  }
+}

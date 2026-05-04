@@ -1,0 +1,13 @@
+{
+  "c_stage": "C5",
+  "c_status": "GO",
+  "c_release_train_policy_file": "config/release_train.yaml",
+  "c_cadence_defined": true,
+  "c_freeze_window_defined": true,
+  "c_exception_policy_defined": true,
+  "c_intake_rules_complete": true,
+  "c_blockers": [],
+  "c_findings": [],
+  "c_final_decision": "GO",
+  "c_timestamp_utc": "2026-05-02T10:42:26.768401+00:00"
+}

@@ -1,0 +1,367 @@
+<prompt>
+  <name>Coherence Coach Track — S6.3 Plan + Execute 组件</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>6</phase>
+  <sub_stage>S6.3</sub_stage>
+  <sub_stage_name>MAPE-K Plan + Execute — 规划层与执行层实现</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S6.3 实现者。
+    你的任务是：实现 src/mapek/plan.py（规划层）和 src/mapek/execute.py（执行层）。
+    这是 MAPE-K 循环的中间两环，负责策略生成与动作分发。
+  </role>
+
+  <context>
+    已存在的代码和数据源：
+    - contracts/mapek_loop.json: Plan inputs/outputs/methods, Execute targets/max_retries
+    - src/mapek/monitor.py: Monitor 信号收集（S6.2）
+    - src/mapek/analyze.py: Analyze 诊断输出（S6.2）
+    - src/coach/composer.py: PolicyComposer 现有 DSL 动作选择
+    - src/coach/dsl.py: DSLBuilder 构建 DSL 动作包
+    - src/inner/ledger/event_store.py: 事件写入目标
+
+    mapek_loop.json 接口定义：
+    - Plan: inputs=["analysis_report", "current_strategy"], output="plan",
+            methods=["strategy_generation", "resource_allocation", "conflict_resolution"],
+            max_horizon_steps=5
+    - Execute: inputs=["plan"], output="execution_result",
+               targets=["CoachAgent", "Ledger", "Audit", "ExternalAPI"], max_retries=2
+
+    多智能体分层中的 Plan 定位：
+    ```
+    CoachAgent (CEO)  →  宏观判断 + TTM 阶段切换
+        ↓
+    PolicyComposer (Manager)  →  DSL 动作选择（S6.6 细化）
+        ↓
+    Plan (MAPE-K)  →  策略组合生成（当前子阶段）
+        ↓
+    Execute (MAPE-K)  →  动作分发 + 写 ledger（当前子阶段）
+    ```
+
+    注意：Plan 组件生成"策略组合"，不是最终 DSL 动作包。
+    策略组合包含 target_action_type、intensity_level、resource_budget 等元信息。
+    PolicyComposer 消费这些元信息来生成具体 DSL 包。
+  </context>
+
+  <task>
+    1) 新建 src/mapek/plan.py：Plan 类（策略生成 + 资源分配 + 冲突消解）
+    2) 新建 src/mapek/execute.py：Execute 类（动作分发 + 重试 + 结果记录）
+    3) 新增 tests/test_mapek_plan_execute.py
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="Plan 类">
+      src/mapek/plan.py：
+
+      ```python
+      class Plan:
+          """MAPE-K 规划层：基于 Analyze 输出生成策略组合。
+
+          generate(analysis_report) → plan (策略组合)
+          """
+
+          def __init__(self, max_horizon_steps: int = 5):
+              self._max_steps = max_horizon_steps
+              self._current_strategy: dict | None = None
+
+          def generate(self, analysis_report: dict) -> dict:
+              """生成下一阶段策略组合。"""
+              trends = analysis_report.get("trends", [])
+              anomalies = analysis_report.get("anomalies", [])
+              confidence = analysis_report.get("confidence", 0.0)
+
+              # 1. 根据趋势和异常确定动作方向
+              action_type = self._select_action_type(trends, anomalies)
+              intensity = self._compute_intensity(anomalies, confidence)
+
+              # 2. 资源分配
+              resource_budget = self._allocate_resources(intensity)
+
+              # 3. 冲突消解
+              conflicts = self._resolve_conflicts(action_type, intensity)
+
+              plan = {
+                  "target_action_type": action_type,
+                  "intensity": intensity,
+                  "resource_budget": resource_budget,
+                  "horizon_steps": min(self._max_steps, max(1, len(anomalies) // 2 + 1)),
+                  "conflicts": conflicts,
+                  "confidence": confidence,
+                  "generated_at": self._now_utc(),
+              }
+              self._current_strategy = plan
+              return plan
+
+          def _select_action_type(self, trends: list[dict],
+                                   anomalies: list[dict]) -> str:
+              """根据趋势+异常选择推荐动作类型。"""
+              if len(anomalies) > 2:
+                  return "probe"    # 异常多 → 先探查再行动
+              rising_metrics = [t["metric"] for t in trends
+                                if t.get("direction") == "rising"]
+              falling_metrics = [t["metric"] for t in trends
+                                 if t.get("direction") == "falling"]
+              if len(falling_metrics) > len(rising_metrics):
+                  return "scaffold"  # 下降趋势 → 搭建脚手架
+              if len(rising_metrics) > 0:
+                  return "challenge"  # 上升趋势 → 给予挑战
+              return "suggest"       # 平稳 → 建议
+
+          def _compute_intensity(self, anomalies: list[dict],
+                                  confidence: float) -> str:
+              """计算动作强度。"""
+              if len(anomalies) == 0 and confidence < 0.5:
+                  return "low"
+              elif len(anomalies) <= 2:
+                  return "medium"
+              return "high"
+
+          def _allocate_resources(self, intensity: str) -> dict:
+              """分配资源预算。"""
+              base = {"max_steps": 3, "max_retries": 1, "timeout_ms": 1000}
+              if intensity == "high":
+                  base.update({"max_steps": 5, "max_retries": 3, "timeout_ms": 3000})
+              elif intensity == "low":
+                  base.update({"max_steps": 1, "max_retries": 0, "timeout_ms": 500})
+              return base
+
+          def _resolve_conflicts(self, action_type: str,
+                                  intensity: str) -> list[dict]:
+              """冲突消解：检查当前策略与当前策略的兼容性。"""
+              conflicts = []
+              if self._current_strategy:
+                  prev_type = self._current_strategy.get("target_action_type")
+                  if prev_type and prev_type != action_type:
+                      if intensity == "high" and prev_type in ("probe", "reflect"):
+                          conflicts.append({
+                              "type": "action_type_switch",
+                              "from": prev_type,
+                              "to": action_type,
+                              "severity": "medium",
+                              "resolution": "allow_with_caution",
+                          })
+              return conflicts
+
+          def _now_utc(self) -> str:
+              from datetime import datetime, timezone
+              return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+      ```
+    </step>
+
+    <step id="2" name="Execute 类">
+      src/mapek/execute.py：
+
+      ```python
+      class Execute:
+          """MAPE-K 执行层：分发 DSL 动作包 + 调用外部 API + 结果写 ledger。
+
+          dispatch(plan) → execution_result
+          """
+
+          TARGETS = ["CoachAgent", "Ledger", "Audit", "ExternalAPI"]
+
+          def __init__(self, max_retries: int = 2):
+              self._max_retries = max_retries
+              self._history: list[dict] = []
+
+          def dispatch(self, plan: dict, context: dict | None = None) -> dict:
+              """分发策略计划到各目标。"""
+              ctx = context or {}
+              target = plan.get("target_action_type", "suggest")
+              intensity = plan.get("intensity", "low")
+
+              results = {}
+              for tgt in self.TARGETS:
+                  result = self._dispatch_to(tgt, plan, ctx)
+                  results[tgt] = result
+
+              execution = {
+                  "target": target,
+                  "intensity": intensity,
+                  "results": results,
+                  "all_success": all(r.get("success") for r in results.values()),
+                  "timestamp": self._now_utc(),
+              }
+              self._history.append(execution)
+              return execution
+
+          def _dispatch_to(self, target: str, plan: dict,
+                            context: dict) -> dict:
+              """分发到单个目标，含重试逻辑。"""
+              for attempt in range(self._max_retries + 1):
+                  try:
+                      if target == "CoachAgent":
+                          return self._call_coach_agent(plan, context)
+                      elif target == "Ledger":
+                          return self._write_ledger(plan)
+                      elif target == "Audit":
+                          return self._trigger_audit(plan)
+                      elif target == "ExternalAPI":
+                          return self._call_external(plan, context)
+                  except Exception as e:
+                      if attempt < self._max_retries:
+                          continue
+                      return {"target": target, "success": False,
+                              "error": str(e), "attempts": attempt + 1}
+              return {"target": target, "success": False, "error": "unknown"}
+
+          def _call_coach_agent(self, plan: dict, context: dict) -> dict:
+              """委托 CoachAgent 根据 plan 生成 DSL 动作包。
+
+              实际调用在 S6.6/S6.7 集成时激活。当前返回占位。"""
+              return {"target": "CoachAgent", "success": True,
+                      "action": plan.get("target_action_type"),
+                      "note": "CoachAgent integration — activated in S6.7"}
+
+          def _write_ledger(self, plan: dict) -> dict:
+              """将执行计划写入 ledger。
+
+              实际 ledger 写入在集成阶段激活。当前返回占位。"""
+              return {"target": "Ledger", "success": True,
+                      "note": "Ledger write — activated in S6.7"}
+
+          def _trigger_audit(self, plan: dict) -> dict:
+              """触发审计检查。"""
+              return {"target": "Audit", "success": True,
+                      "note": "Audit trigger — activated in S6.7"}
+
+          def _call_external(self, plan: dict, context: dict) -> dict:
+              """调用外部 API（如量化自我数据源）。协作者阶段 2 已建接口占位。"""
+              return {"target": "ExternalAPI", "success": True,
+                      "note": "External API call — QS collector placeholder"}
+
+          def history(self) -> list[dict]:
+              return list(self._history)
+
+          def _now_utc(self) -> str:
+              from datetime import datetime, timezone
+              return datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+      ```
+
+      设计说明：
+      - Execute._dispatch_to() 含重试逻辑（最多 max_retries+1 次）
+      - 对 CoachAgent/Ledger/Audit 的调用当前是占位（返回 success=True）
+      - 真正的调用集成在 S6.7 完成
+      - ExternalAPI 目前是占位，对应阶段 2 的 QSCollector
+    </step>
+
+    <step id="3" name="更新 coach_defaults.yaml">
+      确保 config/coach_defaults.yaml 已有 plan + execute 配置段：
+
+      ```yaml
+      # 在 Phase 6 mapek 段内补充
+      mapek:
+        enabled: false
+        loop:
+          min_interval_ms: 100
+          max_interval_ms: 5000
+          adaptive: true
+          backpressure_threshold: 0.8
+        monitor:
+          buffer_size: 100
+          dedup_window_s: 5
+        analyze:
+          min_confidence: 0.3
+        plan:
+          max_horizon_steps: 5
+        execute:
+          max_retries: 2
+        knowledge:
+          confidence_decay_rate: 0.05
+          archival_after_days: 30
+      ```
+    </step>
+
+    <step id="4" name="测试">
+      创建 tests/test_mapek_plan_execute.py：
+
+      ```python
+      import pytest
+      from src.mapek.plan import Plan
+      from src.mapek.execute import Execute
+
+      class TestPlan:
+          def test_generate_returns_required_keys(self):
+              p = Plan()
+              report = {"trends": [], "anomalies": [], "confidence": 0.0}
+              result = p.generate(report)
+              for key in ("target_action_type", "intensity", "resource_budget",
+                          "horizon_steps", "conflicts", "confidence"):
+                  assert key in result
+
+          def test_many_anomalies_selects_probe(self):
+              p = Plan()
+              report = {"trends": [], "anomalies": [{"i": 1}, {"i": 2}, {"i": 3}],
+                        "confidence": 0.8}
+              result = p.generate(report)
+              assert result["target_action_type"] == "probe"
+
+          def test_falling_trend_selects_scaffold(self):
+              p = Plan()
+              report = {"trends": [{"metric": "score", "direction": "falling",
+                                    "older_avg": 10, "recent_avg": 5}],
+                        "anomalies": [], "confidence": 0.6}
+              result = p.generate(report)
+              assert result["target_action_type"] == "scaffold"
+
+          def test_rising_trend_selects_challenge(self):
+              p = Plan()
+              report = {"trends": [{"metric": "score", "direction": "rising",
+                                    "older_avg": 5, "recent_avg": 10}],
+                        "anomalies": [], "confidence": 0.6}
+              result = p.generate(report)
+              assert result["target_action_type"] == "challenge"
+
+          def test_intensity_scales_with_anomalies(self):
+              p = Plan()
+              assert p._compute_intensity([], 0.2) == "low"
+              assert p._compute_intensity([{"i": 1}], 0.6) == "medium"
+              assert p._compute_intensity([{"i": 1}, {"i": 2}, {"i": 3}], 0.8) == "high"
+
+      class TestExecute:
+          def test_dispatch_returns_all_targets(self):
+              e = Execute()
+              result = e.dispatch({"target_action_type": "suggest", "intensity": "low"})
+              for tgt in ("CoachAgent", "Ledger", "Audit", "ExternalAPI"):
+                  assert tgt in result["results"]
+
+          def test_all_success_on_valid_plan(self):
+              e = Execute()
+              result = e.dispatch({"target_action_type": "suggest", "intensity": "low"})
+              assert result["all_success"] is True
+
+          def test_history_tracks_executions(self):
+              e = Execute()
+              e.dispatch({"target_action_type": "probe", "intensity": "medium"})
+              assert len(e.history()) == 1
+              e.dispatch({"target_action_type": "challenge", "intensity": "high"})
+              assert len(e.history()) == 2
+      ```
+
+      说明：
+      - Plan 5 个测试 + Execute 3 个测试 = 8 个
+      - TestPlan 覆盖四种趋势场景（无数据→probe、下降→scaffold、上升→challenge、强度映射）
+      - TestExecute 覆盖全目标分发、成功状态、历史跟踪
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/mapek/plan.py" type="new">~90 行: Plan 策略生成 + 资源分配 + 冲突消解</change>
+    <change file="src/mapek/execute.py" type="new">~90 行: Execute 动作分发 + 重试 + 历史跟踪</change>
+    <change file="tests/test_mapek_plan_execute.py" type="new">~80 行: 8 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. src/mapek/plan.py 存在，Plan.generate() 返回完整策略组合
+    2. Plan 根据趋势方向正确选择 action_type
+    3. Plan 根据异常数和置信度计算强度
+    4. Plan 冲突消解能检测 action_type 切换
+    5. src/mapek/execute.py 存在，Execute.dispatch() 返回全 target 结果
+    6. Execute 重试逻辑可用（当前通过 try/except 实现）
+    7. Execute.history() 跟踪所有分发的执行
+    8. 8 个测试全部通过
+    9. 916 已有测试无回归
+  </success_criteria>
+</prompt>

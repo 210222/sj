@@ -1,17 +1,18 @@
 {
   "day_30": [
-    "Update handoff docs",
-    "Add mypy CI",
-    "Create requirements.txt"
+    "Fix P0/P1 security findings",
+    "Reduce high-complexity functions",
+    "Add CI/CD pipeline configuration"
   ],
   "day_60": [
-    "Outer circle modules",
-    "Integration tests",
-    "TLA+ verification"
+    "Address code smells (0 findings)",
+    "Improve test pyramid balance",
+    "Add model drift detection for AI components"
   ],
   "day_90": [
-    "Production hardening",
-    "Performance benchmarks",
-    "External pentest"
+    "Production hardening — chaos engineering drills",
+    "Performance benchmarks under load",
+    "TLA+ verification for state machine components",
+    "Tech debt repayment: $15,000 estimated"
   ]
 }

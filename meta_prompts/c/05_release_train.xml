@@ -1,0 +1,39 @@
+<prompt>
+  <name>C5 Release Train</name><version>1.0.0</version><track>C</track><stage>C5</stage>
+  <role>你是 C5 发布列车治理执行器。建立固定发布节奏、冻结窗口和例外审批机制，输出可审计 GO/NO_GO 结论。</role>
+  <inputs><required>
+    <file>reports/c_global_state.json</file><file>reports/c_stage4_resilience_drills.json</file>
+    <file>config/change_policy.yaml</file>
+  </required></inputs>
+  <preconditions>
+    <rule>c_global_state.c_stages.C4.status == GO</rule>
+    <rule>禁改边界持续生效: contracts/**, src/inner/**, src/middle/**</rule>
+  </preconditions>
+  <execution>
+    <step>定义发布节奏（cadence=biweekly）与批次切分规则</step>
+    <step>定义冻结窗口（48h pre-release freeze）与窗口内准入限制</step>
+    <step>定义例外审批机制（max 7-day validity, project_owner approval, required exception_id/expires_at_utc）</step>
+    <step>映射 C2 风险分级到列车准入规则（P0/P1/P2 min_gates + recommended_gates）</step>
+    <step>生成 config/release_train.yaml</step>
+    <step>生成 reports/c_stage5_release_train.json 与 md 摘要</step>
+    <step>更新 reports/c_global_state.json 的 C5 状态与证据引用</step>
+  </execution>
+  <outputs>
+    <config>config/release_train.yaml</config>
+    <report_json>reports/c_stage5_release_train.json</report_json>
+    <report_md>reports/c_stage5_release_train.md</report_md>
+  </outputs>
+  <decision_logic>
+    <go_when>cadence+freeze+exception+intake_rules 全完整，blockers 为空</go_when>
+    <no_go_when>任一治理要素缺失、例外不可审计、或 blocker 未关闭</no_go_when>
+  </decision_logic>
+  <state_update>
+    <file>reports/c_global_state.json</file>
+    <mutations><field>c_current_stage=C5</field><field>c_stages.C5.status=GO|NO_GO</field></mutations>
+  </state_update>
+  <safety>
+    <rule>禁止修改 contracts/**, src/inner/**, src/middle/**</rule>
+    <rule>c_ 前缀命名空间隔离</rule>
+    <rule>例外审批必须带有效期与责任人</rule>
+  </safety>
+</prompt>

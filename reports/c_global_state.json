@@ -1,0 +1,57 @@
+{
+  "c_track": "C",
+  "c_baseline_ref": "outer_B_v1.0.0_frozen",
+  "c_current_stage": "C6",
+  "c_stages": {
+    "C1": {
+      "status": "GO",
+      "name": "Baseline Freeze",
+      "evidence": [
+        "reports/c_stage1_baseline_freeze.json"
+      ]
+    },
+    "C2": {
+      "status": "GO",
+      "name": "Change Policy",
+      "evidence": [
+        "config/change_policy.yaml",
+        "reports/c_stage2_change_policy.json"
+      ]
+    },
+    "C3": {
+      "status": "GO",
+      "name": "Continuous Observation",
+      "evidence": [
+        "reports/c_stage3_continuous_observation.json",
+        "reports/c_observation/weekly_summary.json"
+      ]
+    },
+    "C4": {
+      "status": "GO",
+      "name": "Resilience Drills",
+      "evidence": [
+        "reports/c_stage4_resilience_drills.json",
+        "reports/c_stage4_resilience_drills.md"
+      ]
+    },
+    "C5": {
+      "status": "GO",
+      "name": "Release Train",
+      "evidence": [
+        "config/release_train.yaml",
+        "reports/c_stage5_release_train.json",
+        "reports/c_stage5_release_train.md"
+      ]
+    },
+    "C6": {
+      "status": "GO",
+      "name": "Quarterly Signoff",
+      "evidence": [
+        "reports/c_stage6_quarterly_audit.json",
+        "reports/c_stage6_signoff.md"
+      ]
+    }
+  },
+  "c_final_decision": "GO",
+  "c_updated_at_utc": "2026-05-02T10:46:23.409479+00:00"
+}

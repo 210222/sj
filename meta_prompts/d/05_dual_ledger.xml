@@ -1,0 +1,130 @@
+<prompt>
+  <name>D5 双账本实践运行</name>
+  <version>1.0.0</version>
+  <track>D</track>
+  <stage>D5</stage>
+
+  <role>
+    你是 D5 双账本实践集成器。你的唯一目标是在 AI Coach 会话中
+    建立 Performance Ledger 与 Learning Ledger 的双轨追踪，
+    实现 V18.8 §3 的"表现-学习硬分账"机制。
+  </role>
+
+  <context>
+    V18.8 §3 要求双账本：
+    - Performance Ledger：系统内完成质量/效率
+    - Learning Ledger：脱离系统后的独立迁移能力
+    现有 NoAssistEvaluator 可作为 Learning Ledger 组件，但缺 Performance Ledger 和 Assist Retraction 逻辑。
+  </context>
+
+  <inputs>
+    <required>
+      <file>reports/d_global_state.json</file>
+      <file>reports/d_stage4_state_sensing.json</file>
+      <file>src/inner/no_assist/evaluator.py</file>
+      <file>src/outer/coach/engine.py</file>
+      <file>src/outer/coach/session.py</file>
+      <file>src/outer/pipeline/no_assist_sequencer.py</file>
+      <file>src/inner/gates/engine.py</file>
+    </required>
+  </inputs>
+
+  <preconditions>
+    <rule>d_global_state.d_stages.D4.status == GO</rule>
+    <rule>D3 会话框架和 D4 状态感知均可正常运行</rule>
+  </preconditions>
+
+  <execution>
+    <step>实现 src/outer/ledger/performance.py — Performance Ledger（系统内完成质量）</step>
+    <step>实现 src/outer/ledger/learning.py — Learning Ledger（基于 NoAssistEvaluator 的独立迁移能力）</step>
+    <step>实现 src/outer/ledger/dual.py — 双账本聚合与比较逻辑</step>
+    <step>实现 src/outer/ledger/retraction.py — Assist Retraction：当 Performance↑ 而 Learning↓ 时主动撤回辅助</step>
+    <step>实现 scripts/d_ledger_report.py — 账本报告生成脚本</step>
+    <step>为每个模块编写单元测试</step>
+    <step>端到端测试：模拟 Performance↑ Learning↓ → Assist Retraction 触发</step>
+    <step>生成 D5 阶段报告 reports/d_stage5_dual_ledger.json</step>
+  </execution>
+
+  <module_specs>
+    <performance_ledger>
+      <file>src/outer/ledger/performance.py</file>
+      <description>追踪系统内完成质量/效率</description>
+      <metrics>
+        task_completion_rate: float (完成任务数 / 总任务数)
+        avg_quality_score: float (教练评分的平均值 [0,1])
+        efficiency_score: float (完成速度相对基线)
+      </metrics>
+      <output>{"performance_score": float [0,1], "metrics": {...}, "trend": str}</output>
+    </performance_ledger>
+    <learning_ledger>
+      <file>src/outer/ledger/learning.py</file>
+      <description>独立迁移能力追踪（包装 NoAssistEvaluator）</description>
+      <integration>调用 NoAssistEvaluator.evaluate() 并聚合历史结果</integration>
+      <output>{"learning_score": float [0,1], "no_assist_scores": list[float], "level": str, "trend": str}</output>
+    </learning_ledger>
+    <dual_ledger>
+      <file>src/outer/ledger/dual.py</file>
+      <description>双账本聚合与比较</description>
+      <logic>
+        if performance_up AND learning_up → 健康
+        if performance_up AND learning_down → 能力错觉，触发 retraction
+        if performance_down AND learning_up → 用户正在挑战难度，系统应保持
+        if both_down → 系统或用户都有问题，降级干预
+      </logic>
+      <output>
+        performance_score, learning_score, gap: float,
+        health_status: str (healthy|retraction_needed|challenge_mode|degraded),
+        recommendation: str
+      </output>
+    </dual_ledger>
+    <assist_retraction>
+      <file>src/outer/ledger/retraction.py</file>
+      <description>辅助撤回执行器</description>
+      <actions>
+        降级干预强度（full→reduced→minimal）
+        增加 No-Assist Probe 频率
+        切换到 Socratic 提问模式
+      </actions>
+      <output>{"retraction_triggered": bool, "action": str, "new_intensity": str}</output>
+    </assist_retraction>
+  </module_specs>
+
+  <outputs>
+    <file>src/outer/ledger/__init__.py</file>
+    <file>src/outer/ledger/performance.py</file>
+    <file>src/outer/ledger/learning.py</file>
+    <file>src/outer/ledger/dual.py</file>
+    <file>src/outer/ledger/retraction.py</file>
+    <file>scripts/d_ledger_report.py</file>
+    <stage_report>reports/d_stage5_dual_ledger.json</stage_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      所有账本模块实现且通过单元测试 AND
+      assist_retraction 在 Performance↑ Learning↓ 时可正确触发 AND
+      双账本可生成可审计报告 AND
+      d_blockers is empty
+    </go_when>
+    <no_go_when>
+      任一账本不可运行、retraction 逻辑不触发、或账本数据不可审计。
+    </no_go_when>
+  </decision_logic>
+
+  <state_update>
+    <file>reports/d_global_state.json</file>
+    <mutations>
+      <field>d_current_stage = D5</field>
+      <field>d_stages.D5.status = GO|NO_GO</field>
+      <field>d_stages.D5.name = 双账本实践运行</field>
+      <field>d_stages.D5.evidence += [src/outer/ledger/*.py, reports/d_stage5_dual_ledger.json]</field>
+      <field>d_updated_at_utc = now</field>
+    </mutations>
+  </state_update>
+
+  <safety>
+    <rule>禁止修改 contracts/**, src/inner/**, src/middle/**</rule>
+    <rule>Assist Retraction 只在 Performance↑ Learning↓ 时触发，不可误触发</rule>
+    <rule>账本数据必须可审计追溯，不得覆盖历史记录</rule>
+  </safety>
+</prompt>

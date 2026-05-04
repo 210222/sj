@@ -1,13 +1,28 @@
 {
   "step": "S30",
   "status": "GO",
-  "executed_at_utc": "2026-04-30T06:02:38.131Z",
-  "sast_executed": true,
-  "dependency_scan_executed": true,
-  "secret_scan_executed": true,
-  "files_scanned": 34,
-  "sast_total": 0,
-  "critical": 0,
-  "high": 0,
-  "secrets": 0
+  "executed_at_utc": "2026-05-04T07:26:06.296Z",
+  "layer": "C — Security Immunology",
+  "sast": {
+    "total": 52,
+    "critical": 0,
+    "high": 0,
+    "medium": 53
+  },
+  "secrets": {
+    "total": 0,
+    "critical": 0
+  },
+  "crypto": {
+    "findings": 1
+  },
+  "auth": {
+    "findings": 2
+  },
+  "dependency_vulnerability": {
+    "dependency_count": 3,
+    "attack_surface_score": 3,
+    "note": "3 dependencies — recommend regular `pip audit` or `safety check`"
+  },
+  "findings_count": 55
 }

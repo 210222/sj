@@ -50,41 +50,41 @@ decision:
 # 外圈参数（Outer Circle）
 # ============================================================
 
-exploration:
-  quota_min: 0.25              # 探索配额下限
-  tax_base: 0.10               # 默认跨域税率
-  tax_reward_factor: -0.05     # 有效探索减税幅度
+# [待阶段 7 实现] exploration:
+#   quota_min: 0.25              # 探索配额下限
+#   tax_base: 0.10               # 默认跨域税率
+#   tax_reward_factor: -0.05     # 有效探索减税幅度
 
 # ============================================================
 # 交互参数（Interaction）
 # ============================================================
 
-flow:
-  token_budget_max: 2000
-  round_count_max: 1
-  p95_latency_ms: 1400
+# [待阶段 4 实现] flow:
+#   token_budget_max: 2000
+#   round_count_max: 1
+#   p95_latency_ms: 1400
 
-checkpoint:
-  token_budget_max: 6000
-  round_count_max: 2
-  p95_latency_ms: 2300
+# [待阶段 5 实现] checkpoint:
+#   token_budget_max: 6000
+#   round_count_max: 2
+#   p95_latency_ms: 2300
 
 global_latency_hard_cap_ms: 2500
 
-sovereignty_pulse:
-  max_per_25_min: 1
-  defer_on_high_load: true
+# [待阶段 3 实现] sovereignty_pulse:
+#   max_per_25_min: 1
+#   defer_on_high_load: true
 
-zero_drift_patch:
-  n_implicit_calibrations: 8
-  max_per_24h: 1
+# [待阶段 3 实现] zero_drift_patch:
+#   n_implicit_calibrations: 8
+#   max_per_24h: 1
 
-creativity:
-  index_p1_weight: 0.35        # 发散度权重
-  index_p2_weight: 0.35        # 跨域联想率权重
-  index_p3_weight: 0.30        # 新颖-可行平衡权重
-  biweekly_floor: -0.03        # 双周硬裁决阈值（相对基线 %）
-  min_valid_samples: 24        # 最少样本数才进硬裁决
-  warmup_weeks: 3              # 冷启动周期
-  baseline_freeze_week: 4      # 基线冻结周
-  hard_gate_effective_week: 5  # 硬裁决生效周
+# [待阶段 7 实现] creativity:
+#   index_p1_weight: 0.35        # 发散度权重
+#   index_p2_weight: 0.35        # 跨域联想率权重
+#   index_p3_weight: 0.30        # 新颖-可行平衡权重
+#   biweekly_floor: -0.03        # 双周硬裁决阈值（相对基线 %）
+#   min_valid_samples: 24        # 最少样本数才进硬裁决
+#   warmup_weeks: 3              # 冷启动周期
+#   baseline_freeze_week: 4      # 基线冻结周
+#   hard_gate_effective_week: 5  # 硬裁决生效周

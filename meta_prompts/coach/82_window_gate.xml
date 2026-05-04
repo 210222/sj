@@ -1,0 +1,304 @@
+<prompt>
+  <name>Coherence Coach Track — S8.2 窗口一致性门禁 (Window Gate)</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>8</phase>
+  <sub_stage>S8.2</sub_stage>
+  <sub_stage_name>窗口一致性门禁 — Schema 版本追踪 + 一致性检查 + 数据新鲜度</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S8.2 实现者。
+    你的任务是：实现 src/coach/window_consistency.py，为 gate 8 (window_gate)
+    提供运行时 window_schema_version_consistency 指标——
+    版本追踪、跨组件一致性检查、数据新鲜度检测。
+  </role>
+
+  <context>
+    gates.json 中 gate 8 定义：
+    ```json
+    "8_window_gate": {
+        "metric": "window_schema_version_consistency",
+        "rule": "参与升档计算的所有数据使用同一 window_schema_version"
+    }
+    ```
+
+    已有组件的数据版本：
+    - src/inner/clock/ — 时钟（冻结，提供时间窗口）
+    - MRTExperiment (src/coach/mrt.py) — 使用 window_id (24h 窗口)
+    - DiagnosticEngine (src/coach/diagnostics.py) — 三诊断使用 evaluated_at_utc
+    - GateResult (src/coach/gates_v18_7.py) — 门禁结果含 evaluated_at_utc
+    - config/coach_defaults.yaml — 各组件配置版本
+
+    设计要点：
+    - WindowConsistencyChecker 是只读检查器——验证数据一致性，不修改数据
+    - 版本漂移检查：各组件上报的数据窗口版本号是否一致
+    - 数据新鲜度检查：最近数据的时间戳是否在可接受范围内
+    - MRT 的 window_id (24h 窗口) 作为默认的时间窗口标识
+  </context>
+
+  <task>
+    1) 实现 src/coach/window_consistency.py
+    2) 新增 tests/test_s8_window_consistency.py
+    3) 不实现 audit_gate、全链路测试、签收
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="实现 window_consistency.py">
+
+      新建 src/coach/window_consistency.py：
+
+      ```python
+      """S8.2 窗口一致性门禁 — gate 8 (window_gate) 运行时实现。
+
+      只读一致性检查器——验证参与升档计算的所有数据使用同一窗口版本。
+      不修改数据，不熔断，不降级。
+      """
+      from dataclasses import dataclass, field
+      from datetime import datetime, timezone
+      from typing import Any
+
+
+      @dataclass
+      class ComponentVersion:
+          """单个组件的数据版本信息。"""
+          component: str              # 组件名 (mrt/diagnostics/gates/clock)
+          window_id: str             # 窗口标识
+          schema_version: str        # schema 版本号
+          data_timestamp: str        # 数据时间戳（ISO 8601）
+          data_age_seconds: float    # 数据距今秒数
+
+
+      @dataclass
+      class WindowConsistencyResult:
+          """窗口一致性检查结果。"""
+          all_consistent: bool       # 全部一致
+          version_count: int         # 不同版本数
+          max_version_drift: int     # 最大版本漂移
+          fresh: bool                # 数据新鲜度
+          max_data_age_seconds: float
+          components: list[dict] = field(default_factory=list)
+          detail: str = ""
+
+          def to_dict(self) -> dict:
+              return {
+                  "all_consistent": self.all_consistent,
+                  "version_count": self.version_count,
+                  "max_version_drift": self.max_version_drift,
+                  "fresh": self.fresh,
+                  "max_data_age_seconds": self.max_data_age_seconds,
+                  "components": self.components,
+                  "detail": self.detail,
+              }
+
+          def window_schema_version_consistency(self) -> dict:
+              """返回 gate 8 (window_gate) 所需的指标。"""
+              return {
+                  "all_consistent": self.all_consistent,
+                  "version_count": self.version_count,
+                  "max_version_drift": self.max_version_drift,
+                  "fresh": self.fresh,
+                  "gate_pass": self.all_consistent and self.fresh,
+              }
+
+
+      class WindowConsistencyChecker:
+          """窗口一致性检查器。
+
+          职责：
+          1. Schema 版本一致性：各组件上报的 schema_version 是否一致
+          2. 窗口标识一致性：各组件的 window_id 是否属于同一时间窗口
+          3. 数据新鲜度：数据是否在 max_age_seconds 内
+          """
+
+          def __init__(self, max_version_drift: int = 0,
+                       max_age_seconds: float = 3600.0):
+              self.max_drift = max_version_drift
+              self.max_age = max_age_seconds
+
+          def check(self, versions: list[ComponentVersion]) -> WindowConsistencyResult:
+              if not versions:
+                  return WindowConsistencyResult(
+                      all_consistent=True, version_count=0,
+                      max_version_drift=0, fresh=True,
+                      max_data_age_seconds=0.0,
+                      detail="无组件版本数据，一致性检查跳过",
+                  )
+
+              # Schema 版本一致性
+              schema_versions = set(v.schema_version for v in versions)
+              max_drift = len(schema_versions) - 1
+
+              # 窗口一致性
+              window_ids = set(v.window_id for v in versions)
+
+              # 数据新鲜度
+              now = datetime.now(timezone.utc)
+              ages = []
+              for v in versions:
+                  try:
+                      ts = datetime.fromisoformat(v.data_timestamp)
+                      age = (now - ts).total_seconds()
+                      ages.append(age)
+                  except (ValueError, TypeError):
+                      ages.append(float("inf"))
+              max_age = max(ages) if ages else 0.0
+              fresh = max_age <= self.max_age
+
+              all_consistent = (len(schema_versions) <= self.max_drift + 1
+                                and len(window_ids) <= 1)
+
+              reason_parts = []
+              if len(schema_versions) > self.max_drift + 1:
+                  reason_parts.append(f"schema 版本数={len(schema_versions)}(漂移={max_drift})")
+              if len(window_ids) > 1:
+                  reason_parts.append(f"窗口数={len(window_ids)}")
+              if not fresh:
+                  reason_parts.append(f"最大数据年龄={max_age:.0f}s > {self.max_age:.0f}s")
+
+              detail = "一致" if all_consistent and fresh else "; ".join(reason_parts)
+
+              return WindowConsistencyResult(
+                  all_consistent=all_consistent,
+                  version_count=len(schema_versions),
+                  max_version_drift=max_drift,
+                  fresh=fresh,
+                  max_data_age_seconds=round(max_age, 1),
+                  components=[
+                      {"component": v.component, "window_id": v.window_id,
+                       "schema_version": v.schema_version,
+                       "age_seconds": round(ages[i], 1) if i < len(ages) else -1}
+                      for i, v in enumerate(versions)
+                  ],
+                  detail=detail,
+              )
+      ```
+
+      关键设计决策：
+      - max_version_drift=0 表示所有组件必须使用完全相同的 schema 版本
+      - window_id 一致性：所有组件必须在同一时间窗口内
+      - max_age_seconds=3600 (1h) 数据超过 1 小时未更新视为不新鲜
+      - 无版本数据时 pass（冷启动友好）
+    </step>
+
+    <step id="2" name="新增测试 test_s8_window_consistency.py">
+      ```python
+      """S8.2 窗口一致性门禁测试。"""
+      import pytest
+      from datetime import datetime, timezone, timedelta
+      from src.coach.window_consistency import (
+          ComponentVersion, WindowConsistencyChecker,
+      )
+
+
+      def _now_utc():
+          return datetime.now(timezone.utc)
+
+
+      class TestWindowConsistencyChecker:
+          def test_all_consistent_passes(self):
+              now = _now_utc()
+              versions = [
+                  ComponentVersion("mrt", "win_00100", "1.0.0", now.isoformat(), 0),
+                  ComponentVersion("diagnostics", "win_00100", "1.0.0", now.isoformat(), 0),
+                  ComponentVersion("gates", "win_00100", "1.0.0", now.isoformat(), 0),
+              ]
+              checker = WindowConsistencyChecker()
+              result = checker.check(versions)
+              assert result.all_consistent is True
+              assert result.fresh is True
+              assert result.version_count == 1
+              gate = result.window_schema_version_consistency()
+              assert gate["gate_pass"] is True
+
+          def test_version_drift_fails(self):
+              now = _now_utc()
+              versions = [
+                  ComponentVersion("mrt", "win_00100", "1.1.0", now.isoformat(), 0),
+                  ComponentVersion("diagnostics", "win_00100", "1.0.0", now.isoformat(), 0),
+                  ComponentVersion("gates", "win_00100", "1.2.0", now.isoformat(), 0),
+              ]
+              checker = WindowConsistencyChecker(max_version_drift=0)
+              result = checker.check(versions)
+              assert result.all_consistent is False
+              assert result.version_count == 3
+              assert result.max_version_drift == 2
+
+          def test_window_mismatch_fails(self):
+              now = _now_utc()
+              versions = [
+                  ComponentVersion("mrt", "win_00100", "1.0.0", now.isoformat(), 0),
+                  ComponentVersion("diagnostics", "win_00101", "1.0.0", now.isoformat(), 0),
+              ]
+              checker = WindowConsistencyChecker()
+              result = checker.check(versions)
+              assert result.all_consistent is False
+
+          def test_stale_data_fails(self):
+              old = _now_utc() - timedelta(hours=2)
+              versions = [
+                  ComponentVersion("mrt", "win_00100", "1.0.0", old.isoformat(), 7200),
+              ]
+              checker = WindowConsistencyChecker(max_age_seconds=3600)
+              result = checker.check(versions)
+              assert result.fresh is False
+              assert result.max_data_age_seconds >= 7200
+
+          def test_no_versions_passes(self):
+              checker = WindowConsistencyChecker()
+              result = checker.check([])
+              assert result.all_consistent is True
+              assert result.fresh is True
+
+          def test_allowed_drift(self):
+              now = _now_utc()
+              versions = [
+                  ComponentVersion("mrt", "win_00100", "1.1.0", now.isoformat(), 0),
+                  ComponentVersion("diagnostics", "win_00100", "1.0.0", now.isoformat(), 0),
+              ]
+              checker = WindowConsistencyChecker(max_version_drift=1)
+              result = checker.check(versions)
+              assert result.all_consistent is True
+
+          def test_to_dict_serializable(self):
+              now = _now_utc()
+              versions = [ComponentVersion("mrt", "win_00100", "1.0.0", now.isoformat(), 0)]
+              checker = WindowConsistencyChecker()
+              result = checker.check(versions)
+              d = result.to_dict()
+              assert "all_consistent" in d
+              assert "components" in d
+
+          def test_window_schema_version_consistency_format(self):
+              now = _now_utc()
+              versions = [ComponentVersion("mrt", "win_00100", "1.0.0", now.isoformat(), 0)]
+              checker = WindowConsistencyChecker()
+              result = checker.check(versions)
+              wsv = result.window_schema_version_consistency()
+              for key in ("all_consistent", "version_count", "max_version_drift",
+                           "fresh", "gate_pass"):
+                  assert key in wsv, f"Missing {key}"
+              assert wsv["gate_pass"] is True
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/window_consistency.py" type="new">~130 行: 窗口一致性门禁</change>
+    <change file="tests/test_s8_window_consistency.py" type="new">~85 行: 窗口门禁测试</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. src/coach/window_consistency.py 存在：ComponentVersion/WindowConsistencyResult/WindowConsistencyChecker
+    2. 组件版本一致 + 窗口一致 + 数据新鲜 → gate_pass=True
+    3. 版本漂移 > 允许值 → all_consistent=False
+    4. 窗口不一致 → all_consistent=False
+    5. 数据过时 → fresh=False
+    6. 无版本数据时 pass（all_consistent=True）
+    7. 允许的版本漂移配置（max_version_drift）
+    8. window_schema_version_consistency() 输出 5 字段匹配 gate 8
+    9. to_dict() JSON 可序列化
+    10. 新增测试全部 pass + 1034 已有测试零回归
+    11. 不修改任何已冻结文件
+  </success_criteria>
+</prompt>

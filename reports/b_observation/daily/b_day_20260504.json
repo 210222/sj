@@ -1,0 +1,12 @@
+{
+  "b_stage": "b_observation_daily",
+  "b_day_index": 3,
+  "b_date_utc": "20260504",
+  "b_release_gate_passed": true,
+  "b_healthcheck_passed": true,
+  "b_rollback_verify_passed": true,
+  "b_p0_detected": false,
+  "b_p1_detected": false,
+  "b_final_decision": "GO",
+  "b_timestamp_utc": "2026-05-04T09:00:00.000000+00:00"
+}

@@ -1,0 +1,97 @@
+<prompt>
+  <name>S2.1 — 用户模型合约冻结</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>2</phase>
+  <sub_stage>S2.1</sub_stage>
+
+  <role>
+    你是 S2.1 用户模型合约冻结器。你的唯一目标是新建 contracts/user_profile.json，
+    定义三层图谱中的 Entity 层和 Fact 层的完整 schema 为冻结合约。
+  </role>
+
+  <context>
+    Phase 1 完成了 DSL 协议和 CoachAgent 基本流程，但 CoachAgent 仍是无状态的一轮对话。
+    Phase 2 要引入持久化记忆——三层图谱（Content / Entity / Fact）。
+    Content 层已由 Phase 0 的 ledger 实现。本阶段新建 Entity 层和 Fact 层。
+
+    第一步是冻结 user_profile.json 合约，定义 entity_profiles 表、facts 表、
+    lifecycle_status 枚举等数据模型。
+  </context>
+
+  <inputs>
+    <required>
+      <reference>contracts/coach_dsl.json (参考冻结格式)</reference>
+      <reference>reports/full_implementation_roadmap.md (§2.1 三层图谱 + Fact 表 schema)</reference>
+      <reference>src/inner/ledger/event_store.py (参考 Content 层的表结构)</reference>
+    </required>
+    <depends_on>
+      <rule>Phase 1 必须已完成（coach_global_state.coach_phase == 1 AND coach_final_decision == GO）</rule>
+    </depends_on>
+  </inputs>
+
+  <execution>
+    <step>1. 读取已有 contracts/coach_dsl.json 理解冻结格式</step>
+    <step>2. 读取 reports/full_implementation_roadmap.md 的 §2.1 三层图谱和 Fact 表 schema</step>
+    <step>3. 新建 contracts/user_profile.json，version="1.0.0"，status="draft"（S2.5 改为 frozen）</step>
+    <step>4. 定义 entity_profiles 表的 schema：entity_id, timeline(TEXT), session_tags(TEXT JSON), device_id, created_at, updated_at</step>
+    <step>5. 定义 facts 表的 schema（精确遵循 roadmap）：
+      - fact_id (TEXT PK)
+      - claim (TEXT NOT NULL)
+      - evidence_ids (TEXT JSON)
+      - confidence (REAL, 0.0-1.0)
+      - timestamp_utc (TEXT NOT NULL)
+      - ttl_seconds (INTEGER, NULL=不永不过期)
+      - context_scope (TEXT)
+      - reversibility_flag (INTEGER DEFAULT 1)
+      - source_tag (TEXT, 枚举)
+      - lifecycle_status (TEXT DEFAULT 'active', 枚举：active/frozen/archived)
+      - created_at_utc (TEXT NOT NULL)
+      - updated_at_utc (TEXT NOT NULL)
+    </step>
+    <step>6. 定义 source_tag 枚举：["rule", "statistical_model", "hypothesis", "user_history", "domain_knowledge"]</step>
+    <step>7. 定义 lifecycle_status 枚举：["active", "frozen", "archived"]</step>
+    <step>8. 定义约束：confidence 必须在 [0, 1] 区间、reversibility_flag 为 0 或 1、lifecycle_status 不可为 NULL</step>
+    <step>9. 运行 python -c "import json; json.load(open('contracts/user_profile.json'))" 验证 JSON 合法</step>
+    <step>10. 运行全量回归 python -m pytest tests/ -q 确认 749 pass</step>
+  </execution>
+
+  <outputs>
+    <new_file>contracts/user_profile.json</new_file>
+    <stage_report>reports/coach_phase2_s21_contract.json</stage_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      contracts/user_profile.json 存在且 JSON 合法 AND
+      entity_profiles 表和 facts 表的 schema 完整 AND
+      source_tag / lifecycle_status 枚举已定义 AND
+      全量回归 749 pass AND
+      禁改区域零触碰
+    </go_when>
+    <no_go_when>
+      合约格式不合法 / schema 不完整 / 全量测试失败 / 禁改区域被触碰
+    </no_go_when>
+  </decision_logic>
+
+  <test_cases>
+    <test>
+      <name>test_contract_valid_json</name>
+      <assert>user_profile.json 可被 json.load 解析且 contract 字段为 "user_profile"</assert>
+    </test>
+    <test>
+      <name>test_facts_schema_has_required_fields</name>
+      <assert>facts schema 包含 fact_id/claim/confidence/timestamp_utc/ttl_seconds/context_scope/reversibility_flag/source_tag/lifecycle_status</assert>
+    </test>
+    <test>
+      <name>test_full_regression_passes</name>
+      <assert>pytest -q tests/ 输出 749 passed</assert>
+    </test>
+  </test_cases>
+
+  <safety>
+    <rule>禁止修改 contracts/ 中已有 6 个冻结合约</rule>
+    <rule>禁止修改 src/inner/**、src/middle/**</rule>
+    <rule>S2.1 不生成任何 Python 代码</rule>
+  </safety>
+</prompt>

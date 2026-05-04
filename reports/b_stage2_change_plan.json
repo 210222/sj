@@ -1,0 +1,155 @@
+{
+  "b_stage": "B2",
+  "b_work_items": [
+    {
+      "b_wi_id": "WI-01",
+      "b_title": "Freeze file-level change whitelist for B3",
+      "b_description": "Produce allowed_files / forbidden_files at file granularity, derived from B1 scope",
+      "b_output": "reports/b_stage2_design_freeze.json"
+    },
+    {
+      "b_wi_id": "WI-02",
+      "b_title": "Define B-track observation strategy",
+      "b_description": "B observation scripts reuse core gate logic (release_gate/healthcheck/rollback) with isolated output namespace (reports/b_observation/)",
+      "b_files": ["scripts/b_observation_daily.py", "scripts/b_observation_finalize.py"]
+    },
+    {
+      "b_wi_id": "WI-03",
+      "b_title": "Define governance append-only strategy",
+      "b_description": "prod_deploy_validation.json: b_ prefixed field appends only, A-track fields immutable",
+      "b_files": ["reports/prod_deploy_validation.json"]
+    },
+    {
+      "b_wi_id": "WI-04",
+      "b_title": "Preserve rollback anchor",
+      "b_description": "Ensure git tag outer_A_v1.0.0_frozen remains as rollback destination",
+      "b_files": []
+    }
+  ],
+  "b_file_level_plan": [
+    {
+      "b_file": "meta_prompts/b/03_implementation.xml",
+      "b_change_type": "create",
+      "b_purpose": "B3 implementation prompt — drives actual code changes in B3 stage"
+    },
+    {
+      "b_file": "meta_prompts/b/04_gate_validation.xml",
+      "b_change_type": "create",
+      "b_purpose": "B4 gate validation prompt — runs release_gate/healthcheck/rollback and verifies drift"
+    },
+    {
+      "b_file": "meta_prompts/b/05_observation.xml",
+      "b_change_type": "create",
+      "b_purpose": "B5 observation window prompt — drives b_observation_daily for 3-day window"
+    },
+    {
+      "b_file": "meta_prompts/b/06_signoff.xml",
+      "b_change_type": "create",
+      "b_purpose": "B6 final signoff prompt — produces audit closure and final GO/NO_GO"
+    },
+    {
+      "b_file": "scripts/b_observation_daily.py",
+      "b_change_type": "verify_or_update",
+      "b_purpose": "B-track daily observation — outputs to reports/b_observation/daily/ with b_ prefixed fields"
+    },
+    {
+      "b_file": "scripts/b_observation_finalize.py",
+      "b_change_type": "verify_or_update",
+      "b_purpose": "B-track observation summary — outputs to reports/b_observation/b_observation_summary.json"
+    },
+    {
+      "b_file": "src/outer/__init__.py",
+      "b_change_type": "conditional_enhance",
+      "b_purpose": "Package init — may add B-track exports",
+      "b_constraint": "Must not re-export inner/middle symbols"
+    },
+    {
+      "b_file": "src/outer/api/__init__.py",
+      "b_change_type": "conditional_enhance",
+      "b_purpose": "API package init — may expose B-track entry points"
+    },
+    {
+      "b_file": "src/outer/api/service.py",
+      "b_change_type": "conditional_enhance",
+      "b_purpose": "API service — may add B-track orchestration endpoints",
+      "b_constraint": "Must not change OUTPUT_SCHEMA_KEYS, reason_code semantics, or orchestration chain"
+    },
+    {
+      "b_file": "src/outer/orchestration/__init__.py",
+      "b_change_type": "conditional_enhance",
+      "b_purpose": "Orchestration package init"
+    },
+    {
+      "b_file": "src/outer/orchestration/pipeline.py",
+      "b_change_type": "conditional_enhance",
+      "b_purpose": "Pipeline — may add B-track stage markers or telemetry",
+      "b_constraint": "Must not reorder L0→L1→L2→Decision→Safety chain"
+    },
+    {
+      "b_file": "src/outer/presentation/__init__.py",
+      "b_change_type": "conditional_enhance",
+      "b_purpose": "Presentation package init"
+    },
+    {
+      "b_file": "src/outer/presentation/formatter.py",
+      "b_change_type": "conditional_enhance",
+      "b_purpose": "Formatter — may add B-track metadata fields",
+      "b_constraint": "Must keep 8-field OUTPUT_SCHEMA_KEYS unchanged"
+    },
+    {
+      "b_file": "src/outer/safeguards/__init__.py",
+      "b_change_type": "conditional_enhance",
+      "b_purpose": "Safeguards package init"
+    },
+    {
+      "b_file": "src/outer/safeguards/policies.py",
+      "b_change_type": "conditional_enhance",
+      "b_purpose": "Policies — may add B-track fallback or safety rules",
+      "b_constraint": "Must keep reason_code layering (INVALID_INPUT/PIPELINE_ERROR/SEM_*) unchanged"
+    },
+    {
+      "b_file": "reports/prod_deploy_validation.json",
+      "b_change_type": "append_b_fields_only",
+      "b_purpose": "Record B-track governance state with b_ prefixed fields",
+      "b_pre_state_hash_required": true
+    },
+    {
+      "b_file": "reports/b_global_state.json",
+      "b_change_type": "update",
+      "b_purpose": "Track B1-B6 stage progression with evidence references"
+    },
+    {
+      "b_file": "CLAUDE.md",
+      "b_change_type": "conditional_update",
+      "b_purpose": "Keep B routing commands and project documentation current"
+    }
+  ],
+  "b_test_commands": [
+    "python scripts/release_gate.py",
+    "python scripts/runtime_healthcheck.py",
+    "python scripts/rollback_verify.py",
+    "python -m pytest tests/ -q"
+  ],
+  "b_expected_outputs": [
+    "reports/b_stage3_impl_report.json (B3 output)",
+    "reports/b_stage4_gate_report.json (B4 output)",
+    "reports/b_stage5_observation_report.json (B5 output)",
+    "reports/b_stage6_signoff_report.json (B6 output)",
+    "No schema drift from 8-field baseline",
+    "No reason_code drift from INVALID_INPUT/PIPELINE_ERROR/SEM_* layering",
+    "698 tests passing with zero failures"
+  ],
+  "b_rollback_prep": {
+    "b_git_tag": "outer_A_v1.0.0_frozen",
+    "b_trigger": [
+      "Any P0 detected in B stage execution",
+      "Any P1 persisting beyond one validation cycle",
+      "Schema drift (8-field OUTPUT_SCHEMA_KEYS changed)",
+      "Reason-code drift (INVALID_INPUT/PIPELINE_ERROR/SEM_* semantically altered)",
+      "Forbidden path modified"
+    ],
+    "b_action": "git checkout outer_A_v1.0.0_frozen",
+    "b_recovery": "Re-run release_gate.py to confirm baseline restored"
+  },
+  "b_timestamp_utc": "2026-05-02T06:30:00.000000+00:00"
+}

@@ -1,0 +1,40 @@
+{
+  "coach_phase": 1,
+  "coach_sub_stage": "S1.3",
+  "coach_status": "GO",
+  "coach_name": "Pipeline Dual-Mode Wiring",
+  "coach_description": "pipeline.py 增加 mode='coach' 分支 + DSL→信号提取 + CoachAgent.act() 集成管线调用",
+  "coach_changes": {
+    "modified": [
+      "src/outer/orchestration/pipeline.py",
+      "src/coach/agent.py"
+    ],
+    "added": ["tests/test_pipeline_dual_mode.py"],
+    "lines_added": 65
+  },
+  "coach_dual_mode_summary": {
+    "legacy": "Phase 0 流程完全不变，省略 mode 时默认 legacy。返回 {safety_result, stage_markers, audit_level}",
+    "coach": "从 dsl_packet 自动提取 L0/L2 信号，走完整管线，额外返回 {sanitized_dsl, coach_trace}"
+  },
+  "coach_test_results": {
+    "total": 749,
+    "passed": 749,
+    "failed": 0,
+    "new_tests": 11,
+    "new_tests_passed": 11
+  },
+  "coach_acceptance": {
+    "legacy_returns_expected_keys": "PASSED",
+    "legacy_default_mode_is_legacy": "PASSED",
+    "legacy_p0_block_still_works": "PASSED",
+    "coach_mode_has_sanitized_dsl": "PASSED",
+    "coach_mode_has_coach_trace": "PASSED",
+    "coach_mode_audit_level": "PASSED",
+    "dsl_signal_extraction": "PASSED",
+    "coach_agent_pipeline_integration": "PASSED",
+    "full_regression_749_pass": "PASSED",
+    "no_inner_middle_contracts_touched": "PASSED"
+  },
+  "coach_decision": "GO",
+  "coach_timestamp_utc": "2026-05-02T13:30:00.000000+00:00"
+}

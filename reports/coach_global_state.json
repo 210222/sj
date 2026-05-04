@@ -1,0 +1,23 @@
+{
+  "coach_track": "COACH",
+  "coach_phase": 8,
+  "coach_sub_stage": "S8.4",
+  "coach_track_completed": true,
+  "coach_completed_at_utc": "2026-05-04T08:00:00.000Z",
+  "coach_stages": {
+    "Phase 0": {"status": "GO", "name": "Wiring", "tests": 714},
+    "Phase 1": {"status": "GO", "name": "Coach Engine", "tests": 62},
+    "Phase 2": {"status": "GO", "name": "Memory", "tests": 32},
+    "Phase 3": {"status": "GO", "name": "V18.8 Runtime", "tests": 31},
+    "Phase 4": {"status": "GO", "name": "Behavior Models", "tests": 42},
+    "Phase 5": {"status": "GO", "name": "Semantic Safety", "tests": 35},
+    "Phase 6": {"status": "GO", "name": "MAPE-K + Multi-Agent", "tests": 59},
+    "Phase 7": {"status": "GO", "name": "Causal + Gates", "tests": 44},
+    "Phase 8": {"status": "GO", "name": "Final Sign-off", "tests": 36}
+  },
+  "coach_final_decision": "GO",
+  "coach_test_totals": {
+    "total": 1070
+  },
+  "coach_updated_at_utc": "2026-05-04T08:00:00.000000+00:00"
+}

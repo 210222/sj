@@ -1,0 +1,170 @@
+<prompt>
+  <name>S1.2 — Coach 引擎核心</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>1</phase>
+  <sub_stage>S1.2</sub_stage>
+
+  <role>
+    你是 S1.2 Coach 引擎核心构建器。你的唯一目标是创建 src/coach/ 包，
+    实现 CoachAgent 主类、DSL 构建器/校验器、PolicyComposer、用户状态追踪、轻量会话记忆。
+  </role>
+
+  <context>
+    S1.1 已冻结 DSL 合约（contracts/coach_dsl.json 定义了 8 action_types）。
+    现在需要基于该合约创建完整的 CCA-T 教练引擎核心。
+    所有代码放在 src/coach/ 下，不修改任何现有代码。
+
+    src/outer/orchestration/pipeline.py 将在 S1.3 修改以接入 CoachAgent，
+    本阶段只建 coach 引擎本身。
+  </context>
+
+  <inputs>
+    <required>
+      <file>contracts/coach_dsl.json</file>
+    </required>
+    <depends_on>
+      <rule>S1.1 status == GO</rule>
+    </depends_on>
+  </inputs>
+
+  <preconditions>
+    <rule>coach_global_state.coach_stages.S1.1.status == GO</rule>
+    <rule>src/coach/ 目录不存在或为空（全新创建）</rule>
+    <rule>禁改边界持续生效：src/inner/**、src/middle/**、已有 contracts/ 不动</rule>
+  </preconditions>
+
+  <execution>
+    <step>1. 创建 src/coach/__init__.py，导出 CoachAgent</step>
+    <step>
+      2. 创建 src/coach/agent.py — CoachAgent 主类：
+      ```python
+      class CoachAgent:
+          def act(self, user_input: str, context: dict) -> DSLPacket:
+              # 1. parse_intent(user_input) → intent dict
+              # 2. user_state = self.state_tracker.get_state()
+              # 3. relevant = self.memory.recall(intent, user_state)
+              # 4. action = self.composer.compose(user_state, intent, relevant)
+              # 5. packet = self.dsl_builder.build(action)
+              # 6. 暂不调用 pipeline（S1.3 接入）
+              # 7. return packet
+    </step>
+    <step>
+      3. 创建 src/coach/dsl.py — DSLBuilder + DSLValidator：
+      - DSLBuilder.build(action: dict) → dict（含 action_type, payload, trace_id, intent, domain_passport）
+      - DSLValidator.validate(packet: dict) → (bool, list[str]) 合法性 + 错误列表
+      - validate() 从 contracts/coach_dsl.json 读取 action_types 枚举做校验
+      - validate() 检查 required_fields 是否存在
+      - validate() 检查 domain_passport 值是否在枚举中
+    </step>
+    <step>
+      4. 创建 src/coach/composer.py — PolicyComposer：
+      - compose(user_state, intent, relevant) → action dict
+      - 当前阶段使用简单规则（非 TTM/SDT）：
+        * intent 含"探查/测测" → probe
+        * intent 含"挑战/难点" → challenge
+        * intent 含"为什么/反思" → reflect
+        * intent 含"帮助/教教" → scaffold
+        * 其他 → suggest
+      - 输出包含 domain_passport（当前固定 medium）
+    </step>
+    <step>
+      5. 创建 src/coach/state.py — UserStateTracker：
+      - update(pipeline_result: dict) → None（从 pipeline 的 L0/L1/L2 输出更新）
+      - get_state() → dict（当前用户状态摘要）
+      - 包装 L0 的 state/confidence、L1 的 correction/magnitude、L2 的 feasible/uncertainty
+    </step>
+    <step>
+      6. 创建 src/coach/memory.py — SessionMemory：
+      - store(session_id, turn_data) → None
+      - recall(intent, user_state, limit=5) → list[dict]
+      - 轻量实现：内存 dict + 时间排序 + intent 关键词匹配
+      - 不持久化到 SQLite（阶段 2 才引入持久化）
+    </step>
+    <step>
+      7. 创建 config/coach_defaults.yaml：
+      - default_intent: "general"
+      - default_domain_passport: "medium"
+      - memory_recall_limit: 5
+      - composer_rules: 简单关键词→action_type 映射表
+    </step>
+    <step>8. 创建 tests/test_coach_agent.py：覆盖正常路径和边界</step>
+    <step>9. 运行 python -m pytest tests/ -q 确认 714 + 新增全部 pass</step>
+  </execution>
+
+  <code_spec>
+    <file name="src/coach/__init__.py">~5 行，导出 CoachAgent</file>
+    <file name="src/coach/agent.py">~120 行，CoachAgent 主类 + act() 主流程</file>
+    <file name="src/coach/dsl.py">~100 行，DSLBuilder + DSLValidator</file>
+    <file name="src/coach/composer.py">~80 行，PolicyComposer + 简单规则</file>
+    <file name="src/coach/state.py">~60 行，UserStateTracker</file>
+    <file name="src/coach/memory.py">~60 行，SessionMemory（内存实现）</file>
+    <file name="config/coach_defaults.yaml">~20 行，可调参数</file>
+    <file name="tests/test_coach_agent.py">~80 行，单元测试</file>
+  </code_spec>
+
+  <dsl_packet_format>
+    <example>
+      {
+        "action_type": "suggest",
+        "payload": {"option": "尝试分步调试", "alternatives": [...], "evidence_id": null, "source_tag": "rule"},
+        "trace_id": "uuid",
+        "intent": "寻求调试帮助",
+        "domain_passport": {"domain": "programming", "evidence_level": "medium", "source_tag": "rule", "epistemic_warning": null}
+      }
+    </example>
+  </dsl_packet_format>
+
+  <outputs>
+    <new_files>src/coach/__init__.py, src/coach/agent.py, src/coach/dsl.py, src/coach/composer.py, src/coach/state.py, src/coach/memory.py, config/coach_defaults.yaml</new_files>
+    <new_test_file>tests/test_coach_agent.py</new_test_file>
+    <stage_report>reports/coach_phase1_s12_coach_core.json</stage_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      src/coach/ 包可导入且 CoachAgent.act() 返回合法 DSL 包 AND
+      DSLValidator.validate() 对合法包返回 (True, [])，对非法包返回 (False, [...]) AND
+      UserStateTracker.get_state() 返回 6 字段状态字典 AND
+      SessionMemory.store+recall 正常工作 AND
+      全量回归 714 + 新增测试全部 pass AND
+      禁改区域零触碰
+    </go_when>
+    <no_go_when>
+      CoachAgent.act() 输出不合法 DSL / validate() 漏报或误报 / 全量测试失败 / 禁改区域被触碰
+    </no_go_when>
+  </decision_logic>
+
+  <test_cases>
+    <test>
+      <name>test_coach_agent_act_returns_dsl_packet</name>
+      <assert>CoachAgent.act("给我一个挑战", {}) 返回的 dict 包含 action_type/payload/trace_id/intent/domain_passport</assert>
+    </test>
+    <test>
+      <name>test_dsl_validator_accepts_valid_packet</name>
+      <assert>DSLValidator.validate(合法包) → (True, [])</assert>
+    </test>
+    <test>
+      <name>test_dsl_validator_rejects_invalid_action_type</name>
+      <assert>DSLValidator.validate({..., action_type: "invalid"}) → (False, ["未知 action_type"])</assert>
+    </test>
+    <test>
+      <name>test_state_tracker_returns_valid_state</name>
+      <assert>UserStateTracker.get_state() 返回的 dict 包含 state/confidence/correction/magnitude/feasible/uncertainty</assert>
+    </test>
+    <test>
+      <name>test_composer_selects_action_by_keyword</name>
+      <assert>compose(intent="测测你的水平") → action_type 为 probe</assert>
+    </test>
+    <test>
+      <name>test_full_regression_still_passes</name>
+      <assert>pytest -q tests/ 输出 714 passed</assert>
+    </test>
+  </test_cases>
+
+  <safety>
+    <rule>禁止修改 src/inner/**、src/middle/**、src/outer/**（pipeline.py 除外但 S1.3 才改）</rule>
+    <rule>禁止修改 contracts/ 中已有 5 个冻结合约</rule>
+    <rule>coach 引擎在 S1.3 之前不调用管线，只做本地构建</rule>
+  </safety>
+</prompt>

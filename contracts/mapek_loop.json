@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract": "mapek_loop",
+  "version": "1.0.0",
+  "status": "frozen",
+  "description": "MAPE-K 控制循环五组件接口合约 — Phase 6 冻结。Monitor→Analyze→Plan→Execute→Knowledge 闭环。",
+
+  "components": {
+    "monitor": {
+      "description": "感知层：用户输入 + DSL 反馈 + 外部信号的收集与缓冲",
+      "inputs": ["user_input", "dsl_feedback", "external_signals"],
+      "output": "monitor_snapshot",
+      "methods": ["ingest", "deduplicate", "flush"],
+      "buffer_size": 100,
+      "dedup_window_s": 5
+    },
+    "analyze": {
+      "description": "分析层：状态深层诊断 + 趋势检测 + 异常识别",
+      "inputs": ["monitor_snapshot"],
+      "output": "analysis_report",
+      "methods": ["trend_detection", "anomaly_detection", "causal_signal"],
+      "min_confidence": 0.3
+    },
+    "plan": {
+      "description": "规划层：策略组合生成 + 资源分配 + 冲突消解",
+      "inputs": ["analysis_report", "current_strategy"],
+      "output": "plan",
+      "methods": ["strategy_generation", "resource_allocation", "conflict_resolution"],
+      "max_horizon_steps": 5
+    },
+    "execute": {
+      "description": "执行层：DSL 动作分发 + 外部 API 调用 + 结果写入 ledger",
+      "inputs": ["plan"],
+      "output": "execution_result",
+      "methods": ["dispatch", "retry", "rollback"],
+      "targets": ["CoachAgent", "Ledger", "Audit", "ExternalAPI"],
+      "max_retries": 2
+    },
+    "knowledge": {
+      "description": "知识仓库：Facts + 策略历史 + 实验证据 + 置信度衰减",
+      "inputs": ["facts", "strategy_history", "experiment_evidence"],
+      "output": "knowledge_snapshot",
+      "stores": ["facts", "strategy_history", "experiment_evidence"],
+      "query_methods": ["exact_match", "semantic_search", "temporal_range"],
+      "confidence_decay_rate": 0.05,
+      "archival_after_days": 30
+    }
+  },
+
+  "loop_timing": {
+    "description": "MAPE-K 外循环触发定时参数",
+    "min_interval_ms": 100,
+    "max_interval_ms": 5000,
+    "adaptive": true,
+    "backpressure_threshold": 0.8,
+    "trigger_modes": ["interval", "on_demand", "external_signal"]
+  },
+
+  "frozen_constraints": {
+    "components_enum": "S6.7 冻结后五组件不可增删，仅可扩展",
+    "loop_timing_params": "min_interval_ms/max_interval_ms/adaptive/backpressure_threshold 不可删改",
+    "methods_per_component": "各组件 methods 枚举不可删减，仅可扩展",
+    "contract_version": "1.0.0"
+  },
+
+  "frozen_at": "2026-05-03T15:00:00.000Z"
+}

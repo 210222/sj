@@ -1,1 +1,381 @@
-[]
+[
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_audit.py",
+    "line": 83,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_clock.py",
+    "line": 32,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_coach_agent.py",
+    "line": 22,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_coach_agent_deep.py",
+    "line": 24,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_coach_data.py",
+    "line": 32,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_coach_memory_upgrade.py",
+    "line": 36,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_composer_upgrade.py",
+    "line": 17,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_comprehensive_deep.py",
+    "line": 113,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_counterfactual.py",
+    "line": 10,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_cross_track.py",
+    "line": 10,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_decision_engine.py",
+    "line": 55,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_flow.py",
+    "line": 10,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_gates.py",
+    "line": 40,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_ledger.py",
+    "line": 32,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_mapek_knowledge.py",
+    "line": 14,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_mapek_monitor_analyze.py",
+    "line": 13,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_mapek_plan_execute.py",
+    "line": 15,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_middle_shared_adversarial.py",
+    "line": 23,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_middle_shared_config.py",
+    "line": 52,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_middle_shared_contract.py",
+    "line": 29,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_multi_agent_layering.py",
+    "line": 15,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_no_assist.py",
+    "line": 45,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_outer_api.py",
+    "line": 24,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_outer_orchestration.py",
+    "line": 20,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_outer_resilience.py",
+    "line": 25,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_passport.py",
+    "line": 12,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_pipeline_audit_integration.py",
+    "line": 27,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_pipeline_dual_mode.py",
+    "line": 26,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_pipeline_gates_integration.py",
+    "line": 21,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_pipeline_ledger_integration.py",
+    "line": 29,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_precedent_intercept.py",
+    "line": 27,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_qs_collector.py",
+    "line": 8,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_resolver.py",
+    "line": 52,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_s5_safety_integration.py",
+    "line": 13,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_s6_mapek_integration.py",
+    "line": 12,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_s7_diagnostics.py",
+    "line": 18,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_s7_gates.py",
+    "line": 14,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_s7_mrt.py",
+    "line": 10,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_s8_audit_health.py",
+    "line": 10,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_s8_full_chain_integration.py",
+    "line": 50,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_s8_window_consistency.py",
+    "line": 22,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_sdt.py",
+    "line": 10,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_semantic_safety_engine.py",
+    "line": 42,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_state_l0.py",
+    "line": 33,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_state_l1.py",
+    "line": 34,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_state_l2.py",
+    "line": 40,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_ttm.py",
+    "line": 10,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_v18_dual_ledger.py",
+    "line": 20,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_v18_excursion.py",
+    "line": 26,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_v18_pulse.py",
+    "line": 12,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_v18_relational.py",
+    "line": 36,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_vector_memory.py",
+    "line": 27,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P4",
+    "type": "crypto_audit",
+    "detail": "No weak cryptography detected"
+  },
+  {
+    "severity": "P3",
+    "type": "auth_profile",
+    "detail": "{\"auth_detected\": false, \"mfa_detected\": false, \"rbac_detected\": true, \"session_management\": true, \"rate_limiting\": false}"
+  },
+  {
+    "severity": "P2",
+    "type": "missing_mfa",
+    "detail": "No MFA/2FA patterns detected — single-factor auth risk"
+  }
+]

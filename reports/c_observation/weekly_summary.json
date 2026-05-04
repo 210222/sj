@@ -1,0 +1,13 @@
+{
+  "c_window_days": 7,
+  "c_days_collected": 7,
+  "c_go_days": 7,
+  "c_no_go_days": 0,
+  "c_p0_count": 0,
+  "c_p1_count": 0,
+  "c_schema_drift_count": 0,
+  "c_reason_code_drift_count": 0,
+  "c_availability_rate": 1.0,
+  "c_weekly_decision": "GO",
+  "c_timestamp_utc": "2026-05-02T10:22:36.572732+00:00"
+}

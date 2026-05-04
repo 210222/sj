@@ -1,10 +1,55 @@
 {
   "step": "S50",
-  "status": "GO",
-  "executed_at_utc": "2026-04-30T05:33:42.291Z",
-  "test_strategy_assessed": true,
-  "rollback_readiness_assessed": true,
-  "test_files": 15,
-  "total_tests": 669,
-  "test_pyramid_ok": true
+  "status": "WARN",
+  "executed_at_utc": "2026-05-04T07:26:06.853Z",
+  "layer": "E — Delivery & Governance",
+  "dora_metrics": {
+    "available": true,
+    "deploy_frequency_per_day": 0,
+    "deploy_frequency_label": "Low (monthly)",
+    "lead_time_days": 0,
+    "lead_time_commits": 1,
+    "change_failure_rate": 0.0,
+    "change_failure_label": "Low (<5%)",
+    "mttr_estimate": "N/A (no revert data)",
+    "total_commits_analyzed": 1
+  },
+  "bus_factor": {
+    "factor": 1,
+    "total_authors": 2,
+    "knowledge_silo": true,
+    "top_author": "210222"
+  },
+  "commit_patterns": {
+    "after_hour_pct": 0.0,
+    "weekend_pct": 0.0,
+    "health": "Good"
+  },
+  "test_pyramid": {
+    "total": 1003,
+    "unit": 144,
+    "integration": 173,
+    "e2e": 29,
+    "healthy": false
+  },
+  "cicd_readiness": {
+    "readiness_score": 0.2857,
+    "checks": {
+      "requirements_txt": true,
+      "makefile": false,
+      "dockerfile": true,
+      "github_actions": false,
+      "gitlab_ci": false,
+      "pytest_config": false,
+      "mypy_config": false
+    },
+    "missing": [
+      "makefile",
+      "github_actions",
+      "gitlab_ci",
+      "pytest_config",
+      "mypy_config"
+    ],
+    "note": "28% CI/CD readiness — create CI config for automated pipelines"
+  }
 }

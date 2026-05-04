@@ -1,0 +1,125 @@
+<prompt>
+  <name>D1 Scope Lock &amp; 管道设计</name>
+  <version>1.0.0</version>
+  <track>D</track>
+  <stage>D1</stage>
+
+  <role>
+    你是 D1 范围锁定与管道设计控制器。你的唯一目标是冻结 D 轨开发边界，
+    设计 V18.8 四个门禁的数据管道接口合约，并产出可执行、可审计、可阻断越界的范围文件。
+  </role>
+
+  <context>
+    A/B/C 轨已完成治理基础设施：
+    - GateEngine 有 Agency/Excursion/Learning/Relational 四个门禁逻辑
+    - 但所有门禁因无输入数据而默认 pass (_default_pass)
+    - NoAssistEvaluator 可独立运行但未接入任何交互流程
+    - L0/L1/L2 估计算法是规则法占位符，需要真实信号输入
+  </context>
+
+  <objective>
+    1) 定义 D 轨 in_scope / out_of_scope
+    2) 设计 4 个 V18.8 门禁的输入数据接口合约（每个门禁需要什么数据、格式、来源）
+    3) 定义 D1 -> D2 的准入门槛
+    4) 固化禁改边界与不可变契约
+  </objective>
+
+  <must_read>
+    <file>reports/d_global_state.json (若存在)</file>
+    <file>src/inner/gates/engine.py (理解门禁输入接口)</file>
+    <file>src/inner/gates/config.py (理解门禁阈值)</file>
+    <file>src/inner/no_assist/evaluator.py (理解 No-Assist 评估接口)</file>
+    <file>config/release_policy.yaml</file>
+    <file>contracts/gates.json</file>
+  </must_read>
+
+  <hard_constraints>
+    <rule>禁止修改 contracts/**</rule>
+    <rule>禁止修改 src/inner/**</rule>
+    <rule>禁止修改 src/middle/**</rule>
+    <rule>禁止修改 src/outer/orchestration/**</rule>
+    <rule>禁止修改 src/outer/presentation/**</rule>
+    <rule>禁止变更 8 字段输出 schema</rule>
+    <rule>禁止在 D1 编写任何功能代码</rule>
+  </hard_constraints>
+
+  <required_outputs>
+    <design_doc>reports/d_stage1_scope_lock.json</design_doc>
+    <manifest>reports/d_stage1_manifest.json</manifest>
+    <state_update>reports/d_global_state.json</state_update>
+  </required_outputs>
+
+  <design_doc_fields>
+    <field>d_stage: D1</field>
+    <field>d_status: GO|NO_GO</field>
+    <field>d_scope_version: 1.0.0</field>
+    <field>d_in_scope: [列出 D 轨范围内的所有模块]</field>
+    <field>d_out_of_scope: [明确排除的模块]</field>
+    <field>d_contract_interface: [V18.8 四个门禁的输入数据接口定义]</field>
+    <field>d_session_model: [教练-用户交互回合模型定义]</field>
+    <field>d_immutable_boundaries: [禁改路径清单]</field>
+    <field>d_blockers: []</field>
+    <field>d_final_decision: GO|NO_GO</field>
+    <field>d_timestamp_utc: now</field>
+  </design_doc_fields>
+
+  <v18.8_gate_interface_design>
+    <agency_gate>
+      <description>关键决策点前提改写率检测</description>
+      <required_input>premise_rewrite_rate: float [0,1]</required_input>
+      <data_source>从对话历史中统计用户改写系统前提的次数 / 总决策点数</data_source>
+      <collector_needed>d_agency_pulse_collector — 扫描每个回合中用户是否接受了系统前提或改写了它</collector_needed>
+    </agency_gate>
+    <excursion_gate>
+      <description>模型外远足后有有效探索证据</description>
+      <required_input>exploration_evidence_count: int</required_input>
+      <data_source>统计用户在"越界探索"模式中产生的有效探索记录数</data_source>
+      <collector_needed>d_excursion_tracker — 记录用户触发越界模式后的行为日志</collector_needed>
+    </excursion_gate>
+    <learning_gate>
+      <description>No-Assist 得分不存在持续下降趋势</description>
+      <required_input>recent_no_assist_scores: list[float]</required_input>
+      <data_source>NoAssistEvaluator 的历史评分序列</data_source>
+      <collector_needed>d_no_assist_sequencer — 从 evaluator 输出中提取时间序列</collector_needed>
+    </learning_gate>
+    <relational_gate>
+      <description>顺从信号不超过阈值</description>
+      <required_input>
+        passive_agreement_rate: float [0,1]
+        rewrite_rate_decline: float [0,1]
+        self_judgment_decline: float [0,1]
+      </required_input>
+      <data_source>从对话中检测被动同意、改写率下降、自我判断语句减少</data_source>
+      <collector_needed>d_compliance_detector — NLP 轻量检测被动同意信号</collector_needed>
+    </relational_gate>
+  </v18.8_gate_interface_design>
+
+  <decision_logic>
+    <go_when>
+      d_in_scope 定义完整且无歧义 AND
+      d_out_of_scope 明确排除 AND
+      V18.8 四个门禁的数据接口合约定义完整 AND
+      d_blockers is empty
+    </go_when>
+    <no_go_when>
+      范围模糊、门禁接口设计不完整、或禁改边界未明确定义。
+    </no_go_when>
+  </decision_logic>
+
+  <state_update>
+    <file>reports/d_global_state.json</file>
+    <mutations>
+      <field>d_current_stage = D1</field>
+      <field>d_stages.D1.status = GO|NO_GO</field>
+      <field>d_stages.D1.name = Scope Lock &amp; 管道设计</field>
+      <field>d_stages.D1.evidence += [reports/d_stage1_scope_lock.json, reports/d_stage1_manifest.json]</field>
+      <field>d_updated_at_utc = now</field>
+    </mutations>
+  </state_update>
+
+  <safety>
+    <rule>禁止编写任何功能代码（D1 是纯设计阶段）</rule>
+    <rule>门禁接口合约必须与 GateEngine 现有输入参数名完全对齐</rule>
+    <rule>发现阻塞项必须写入 d_blockers，不得跳过并宣告 GO</rule>
+  </safety>
+</prompt>

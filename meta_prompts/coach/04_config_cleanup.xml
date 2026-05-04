@@ -1,0 +1,107 @@
+<prompt>
+  <name>S0.4 — Config 清理 + 全量回归</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>0</phase>
+  <sub_stage>S0.4</sub_stage>
+
+  <role>
+    你是 S0.4 Config 清理器 + 回归验收员。
+    你的唯一目标是清理 parameters.yaml 中无代码消费的无效段落，
+    然后执行完整的全量回归确认 Phase 0 没有破坏任何东西。
+  </role>
+
+  <context>
+    config/parameters.yaml 中有 6 个配置段
+    （exploration / flow / checkpoint / sovereignty_pulse / zero_drift_patch / creativity）
+    没有任何 Python 代码加载或引用它们。
+    这些值相当于"注释"——留在文件里只会误导后续开发者。
+
+    同时，S0.1→S0.3 的三轮改动修改了 pipeline.py，
+    必须用全量回归 698 tests 来证明没有破坏任何已有功能。
+  </context>
+
+  <inputs>
+    <required>
+      <file>config/parameters.yaml</file>
+      <file>reports/coach_phase0_s03_gates.json</file>
+    </required>
+    <depends_on>
+      <rule>必须先完成 S0.1→S0.3（需验证三轮改动都不破坏回归）</rule>
+    </depends_on>
+  </inputs>
+
+  <preconditions>
+    <rule>coach_global_state.coach_stages.S0.3.status == GO</rule>
+  </preconditions>
+
+  <execution>
+    <step>1. 读取 config/parameters.yaml，确认每个配置段是否有代码消费</step>
+    <step>2. 保留有代码消费的段：ledger / audit / clock / resolver / decision / state_estimation</step>
+    <step>3. 以注释形式保留无代码消费的段并标注"待阶段N实现"</step>
+    <step>
+      注释格式示例：
+      # ── 以下段暂无可消费代码（full_implementation_roadmap.md 阶段 N 激活） ──
+      # exploration:
+      #   quota_min: 0.25
+    </step>
+    <step>4. 运行 python -m pytest tests/ -q 统计全部结果</step>
+    <step>5. 若有失败：诊断、修复、重新跑直到 698 pass</step>
+    <step>6. 生成 Phase 0 完结报告 reports/coach_phase0_final.json</step>
+    <step>7. 更新 CLAUDE.md 中的"当前阶段"为"Phase 0 → GO"</step>
+  </execution>
+
+  <config_cleanup_rules>
+    <keep_as_active>ledger, audit, clock, resolver, decision, state_estimation</keep_as_active>
+    <comment_out>
+      <section>exploration</section>
+      <section>flow</section>
+      <section>checkpoint</section>
+      <section>sovereignty_pulse</section>
+      <section>zero_drift_patch</section>
+      <section>creativity</section>
+    </comment_out>
+    <rule>不改 parameters.yaml 中任何保留段的值</rule>
+    <rule>不改 src/middle/shared/config.py、src/inner/audit/config.py 等已硬编码的 Python 常量</rule>
+    <rule>清理后 YAML 文件仍可被合法解析</rule>
+  </config_cleanup_rules>
+
+  <outputs>
+    <changed_file>config/parameters.yaml</changed_file>
+    <stage_report>reports/coach_phase0_s04_config_cleanup.json</stage_report>
+    <phase0_report>reports/coach_phase0_final.json</phase0_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      全量回归 pytest -q 输出 "698 passed" AND
+      parameters.yaml 所有无效段已被注释 AND
+      S0.1→S0.3 测试仍然全部 pass AND
+      没有新增的未跟踪文件包含对 src/inner/** 或 src/middle/** 的修改
+    </go_when>
+    <no_go_when>
+      哪怕 1 个 test 失败 / YAML 格式错误 / 禁改区域被触碰
+    </no_go_when>
+  </decision_logic>
+
+  <safety>
+    <rule>每个 YAML 段在注释前必须先用 grep 确认 src/ 和 tests/ 中无人引用</rule>
+    <rule>"注释掉"不是"删掉"——随时可恢复</rule>
+    <rule>全量回归失败不得以跳过测试方式绕过，必须修到通过</rule>
+  </safety>
+
+  <test_cases>
+    <test>
+      <name>test_full_regression_passes</name>
+      <assert>pytest -q tests/ 输出 698 passed</assert>
+    </test>
+    <test>
+      <name>test_pipeline_integration_still_passes</name>
+      <assert>S0.1→S0.3 新增的三个集成测试仍然通过</assert>
+    </test>
+    <test>
+      <name>test_config_yaml_valid</name>
+      <assert>清理后的 parameters.yaml 可被 yaml.safe_load 解析</assert>
+    </test>
+  </test_cases>
+</prompt>

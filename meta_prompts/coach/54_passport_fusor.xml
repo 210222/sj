@@ -1,0 +1,324 @@
+<prompt>
+  <name>Coherence Coach Track — S5.4 Domain Competence Passport + 越权熔断器</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>5</phase>
+  <sub_stage>S5.4</sub_stage>
+  <sub_stage_name>Domain Competence Passport — 证据标注 + 越权熔断 + 迁移税</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S5.4 实现者。
+    你的任务是：升级 src/coach/composer.py 的 PolicyComposer，
+    为每个 DSL 动作包附加 Domain Competence Passport，
+    实现越权熔断器和高置信语气→低证据的降级逻辑。
+    这是语义安全三件套的支撑基础设施。
+  </role>
+
+  <context>
+    已存在的代码和数据源：
+    - src/coach/composer.py: PolicyComposer — compose() 输出 action dict
+    - contracts/coach_dsl.json: DSL 合约枚举（source_tag 枚举）
+    - src/coach/data.py: TripleLayerGraph facts 表（evidence 计数用）
+
+    Passport 结构（来自 ai教练.txt §5.4）：
+    ```python
+    {
+        "domain": "programming",
+        "evidence_level": "high",   # 来自 facts 表中有多少条该 domain 的成功证据
+        "source_tag": "rule",       # 来自 coach_dsl.json 枚举
+        "epistemic_warning": None   # 若跨域，标注"此建议跨越了XX领域，不确定性+XX%"
+    }
+    ```
+
+    越权熔断器规则（来自 ai教练.txt §5）：
+    - 当"高置信语气 + 低领域证据覆盖"共现时 → 强制将动作降级为提问/澄清
+    - 动机、情绪等高风险域默认列入白名单，仅提供过程性支持
+    - 跨域建议自动缴纳"迁移税"（动作强度降低一级）
+
+    当前 composer.py _infer_domain() 已实现领域推断（programming/math/writing/general）。
+    当前 domain_passport 已存在于 action dict 中，但只含简单字段，无 evidence_level 语义。
+  </context>
+
+  <task>
+    升级 composer.py 中的 PolicyComposer：
+    1. _build_passport() — 构建完整的 Domain Competence Passport
+    2. _apply_epistemic_fusor() — 越权熔断器
+    3. _apply_transfer_tax() — 跨域迁移税
+    4. compose() 中集成三道逻辑
+    新增 tests/test_passport.py。
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="证据等级推断">
+      添加方法，从 facts 表中查询领域证据数量来推断 evidence_level：
+
+      ```python
+      def _infer_evidence_level(self, domain: str, user_state: dict | None = None) -> str:
+          """根据领域历史交互推断证据等级。
+
+          简单实现：使用 user_state 中的 confidence/feasible 作为代理，
+          复杂的 facts 表查询在后续阶段升级。
+          """
+          if user_state is None:
+              return "medium"
+
+          confidence = user_state.get("confidence", 0.5)
+          feasible = user_state.get("feasible", True)
+
+          if confidence > 0.7 and feasible:
+              return "high"
+          elif confidence > 0.4:
+              return "medium"
+          return "low"
+      ```
+
+      注意：这是 Phase 5 的轻量版实现。
+      完整版应在 S5.5 或阶段 6 接入真实 facts 表计数。
+    </step>
+    <step id="2" name="Passport 构建">
+      ```python
+      def _build_passport(self, domain: str, intent: str,
+                           user_state: dict | None = None) -> dict:
+          """构建 Domain Competence Passport。
+
+          Returns: {
+              "domain": str,
+              "evidence_level": str,    # "high"|"medium"|"low"
+              "source_tag": str,        # 从 coach_dsl.json 的 source_tag 枚举
+              "epistemic_warning": str|None,  # 跨域时填充
+          }
+          """
+          from src.coach.dsl import SOURCE_TAGS
+          default_tag = SOURCE_TAGS[0] if SOURCE_TAGS else "rule"
+
+          evidence_level = self._infer_evidence_level(domain, user_state)
+
+          epistemic_warning = None
+          if domain != "general":
+              # 跨域检测：intent 内容涉及的领域是否与当前 domain 不同
+              inferred = self._infer_domain(intent, user_state)
+              if inferred and inferred != domain:
+                  epistemic_warning = (
+                      f"此建议跨越了「{inferred}」领域，不确定性增加"
+                  )
+
+          return {
+              "domain": domain,
+              "evidence_level": evidence_level,
+              "source_tag": default_tag,
+              "epistemic_warning": epistemic_warning,
+          }
+      ```
+
+      需要确认 src/coach/dsl.py 是否有 SOURCE_TAGS 导出。
+      如果没有，默认使用 "rule"。
+    </step>
+    <step id="3" name="越权熔断器">
+      ```python
+      # 高置信语气词列表
+      _HIGH_CONFIDENCE_PATTERNS = [
+          "一定", "必须", "绝对", "肯定", "毫无疑问",
+          "always", "must", "definitely", "certainly", "absolutely",
+      ]
+
+      def _apply_epistemic_fusor(self, payload: dict,
+                                   passport: dict,
+                                   intent: str) -> dict:
+          """越权熔断器：高置信语气 + 低证据 → 降级为 reflect。
+
+          Args:
+              payload: 当前 payload
+              passport: Domain Competence Passport
+              intent: 用户意图文本
+
+          Returns: (may be modified) payload
+          """
+          # 高风险领域白名单：仅过程性支持
+          high_risk_domains = ["mood", "emotion", "psychology", "mental", "health"]
+          domain = passport.get("domain", "")
+          evidence = passport.get("evidence_level", "medium")
+
+          # 高风险域直接降级为提问/澄清
+          if domain in high_risk_domains:
+              return {
+                  "question": intent,
+                  "context_ids": [],
+                  "format": "text",
+                  "_fusor_triggered": "high_risk_domain",
+              }
+
+          # 高置信语气 + 低证据 → 熔断
+          if evidence == "low":
+              intent_lower = intent.lower()
+              for pattern in self._HIGH_CONFIDENCE_PATTERNS:
+                  if pattern in intent_lower or pattern in intent:
+                      # 越权熔断: 降级为 reflect
+                      return {
+                          "question": intent,
+                          "context_ids": [],
+                          "format": "text",
+                          "_fusor_triggered": f"epistemic_trespassing ({pattern})",
+                      }
+
+          return payload
+      ```
+    </step>
+    <step id="4" name="迁移税">
+      ```python
+      def _apply_transfer_tax(self, payload: dict,
+                               passport: dict) -> dict:
+          """跨域迁移税：跨域建议动作强度降低一级。"""
+          if passport.get("epistemic_warning") is None:
+              return payload  # 未跨域，无税
+
+          # 降低难度（如果存在）
+          if "difficulty" in payload:
+              levels = ["low", "medium", "high"]
+              current = payload.get("difficulty", "medium")
+              idx = levels.index(current) if current in levels else 1
+              payload["difficulty"] = levels[max(0, idx - 1)]
+
+          # 降低 support_level（如果存在）
+          if "support_level" in payload:
+              levels = ["high", "medium", "low"]
+              current = payload.get("support_level", "medium")
+              idx = levels.index(current) if current in levels else 1
+              payload["support_level"] = levels[min(len(levels) - 1, idx + 1)]
+
+          payload["_transfer_tax_applied"] = True
+          return payload
+      ```
+    </step>
+    <step id="5" name="集成到 compose()">
+      在 compose() 中已有的 domain_passport 构建处插入：
+
+      ```python
+      # Phase 5 升级: Domain Competence Passport
+      passport = self._build_passport(domain, intent, user_state)
+
+      # Phase 5: 越权熔断器
+      payload = self._apply_epistemic_fusor(payload, passport, intent)
+
+      # Phase 5: 迁移税（跨域时降低强度）
+      payload = self._apply_transfer_tax(payload, passport)
+      ```
+
+      替换原有的简单 domain_passport 返回：
+      ```python
+      return {
+          "action_type": action_type,
+          "payload": payload,
+          "intent": intent or _DEFAULT_INTENT,
+          "domain_passport": passport,  # ★ 升级为完整 Passport
+      }
+      ```
+    </step>
+    <step id="6" name="测试">
+      创建 tests/test_passport.py：
+
+      ```python
+      import pytest
+      from src.coach.composer import PolicyComposer
+
+      class TestEvidenceLevel:
+          def test_high_confidence_high_evidence(self):
+              c = PolicyComposer()
+              level = c._infer_evidence_level("programming",
+                           {"confidence": 0.8, "feasible": True})
+              assert level == "high"
+
+          def test_low_confidence_low_evidence(self):
+              c = PolicyComposer()
+              level = c._infer_evidence_level("programming",
+                           {"confidence": 0.2, "feasible": False})
+              assert level == "low"
+
+          def test_default_medium(self):
+              c = PolicyComposer()
+              level = c._infer_evidence_level("programming")
+              assert level == "medium"
+
+      class TestPassport:
+          def test_passport_has_required_keys(self):
+              c = PolicyComposer()
+              action = c.compose(intent="教教我怎么调试")
+              p = action["domain_passport"]
+              for key in ("domain", "evidence_level", "source_tag",
+                           "epistemic_warning"):
+                  assert key in p, f"Missing passport key: {key}"
+
+          def test_cross_domain_epistemic_warning(self):
+              c = PolicyComposer()
+              # intent 包含编程关键词，domain 会推断为 programming
+              action = c.compose(intent="帮我写一篇关于AI的文章")
+              p = action["domain_passport"]
+              # intent 包含"写"和"文章"→writing 领域，epistemic_warning 应为 None
+              # 或不为 None 时包含"跨越"字样
+              if p.get("epistemic_warning"):
+                  assert "跨越" in p["epistemic_warning"]
+
+      class TestEpistemicFusor:
+          def test_low_evidence_high_confidence_triggers(self):
+              c = PolicyComposer()
+              payload = {"option": "你一定必须这样做", "difficulty": "high"}
+              passport = {"domain": "programming", "evidence_level": "low",
+                          "source_tag": "rule", "epistemic_warning": None}
+              result = c._apply_epistemic_fusor(payload, passport, "你一定必须这样做")
+              assert "_fusor_triggered" in result
+
+          def test_high_evidence_no_trigger(self):
+              c = PolicyComposer()
+              payload = {"option": "你一定必须这样做", "difficulty": "high"}
+              passport = {"domain": "programming", "evidence_level": "high",
+                          "source_tag": "rule", "epistemic_warning": None}
+              result = c._apply_epistemic_fusor(payload, passport, "你一定必须这样做")
+              assert "_fusor_triggered" not in result
+
+          def test_high_risk_domain_triggers(self):
+              c = PolicyComposer()
+              payload = {"option": "test", "difficulty": "high"}
+              passport = {"domain": "mood", "evidence_level": "high",
+                          "source_tag": "rule", "epistemic_warning": None}
+              result = c._apply_epistemic_fusor(payload, passport, "test")
+              assert "_fusor_triggered" in result
+
+      class TestTransferTax:
+          def test_cross_domain_reduces_difficulty(self):
+              c = PolicyComposer()
+              payload = {"option": "test", "difficulty": "high"}
+              passport = {"domain": "programming", "evidence_level": "medium",
+                          "source_tag": "rule",
+                          "epistemic_warning": "此建议跨越了「writing」领域"}
+              result = c._apply_transfer_tax(payload, passport)
+              assert result["difficulty"] == "medium"
+
+          def test_no_tax_within_domain(self):
+              c = PolicyComposer()
+              payload = {"option": "test", "difficulty": "high"}
+              passport = {"domain": "programming", "evidence_level": "high",
+                          "source_tag": "rule", "epistemic_warning": None}
+              result = c._apply_transfer_tax(payload, passport)
+              assert result["difficulty"] == "high"
+      ```
+
+      基线 10 个测试。
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/composer.py" type="modify">+70 行: _build_passport / _infer_evidence_level / _apply_epistemic_fusor / _apply_transfer_tax + compose() 集成</change>
+    <change file="tests/test_passport.py" type="new">~100 行: 10 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. _infer_evidence_level() 根据 confidence/feasible 返回正确等级
+    2. compose() 返回的 domain_passport 包含全部 4 个键
+    3. 越权熔断器在"低证据+高置信语气"时触发，payload 降级为 reflect 结构
+    4. 高风险域（mood/emotion 等）直接熔断
+    5. 迁移税降低跨域建议的 difficulty/support_level
+    6. 同域建议不触发迁移税
+    7. 10 个测试全部通过
+    8. 881 已有测试无回归
+  </success_criteria>
+</prompt>

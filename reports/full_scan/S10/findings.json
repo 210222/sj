@@ -1,7 +1,1007 @@
 [
   {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/coach/agent.py",
+    "line": 241,
+    "detail": "run_diagnostics() has 9 parameters (max 6)"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/coach/agent.py",
+    "line": 271,
+    "detail": "audit_v18_7_gates() has 8 parameters (max 6)"
+  },
+  {
+    "severity": "P3",
+    "type": "long_function",
+    "file": "src/coach/agent.py",
+    "line": 295,
+    "detail": "act() is 305 lines (max 80)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/coach/agent.py",
+    "detail": "88 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/coach/audit_health.py",
+    "detail": "19 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/coach/composer.py",
+    "line": 37,
+    "detail": "compose() has 8 parameters (max 6)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/coach/composer.py",
+    "detail": "13 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/coach/counterfactual.py",
+    "detail": "22 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/coach/data.py",
+    "line": 156,
+    "detail": "insert_fact() has 7 parameters (max 6)"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/coach/data.py",
+    "line": 299,
+    "detail": "tag_event() has 7 parameters (max 6)"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/coach/diagnostics.py",
+    "line": 186,
+    "detail": "run() has 9 parameters (max 6)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/coach/diagnostics.py",
+    "detail": "22 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "deep_nesting",
+    "file": "src/coach/flow.py",
+    "line": 76,
+    "detail": "compute_flow() nesting depth 8 (max 5)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/coach/flow.py",
+    "detail": "31 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/coach/gates_v18_7.py",
+    "line": 222,
+    "detail": "audit() has 8 parameters (max 6)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/coach/gates_v18_7.py",
+    "detail": "14 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/coach/memory.py",
+    "line": 189,
+    "detail": "promote_to_fact() has 7 parameters (max 6)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/coach/mrt.py",
+    "detail": "19 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/coach/sdt.py",
+    "detail": "25 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/coach/ttm.py",
+    "detail": "20 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/inner/clock/clock.py",
+    "detail": "38 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/inner/gates/config.py",
+    "detail": "13 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/inner/gates/engine.py",
+    "detail": "15 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/inner/ledger/event_store.py",
+    "line": 86,
+    "detail": "_build_event_fields() has 8 parameters (max 6)"
+  },
+  {
+    "severity": "P3",
+    "type": "long_function",
+    "file": "src/inner/ledger/event_store.py",
+    "line": 138,
+    "detail": "create_genesis_event() is 85 lines (max 80)"
+  },
+  {
+    "severity": "P3",
+    "type": "long_function",
+    "file": "src/inner/ledger/event_store.py",
+    "line": 225,
+    "detail": "append_event() is 150 lines (max 80)"
+  },
+  {
+    "severity": "P3",
+    "type": "long_function",
+    "file": "src/inner/ledger/event_store.py",
+    "line": 408,
+    "detail": "verify_chain_integrity() is 91 lines (max 80)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/inner/no_assist/config.py",
+    "detail": "13 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/inner/no_assist/evaluator.py",
+    "line": 45,
+    "detail": "evaluate() has 7 parameters (max 6)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/inner/no_assist/evaluator.py",
+    "detail": "15 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "long_function",
+    "file": "src/inner/resolver/resolver.py",
+    "line": 63,
+    "detail": "resolve() is 88 lines (max 80)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/inner/resolver/resolver.py",
+    "detail": "18 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/mapek/analyze.py",
+    "detail": "13 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "deep_nesting",
+    "file": "src/mapek/execute.py",
+    "line": 39,
+    "detail": "_dispatch_to() nesting depth 6 (max 5)"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/middle/decision/engine.py",
+    "line": 57,
+    "detail": "__init__() has 9 parameters (max 6)"
+  },
+  {
+    "severity": "P3",
+    "type": "long_function",
+    "file": "src/middle/decision/engine.py",
+    "line": 126,
+    "detail": "decide() is 93 lines (max 80)"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/middle/decision/engine.py",
+    "line": 126,
+    "detail": "decide() has 8 parameters (max 6)"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/middle/decision/engine.py",
+    "line": 343,
+    "detail": "_validate_inputs() has 7 parameters (max 6)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/middle/decision/engine.py",
+    "detail": "21 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "long_function",
+    "file": "src/middle/semantic_safety/engine.py",
+    "line": 77,
+    "detail": "evaluate() is 86 lines (max 80)"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/middle/semantic_safety/engine.py",
+    "line": 231,
+    "detail": "_make_result() has 7 parameters (max 6)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/middle/shared/config.py",
+    "detail": "17 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/middle/state_l0/estimator.py",
+    "detail": "13 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "long_function",
+    "file": "src/middle/state_l2/estimator.py",
+    "line": 90,
+    "detail": "estimate() is 89 lines (max 80)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/middle/state_l2/estimator.py",
+    "detail": "19 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/outer/orchestration/pipeline.py",
+    "line": 52,
+    "detail": "_commit_to_ledger() has 8 parameters (max 6)"
+  },
+  {
+    "severity": "P3",
+    "type": "long_function",
+    "file": "src/outer/orchestration/pipeline.py",
+    "line": 136,
+    "detail": "run_pipeline() is 172 lines (max 80)"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "src/outer/orchestration/pipeline.py",
+    "line": 136,
+    "detail": "run_pipeline() has 7 parameters (max 6)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/outer/orchestration/pipeline.py",
+    "detail": "17 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_audit.py",
+    "detail": "45 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_clock.py",
+    "detail": "45 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_coach_agent_deep.py",
+    "detail": "18 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_coach_data.py",
+    "detail": "16 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_comprehensive_deep.py",
+    "detail": "253 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_decision_engine.py",
+    "detail": "132 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_flow.py",
+    "detail": "25 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_gates.py",
+    "detail": "121 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_ledger.py",
+    "detail": "21 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_mapek_monitor_analyze.py",
+    "detail": "12 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_mapek_plan_execute.py",
+    "detail": "17 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_no_assist.py",
+    "detail": "13 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_outer_api.py",
+    "detail": "36 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_outer_orchestration.py",
+    "detail": "54 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_outer_resilience.py",
+    "detail": "50 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_pipeline_audit_integration.py",
+    "detail": "30 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_pipeline_dual_mode.py",
+    "detail": "23 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_pipeline_gates_integration.py",
+    "detail": "39 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_pipeline_ledger_integration.py",
+    "detail": "44 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_resolver.py",
+    "detail": "66 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_s6_mapek_integration.py",
+    "detail": "13 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_s7_diagnostics.py",
+    "detail": "48 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_s7_gates.py",
+    "detail": "42 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_s7_mrt.py",
+    "detail": "12 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_s8_full_chain_integration.py",
+    "detail": "36 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_sdt.py",
+    "detail": "26 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_semantic_safety_engine.py",
+    "detail": "39 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_state_l0.py",
+    "detail": "177 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_state_l1.py",
+    "detail": "222 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_state_l2.py",
+    "detail": "154 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_ttm.py",
+    "detail": "11 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_v18_dual_ledger.py",
+    "detail": "22 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_v18_pulse.py",
+    "detail": "19 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_vector_memory.py",
+    "detail": "14 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "scripts/b_observation_daily.py",
+    "line": 121,
+    "detail": "_print_visual_summary() has 8 parameters (max 6)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "scripts/c_drill_drift.py",
+    "detail": "16 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "scripts/c_drill_rollback.py",
+    "detail": "13 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "long_function",
+    "file": "scripts/c_observation_daily.py",
+    "line": 11,
+    "detail": "main() is 82 lines (max 80)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "scripts/c_observation_daily.py",
+    "detail": "11 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "too_many_parameters",
+    "file": "scripts/p2_observation_daily.py",
+    "line": 126,
+    "detail": "_print_visual_summary() has 8 parameters (max 6)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "scripts/runtime_healthcheck.py",
+    "detail": "23 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "scripts/smoke_outer.py",
+    "detail": "29 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/coach/agent.py",
+    "detail": "Unused imports: DSLValidator"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/coach/audit_health.py",
+    "detail": "Unused imports: field"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/coach/data.py",
+    "detail": "Unused imports: os"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/coach/__init__.py",
+    "detail": "Unused imports: CoachAgent"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/cohort/__init__.py",
+    "detail": "Unused imports: QSCollector"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/inner/audit/__init__.py",
+    "detail": "Unused imports: AuditClassifier, P0_FIELDS, P1_FIELDS, compute_batch_stats, generate_audit_report"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/inner/clock/__init__.py",
+    "detail": "Unused imports: WINDOW_SCHEMA_VERSION, add_days_anchor, add_hours_offset, format_utc, get_window_30min, get_window_30min_parts, get_window_biweekly, parse_utc, validate_window_consistency, validate_window_id"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/inner/gates/__init__.py",
+    "detail": "Unused imports: GateEngine"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/inner/ledger/__init__.py",
+    "detail": "Unused imports: EventStore"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/inner/no_assist/evaluator.py",
+    "detail": "Unused imports: uuid"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/inner/no_assist/__init__.py",
+    "detail": "Unused imports: NoAssistEvaluator"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/inner/resolver/__init__.py",
+    "detail": "Unused imports: DisagreementResolver"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/mapek/monitor.py",
+    "detail": "Unused imports: timezone"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/mapek/__init__.py",
+    "detail": "Unused imports: Analyze, Monitor"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/middle/decision/engine.py",
+    "detail": "Unused imports: INTERVENTION_INTENSITIES"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/middle/decision/__init__.py",
+    "detail": "Unused imports: DecisionEngine"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/middle/semantic_safety/__init__.py",
+    "detail": "Unused imports: SemanticSafetyEngine"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/middle/shared/constants.py",
+    "detail": "Unused imports: P0_FIELDS, P1_FIELDS, WINDOW_SCHEMA_VERSION"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/middle/shared/__init__.py",
+    "detail": "Unused imports: AUDIT_LEVELS, AuditLevel, CONFLICT_LEVELS, ConflictLevel, ContractViolationError, DECISION_CONFLICT_ESCALATE, DECISION_LRM_WEIGHT, DECISION_MAX_DELTA_PER_UPDATE, DECISION_MIN_WEIGHT, DECISION_ROBUST_WEIGHT, DECISION_UPDATE_WINDOW_DAYS, DECISION_WEIGHT_CREATIVITY, DECISION_WEIGHT_INDEPENDENCE, DECISION_WEIGHT_TRANSFER, DOMINANT_LAYERS, DecisionRejectedError, DominantLayer, GATE_DECISIONS, GateDecision, INTERVENTION_INTENSITIES, InterventionIntensity, L0StateOutput, L0_DWELL_MIN_SECONDS, L0_HYSTERESIS_ENTRY, L0_HYSTERESIS_EXIT, L0_MIN_SAMPLES, L0_SWITCH_PENALTY, L1ResidualOutput, L1_MEMORY_DECAY_RATE, L1_SHOCK_THRESHOLD, L1_TREND_MIN_WINDOWS, L2FeasibilityOutput, L2_CAPABILITY_MIN, L2_MOTIVATION_MIN, L2_OPPORTUNITY_MIN, MIDDLE_CONFIG_VERSION, MIDDLE_SCHEMA_VERSION, MiddlewareError, NO_ASSIST_LEVELS, NoAssistLevel, P0_FIELDS, P1_FIELDS, SEMANTIC_SAFETY_BLOCK_THRESHOLD, SEMANTIC_SAFETY_MIN_SCORE, SemanticSafetyError, StateEstimationError, UncertaintyVector, WINDOW_SCHEMA_VERSION"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/middle/state_l0/estimator.py",
+    "detail": "Unused imports: L0StateOutput"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/middle/state_l0/__init__.py",
+    "detail": "Unused imports: L0Estimator"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/middle/state_l1/estimator.py",
+    "detail": "Unused imports: L1ResidualOutput"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/middle/state_l1/__init__.py",
+    "detail": "Unused imports: L1Estimator"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/middle/state_l2/__init__.py",
+    "detail": "Unused imports: L2Estimator"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/outer/api/__init__.py",
+    "detail": "Unused imports: run_orchestration"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/outer/orchestration/__init__.py",
+    "detail": "Unused imports: run_pipeline"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/outer/presentation/__init__.py",
+    "detail": "Unused imports: format_output"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/outer/safeguards/__init__.py",
+    "detail": "Unused imports: generate_fallback"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_audit.py",
+    "detail": "Unused imports: P0_FIELDS"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_clock.py",
+    "detail": "Unused imports: timedelta"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_coach_agent_deep.py",
+    "detail": "Unused imports: pytest, uuid"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_composer_upgrade.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_comprehensive_deep.py",
+    "detail": "Unused imports: DECISION_CONFLICT_ESCALATE, DECISION_LRM_WEIGHT, DECISION_MAX_DELTA_PER_UPDATE, DECISION_MIN_WEIGHT, DECISION_ROBUST_WEIGHT, DECISION_WEIGHT_CREATIVITY, DECISION_WEIGHT_INDEPENDENCE, L0_HYSTERESIS_ENTRY, L0_HYSTERESIS_EXIT, L0_MIN_SAMPLES, L0_SWITCH_PENALTY, L1_MEMORY_DECAY_RATE, L1_SHOCK_THRESHOLD, L1_TREND_MIN_WINDOWS, L2_CAPABILITY_MIN, L2_MOTIVATION_MIN, L2_OPPORTUNITY_MIN, SEMANTIC_SAFETY_BLOCK_THRESHOLD, datetime, format_utc, math, parse_utc, timezone"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_counterfactual.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_cross_track.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_decision_engine.py",
+    "detail": "Unused imports: INTENSITY_MINIMAL, math"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_flow.py",
+    "detail": "Unused imports: math"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_gates.py",
+    "detail": "Unused imports: EXCURSION_MIN_EVIDENCE"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_mapek_knowledge.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_mapek_monitor_analyze.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_mapek_plan_execute.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_middle_shared_contract.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_multi_agent_layering.py",
+    "detail": "Unused imports: CoachAgent, pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_no_assist.py",
+    "detail": "Unused imports: SCORE_THRESHOLD_PARTIAL"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_passport.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_pipeline_dual_mode.py",
+    "detail": "Unused imports: pytest, src"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_pipeline_gates_integration.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_pipeline_ledger_integration.py",
+    "detail": "Unused imports: GENESIS_PREV_HASH"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_precedent_intercept.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_s5_safety_integration.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_s6_mapek_integration.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_s7_diagnostics.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_s7_gates.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_s7_mrt.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_s8_audit_health.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_s8_full_chain_integration.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_s8_window_consistency.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_sdt.py",
+    "detail": "Unused imports: pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_semantic_safety_engine.py",
+    "detail": "Unused imports: SEMANTIC_SAFETY_BLOCK_THRESHOLD, math"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_state_l0.py",
+    "detail": "Unused imports: datetime, format_utc, timezone"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_state_l1.py",
+    "detail": "Unused imports: math"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_state_l2.py",
+    "detail": "Unused imports: math"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_ttm.py",
+    "detail": "Unused imports: STAGES, STAGE_STRATEGY_MAP, pytest"
+  },
+  {
     "severity": "P2",
-    "title": "5 functions with complexity > 10",
-    "count": 5
+    "type": "race_condition_risk",
+    "file": "tests/test_ledger.py",
+    "detail": "Threading usage without Lock/RLock — potential race condition"
+  },
+  {
+    "severity": "P4",
+    "file": "src/__init__.py",
+    "detail": "Missing license/copyright header"
+  },
+  {
+    "severity": "P4",
+    "file": "src/inner/__init__.py",
+    "detail": "Missing license/copyright header"
+  },
+  {
+    "severity": "P4",
+    "file": "src/inner/audit/__init__.py",
+    "detail": "Missing license/copyright header"
+  },
+  {
+    "severity": "P4",
+    "file": "src/inner/clock/__init__.py",
+    "detail": "Missing license/copyright header"
+  },
+  {
+    "severity": "P4",
+    "file": "src/inner/gates/__init__.py",
+    "detail": "Missing license/copyright header"
+  },
+  {
+    "severity": "P4",
+    "file": "src/inner/ledger/__init__.py",
+    "detail": "Missing license/copyright header"
+  },
+  {
+    "severity": "P4",
+    "file": "src/inner/no_assist/__init__.py",
+    "detail": "Missing license/copyright header"
+  },
+  {
+    "severity": "P4",
+    "file": "src/inner/resolver/__init__.py",
+    "detail": "Missing license/copyright header"
+  },
+  {
+    "severity": "P4",
+    "file": "src/outer/__init__.py",
+    "detail": "Missing license/copyright header"
   }
 ]

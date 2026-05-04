@@ -1,0 +1,129 @@
+<prompt>
+  <name>D4 用户状态感知集成</name>
+  <version>1.0.0</version>
+  <track>D</track>
+  <stage>D4</stage>
+
+  <role>
+    你是 D4 状态感知集成器。你的唯一目标是从用户交互数据中提取真实信号，
+    喂入 L0/L1/L2 估计器，使中圈 Pipeline 从"规则法骨架"变为"有真实输入的状态估计器"。
+  </role>
+
+  <context>
+    当前 L0/L1/L2 估计器需要手动传入 engagement/stability/volatility 等信号。
+    本阶段构建信号提取器，从用户的实际交互行为（消息长度、响应时间、改写行为等）
+    自动推导这些状态信号。
+  </context>
+
+  <inputs>
+    <required>
+      <file>reports/d_global_state.json</file>
+      <file>reports/d_stage3_session_framework.json</file>
+      <file>src/middle/state_l0/estimator.py</file>
+      <file>src/middle/state_l1/estimator.py</file>
+      <file>src/middle/state_l2/estimator.py</file>
+      <file>src/middle/decision/engine.py</file>
+      <file>src/outer/orchestration/pipeline.py</file>
+      <file>src/outer/coach/engine.py</file>
+    </required>
+  </inputs>
+
+  <preconditions>
+    <rule>d_global_state.d_stages.D3.status == GO</rule>
+    <rule>禁改边界持续生效</rule>
+    <rule>D3 会话框架可正常运行</rule>
+  </preconditions>
+
+  <execution>
+    <step>实现 src/outer/signals/extractor.py — 从回合数据提取状态信号</step>
+    <step>实现 src/outer/signals/l0_signals.py — 计算 engagement/stability/volatility</step>
+    <step>实现 src/outer/signals/l2_signals.py — 计算 goal_clarity/resource_readiness/risk_pressure/constraint_conflict</step>
+    <step>实现 src/outer/signals/bridge.py — 连接信号提取器与编排管道</step>
+    <step>实现 scripts/d_state_observation.py — 一键运行状态观测并记录结果</step>
+    <step>为每个信号模块编写单元测试</step>
+    <step>端到端测试：用户交互 → 信号提取 → L0/L1/L2 → Decision → Safety</step>
+    <step>生成 D4 阶段报告 reports/d_stage4_state_sensing.json</step>
+  </execution>
+
+  <signal_specs>
+    <extractor>
+      <file>src/outer/signals/extractor.py</file>
+      <description>从 Turn 记录中提取低层特征</description>
+      <output>
+        message_length: int
+        response_time_seconds: float
+        contains_question: bool
+        contains_reasoning: bool (contains reasoning keywords)
+        sentiment_shift: float [-1,1] (简单规则法)
+        rewrite_count: int (本会话内改写前提次数)
+        self_judgment_count: int (含自我评价语句的次数)
+      </output>
+    </extractor>
+    <l0_signals>
+      <file>src/outer/signals/l0_signals.py</file>
+      <description>从低层特征推导 L0 三信号</description>
+      <mapping>
+        engagement: message_length > 50 + contains_reasoning → high; short + no reasoning → low
+        stability: sentiment_shift 低 + rewrite_count 低 → high; 波动大 → low
+        volatility: response_time 波动大 + message_length 波动大 → high; 稳定 → low
+      </mapping>
+      <edge_case>不足 3 回合的数据 → 标记 low_confidence</edge_case>
+    </l0_signals>
+    <l2_signals>
+      <file>src/outer/signals/l2_signals.py</file>
+      <description>从对话上下文推导 L2 COM-B 信号</description>
+      <mapping>
+        goal_clarity: 用户提及目标的频率和清晰度
+        resource_readiness: 用户提及可用资源/时间/工具的语句
+        risk_pressure: 用户表达压力/焦虑/截止日期的语句
+        constraint_conflict: 用户表达矛盾/冲突/权衡的语句
+      </mapping>
+      <edge_case>无上下文时各信号默认 0.5</edge_case>
+    </l2_signals>
+    <bridge>
+      <file>src/outer/signals/bridge.py</file>
+      <description>聚合信号并调用 pipeline.run_pipeline()</description>
+      <api>run_state_estimation(session_id, turn_data) -> pipeline_result</api>
+    </bridge>
+  </signal_specs>
+
+  <outputs>
+    <file>src/outer/signals/__init__.py</file>
+    <file>src/outer/signals/extractor.py</file>
+    <file>src/outer/signals/l0_signals.py</file>
+    <file>src/outer/signals/l2_signals.py</file>
+    <file>src/outer/signals/bridge.py</file>
+    <file>scripts/d_state_observation.py</file>
+    <stage_report>reports/d_stage4_state_sensing.json</stage_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      所有信号模块实现且通过单元测试 AND
+      bridge 可正确调用 pipeline.run_pipeline() AND
+      端到端测试：turn_data → pipeline_result 通过 AND
+      d_blockers is empty
+    </go_when>
+    <no_go_when>
+      任一信号模块不可运行、bridge 集成失败、或 pipeline 输出不符合预期。
+    </no_go_when>
+  </decision_logic>
+
+  <state_update>
+    <file>reports/d_global_state.json</file>
+    <mutations>
+      <field>d_current_stage = D4</field>
+      <field>d_stages.D4.status = GO|NO_GO</field>
+      <field>d_stages.D4.name = 用户状态感知集成</field>
+      <field>d_stages.D4.evidence += [src/outer/signals/*.py, scripts/d_state_observation.py, reports/d_stage4_state_sensing.json]</field>
+      <field>d_updated_at_utc = now</field>
+    </mutations>
+  </state_update>
+
+  <safety>
+    <rule>禁止修改 contracts/**, src/inner/**, src/middle/**</rule>
+    <rule>信号只能从会话数据中提取，不得调用外部 API</rule>
+    <rule>信号值域必须与 L0/L1/L2 输入合约对齐（全为 [0,1]）</rule>
+    <rule>信号不足时必须标记低置信度，不可伪造高置信度信号</rule>
+  </safety>
+</prompt>

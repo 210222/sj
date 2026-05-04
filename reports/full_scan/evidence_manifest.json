@@ -1,17 +1,17 @@
 [
   {
     "path": "00_execution_index.md",
-    "sha256": "7b53f7814e71c104",
+    "sha256": "0de68b2775cda3ac",
     "step_id": "root"
   },
   {
     "path": "99_final_report.json",
-    "sha256": "d59c94406ae1cd2b",
+    "sha256": "2ec220471a5eb380",
     "step_id": "root"
   },
   {
     "path": "99_final_report.md",
-    "sha256": "858bb5b078e4f0e2",
+    "sha256": "0e906804ff4956e4",
     "step_id": "root"
   },
   {
@@ -21,132 +21,152 @@
   },
   {
     "path": "evidence_manifest.json",
-    "sha256": "2eac3ff2df7ceda1",
+    "sha256": "2e6379a0db075cbe",
     "step_id": "root"
   },
   {
     "path": "replay_commands.sh",
-    "sha256": "6bd7e2a10190cc47",
+    "sha256": "2a749959df83b29e",
     "step_id": "root"
   },
   {
-    "path": "S00\\summary.json",
-    "sha256": "23d4925790750734",
+    "path": "S00/summary.json",
+    "sha256": "8cf331d066f01e44",
     "step_id": "S00"
   },
   {
-    "path": "S00\\raw\\env.txt",
-    "sha256": "b30048c7b8a2c0b4",
+    "path": "S00/raw/env.txt",
+    "sha256": "ea3fee3f449aca69",
     "step_id": "S00"
   },
   {
-    "path": "S10\\findings.json",
-    "sha256": "ae270797a102a634",
+    "path": "S10/findings.json",
+    "sha256": "7fdf0b9ea93e5e49",
     "step_id": "S10"
   },
   {
-    "path": "S10\\summary.json",
-    "sha256": "ecb09f319a1b2af5",
+    "path": "S10/summary.json",
+    "sha256": "3d747e815b93ac51",
     "step_id": "S10"
   },
   {
-    "path": "S10\\raw\\static_analysis.log",
-    "sha256": "f1e064cae508418f",
+    "path": "S10/raw/static_analysis.log",
+    "sha256": "fdb1fd08d37c48d8",
     "step_id": "S10"
   },
   {
-    "path": "S20\\findings.json",
-    "sha256": "4f53cda18c2baa0c",
+    "path": "S20/findings.json",
+    "sha256": "bdc1023b3966f665",
     "step_id": "S20"
   },
   {
-    "path": "S20\\summary.json",
-    "sha256": "907221e83e99d8dc",
+    "path": "S20/summary.json",
+    "sha256": "f70464e90d7a1cba",
     "step_id": "S20"
   },
   {
-    "path": "S20\\raw\\test_run.log",
-    "sha256": "2c29d1735c2599ee",
+    "path": "S20/raw/test_run.log",
+    "sha256": "95a5b9a874fc59fd",
     "step_id": "S20"
   },
   {
-    "path": "S30\\findings.json",
-    "sha256": "4f53cda18c2baa0c",
+    "path": "S30/findings.json",
+    "sha256": "6352a85dca5909b2",
     "step_id": "S30"
   },
   {
-    "path": "S30\\summary.json",
-    "sha256": "d986b2b49ebc4c69",
+    "path": "S30/summary.json",
+    "sha256": "12dbce9fe331de07",
     "step_id": "S30"
   },
   {
-    "path": "S30\\raw\\sast.log",
-    "sha256": "b170c91130157fb3",
+    "path": "S30/raw/sast.log",
+    "sha256": "585cc35bad434dd8",
     "step_id": "S30"
   },
   {
-    "path": "S30\\raw\\secret_scan.log",
-    "sha256": "d50f3630c53d4230",
+    "path": "S30/raw/secret_scan.log",
+    "sha256": "33d45d012f77da2d",
     "step_id": "S30"
   },
   {
-    "path": "S40\\findings.json",
-    "sha256": "10b0456f0eccfd73",
+    "path": "S40/findings.json",
+    "sha256": "dbb5e790cb0b73d5",
     "step_id": "S40"
   },
   {
-    "path": "S40\\summary.json",
-    "sha256": "3e187d37177e0fc7",
+    "path": "S40/summary.json",
+    "sha256": "6322ffb6ecd387d9",
     "step_id": "S40"
   },
   {
-    "path": "S40\\raw\\schema_check.log",
-    "sha256": "6ffd8734365ec634",
+    "path": "S40/raw/schema_check.log",
+    "sha256": "1ddb790a212365c3",
     "step_id": "S40"
   },
   {
-    "path": "S50\\findings.json",
-    "sha256": "4f53cda18c2baa0c",
+    "path": "S50/findings.json",
+    "sha256": "cc65d041a1575a17",
     "step_id": "S50"
   },
   {
-    "path": "S50\\summary.json",
-    "sha256": "3340242866771afa",
+    "path": "S50/summary.json",
+    "sha256": "1f5f50b2a7873c9b",
     "step_id": "S50"
   },
   {
-    "path": "S50\\raw\\delivery_check.log",
-    "sha256": "e12f9d33978eba9c",
+    "path": "S50/raw/delivery_check.log",
+    "sha256": "a6e87fb7809f39a9",
     "step_id": "S50"
   },
   {
-    "path": "S60\\consistency_matrix.json",
-    "sha256": "b883d9aa93c703d9",
+    "path": "S60/consistency_matrix.json",
+    "sha256": "70b772870ce6633f",
     "step_id": "S60"
   },
   {
-    "path": "S60\\summary.json",
-    "sha256": "fcd675beddfd20f4",
+    "path": "S60/summary.json",
+    "sha256": "9af5ea8f286b8ebd",
     "step_id": "S60"
   },
   {
-    "path": "S70\\roadmap.json",
-    "sha256": "5826be700cfcfab8",
+    "path": "S65/summary.json",
+    "sha256": "cbbce0e17da2e02d",
+    "step_id": "S65"
+  },
+  {
+    "path": "S70/roadmap.json",
+    "sha256": "d5aa62aa7f4680a4",
     "step_id": "S70"
   },
   {
-    "path": "S70\\scoring.json",
-    "sha256": "8aae84d1085e5beb",
+    "path": "S70/scoring.json",
+    "sha256": "a59e17a9ebda494d",
     "step_id": "S70"
   },
   {
-    "path": "S70\\summary.json",
-    "sha256": "efd1067282d7d040",
+    "path": "S70/summary.json",
+    "sha256": "d531a078a13d8b1c",
     "step_id": "S70"
   },
   {
-    "path": "S90\\summary.json",
-    "sha256": "41cf5b256a656625",
+    "path": "S70/tech_debt.json",
+    "sha256": "f624ddb957fbbedb",
+    "step_id": "S70"
+  },
+  {
+    "path": "S80/findings.json",
+    "sha256": "9215cc496446be9e",
+    "step_id": "S80"
+  },
+  {
+    "path": "S80/summary.json",
+    "sha256": "adbcea6ca8655bdd",
+    "step_id": "S80"
+  },
+  {
+    "path": "S90/summary.json",
+    "sha256": "31d66487ed0b2199",
     "step_id": "S90"
   }
 ]

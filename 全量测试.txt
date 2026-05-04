@@ -1,0 +1,95 @@
+● 全量测试报告 — 2026-05-02 (逐测试验证)
+
+## 内圈 Inner — 224 passed (6 files, all individual tests listed)
+
+### test_ledger.py — 22 passed
+   TestGenesis: test_create_genesis_returns_event, test_genesis_trace_id_is_present, test_genesis_set_chain_length_1, test_cannot_append_without_genesis
+   TestAppend: test_append_increments_chain_height, test_append_links_prev_hash, test_missing_p0_field_raises, test_none_p0_field_raises, test_append_preserves_p1_fields, test_chain_length_grows
+   TestHashChainIntegrity: test_verify_fails_on_empty_chain, test_verify_passes_on_correct_chain, test_verify_detects_tampered_prev_hash, test_tampered_data_fails_hash_recomputation
+   TestAppendOnly: test_cannot_update_event, test_cannot_delete_event
+   TestWindowQueries: test_events_have_window_id, test_get_events_in_window
+   TestConcurrentAppend: test_concurrent_append_200_events_chain_valid, test_high_contention_chain_valid
+   TestRetryExhaustion: test_no_genesis_raises_immediately, test_retry_exhaustion_raises_runtime_error
+
+### test_audit.py — 33 passed
+   TestP0Block (7): test_missing_trace_id_yields_p0_block, test_missing_policy_version, test_missing_crv, test_missing_cfsv, test_multiple_p0_missing, test_none_trace_id, test_report_level_is_p0_block
+   TestP1Levels (4): test_single_p1_missing_flagged, test_report_p1_warn_at_high_rate, test_report_pass_at_low_rate, test_p1_issue_has_empty_p0_list
+   TestPass (3): test_all_fields_pass, test_report_level_is_pass, test_batch_classify
+   TestBatchStats (4): test_empty_list, test_mixed_events, test_all_pass, test_rate_uses_any_null_not_level_counting
+   TestThresholdBranches (7): test_zero_is_pass, test_one_percent_is_pass, test_just_above_warn, test_below_freeze, test_three_percent_is_warn, test_just_above_freeze, test_far_above_freeze, test_custom_thresholds
+   TestEmptyInput (3): test_classify_batch_empty, test_compute_batch_stats_empty, test_generate_report_empty
+   TestLedgerIntegration (3): test_genesis_classifies_p1_issue, test_filled_event_classifies_pass, test_report_has_all_contract_fields, test_integration_full_report_audit_levels
+
+### test_clock.py — 36 passed
+   TestParseUTC (8): z_suffix / positive_offset / negative_offset / milliseconds / invalid_string / empty_string / date_only / roundtrip
+   TestWindow30Min (8): first_half / second_half / cross_hour / cross_day / midnight / seconds_dont_affect / parts / contract_example
+   TestBiweekly (3): epoch_date / days_after / before_epoch
+   TestDaysOffset (5): d_plus_1 / d_plus_7 / hours_d1 / hours_d7 / z_suffix
+   TestWindowValidation (7): valid / invalid_format / non_string / empty / consistency_passes / consistency_mismatch / consistency_wrong_schema / consistency_empty
+   TestLedgerIntegration (4): genesis_window / append_window / custom_window / all_stored_validate
+
+### test_resolver.py — 26 passed
+   TestLowConflict (3) / TestMidConflict (3) / TestHighConflict (3) / TestDisagreementScoreBoundaries (4)
+   TestDominantLayer (4) / TestAuditMapping (2) / TestInvalidInput (4) / TestIntegrationSmoke (3)
+
+### test_no_assist.py — 25 passed
+   TestLevelHits (4) / TestBoundaries (4) / TestAssistUsedConstraint (2) / TestInvalidInput (6)
+   TestAuditMapping (2) / TestReferenceOverlap (4) / TestIntegration (1) / TestReasonCode (2)
+
+### test_gates.py — 82 passed
+   TestDefaultBehavior (4) / TestIndividualGates (24) / TestAggregateDecisions (5) / TestReasonCode (3)
+   TestAuditMapping (3) / TestTimeAndWindow (3) / TestGateResultSchema (2) / TestIntegration (2)
+   TestContextParameter (2) / TestAdversarialTypeRobustness (14) / TestAdversarialNumericalBoundaries (11)
+   TestIdempotency (2) / TestBatchStress (1) / TestRegression (1)
+
+────────────────────────────────────────
+## 中圈 Middle — 386 passed (8 files)
+
+### test_middle_shared_contract.py — 24 passed
+### test_middle_shared_config.py — 18 passed
+### test_middle_shared_adversarial.py — 42 passed
+### test_state_l0.py — 65 passed
+### test_state_l1.py — 66 passed
+### test_state_l2.py — 59 passed
+### test_decision_engine.py — 56 passed
+### test_semantic_safety_engine.py — 56 passed
+
+────────────────────────────────────────
+## 外圈 Outer — 29 passed (3 files)
+
+### test_outer_api.py — 14 passed
+   TestOutputSchema (5): keys_exact_match, keys_stable, allowed_is_bool, final_intensity_is_str, evaluated_at_utc_is_iso8601
+   TestHappyPath (3): full_pipeline, high_risk, with_safety_context
+   TestErrorLayering (6): empty_trace, empty_time, non_dict_l0, non_dict_l2, pipeline_exception, import_error
+
+### test_outer_orchestration.py — 9 passed
+   TestPipelineExecution (4) / TestIdempotency (2) / TestFailureLocalization (3)
+
+### test_outer_resilience.py — 6 passed
+   TestFallback (4): pipeline_exception, schema_stable, bad_time, preserves_trace_id
+   TestTimeConsistency (2): window_id_matches_clock, evaluated_at_utc_refreshes
+
+────────────────────────────────────────
+## 深测 Comprehensive Deep — 59 passed (1 file, 12 dimensions)
+
+   D1  RandomInvariants   (8 tests, 50000+ invariants)
+   D2  CrossModule        (3 tests)
+   D3  PropertyVerify     (7 tests)
+   D4  StressConcurrency  (5 tests, batch 5000)
+   D5  ContractSweep      (6 tests)
+   D6  TimeConsistency    (4 tests)
+   D7  ErrorPropagation   (4 tests)
+   D8  ConfigSweep        (5 tests)
+   D9  StateTransition    (3 tests)
+   D10 AdversarialFuzz    (4 tests, 3000 fuzzy chains)
+   D11 EnumCrossRef       (4 tests)
+   D12 RegressionSmoke    (6 tests)
+
+────────────────────────────────────────
+## 总计: 698 passed / 0 failed
+
+## 白金审计 S00-S90: GO
+## 契约: 5 contracts @ 1.0.0 frozen, zero drift
+## Schema: 8 fields, zero drift
+## Reason Code: INVALID_INPUT / PIPELINE_ERROR / SEM_*, zero drift
+## 禁改路径: zero touch

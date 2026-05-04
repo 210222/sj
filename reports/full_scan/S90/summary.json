@@ -1,7 +1,8 @@
 {
   "step": "S90",
-  "status": "GO",
-  "executed_at_utc": "2026-04-30T06:02:38.163Z",
-  "final_decision": "GO",
-  "artifacts_generated": 30
+  "status": "WARN",
+  "executed_at_utc": "2026-05-04T07:26:40.572Z",
+  "layer": "Final Report Assembly (8-chapter L3)",
+  "final_decision": "WARN",
+  "artifacts_generated": 34
 }

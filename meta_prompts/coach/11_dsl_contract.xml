@@ -1,0 +1,100 @@
+<prompt>
+  <name>S1.1 — DSL 合约冻结</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>1</phase>
+  <sub_stage>S1.1</sub_stage>
+
+  <role>
+    你是 S1.1 DSL 合约冻结器。你的唯一目标是新建 contracts/coach_dsl.json，
+    定义完整的 DSL 动作协议，包括 8 种 action_types、字段 schema、domain_passport_levels、source_tags。
+  </role>
+
+  <context>
+    Phase 0 完成了 5 个死模块接入管线，但系统仍只处理 float 信号输出 pass/block。
+    Phase 1 要把系统变为"输入对话输出 DSL 动作包"的教练系统。
+    第一步就是冻结 DSL 协议合约——所有后续代码都依赖这个合约。
+
+    contracts/ 已有 5 个冻结合约（ledger / audit / clock / resolver / gates），
+    每个都是 JSON Schema 格式，version=1.0.0, status=frozen。
+  </context>
+
+  <inputs>
+    <required>
+      <reference>contracts/gates.json (参考冻结格式)</reference>
+      <reference>contracts/ledger.json (参考冻结格式)</reference>
+      <reference>reports/full_implementation_roadmap.md (DSL 定义 §1.1)</reference>
+    </required>
+    <depends_on>
+      <rule>必须先完成 Phase 0（coach_global_state.coach_phase == 0 AND coach_final_decision == GO）</rule>
+    </depends_on>
+  </inputs>
+
+  <execution>
+    <step>1. 读取已有 contracts/*.json，理解冻结合约的格式（$schema、contract、version、status、fields）</step>
+    <step>2. 新建 contracts/coach_dsl.json，version="1.0.0"，status="draft"（S1.4 才改为 frozen）</step>
+    <step>3. 定义 action_types 数组，每项包含：id, purpose, slots(array), max_repeat</step>
+    <step>
+      8 种 action_type 定义：
+      - probe:    无辅助能力探查    → slots: ["prompt", "expected_skill", "max_duration_s"], max_repeat: 1
+      - challenge:挑战性任务        → slots: ["objective", "difficulty", "hints_allowed", "evidence_id"], max_repeat: 1
+      - reflect:  引导反思          → slots: ["question", "context_ids", "format"], max_repeat: 1
+      - scaffold:搭建脚手架         → slots: ["step", "support_level", "next_step", "fallback_step"], max_repeat: 1
+      - suggest:  系统建议          → slots: ["option", "alternatives", "evidence_id", "source_tag"], max_repeat: 1
+      - pulse:    主权确认脉冲       → slots: ["statement", "accept_label", "rewrite_label"], max_repeat: 3
+      - excursion:模型外远足         → slots: ["domain", "options", "bias_disabled"], max_repeat: 1
+      - defer:    暂缓/降级         → slots: ["reason", "fallback_intensity", "resume_condition"], max_repeat: 1
+    </step>
+    <step>4. 定义 required_fields: ["action_type", "payload", "trace_id", "intent", "domain_passport"]</step>
+    <step>5. 定义 optional_fields: ["evidence_ids", "uncertainty", "user_response_expected"]</step>
+    <step>6. 定义 domain_passport_levels: ["high", "medium", "low", "none"]</step>
+    <step>7. 定义 source_tags: ["rule", "statistical_model", "hypothesis", "user_history", "domain_knowledge"]</step>
+    <step>8. 运行 python -c "import json; json.load(open('contracts/coach_dsl.json'))" 验证 JSON 合法</step>
+    <step>9. 运行全量回归 python -m pytest tests/ -q 确认 714 pass（纯合约不应影响测试）</step>
+  </execution>
+
+  <contract_spec>
+    <output_format>JSON Schema draft-07+ 兼容，扩展字段包含 contract/version/status/description</output_format>
+    <frozen_at>contracts/gates.json</frozen_at>
+    <note>S1.4 才将 status 从 "draft" 改为 "frozen"</note>
+  </contract_spec>
+
+  <outputs>
+    <new_file>contracts/coach_dsl.json</new_file>
+    <stage_report>reports/coach_phase1_s11_contract.json</stage_report>
+  </outputs>
+
+  <decision_logic>
+    <go_when>
+      contracts/coach_dsl.json 存在且 JSON 合法 AND
+      全部 8 种 action_types 定义完整 AND
+      required_fields/optional_fields/domain_passport_levels/source_tags 都定义 AND
+      全量回归 714 pass AND
+      没有对 src/inner/**、src/middle/**、已有 contracts/ 的修改
+    </go_when>
+    <no_go_when>
+      合约格式不合法 / action_types 缺失 / 全量测试失败 / 禁改区域被触碰
+    </no_go_when>
+  </decision_logic>
+
+  <test_cases>
+    <test>
+      <name>test_coach_dsl_contract_valid_json</name>
+      <assert>coach_dsl.json 可被 json.load 解析且 contract 字段为 "coach_dsl"</assert>
+    </test>
+    <test>
+      <name>test_coach_dsl_has_8_action_types</name>
+      <assert>action_types 数组长度为 8</assert>
+    </test>
+    <test>
+      <name>test_coach_dsl_required_fields_present</name>
+      <assert>required_fields 包含 action_type/payload/trace_id/intent/domain_passport</assert>
+    </test>
+  </test_cases>
+
+  <safety>
+    <rule>禁止修改 contracts/ 中任何已有文件</rule>
+    <rule>禁止修改 src/inner/**、src/middle/**</rule>
+    <rule>S1.1 不生成任何 Python 代码</rule>
+  </safety>
+</prompt>

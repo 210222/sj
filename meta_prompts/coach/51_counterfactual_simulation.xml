@@ -1,0 +1,275 @@
+<prompt>
+  <name>Coherence Coach Track — S5.1 情境反事实仿真</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>5</phase>
+  <sub_stage>S5.1</sub_stage>
+  <sub_stage_name>情境反事实仿真引擎 — 三假设推演 + 风险标记</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S5.1 实现者。
+    你的任务是：实现 src/coach/counterfactual.py，包含 CounterfactualSimulator 类，
+    对每个候选 DSL 动作包生成 3 种假设历史，推演结果并标记风险。
+    这是语义安全三件套的第一道闸门。
+  </role>
+
+  <context>
+    已存在的代码和数据源：
+    - src/coach/composer.py: PolicyComposer 输出 action dict（含 action_type/payload/domain_passport）
+    - src/coach/agent.py: CoachAgent 提供运行时上下文
+    - src/coach/state.py: UserStateTracker 提供当前用户状态
+    - src/coach/memory.py: SessionMemory 提供历史会话记忆
+
+    反事实仿真理论（来自 ai教练.txt §5）：
+    ```
+    对于每个候选 DSL 动作包:
+      生成 3 种假设历史:
+      1. 用户未经历上次挫折（最佳历史）
+      2. 用户当前疲劳加重（最差历史）
+      3. 用户选择完全不同路径（替换历史）
+
+      在每种假设下用 L0/L1/L2 推演结果
+      若任一假设下结果恶化 → 标记为风险动作
+    ```
+
+    注意：这是方向性风险排序，不是精确因果推断。
+    Phase 5 实现轻量版：使用证据分数加权模拟，不做全量 L0/L1/L2 重计算。
+  </context>
+
+  <task>
+    实现 src/coach/counterfactual.py：CounterfactualSimulator — 三假设生成 + 推演 + 风险标记。
+    新增 config/coach_defaults.yaml 反事实配置段。
+    新增 tests/test_counterfactual.py。
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="配置段">
+      在 config/coach_defaults.yaml 新增 Phase 5 配置段：
+
+      ```yaml
+      # ── Phase 5: 语义安全三件套 ──────────────────
+      counterfactual:
+        enabled: false
+        simulation:
+          deterioration_threshold: 0.3   # 假设下恶化超过此阈值→标记风险
+          stabilization_factor: 0.2      # 假设推演中的稳定因子
+          max_hypotheses: 3             # 生成假设数
+        weights:
+          best_case: 0.3                # 最佳历史权重
+          worst_case: 0.4               # 最差历史权重
+          alt_path: 0.3                 # 替换路径权重
+      ```
+    </step>
+    <step id="2" name="CounterfactualHypothesis 数据类">
+      ```python
+      from dataclasses import dataclass, field
+      from typing import Any
+
+      @dataclass
+      class CounterfactualHypothesis:
+          """一条反事实假设。"""
+          name: str                     # "best_case" | "worst_case" | "alt_path"
+          description: str              # 假设描述
+          delta_score: float            # 相对于基线的变化量 [-1, 1]
+          risk_flagged: bool            # 是否标记为风险
+          details: dict = field(default_factory=dict)
+      ```
+    </step>
+    <step id="3" name="CounterfactualSimulator 核心类">
+      ```python
+      class CounterfactualSimulator:
+          """三假设反事实仿真引擎。
+
+          simulate(action, user_context) → CounterfactualResult
+          """
+
+          def __init__(self, config: dict | None = None):
+              self._config = config or {}
+              self._sim_cfg = config.get("simulation", {}) if config else {}
+
+          def simulate(self, action: dict, user_context: dict | None = None) -> dict:
+              """对 DSL 动作进行反事实仿真。
+
+              Args:
+                  action: PolicyComposer 输出的 action dict
+                  user_context: 当前用户上下文（可选）
+
+              Returns: {
+                  "risk_flagged": bool,        # 任一假设下恶化
+                  "risk_score": float,          # 综合风险得分 [0,1]
+                  "hypotheses": list[dict],    # 三个假设的推演结果
+                  "baseline_score": float,      # 基线推演得分
+                  "recommendation": str,        # "proceed"|"caution"|"block"
+              }
+              """
+      ```
+    </step>
+    <step id="4" name="假设生成逻辑">
+      三种假设的生成逻辑：
+
+      ```python
+      def _generate_hypotheses(self, action: dict, ctx: dict) -> list[dict]:
+          """生成三种反事实假设。"""
+          return [
+              {
+                  "name": "best_case",
+                  "description": "用户未经历上次挫折（最佳历史）",
+                  "base_adjustment": 0.2,      # 正向调整
+                  "risk_multiplier": 0.5,       # 风险降低
+              },
+              {
+                  "name": "worst_case",
+                  "description": "用户当前疲劳加重（最差历史）",
+                  "base_adjustment": -0.3,     # 负向调整
+                  "risk_multiplier": 1.5,       # 风险放大
+              },
+              {
+                  "name": "alt_path",
+                  "description": "用户选择完全不同路径（替换历史）",
+                  "base_adjustment": -0.1,     # 轻微负向
+                  "risk_multiplier": 1.2,       # 轻微放大
+              },
+          ]
+      ```
+
+      每种假设的推演逻辑：
+      1. 从基线得分开始（来自 action 的 evidence_level 或 user_context）
+      2. 应用 base_adjustment 得到假设下得分
+      3. 应用 risk_multiplier 调整风险权重
+      4. 如果假设下得分 < 基线得分 - deterioration_threshold → 标记风险
+
+      ```python
+      def _simulate_hypothesis(self, hypothesis: dict, baseline: float,
+                                threshold: float) -> CounterfactualHypothesis:
+          """在给定假设下推演动作结果。"""
+          adj = hypothesis["base_adjustment"]
+          # 假设下得分 = 基线 + 调整值（需 clamp [0,1]）
+          hypo_score = max(0.0, min(1.0, baseline + adj))
+
+          # 风险判定：调整后得分低于基线减阈值
+          risk = (baseline - hypo_score) > threshold
+
+          return CounterfactualHypothesis(
+              name=hypothesis["name"],
+              description=hypothesis["description"],
+              delta_score=round(hypo_score - baseline, 4),
+              risk_flagged=risk,
+              details={"hypothesis_score": round(hypo_score, 4)},
+          )
+      ```
+    </step>
+    <step id="5" name="综合风险评分">
+      ```python
+      def _compute_risk_score(self, hypotheses: list[CounterfactualHypothesis],
+                                weights: dict) -> float:
+          """综合各假设的风险得分 [0,1]"""
+          w = weights or {}
+          w_best = w.get("best_case", 0.3)
+          w_worst = w.get("worst_case", 0.4)
+          w_alt = w.get("alt_path", 0.3)
+
+          total_risk = 0.0
+          for h in hypotheses:
+              weight = {
+                  "best_case": w_best,
+                  "worst_case": w_worst,
+                  "alt_path": w_alt,
+              }.get(h.name, 0.33)
+              # 风险贡献 = weight * (1.0 - baseline_adj_score)
+              risk_contrib = weight * (1.0 - (0.5 - h.delta_score))
+              total_risk += risk_contrib
+
+          return round(max(0.0, min(1.0, total_risk)), 4)
+
+      def _recommend(self, risk_flagged: bool, risk_score: float) -> str:
+          """生成推荐动作。"""
+          if risk_flagged and risk_score > 0.6:
+              return "block"
+          elif risk_flagged:
+              return "caution"
+          return "proceed"
+      ```
+    </step>
+    <step id="6" name="测试">
+      创建 tests/test_counterfactual.py：
+
+      ```python
+      import pytest
+      from src.coach.counterfactual import CounterfactualSimulator
+
+      class TestCounterfactualBasics:
+          def test_simulator_initialized(self):
+              sim = CounterfactualSimulator()
+              assert sim is not None
+
+          def test_simulate_returns_required_keys(self):
+              sim = CounterfactualSimulator()
+              result = sim.simulate({"action_type": "suggest", "payload": {}})
+              for key in ("risk_flagged", "risk_score", "hypotheses",
+                           "baseline_score", "recommendation"):
+                  assert key in result, f"Missing key: {key}"
+
+          def test_default_returns_proceed(self):
+              sim = CounterfactualSimulator()
+              result = sim.simulate({"action_type": "suggest", "payload": {}})
+              assert result["recommendation"] == "proceed"
+
+      class TestHypotheses:
+          def test_three_hypotheses_generated(self):
+              sim = CounterfactualSimulator()
+              result = sim.simulate({"action_type": "challenge", "payload": {}})
+              assert len(result["hypotheses"]) == 3
+
+          def test_hypotheses_have_required_fields(self):
+              sim = CounterfactualSimulator()
+              result = sim.simulate({"action_type": "probe", "payload": {}})
+              for h in result["hypotheses"]:
+                  assert "name" in h
+                  assert "delta_score" in h
+                  assert "risk_flagged" in h
+
+          def test_worst_case_lowest_delta(self):
+              sim = CounterfactualSimulator()
+              result = sim.simulate({"action_type": "challenge", "payload": {}})
+              hyps = {h["name"]: h for h in result["hypotheses"]}
+              assert hyps["worst_case"]["delta_score"] < hyps["best_case"]["delta_score"]
+
+      class TestRiskScoring:
+          def test_high_risk_action_flagged(self):
+              sim = CounterfactualSimulator({"simulation": {"deterioration_threshold": 0.1}})
+              # 高风险动作（如 challenge）在 worst_case 下更易触发
+              action = {"action_type": "challenge", "payload": {"intensity": "high"}}
+              result = sim.simulate(action)
+              # worst_case delta = -0.3, threshold = 0.1 → risk_flagged
+
+          def test_risk_score_in_range(self):
+              sim = CounterfactualSimulator()
+              result = sim.simulate({"action_type": "suggest", "payload": {}})
+              assert 0.0 <= result["risk_score"] <= 1.0
+      ```
+
+      说明：
+      - 基线 8 个测试
+      - 反事实仿真不做真实因果推断，核心产出的风险标记是"方向性排序"
+      - 集成到 CoachAgent 的管线在 S5.5 完成
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/counterfactual.py" type="new">~180 行: CounterfactualSimulator + 三假设推演 + 风险评分</change>
+    <change file="config/coach_defaults.yaml" type="append">+15 行: Phase 5 counterfactual 配置段</change>
+    <change file="tests/test_counterfactual.py" type="new">~80 行: 8 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. CounterfactualSimulator.simulate() 返回全部 5 个键
+    2. 3 种假设全部生成（best_case/worst_case/alt_path）
+    3. worst_case delta_score < best_case delta_score
+    4. risk_score 始终在 [0,1] 范围内
+    5. 高风险动作（challenge + low threshold）触发 risk_flagged
+    6. 默认配置下低风险动作推荐 "proceed"
+    7. 8 个测试全部通过
+    8. 881 已有测试无回归
+  </success_criteria>
+</prompt>

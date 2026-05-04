@@ -1,0 +1,142 @@
+<prompt>
+  <name>Coherence Coach Track — S3.1 主权确认脉冲</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>3</phase>
+  <sub_stage>S3.1</sub_stage>
+  <sub_stage_name>主权确认脉冲 — Sovereignty Pulse</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S3.1 实现者。
+    你的任务是实现 V18.8 主权确认脉冲机制：
+    当 CoachAgent 产出 HIGH intensity 动作时，自动插入一个 action_type="pulse" 的回合，
+    给用户两个选项（接受前提 / 改写前提），并计算 premise_rewrite_rate 写入门禁数据源。
+  </role>
+
+  <context>
+    已存在的代码和设计：
+    - src/coach/agent.py: CoachAgent.act() 包含 9 步流程（parse_intent → get_state → recall → compose → build → pipeline → state_update → memory_store → return）
+    - src/coach/composer.py: compose() 返回 action dict，含 action_type 和 payload。目前所有 action 被视为等强度。
+    - contracts/coach_dsl.json 已包含 action_type="pulse" 定义（slots: statement, accept_label, rewrite_label, max_repeat: 3）
+    - src/inner/gates/engine.py Gate 1 Agency Gate 已就绪：_evaluate_1_agency_gate() 消费 premise_rewrite_rate >= threshold(0.3) 判定 pass
+    - src/inner/gates/config.py: AGENCY_GATE_THRESHOLD=0.3
+    - 当前 composer 不区分 HIGH/LOW intensity——所有动作强度由 pipeline L0/L1/L2 估算
+  </context>
+
+  <task>
+    在 config/coach_defaults.yaml 新增 sovereignty_pulse 配置段，然后修改 agent.py 实现脉冲注入。
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="配置扩展">
+      在 config/coach_defaults.yaml 末尾新增：
+      ```yaml
+      # ── V18.8 主权脉冲 ──────────────────────────
+      sovereignty_pulse:
+        enabled: false                      # 默认关闭，不影响已有行为
+        high_intensity_threshold: 0.7       # composer action 强度 >= 此值触发脉冲
+        max_pulse_rounds: 3                 # 每轮对话最多脉冲次数
+        pulse_cooldown_turns: 5             # 脉冲后冷却回合数
+      ```
+    </step>
+    <step id="2" name="CoachAgent 脉冲追踪">
+      在 CoachAgent 类中增加脉冲状态追踪：
+      - `_pulse_history: list[dict]` — 存储 {action_type, trace_id, outcome ('accept'|'rewrite'), ts}
+      - `_pulse_round_count: int` — 当前对话已插入的脉冲次数
+      - `_turns_since_last_pulse: int` — 自上次脉冲以来的回合数
+      - `_excursion_evidence: list[str]` — 远足证据记录（S3.2 也用）
+    </step>
+    <step id="3" name="HIGH intensity 判定">
+      实现 `_compute_action_intensity(action: dict) → float` 方法：
+      - challenge → 0.8（默认 HIGH）
+      - probe → 0.6
+      - reflect → 0.4
+      - scaffold → 0.6
+      - suggest → 0.3
+      - defer → 0.1
+      - pulse/excursion → 0.0（脉冲自身和远足不应再触发脉冲）
+
+      注：此为基础版本，阶段 4 TTM 升级后会结合用户状态做动态强度计算。
+    </step>
+    <step id="4" name="脉冲注入逻辑">
+      在 act() 的步骤 4（compose）和步骤 5（build DSL）之间，插入 `_should_insert_pulse(action) → bool`：
+      - sovereignty_pulse.enabled == false → False
+      - _compute_action_intensity(action) < high_intensity_threshold → False
+      - _pulse_round_count >= max_pulse_rounds → False
+      - _turns_since_last_pulse < pulse_cooldown_turns → False
+
+      若 should_insert，则将 action_type 覆盖为 "pulse"，payload 设为：
+      ```python
+      {
+          "statement": f"我注意到这一步对你的影响较大。是否愿意接受系统的前提假设？",
+          "accept_label": "我接受",
+          "rewrite_label": "我改写前提"
+      }
+      ```
+      intent 保持原值，domain_passport 保持原值。
+    </step>
+    <step id="5" name="脉冲结果记录">
+      在 act() 返回后，如果这是一个脉冲回合：
+      - 从 pipeline 返回结果中检查 safety_allowed（如果是脉冲被阻断也不计数）
+      - 脉冲通过后：保存到 `_pulse_history`
+      - 从脉冲的下一轮用户输入中检测：如果包含改写关键词（"改写"、"重新定义"、"我不同意"、"不完全是"）,则记录 outcome='rewrite'；否则默认 'accept'
+
+      注意：第一阶段实现中，accept/rewrite 判定由下一轮输入的简单关键词检测完成。
+      这是一个简化实现——完整版需要两轮对话交互。
+    </step>
+    <step id="6" name="Premise Rewrite Rate">
+      实现 `_get_premise_rewrite_rate() → float`：
+      - 从 `_pulse_history` 中统计
+      - rate = rewrites / (accepts + rewrites)，分母为 0 时返回 0.0
+
+      将此值附加到 act() 返回的 dict 中，键为 "premise_rewrite_rate"。
+      同时将 rate 写入 MemoryStore（S3.3 再用），以供 Gate Engine 消费。
+    </step>
+    <step id="7" name="测试">
+      创建 tests/test_v18_pulse.py，覆盖以下场景：
+      ```python
+      def test_pulse_disabled_by_default():
+          # sovereignty_pulse.enabled=false 时，HIGH action 不触发脉冲
+          agent = CoachAgent()
+          result = agent.act("给我一个挑战")
+          assert result["action_type"] == "challenge"  # 没有被拦截
+
+      def test_pulse_injected_when_enabled():
+          # enable 后，HIGH action 触发脉冲（注意配置需要从 YAML 读——使用 mock 或修改 agent._config）
+          # 验证 result["action_type"] == "pulse"
+
+      def test_premise_rewrite_rate_zero_initially():
+          # 没有脉冲历史时，rate == 0.0
+
+      def test_low_intensity_no_pulse():
+          # suggest/defer 等 LOW action 不会触发脉冲
+
+      def test_pulse_cooldown_respected():
+          # pulse 后在冷却回合内不再触发脉冲
+
+      def test_max_pulse_rounds_limit():
+          # 达到 max_pulse_rounds 后不再插入脉冲
+      ```
+
+      注意：act() 依赖 pipeline 真实调用。测试中需 mock pipeline 或准备 event_store。
+      使用 CoachAgent(session_id="test_s3_1") 避免测试间数据污染。
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="config/coach_defaults.yaml" type="append">+15 行 sovereignty_pulse 配置段</change>
+    <change file="src/coach/agent.py" type="modify">+80 行: 脉冲追踪状态、强度计算、注入逻辑、rewrite rate</change>
+    <change file="tests/test_v18_pulse.py" type="new">+60 行: 6 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. default enabled=false，原有行为完全不变
+    2. enabled=true 时，HIGH action（challenge）触发 pulse action_type
+    3. LOW action（suggest/defer）不触发脉冲
+    4. premise_rewrite_rate 可计算并返回
+    5. 冷却和上限保护生效
+    6. 6 个测试全部通过
+    7. 808 已有测试零回归
+  </success_criteria>
+</prompt>

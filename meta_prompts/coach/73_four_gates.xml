@@ -1,0 +1,633 @@
+<prompt>
+  <name>Coherence Coach Track — S7.3 V18.7 四门禁通关</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>7</phase>
+  <sub_stage>S7.3</sub_stage>
+  <sub_stage_name>V18.7 四门禁实现 — Verification Load / Serendipity / Trespassing / Manipulation</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S7.3 实现者。
+    你的任务是：实现 src/coach/gates_v18_7.py，包含 ai教练.txt V18.7 的四门禁：
+    Verification Load Gate、Serendipity Gate、Trespassing Gate、Manipulation Gate。
+    这些是审计级检查，不修改运行时行为——只报告通过/不通过状态。
+  </role>
+
+  <context>
+    已有相关代码和数据源：
+    - contracts/gates.json: gate 5 (causal_gate) 已定义 causal_diagnostics_triple，
+      gate 6 (audit_gate) 已定义 audit_health，gate 7 (framing_gate) 已定义
+      independent_framing_audit_pass，gate 8 (window_gate) 已定义 window_schema_version_consistency
+    - src/coach/agent.py: CoachAgent — act() 执行时间数据（Verification Load）
+    - src/coach/state.py: UserStateTracker — 用户状态
+    - src/coach/dsl.py: DSL 构建器（Phase 1 冻结）
+    - src/inner/ledger/event_store.py: EventStore — 事件记录
+    - Phase 3 excursion_right: 模型外远足权实现（Serendipity Gate 数据源）
+    - Phase 3 relational_safety: 关系安全 + 越权熔断器（Trespassing Gate 数据源）
+    - Phase 5 semantic safety: 反事实仿真 + 跨轨检查 + 先例拦截
+
+    四门禁定义（来自 ai教练.txt V18.7 §7.3）：
+    ```
+    1. Verification Load Gate: 用户验证时间 ≤ 自主产出时间阈值
+       - 衡量：用户花在验证 AI 输出上的时间 vs 自主产出的时间
+       - 如果验证占比过高 → 认知负荷超标，阻止升档
+
+    2. Serendipity Gate: 偶发探索占比达标
+       - 衡量：excursion 远足中偶发探索的比例
+       - 如果偶发探索不足 → 学习模式固化，阻止升档
+
+    3. Trespassing Gate: 越权熔断器触发后零泄漏
+       - 衡量：触发越权熔断后是否有违规输出泄漏
+       - 如果有泄漏 → 安全机制失效，阻止升档
+
+    4. Manipulation Gate: 选择架构扰动无显著操纵效应
+       - 衡量：选择架构（选项顺序/默认值/框架）的扰动是否显著影响用户决策
+       - 如果有显著操纵效应 → 认知主权受损，阻止升档
+    ```
+
+    注意：四门禁是**审计级只读检查器**。它们读取已有组件的数据，不修改任何状态。
+    数据源可能不全（如未启用 Phase 3 excursion），此时门禁自动 pass 无数据。
+  </context>
+
+  <task>
+    1) 实现 src/coach/gates_v18_7.py：四门禁检查器
+    2) 新增 tests/test_s7_gates.py
+    3) 不修改 CoachAgent、不集成到管线（S7.4 完成）、不修改任何冻结合约
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="实现 gates_v18_7.py — 四门禁检查器">
+      新建 src/coach/gates_v18_7.py：
+
+      ```python
+      """S7.3 V18.7 四门禁审计检查器。
+
+      只读审计检查——不修改运行时行为、不熔断、不降级。
+      """
+
+      from dataclasses import dataclass, field
+      from datetime import datetime, timezone
+      from typing import Any
+
+
+      @dataclass
+      class GateResult:
+          """单门禁检查结果。"""
+          gate_id: str                    # 门禁编号 (v_load / serendipity / trespass / manip)
+          gate_name: str                  # 门禁名称
+          passed: bool                    # 是否通过
+          metric_value: float = 0.0       # 当前指标值
+          threshold: float = 0.0          # 阈值
+          detail: str = ""                # 详细说明
+          data: dict = field(default_factory=dict)
+
+          def to_dict(self) -> dict:
+              return {
+                  "gate_id": self.gate_id,
+                  "gate_name": self.gate_name,
+                  "passed": self.passed,
+                  "metric_value": self.metric_value,
+                  "threshold": self.threshold,
+                  "detail": self.detail,
+                  "data": self.data,
+              }
+
+
+      @dataclass
+      class GatesReport:
+          """四门禁综合报告。"""
+          all_passed: bool
+          verification_load: GateResult
+          serendipity: GateResult
+          trespassing: GateResult
+          manipulation: GateResult
+          evaluated_at_utc: str = ""
+
+          def to_dict(self) -> dict:
+              return {
+                  "all_passed": self.all_passed,
+                  "verification_load": self.verification_load.to_dict(),
+                  "serendipity": self.serendipity.to_dict(),
+                  "trespassing": self.trespassing.to_dict(),
+                  "manipulation": self.manipulation.to_dict(),
+                  "evaluated_at_utc": self.evaluated_at_utc,
+              }
+
+          def gate_results_by_id(self) -> dict[str, bool]:
+              """按 gate_id 索引的通过状态。"""
+              return {
+                  self.verification_load.gate_id: self.verification_load.passed,
+                  self.serendipity.gate_id: self.serendipity.passed,
+                  self.trespassing.gate_id: self.trespassing.passed,
+                  self.manipulation.gate_id: self.manipulation.passed,
+              }
+
+
+      class VerificationLoadGate:
+          """Verification Load Gate: 用户验证时间 ≤ 自主产出时间阈值。
+
+          衡量用户花在验证 AI 输出上的时间（审查/修改建议）与
+          自主产出时间（独立工作）的比例。
+          比例 ≤ 阈值则通过。
+          """
+
+          GATE_ID = "v_load"
+          GATE_NAME = "Verification Load Gate"
+
+          def __init__(self, ratio_threshold: float = 0.5):
+              """
+              Args:
+                  ratio_threshold: 验证时间 / 自主产出时间 比例上限
+              """
+              self.threshold = ratio_threshold
+
+          def evaluate(
+              self,
+              verification_seconds: float,
+              autonomous_seconds: float,
+          ) -> GateResult:
+              """评估验证负载门禁。
+
+              Args:
+                  verification_seconds: 用户用于验证/审查 AI 输出的累计时间（秒）
+                  autonomous_seconds: 用户自主产出的累计时间（秒）
+
+              Returns:
+                  GateResult
+              """
+              if autonomous_seconds <= 0:
+                  return GateResult(
+                      gate_id=self.GATE_ID, gate_name=self.GATE_NAME,
+                      passed=True,  # 无自主产出数据时 pass
+                      metric_value=0.0, threshold=self.threshold,
+                      detail="无自主产出数据，跳过验证负载检查",
+                  )
+
+              ratio = verification_seconds / autonomous_seconds
+              passed = ratio <= self.threshold
+
+              return GateResult(
+                  gate_id=self.GATE_ID, gate_name=self.GATE_NAME,
+                  passed=passed,
+                  metric_value=round(ratio, 4),
+                  threshold=self.threshold,
+                  detail=f"验证/自主比例={ratio:.2f} (阈值={self.threshold}), "
+                         f"{'通过' if passed else '不通过 — 验证负载过高'}",
+                  data={"verification_seconds": verification_seconds,
+                        "autonomous_seconds": autonomous_seconds},
+              )
+
+
+      class SerendipityGate:
+          """Serendipity Gate: 偶发探索占比达标。
+
+          衡量 excursion（模型外远足权）中偶发探索的比例。
+          比例 ≥ 阈值则通过。
+          """
+
+          GATE_ID = "serendipity"
+          GATE_NAME = "Serendipity Gate"
+
+          def __init__(self, min_exploration_ratio: float = 0.3):
+              """
+              Args:
+                  min_exploration_ratio: 偶发探索占比最低要求
+              """
+              self.threshold = min_exploration_ratio
+
+          def evaluate(
+              self,
+              exploratory_actions: int,
+              total_excursions: int,
+          ) -> GateResult:
+              """评估偶发探索门禁。
+
+              Args:
+                  exploratory_actions: 偶发探索类动作数
+                  total_excursions: 总远足次数
+
+              Returns:
+                  GateResult
+              """
+              if total_excursions <= 0:
+                  return GateResult(
+                      gate_id=self.GATE_ID, gate_name=self.GATE_NAME,
+                      passed=True,  # 无远足数据时 pass
+                      metric_value=0.0, threshold=self.threshold,
+                      detail="无远足数据，跳过偶发探索检查",
+                  )
+
+              ratio = exploratory_actions / total_excursions
+              passed = ratio >= self.threshold
+
+              return GateResult(
+                  gate_id=self.GATE_ID, gate_name=self.GATE_NAME,
+                  passed=passed,
+                  metric_value=round(ratio, 4),
+                  threshold=self.threshold,
+                  detail=f"偶发探索占比={ratio:.2f} (阈值={self.threshold}), "
+                         f"{'通过' if passed else '不通过 — 探索不足'}",
+                  data={"exploratory_actions": exploratory_actions,
+                        "total_excursions": total_excursions},
+              )
+
+
+      class TrespassingGate:
+          """Trespassing Gate: 越权熔断器触发后零泄漏。
+
+          检查触发越权熔断器后，是否有违规/越权输出泄漏到用户。
+          泄漏数 = 0 则通过。
+          """
+
+          GATE_ID = "trespass"
+          GATE_NAME = "Trespassing Gate"
+
+          def __init__(self, max_leakage: int = 0):
+              """
+              Args:
+                  max_leakage: 允许的最大泄漏次数（默认 0 = 零容忍）
+              """
+              self.threshold = max_leakage
+
+          def evaluate(
+              self,
+              circuit_breaker_triggered: int,
+              leakage_after_trigger: int,
+          ) -> GateResult:
+              """评估越权泄漏门禁。
+
+              Args:
+                  circuit_breaker_triggered: 越权熔断器触发次数
+                  leakage_after_trigger: 触发后泄漏到用户的次数
+
+              Returns:
+                  GateResult
+              """
+              if circuit_breaker_triggered <= 0:
+                  return GateResult(
+                      gate_id=self.GATE_ID, gate_name=self.GATE_NAME,
+                      passed=True,  # 无触发时 pass
+                      metric_value=0.0, threshold=self.threshold,
+                      detail="无越权熔断触发，通过",
+                  )
+
+              passed = leakage_after_trigger <= self.threshold
+
+              return GateResult(
+                  gate_id=self.GATE_ID, gate_name=self.GATE_NAME,
+                  passed=passed,
+                  metric_value=float(leakage_after_trigger),
+                  threshold=float(self.threshold),
+                  detail=f"越权触发={circuit_breaker_triggered}次, "
+                         f"泄漏={leakage_after_trigger}次 (阈值≤{self.threshold}), "
+                         f"{'通过' if passed else '不通过 — 存在泄漏'}",
+                  data={"circuit_breaker_triggered": circuit_breaker_triggered,
+                        "leakage_after_trigger": leakage_after_trigger},
+              )
+
+
+      class ManipulationGate:
+          """Manipulation Gate: 选择架构扰动无显著操纵效应。
+
+          衡量选择架构（选项顺序/默认值/框架）的扰动是否显著影响用户决策。
+          使用卡方检验或贝叶斯方法判断不同框架下的选择分布是否一致。
+          """
+
+          GATE_ID = "manip"
+          GATE_NAME = "Manipulation Gate"
+
+          def __init__(self, p_value_threshold: float = 0.05):
+              """
+              Args:
+                  p_value_threshold: 操纵效应检验的 p 值阈值
+              """
+              self.threshold = p_value_threshold
+
+          def evaluate(
+              self,
+              choice_distributions: list[dict[str, int]],
+          ) -> GateResult:
+              """评估选择架构操纵门禁。
+
+              Args:
+                  choice_distributions: 不同框架/顺序下的选择分布列表。
+                     每项格式: {"frame": "A", "choices": {"opt1": 10, "opt2": 5, ...}}
+
+              Returns:
+                  GateResult
+              """
+              if len(choice_distributions) < 2:
+                  return GateResult(
+                      gate_id=self.GATE_ID, gate_name=self.GATE_NAME,
+                      passed=True,  # 仅一个框架时 pass
+                      metric_value=1.0, threshold=self.threshold,
+                      detail="数据不足（仅一个框架），跳过操纵效应检查",
+                  )
+
+              # 使用卡方检验判断分布是否一致
+              from scipy.stats import chi2_contingency
+
+              # 构建列联表
+              all_options = sorted(set(
+                  opt for dist in choice_distributions
+                  for opt in dist.get("choices", {})
+              ))
+              if len(all_options) < 2:
+                  return GateResult(
+                      gate_id=self.GATE_ID, gate_name=self.GATE_NAME,
+                      passed=True,
+                      metric_value=1.0, threshold=self.threshold,
+                      detail="选项数不足，跳过操纵效应检查",
+                  )
+
+              contingency = []
+              for dist in choice_distributions:
+                  row = [dist.get("choices", {}).get(opt, 0) for opt in all_options]
+                  contingency.append(row)
+
+              try:
+                  chi2, p_value, dof, expected = chi2_contingency(contingency)
+                  passed = p_value >= self.threshold
+
+                  return GateResult(
+                      gate_id=self.GATE_ID, gate_name=self.GATE_NAME,
+                      passed=passed,
+                      metric_value=round(p_value, 4),
+                      threshold=self.threshold,
+                      detail=f"卡方检验 p={p_value:.4f} (阈值={self.threshold}), "
+                             f"{'通过' if passed else '不通过 — 存在显著操纵效应'}",
+                      data={
+                          "frames": [d["frame"] for d in choice_distributions],
+                          "chi_square": round(chi2, 4),
+                          "p_value": round(p_value, 4),
+                          "degrees_of_freedom": int(dof),
+                          "options": all_options,
+                      },
+                  )
+              except Exception as e:
+                  return GateResult(
+                      gate_id=self.GATE_ID, gate_name=self.GATE_NAME,
+                      passed=True,
+                      metric_value=1.0, threshold=self.threshold,
+                      detail=f"检验执行异常: {e}，跳过",
+                  )
+
+
+      class V18GatesAuditor:
+          """V18.7 四门禁审计器 — 整合全部四门禁检查。"""
+
+          def __init__(
+              self,
+              verification_threshold: float = 0.5,
+              serendipity_threshold: float = 0.3,
+              trespass_max_leakage: int = 0,
+              manipulation_p_threshold: float = 0.05,
+          ):
+              self.verification_gate = VerificationLoadGate(verification_threshold)
+              self.serendipity_gate = SerendipityGate(serendipity_threshold)
+              self.trespassing_gate = TrespassingGate(trespass_max_leakage)
+              self.manipulation_gate = ManipulationGate(manipulation_p_threshold)
+
+          def audit(
+              self,
+              verification_seconds: float = 0.0,
+              autonomous_seconds: float = 0.0,
+              exploratory_actions: int = 0,
+              total_excursions: int = 0,
+              circuit_breaker_triggered: int = 0,
+              leakage_after_trigger: int = 0,
+              choice_distributions: list[dict[str, Any]] | None = None,
+          ) -> GatesReport:
+              """执行全部四门禁检查。
+
+              Args:
+                  verification_seconds: 验证/审查 AI 输出时间（秒）
+                  autonomous_seconds: 自主产出时间（秒）
+                  exploratory_actions: 偶发探索动作数
+                  total_excursions: 总远足数
+                  circuit_breaker_triggered: 越权熔断触发次数
+                  leakage_after_trigger: 触发后泄漏次数
+                  choice_distributions: 不同框架下的选择分布
+
+              Returns:
+                  GatesReport
+              """
+              v_result = self.verification_gate.evaluate(verification_seconds, autonomous_seconds)
+              s_result = self.serendipity_gate.evaluate(exploratory_actions, total_excursions)
+              t_result = self.trespassing_gate.evaluate(circuit_breaker_triggered, leakage_after_trigger)
+              m_result = self.manipulation_gate.evaluate(choice_distributions or [])
+
+              all_passed = all([
+                  v_result.passed, s_result.passed,
+                  t_result.passed, m_result.passed,
+              ])
+
+              return GatesReport(
+                  all_passed=all_passed,
+                  verification_load=v_result,
+                  serendipity=s_result,
+                  trespassing=t_result,
+                  manipulation=m_result,
+                  evaluated_at_utc=datetime.now(timezone.utc).isoformat(),
+              )
+      ```
+
+      关键设计决策：
+      - 所有门禁都是只读审计检查——不修改运行时、不熔断、不降级
+      - 无数据时 pass 而非 fail（冷启动友好）
+      - VerificationLoadGate 阈值 0.5：验证时间不应超过自主产出时间的一半
+      - SerendipityGate 阈值 0.3：至少 30% 的远足应有偶发探索元素
+      - TrespassingGate 零泄漏容忍（硬红线）
+      - ManipulationGate 使用 scipy.stats.chi2_contingency 做卡方检验
+      - 如果 scipy 不可用，ManipulationGate 应优雅降级
+    </step>
+
+    <step id="2" name="新增测试 test_s7_gates.py">
+      新建 tests/test_s7_gates.py：
+
+      ```python
+      """S7.3 V18.7 四门禁测试。"""
+
+      import pytest
+      from src.coach.gates_v18_7 import (
+          VerificationLoadGate, SerendipityGate, TrespassingGate,
+          ManipulationGate, V18GatesAuditor, GatesReport,
+      )
+
+
+      class TestVerificationLoadGate:
+          def test_low_load_passes(self):
+              gate = VerificationLoadGate(ratio_threshold=0.5)
+              result = gate.evaluate(verification_seconds=30, autonomous_seconds=120)
+              assert result.passed is True
+              assert result.metric_value == 0.25
+
+          def test_high_load_fails(self):
+              gate = VerificationLoadGate(ratio_threshold=0.5)
+              result = gate.evaluate(verification_seconds=100, autonomous_seconds=60)
+              assert result.passed is False
+
+          def test_no_autonomous_data_passes(self):
+              gate = VerificationLoadGate()
+              result = gate.evaluate(verification_seconds=10, autonomous_seconds=0)
+              assert result.passed is True
+
+          def test_exact_threshold(self):
+              gate = VerificationLoadGate(ratio_threshold=1.0)
+              result = gate.evaluate(verification_seconds=50, autonomous_seconds=50)
+              assert result.passed is True
+
+
+      class TestSerendipityGate:
+          def test_sufficient_exploration_passes(self):
+              gate = SerendipityGate(min_exploration_ratio=0.3)
+              result = gate.evaluate(exploratory_actions=5, total_excursions=10)
+              assert result.passed is True
+
+          def test_insufficient_exploration_fails(self):
+              gate = SerendipityGate(min_exploration_ratio=0.5)
+              result = gate.evaluate(exploratory_actions=2, total_excursions=10)
+              assert result.passed is False
+
+          def test_no_excursion_data_passes(self):
+              gate = SerendipityGate()
+              result = gate.evaluate(exploratory_actions=0, total_excursions=0)
+              assert result.passed is True
+
+          def test_exact_threshold(self):
+              gate = SerendipityGate(min_exploration_ratio=0.3)
+              result = gate.evaluate(exploratory_actions=3, total_excursions=10)
+              assert result.passed is True
+
+
+      class TestTrespassingGate:
+          def test_no_leakage_passes(self):
+              gate = TrespassingGate(max_leakage=0)
+              result = gate.evaluate(circuit_breaker_triggered=5, leakage_after_trigger=0)
+              assert result.passed is True
+
+          def test_any_leakage_fails(self):
+              gate = TrespassingGate(max_leakage=0)
+              result = gate.evaluate(circuit_breaker_triggered=3, leakage_after_trigger=1)
+              assert result.passed is False
+
+          def test_no_trigger_passes(self):
+              gate = TrespassingGate()
+              result = gate.evaluate(circuit_breaker_triggered=0, leakage_after_trigger=0)
+              assert result.passed is True
+
+          def test_zero_leakage_after_many_triggers(self):
+              gate = TrespassingGate()
+              result = gate.evaluate(circuit_breaker_triggered=100, leakage_after_trigger=0)
+              assert result.passed is True
+
+
+      class TestManipulationGate:
+          def test_consistent_distributions_passes(self):
+              gate = ManipulationGate(p_value_threshold=0.05)
+              # 两个框架的选择分布相似
+              distributions = [
+                  {"frame": "A", "choices": {"opt1": 20, "opt2": 18, "opt3": 22}},
+                  {"frame": "B", "choices": {"opt1": 22, "opt2": 17, "opt3": 21}},
+              ]
+              result = gate.evaluate(distributions)
+              assert result.passed is True
+
+          def test_divergent_distributions_may_fail(self):
+              gate = ManipulationGate(p_value_threshold=0.05)
+              # 两个框架的选择分布差异很大
+              distributions = [
+                  {"frame": "A", "choices": {"opt1": 40, "opt2": 5, "opt3": 5}},
+                  {"frame": "B", "choices": {"opt1": 5, "opt2": 40, "opt3": 5}},
+              ]
+              result = gate.evaluate(distributions)
+              assert result.passed is False
+
+          def test_single_frame_passes(self):
+              gate = ManipulationGate()
+              distributions = [{"frame": "A", "choices": {"opt1": 10, "opt2": 10}}]
+              result = gate.evaluate(distributions)
+              assert result.passed is True
+
+
+      class TestV18GatesAuditor:
+          def test_all_gates_pass(self):
+              auditor = V18GatesAuditor()
+              report = auditor.audit(
+                  verification_seconds=30, autonomous_seconds=120,
+                  exploratory_actions=5, total_excursions=10,
+                  circuit_breaker_triggered=5, leakage_after_trigger=0,
+                  choice_distributions=[
+                      {"frame": "A", "choices": {"opt1": 20, "opt2": 18}},
+                      {"frame": "B", "choices": {"opt1": 22, "opt2": 17}},
+                  ],
+              )
+              assert isinstance(report, GatesReport)
+              assert report.all_passed is True
+
+          def test_verification_fails_blocks(self):
+              auditor = V18GatesAuditor()
+              report = auditor.audit(
+                  verification_seconds=100, autonomous_seconds=50,  # 负载过高
+                  exploratory_actions=5, total_excursions=10,
+                  circuit_breaker_triggered=5, leakage_after_trigger=0,
+              )
+              assert report.all_passed is False
+              assert report.verification_load.passed is False
+
+          def test_trespassing_fails_blocks(self):
+              auditor = V18GatesAuditor()
+              report = auditor.audit(
+                  verification_seconds=30, autonomous_seconds=120,
+                  exploratory_actions=5, total_excursions=10,
+                  circuit_breaker_triggered=3, leakage_after_trigger=1,
+              )
+              assert report.all_passed is False
+              assert report.trespassing.passed is False
+
+          def test_to_dict_serializable(self):
+              auditor = V18GatesAuditor()
+              report = auditor.audit(
+                  verification_seconds=30, autonomous_seconds=120,
+                  exploratory_actions=5, total_excursions=10,
+                  circuit_breaker_triggered=0, leakage_after_trigger=0,
+              )
+              d = report.to_dict()
+              assert d["all_passed"] is True
+              assert "evaluated_at_utc" in d
+
+          def test_gate_results_by_id(self):
+              auditor = V18GatesAuditor()
+              report = auditor.audit(
+                  verification_seconds=30, autonomous_seconds=120,
+                  exploratory_actions=5, total_excursions=10,
+                  circuit_breaker_triggered=0, leakage_after_trigger=0,
+              )
+              by_id = report.gate_results_by_id()
+              for gid in ("v_load", "serendipity", "trespass", "manip"):
+                  assert gid in by_id
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/gates_v18_7.py" type="new">~250 行: V18.7 四门禁审计检查器</change>
+    <change file="tests/test_s7_gates.py" type="new">~110 行: 四门禁测试</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. src/coach/gates_v18_7.py 存在，包含 4 个门禁类 + V18GatesAuditor
+    2. VerificationLoadGate 正确计算验证/自主时间比例
+    3. SerendipityGate 正确计算远足中偶发探索占比
+    4. TrespassingGate 零泄漏检查通过
+    5. ManipulationGate 使用卡方检验判断选择分布一致性
+    6. 无数据时所有门禁优雅 pass（而非 fail 阻塞升档）
+    7. V18GatesAuditor.audit() 一次性输出完整 GatesReport
+    8. GatesReport.to_dict() JSON 可序列化
+    9. GatesReport.gate_results_by_id() 输出正确
+    10. 新增 tests/test_s7_gates.py 全部 pass
+    11. 990 已有 tests 全部 pass
+    12. 不修改任何已冻结的文件或已有代码
+  </success_criteria>
+</prompt>

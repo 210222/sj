@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract": "causal_governance",
+  "version": "1.0.0",
+  "status": "frozen",
+  "description": "因果稳健 + 治理闭环合约 — Phase 7 冻结",
+
+  "mrt": {
+    "description": "微随机实验框架设计参数",
+    "randomization_rate": 0.2,
+    "window_hours": 24,
+    "eligible_action_types": ["challenge", "probe", "reflect", "scaffold"],
+    "excluded_action_types": ["suggest", "defer"],
+    "variant_schema": {
+      "fields": {
+        "variant_id": "string — 变体标识 (A/B/C)",
+        "variant_name": "string — 变体名称",
+        "delta": {"type": "float", "description": "相对基线的偏移量 [-1, 1]"},
+        "dimension": "string — 变体维度 (style/timing/pacing)"
+      }
+    },
+    "outcome_metrics": ["engagement_score", "completion_rate", "satisfaction_rating"],
+    "estimation_method": "bayesian",
+    "min_sample_per_variant": 10
+  },
+
+  "diagnostics": {
+    "description": "升档前三诊断合约",
+    "balance_check": {
+      "description": "变体组 vs 对照组基线可比性检验",
+      "method": "standardized_mean_difference",
+      "smd_threshold": 0.25,
+      "covariates": ["prior_engagement", "skill_level", "session_count"]
+    },
+    "negative_control": {
+      "description": "已知无效干预不应检测出显著性效果",
+      "method": "bayesian_posterior_overlap",
+      "overlap_threshold": 0.8,
+      "min_control_events": 5
+    },
+    "placebo_window": {
+      "description": "真实干预前窗口不应检测出效果",
+      "window_hours_before": 2,
+      "method": "pre_trend_test",
+      "p_value_threshold": 0.05
+    }
+  },
+
+  "frozen_constraints": {
+    "mrt_params": "randomization_rate/window_hours/eligible_action_types 不可删改",
+    "diagnostics_thresholds": "smd_threshold/overlap_threshold/p_value_threshold 不可删改",
+    "contract_version": "1.0.0"
+  },
+
+  "frozen_at": "2026-05-04T07:00:00.000Z"
+}

@@ -1,0 +1,132 @@
+<prompt>
+  <name>Coherence Coach Track — S3.2 模型外远足权</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>3</phase>
+  <sub_stage>S3.2</sub_stage>
+  <sub_stage_name>模型外远足权 — Excursion Right</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S3.2 实现者。
+    你的任务是实现 V18.8 模型外远足权：
+    当用户输入 /excursion 命令时，CoachAgent 临时禁用 user_state 历史影响，
+    输出非最优、非历史偏好、但可解释的选项。
+  </role>
+
+  <context>
+    已存在的代码和设计：
+    - src/coach/agent.py: CoachAgent.act() 中 _parse_intent 通过 YAML 关键词匹配 detection intent
+    - src/coach/composer.py: PolicyComposer.compose() 接收 user_state 参数但当前未使用它做决策——所有逻辑由 intent 关键词驱动
+    - src/coach/state.py: UserStateTracker.get_state() 返回 6 字段：state, confidence, correction, magnitude, feasible, uncertainty
+    - contracts/coach_dsl.json 已包含 action_type="excursion"（slots: domain, options, bias_disabled, max_repeat: 1）
+    - src/inner/gates/engine.py Gate 2 Excursion Gate 已就绪：消费 exploration_evidence_count >= EXCURSION_MIN_EVIDENCE(1)
+    - S3.1 已完成：agent.py 已有 _pulse_history 和 _excursion_evidence 属性
+  </context>
+
+  <task>
+    实现 /excursion 命令解析、远足模式状态管理、Excursion Gate 数据源。
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="配置扩展">
+      在 config/coach_defaults.yaml 的 V18.8 段追加：
+      ```yaml
+      # ── V18.8 远足权 ────────────────────────────
+      excursion:
+        enabled: false
+        excursion_prefix: "/excursion"      # 触发命令前缀
+        excursion_duration_turns: 3          # 远足模式持续回合数
+        excursion_turns_used: 0              # 当前远足已用回合数
+        max_options: 3                       # 远足时最大生成选项数
+      ```
+    </step>
+    <step id="2" name="远足命令解析">
+      在 agent.py 的 _parse_intent() 中增加 special command 检测：
+      - 在现有关键词匹配之前，先检查 user_input.startswith(excursion_prefix)
+      - 若匹配，返回特殊 intent: "excursion_mode"
+      - 解析 /excursion 后面的参数作为远足领域（如 "/excursion 编程" → domain="programming"）
+
+      注意：不要修改 _parse_intent 的返回签名——依然是 str。使用保留关键字 "excursion_mode"。
+    </step>
+    <step id="3" name="远足模式状态管理">
+      在 CoachAgent 中增加远足状态：
+      - `_excursion_mode: bool = False` — 是否处于远足模式
+      - `_excursion_domain: str = ""` — 远足领域
+      - `_excursion_turns_left: int = 0` — 剩余远足回合数
+
+      修改 act() 步骤 1（解析 intent）之后：
+      - 如果 intent == "excursion_mode"：
+        - 设置 _excursion_mode = True
+        - 设置 _excursion_turns_left = excursion_duration_turns
+        - 从 user_input 中提取 domain（去掉前缀后的文本）
+      - 如果 _excursion_mode and _excursion_turns_left > 0：
+        - 每轮减 1
+        - 将 excursion_mode 标志传入 composer
+      - 如果 _excursion_turns_left == 0：
+        - 重置 _excursion_mode = False
+    </step>
+    <step id="4" name="Composer 远足模式历史旁路">
+      修改 PolicyComposer.compose() 签名增加 `excursion_mode: bool = False` 参数。
+
+      当 excursion_mode=True 时：
+      - intent 保持原值用于 action_type 选择
+      - 但 domain_passport.domain 强制设为远足领域（而非从偏好推断）
+      - domain_passport.evidence_level 强制设为 "low"（表示非同源推荐）
+      - 返回的 action dict 增加 epstemic_warning 标注：f"此选项跨越了通常推荐的{domain}领域"
+
+      composer.py 的 _build_payload 对于远足模式：
+      - 如果 action_type 原本会被 composer 选为 scaffold/suggest 等基于用户状态的决策
+      - excursion_mode 下强制改为 "excursion" action_type
+      - payload.options 填充多样化非偏好选项（这里用模拟版本——实际需 LLM 生成）
+    </step>
+    <step id="5" name="远足证据记录">
+      在 act() 中，远足模式执行完成后：
+      - 记录 evidence_id 到 _excursion_evidence
+      - 远足证据包括：{domain, options_generated, bias_disabled=True, ts}
+      - 将 `exploration_evidence_count = len(_excursion_evidence)` 写入 act() 返回 dict
+
+      同时在 CoachAgent 中增加 `get_excursion_evidence() → list[dict]` 供外界查询。
+    </step>
+    <step id="6" name="测试">
+      创建 tests/test_v18_excursion.py：
+      ```python
+      def test_excursion_disabled_by_default():
+          agent = CoachAgent()
+          # 即使输入包含 /excursion，但 enabled=false，不会触发远足模式
+          # 这里依赖 composer.excursion_mode 参数
+
+      def test_excursion_parses_command():
+          # /excursion 被正确解析为 "excursion_mode" intent
+          # 验证 _excursion_mode 被设置
+
+      def test_excursion_bypasses_history():
+          # 远足模式下 domain_passport.domain 被强制覆盖
+          # evidence_level 为 "low"
+
+      def test_excursion_duration_expires():
+          # 持续 excursion_duration_turns 回合后自动退出远足模式
+
+      def test_excursion_evidence_tracked():
+          # excursion 后 exploration_evidence_count > 0
+      ```
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="config/coach_defaults.yaml" type="append">+10 行 excursion 配置段</change>
+    <change file="src/coach/agent.py" type="modify">+50 行: 命令解析、远足状态管理、证据记录</change>
+    <change file="src/coach/composer.py" type="modify">+30 行: excursion_mode 参数、历史旁路逻辑</change>
+    <change file="tests/test_v18_excursion.py" type="new">+50 行: 5 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. /excursion 命令被正确解析，进入远足模式
+    2. 远足模式下 domain_passport 被强制覆盖（domain 来自命令参数，evidence_level="low"）
+    3. 远足模式在 excursion_duration_turns 回合后自动退出
+    4. exploration_evidence_count 可查询
+    5. composer 的 excursion_mode 参数生效，不影响非远足调用
+    6. 5 个测试全部通过
+    7. 808 + S3.1 新增测试无回归
+  </success_criteria>
+</prompt>

@@ -1,1 +1,7 @@
-[]
+[
+  {
+    "severity": "P4",
+    "type": "circuit_breaker_found",
+    "detail": "Circuit breaker in: src/coach/agent.py, src/coach/gates_v18_7.py"
+  }
+]

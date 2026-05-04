@@ -1,0 +1,33 @@
+{
+  "coach_phase": 1,
+  "coach_sub_stage": "S1.1",
+  "coach_status": "GO",
+  "coach_name": "DSL Contract Freeze",
+  "coach_description": "新建 contracts/coach_dsl.json，定义 8 种 action_types、required/optional fields、domain_passport_levels、source_tags",
+  "coach_deliverable": "contracts/coach_dsl.json",
+  "coach_contract_details": {
+    "status": "draft (S1.4 冻结)",
+    "action_types_count": 8,
+    "action_type_ids": ["probe", "challenge", "reflect", "scaffold", "suggest", "pulse", "excursion", "defer"],
+    "required_fields": ["action_type", "payload", "trace_id", "intent", "domain_passport"],
+    "optional_fields": ["evidence_ids", "uncertainty", "user_response_expected"],
+    "domain_passport_levels": ["high", "medium", "low", "none"],
+    "source_tags": ["rule", "statistical_model", "hypothesis", "user_history", "domain_knowledge"]
+  },
+  "coach_validation": {
+    "json_valid": true,
+    "all_checks": "PASSED"
+  },
+  "coach_changes": {
+    "added": ["contracts/coach_dsl.json"],
+    "modified": [],
+    "contracts_dir_touched": ["coach_dsl.json (new only)"]
+  },
+  "coach_test_results": {
+    "total": 714,
+    "passed": 714,
+    "failed": 0
+  },
+  "coach_decision": "GO",
+  "coach_timestamp_utc": "2026-05-02T12:30:00.000000+00:00"
+}

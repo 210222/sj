@@ -1,0 +1,476 @@
+<prompt>
+  <name>Coherence Coach Track — S6.5 向量记忆升级</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>6</phase>
+  <sub_stage>S6.5</sub_stage>
+  <sub_stage_name>向量记忆升级 — ArchivalMemory + WorkingMemory + RMM</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S6.5 实现者。
+    你的任务是：升级 src/coach/memory.py，新增三类记忆架构——
+    ArchivalMemory (FTS5 语义搜索)、WorkingMemory (当前会话上下文中)、
+    ReflectiveMemoryManager (定期置信度衰减 + 归档)。
+    这是自适应AI伴学.txt 中 Letta 记忆架构的精简落地。
+  </role>
+
+  <context>
+    已存在的代码和数据源：
+    - src/coach/memory.py: 现有 SessionMemory 类（轻量会话记忆）
+    - src/inner/ledger/db.py: SQLite 数据库连接
+    - src/coach/data.py: 三层图谱 schema（facts 表等）
+    - src/mapek/knowledge.py: Knowledge 仓库的置信度管理（S6.4）
+
+    现有 memory.py 接口（不可破坏）：
+    ```python
+    class SessionMemory:
+        def store(self, key: str, value: Any) -> None
+        def recall(self, key: str) -> Any
+        def get_session_history(self) -> list[dict]
+    ```
+
+    三类新增记忆 (参考 Letta/MemGPT 架构)：
+
+    ```
+    ArchivalMemory (长期档案记忆):
+      基于 SQLite FTS5 的语义搜索
+      存储：所有历史 DSL 动作包 + 用户反馈 + facts
+      查询：自然语言 MATCH 查询
+      特点：可归档/回收
+
+    WorkingMemory (工作记忆):
+      当前会话上下文缓存
+      存储：当前对话轮次 + CoachAgent 中间状态
+      特点：短生命周期，自动清理
+
+    RMM — ReflectiveMemoryManager (反思性记忆管理):
+      后台运行：置信度衰减 → 过期归档 → 低置信度清理
+      触发：每 N 次 act() 调用 / 定时
+    ```
+
+    Letta 参考（来自自适应AI伴学.txt）：
+    - Human block = facts + entity_profiles
+    - Persona block = coach_defaults.yaml 角色参数
+    - Archival Memory = 基于 FTS5 的轻量语义搜索（非向量嵌入）
+    - RMM = 定期反思 + 压缩
+
+    SQLite FTS5 使用示例：
+    ```sql
+    CREATE VIRTUAL TABLE IF NOT EXISTS memory_archive USING fts5(
+        content, metadata, source_tag, timestamp
+    );
+    -- 查询
+    SELECT * FROM memory_archive WHERE content MATCH 'query terms';
+    ```
+  </context>
+
+  <task>
+    修改 src/coach/memory.py，新增三个类（不破坏现有 SessionMemory 接口）：
+    1) ArchivalMemory: SQLite FTS5 长期档案记忆（存储 + 语义搜索 + 归档回收）
+    2) WorkingMemory: 当前会话上下文缓存
+    3) ReflectiveMemoryManager (RMM): 定期整理操作
+
+    新增 tests/test_vector_memory.py。
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="ArchivalMemory 类">
+      在 src/coach/memory.py 末尾新增（或新建 section）：
+
+      ```python
+      # ── Phase 6: 向量记忆升级 (Letta 精简版) ──────────
+
+      class ArchivalMemory:
+          """长期档案记忆：基于 SQLite FTS5 的语义搜索。
+
+          使用 SQLite FTS5 虚拟表做全文搜索，替代全量向量嵌入。
+          比真实向量数据库轻量，适合个人单机运行。
+          """
+
+          def __init__(self, db_path: str | None = None):
+              if db_path is None:
+                  db_path = str(ROOT / 'data' / 'coherence.db')
+              self._db_path = db_path
+              self._ensure_table()
+
+          def _ensure_table(self) -> None:
+              """确保 FTS5 表和元数据表存在。"""
+              import sqlite3
+              with sqlite3.connect(self._db_path) as conn:
+                  conn.execute("""
+                      CREATE VIRTUAL TABLE IF NOT EXISTS memory_archive
+                      USING fts5(content, source_tag, metadata,
+                                 tokenize='porter unicode61')
+                  """)
+                  conn.execute("""
+                      CREATE TABLE IF NOT EXISTS archive_meta (
+                          rowid INTEGER PRIMARY KEY,
+                          memory_id TEXT UNIQUE,
+                          timestamp_utc TEXT,
+                          lifecycle_status TEXT DEFAULT 'active',
+                          confidence REAL DEFAULT 0.5
+                      )
+                  """)
+
+          def store(self, content: str, source_tag: str = "general",
+                    metadata: str = "{}", confidence: float = 0.5) -> str:
+              """存入一条档案记忆。"""
+              import uuid
+              from datetime import datetime, timezone
+              import sqlite3
+
+              memory_id = f"arch_{uuid.uuid4().hex[:12]}"
+              now = datetime.now(timezone.utc).strftime(
+                  '%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+
+              with sqlite3.connect(self._db_path) as conn:
+                  conn.execute(
+                      "INSERT INTO memory_archive (content, source_tag, metadata) "
+                      "VALUES (?, ?, ?)",
+                      (content, source_tag, metadata),
+                  )
+                  row_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+                  conn.execute(
+                      "INSERT INTO archive_meta (rowid, memory_id, timestamp_utc, "
+                      "lifecycle_status, confidence) VALUES (?, ?, ?, 'active', ?)",
+                      (row_id, memory_id, now, confidence),
+                  )
+              return memory_id
+
+          def search(self, query: str, limit: int = 10) -> list[dict]:
+              """使用 FTS5 MATCH 做语义搜索。"""
+              import sqlite3
+              try:
+                  with sqlite3.connect(self._db_path) as conn:
+                      rows = conn.execute(
+                          """SELECT a.memory_id, m.content, m.source_tag,
+                                    m.metadata, b.confidence, b.timestamp_utc
+                             FROM memory_archive m
+                             JOIN archive_meta b ON m.rowid = b.rowid
+                             WHERE m.content MATCH ? AND b.lifecycle_status = 'active'
+                             ORDER BY b.confidence DESC
+                             LIMIT ?""",
+                          (query, limit),
+                      ).fetchall()
+                      return [
+                          {
+                              "memory_id": r[0],
+                              "content": r[1],
+                              "source_tag": r[2],
+                              "metadata": r[3],
+                              "confidence": r[4],
+                              "timestamp": r[5],
+                          }
+                          for r in rows
+                      ]
+              except Exception:
+                  return []  # FTS5 查询失败时静默返回空
+
+          def archive_memory(self, memory_id: str) -> bool:
+              """软删除：标记为 archived。"""
+              import sqlite3
+              try:
+                  with sqlite3.connect(self._db_path) as conn:
+                      c = conn.execute(
+                          "UPDATE archive_meta SET lifecycle_status = 'archived' "
+                          "WHERE memory_id = ?",
+                          (memory_id,),
+                      )
+                      return c.rowcount > 0
+              except Exception:
+                  return False
+
+          def stats(self) -> dict:
+              """返回档案记忆统计。"""
+              import sqlite3
+              try:
+                  with sqlite3.connect(self._db_path) as conn:
+                      total = conn.execute(
+                          "SELECT COUNT(*) FROM archive_meta").fetchone()[0]
+                      active = conn.execute(
+                          "SELECT COUNT(*) FROM archive_meta "
+                          "WHERE lifecycle_status = 'active'").fetchone()[0]
+                      return {"total": total, "active": active,
+                              "archived": total - active}
+              except Exception:
+                  return {"total": 0, "active": 0, "archived": 0}
+      ```
+
+      注意：ROOT 需要在文件顶部已定义。检查现有 memory.py 是否有 ROOT 常量。如果没有，添加：
+      ```python
+      from pathlib import Path
+      ROOT = Path(__file__).resolve().parent.parent
+      ```
+    </step>
+
+    <step id="2" name="WorkingMemory 类">
+      接续在 memory.py 中 ArchivalMemory 后新增：
+
+      ```python
+      class WorkingMemory:
+          """工作记忆：当前会话上下文缓存。
+
+          临时存储当前会话的数据（对话轮次、DSL 中间状态、MAPE-K 信号）。
+          短生命周期：会话结束时或达到容量上限时自动清理。
+          """
+
+          def __init__(self, capacity: int = 50):
+              self._store: dict[str, list[dict]] = {}
+              self._capacity = capacity
+
+          def set(self, key: str, value: Any) -> None:
+              """写入当前工作记忆。"""
+              if key not in self._store:
+                  self._store[key] = []
+              self._store[key].append({
+                  "value": value,
+                  "timestamp": self._now_utc(),
+              })
+              # 超容量裁剪
+              if len(self._store[key]) > self._capacity:
+                  self._store[key] = self._store[key][-self._capacity:]
+
+          def get(self, key: str, default: Any = None) -> Any:
+              """读取最近的工作记忆值。"""
+              items = self._store.get(key, [])
+              if not items:
+                  return default
+              return items[-1]["value"]
+
+          def get_all(self, key: str) -> list[dict]:
+              """读取指定 key 的所有历史值。"""
+              return list(self._store.get(key, []))
+
+          def clear(self) -> None:
+              """清空所有工作记忆。"""
+              self._store.clear()
+
+          def keys(self) -> list[str]:
+              return list(self._store.keys())
+
+          def size(self) -> int:
+              return sum(len(v) for v in self._store.values())
+
+          def _now_utc(self) -> str:
+              from datetime import datetime, timezone
+              return datetime.now(timezone.utc).strftime(
+                  '%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+      ```
+    </step>
+
+    <step id="3" name="ReflectiveMemoryManager (RMM) 类">
+      接续在 WorkingMemory 后新增：
+
+      ```python
+      class ReflectiveMemoryManager:
+          """反思性记忆管理：定期置信度衰减 + 过期归档 + 低置信度清理。
+
+          参考 Letta 的 Sleep-time Agent 机制的精简实现。
+          每次 run() 执行三步操作：
+          1. 置信度衰减 (decay)
+          2. 过期归档 (archive)
+          3. 低置信度清理 (cleanup)
+          """
+
+          def __init__(self, archival_memory: ArchivalMemory,
+                       decay_rate: float = 0.05,
+                       low_confidence_threshold: float = 0.1,
+                       archive_after_runs: int = 10):
+              self._archival = archival_memory
+              self._decay_rate = decay_rate
+              self._low_conf_threshold = low_confidence_threshold
+              self._archive_after = archive_after_runs
+              self._run_count = 0
+
+          def run(self) -> dict:
+              """执行一次 RMM 整理循环。"""
+              self._run_count += 1
+              result = {"decayed": 0, "archived": 0, "cleaned": 0}
+
+              # 每 N 次运行才实际执行
+              if self._run_count < self._archive_after:
+                  return result
+
+              # 1. 置信度衰减（委托给 Knowledge 或内部逻辑）
+              result["decayed"] = self._decay_all()
+
+              # 2. 过期归档（FTS5 表目前由外部触发归档）
+              result["archived"] = self._archive_expired()
+
+              # 3. 低置信度清理
+              result["cleaned"] = self._cleanup_low_confidence()
+
+              self._run_count = 0
+              return result
+
+          def _decay_all(self) -> int:
+              """对所有档案记忆做置信度衰减。"""
+              import sqlite3
+              try:
+                  db_path = self._archival._db_path
+                  with sqlite3.connect(db_path) as conn:
+                      c = conn.execute(
+                          "UPDATE archive_meta SET confidence = "
+                          "MAX(0.0, confidence - ?) WHERE lifecycle_status = 'active'",
+                          (self._decay_rate,),
+                      )
+                      return c.rowcount
+              except Exception:
+                  return 0
+
+          def _archive_expired(self) -> int:
+              """对低置信度或过期记忆做归档。"""
+              import sqlite3
+              try:
+                  db_path = self._archival._db_path
+                  with sqlite3.connect(db_path) as conn:
+                      c = conn.execute(
+                          "UPDATE archive_meta SET lifecycle_status = 'archived' "
+                          "WHERE lifecycle_status = 'active' AND confidence < ?",
+                          (self._low_conf_threshold,),
+                      )
+                      return c.rowcount
+              except Exception:
+                  return 0
+
+          def _cleanup_low_confidence(self) -> int:
+              """物理删除长期 archived 且低置信度的记录。"""
+              import sqlite3
+              try:
+                  db_path = self._archival._db_path
+                  with sqlite3.connect(db_path) as conn:
+                      c = conn.execute(
+                          "DELETE FROM archive_meta "
+                          "WHERE lifecycle_status = 'archived' AND confidence < 0.05"
+                      )
+                      # 同时清理 FTS5 中对应的行（需要通过 rowid 关联）
+                      return c.rowcount
+              except Exception:
+                  return 0
+      ```
+
+      设计说明：
+      - RMM 不是每次 run() 都执行全部操作，而是每 N 次触发一次（避免高频 I/O）
+      - 低置信度清理先做软删除 (archived)，再做物理删除（confidence < 0.05）
+      - 物理删除较保守，目前仅限于已 archived 且极低置信度的记录
+    </step>
+
+    <step id="4" name="测试">
+      创建 tests/test_vector_memory.py：
+
+      ```python
+      import pytest
+      import os
+      import tempfile
+      from src.coach.memory import ArchivalMemory, WorkingMemory, ReflectiveMemoryManager
+
+      @pytest.fixture
+      def tmp_db():
+          """临时 SQLite 数据库。"""
+          with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as f:
+              db_path = f.name
+          yield db_path
+          if os.path.exists(db_path):
+              os.unlink(db_path)
+
+      class TestArchivalMemory:
+          def test_store_and_search(self, tmp_db):
+              am = ArchivalMemory(db_path=tmp_db)
+              mid = am.store("User prefers Python over JavaScript",
+                             source_tag="user_history")
+              results = am.search("Python")
+              assert len(results) >= 1
+              assert results[0]["source_tag"] == "user_history"
+
+          def test_search_empty_for_no_match(self, tmp_db):
+              am = ArchivalMemory(db_path=tmp_db)
+              am.store("Rust is fast", source_tag="fact")
+              results = am.search("Python")
+              assert len(results) == 0
+
+          def test_archive_memory(self, tmp_db):
+              am = ArchivalMemory(db_path=tmp_db)
+              mid = am.store("Temporary note", source_tag="scratch")
+              assert am.archive_memory(mid) is True
+              # archived 的记忆不应出现在搜索结果中
+              results = am.search("Temporary")
+              assert len(results) == 0
+
+          def test_stats(self, tmp_db):
+              am = ArchivalMemory(db_path=tmp_db)
+              am.store("Fact A", source_tag="rule")
+              am.store("Fact B", source_tag="hypothesis")
+              s = am.stats()
+              assert s["total"] == 2
+              assert s["active"] == 2
+
+      class TestWorkingMemory:
+          def test_set_and_get(self):
+              wm = WorkingMemory()
+              wm.set("current_intent", "exploration")
+              assert wm.get("current_intent") == "exploration"
+
+          def test_get_default(self):
+              wm = WorkingMemory()
+              assert wm.get("nonexistent", "default_val") == "default_val"
+
+          def test_get_all_history(self):
+              wm = WorkingMemory(capacity=10)
+              wm.set("score", 1)
+              wm.set("score", 2)
+              all_items = wm.get_all("score")
+              assert len(all_items) == 2
+              assert all_items[-1]["value"] == 2
+
+          def test_clear(self):
+              wm = WorkingMemory()
+              wm.set("key1", "val1")
+              wm.set("key2", "val2")
+              wm.clear()
+              assert wm.size() == 0
+
+          def test_capacity_cap(self):
+              wm = WorkingMemory(capacity=3)
+              for i in range(10):
+                  wm.set("key", i)
+              assert len(wm.get_all("key")) == 3
+
+      class TestRMM:
+          def test_run_returns_counts(self, tmp_db):
+              am = ArchivalMemory(db_path=tmp_db)
+              rmm = ReflectiveMemoryManager(am, archive_after_runs=1)
+              am.store("Test fact", confidence=0.5)
+              result = rmm.run()
+              assert "decayed" in result
+              assert "archived" in result
+              assert "cleaned" in result
+      ```
+
+      说明：
+      - ArchivalMemory 4 个测试：存储+搜索、空查询、归档、统计
+      - WorkingMemory 5 个测试：读写、默认值、历史、清空、容量
+      - RMM 1 个测试：运行返回字段完整
+      - 临时数据库 fixture 确保测试隔离
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/memory.py" type="modify">+250 行: 新增 ArchivalMemory + WorkingMemory + RMM</change>
+    <change file="tests/test_vector_memory.py" type="new">~120 行: 10 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. ArchivalMemory.store() 存入 SQLite FTS5，返回 memory_id
+    2. ArchivalMemory.search() 使用 MATCH 做全文搜索
+    3. ArchivalMemory.archive_memory() 软删除，已归档的记忆不出现在搜索结果中
+    4. ArchivalMemory.stats() 返回准确的总数/活跃数/归档数
+    5. WorkingMemory.set()/get() 正常读写
+    6. WorkingMemory.get_all() 返回所有历史
+    7. WorkingMemory.clear() 清空，capacity 上限有效
+    8. ReflectiveMemoryManager.run() 返回 decayed/archived/cleaned 计数
+    9. 现有 SessionMemory 接口未被破坏
+    10. 10 个测试全部通过
+    11. 916 已有测试无回归
+  </success_criteria>
+</prompt>

@@ -1,0 +1,28 @@
+{
+  "coach_phase": 0,
+  "coach_sub_stage": "S0.1",
+  "coach_status": "GO",
+  "coach_name": "Ledger Wiring",
+  "coach_description": "pipeline 末尾调用 EventStore.append_event()，将全过程数据写入哈希链账本",
+  "coach_changes": {
+    "modified": ["src/outer/orchestration/pipeline.py"],
+    "added": ["tests/test_pipeline_ledger_integration.py"],
+    "lines_added": 45
+  },
+  "coach_pipeline_flow_after": "L0→L1→L2→Decision→Safety→Ledger",
+  "coach_test_results": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0
+  },
+  "coach_acceptance": {
+    "test_ledger_has_event_after_pipeline": "PASSED",
+    "test_ledger_event_has_trace_id": "PASSED",
+    "test_ledger_chain_integrity": "PASSED",
+    "test_multiple_pipeline_runs_append_to_chain": "PASSED",
+    "test_write_failure_does_not_crash_pipeline": "PASSED"
+  },
+  "coach_full_regression": "698/698 pass",
+  "coach_decision": "GO",
+  "coach_timestamp_utc": "2026-05-02T12:00:00.000000+00:00"
+}

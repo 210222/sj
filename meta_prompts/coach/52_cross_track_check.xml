@@ -1,0 +1,254 @@
+<prompt>
+  <name>Coherence Coach Track — S5.2 跨轨一致性检查</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>5</phase>
+  <sub_stage>S5.2</sub_stage>
+  <sub_stage_name>跨轨一致性检查 — action_type ↔ dominant_layer 匹配</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Coach Track S5.2 实现者。
+    你的任务是：实现 src/coach/cross_track.py，包含 CrossTrackChecker 类，
+    检查 DSL 动作包的 action_type 与 DecisionEngine 产出的 dominant_layer 是否一致。
+    这是语义安全三件套的第二道闸门。
+  </role>
+
+  <context>
+    已存在的代码和数据源：
+    - src/coach/composer.py: PolicyComposer 输出 action dict
+    - src/coach/dsl.py: DSLBuilder 构建器，已有 action_type 枚举
+    - src/coach/state.py: UserStateTracker.get_state() 可提供 dominant_layer 信息
+
+    跨轨一致性检查理论（来自 ai教练.txt §5.2）：
+    ```
+    比较 DSL 动作包的 intent 与 DecisionEngine 产出的 dominant_layer:
+      - suggest → 期望 dominant 为 L0（用户状态驱动）
+      - challenge → 期望 dominant 为 L1（扰动驱动）
+      - scaffold → 期望 dominant 为 L2（可行性驱动）
+    若不一致 → 标记为跨轨偏离
+    ```
+
+    跨轨映射表：
+    | action_type | 期望 dominant_layer | 说明 |
+    |-------------|-------------------|------|
+    | suggest     | L0                | 用户状态驱动的建议 |
+    | reflect     | L0                | 状态驱动的反思提问 |
+    | challenge   | L1                | 扰动驱动的挑战任务 |
+    | probe       | L1                | 扰动驱动的探查 |
+    | scaffold    | L2                | 可行性驱动的支架 |
+    | defer       | L2                | 可行性驱动的推迟 |
+    | pulse       | L0                | 状态驱动的主权脉冲 |
+    | excursion   | L1                | 扰动驱动的远足 |
+  </principle>
+  </context>
+
+  <task>
+    实现 src/coach/cross_track.py：CrossTrackChecker — action_type ↔ dominant_layer 一致性检查。
+    新增 tests/test_cross_track.py。
+  </task>
+
+  <implementation_steps>
+    <step id="1" name="跨轨映射表">
+      定义 action_type → 期望 dominant_layer 的静态映射：
+
+      ```python
+      # action_type → 期望的 dominant_layer
+      EXPECTED_DOMINANT: dict[str, str] = {
+          "suggest":   "L0",
+          "reflect":   "L0",
+          "pulse":     "L0",
+          "challenge": "L1",
+          "probe":     "L1",
+          "excursion": "L1",
+          "scaffold":  "L2",
+          "defer":     "L2",
+      }
+      ```
+    </step>
+    <step id="2" name="CrossTrackChecker 核心类">
+      ```python
+      class CrossTrackChecker:
+          """跨轨一致性检查器。
+
+          check(action_type, dominant_layer) → CrossTrackResult
+          """
+
+          DOMINANT_LAYERS = {"L0", "L1", "L2"}
+
+          def __init__(self, config: dict | None = None):
+              self._config = config or {}
+
+          def check(self, action_type: str, dominant_layer: str) -> dict:
+              """检查 action_type 与 dominant_layer 是否一致。
+
+              Args:
+                  action_type: DSL 动作类型
+                  dominant_layer: DecisionEngine 产出的主导层
+
+              Returns: {
+                  "consistent": bool,         # 是否一致
+                  "expected": str | None,     # 期望的 dominant_layer
+                  "actual": str,              # 实际的 dominant_layer
+                  "severity": str,            # "none"|"low"|"medium"|"high"
+                  "description": str,         # 检查结果描述
+              }
+              """
+      ```
+
+      检查逻辑：
+      ```python
+      def check(self, action_type: str, dominant_layer: str) -> dict:
+          expected = EXPECTED_DOMINANT.get(action_type)
+          if expected is None:
+              # 未知 action_type → 不拦截
+              return {"consistent": True, "expected": None,
+                      "actual": dominant_layer, "severity": "none",
+                      "description": f"Unknown action_type '{action_type}', skipped"}
+
+          consistent = (expected == dominant_layer)
+
+          if consistent:
+              severity = "none"
+              desc = f"{action_type} ↔ {dominant_layer} 一致"
+          else:
+              # 偏离严重度：L0↔L2 偏离 > 相邻层偏离
+              layers = ["L0", "L1", "L2"]
+              try:
+                  gap = abs(layers.index(expected) - layers.index(dominant_layer))
+              except ValueError:
+                  gap = 1
+              if gap >= 2:
+                  severity = "high"
+              elif gap == 1:
+                  severity = "medium"
+              else:
+                  severity = "low"
+              desc = f"{action_type} 期望 {expected}，实际 {dominant_layer}（{severity}偏离）"
+
+          return {
+              "consistent": consistent,
+              "expected": expected,
+              "actual": dominant_layer,
+              "severity": severity,
+              "description": desc,
+          }
+      ```
+    </step>
+    <step id="3" name="批量检查 + 统计">
+      ```python
+      def check_batch(self, checks: list[tuple[str, str]]) -> list[dict]:
+          """批量检查多条记录。"""
+          return [self.check(at, dl) for at, dl in checks]
+
+      def summary(self, results: list[dict]) -> dict:
+          """从检查结果生成汇总统计。"""
+          total = len(results)
+          consistent = sum(1 for r in results if r["consistent"])
+          return {
+              "total": total,
+              "consistent": consistent,
+              "inconsistent": total - consistent,
+              "consistency_rate": round(consistent / max(total, 1), 4),
+              "severity_counts": {
+                  "high": sum(1 for r in results if r["severity"] == "high"),
+                  "medium": sum(1 for r in results if r["severity"] == "medium"),
+                  "low": sum(1 for r in results if r["severity"] == "low"),
+              },
+          }
+      ```
+    </step>
+    <step id="4" name="检查建议生成">
+      ```python
+      def suggest_correction(self, action_type: str, dominant_layer: str) -> dict:
+          """当不一致时，提供修正建议。"""
+          expected = EXPECTED_DOMINANT.get(action_type)
+          if expected is None or expected == dominant_layer:
+              return {"needs_correction": False, "suggested_action": None}
+
+          # 相邻层偏离：可考虑调整 action_type
+          layers = {"L0": ["suggest", "reflect", "pulse"],
+                    "L1": ["challenge", "probe", "excursion"],
+                    "L2": ["scaffold", "defer"]}
+          suggestions = layers.get(dominant_layer, [])
+          return {
+              "needs_correction": True,
+              "suggested_action": suggestions[0] if suggestions else None,
+              "alternatives": suggestions[1:] if len(suggestions) > 1 else [],
+          }
+      ```
+    </step>
+    <step id="5" name="测试">
+      创建 tests/test_cross_track.py：
+
+      ```python
+      import pytest
+      from src.coach.cross_track import CrossTrackChecker
+
+      class TestCrossTrackBasic:
+          def test_checker_initialized(self):
+              c = CrossTrackChecker()
+              assert c is not None
+
+          def test_consistent_match(self):
+              c = CrossTrackChecker()
+              result = c.check("suggest", "L0")
+              assert result["consistent"]
+              assert result["severity"] == "none"
+
+          def test_inconsistent_mismatch(self):
+              c = CrossTrackChecker()
+              result = c.check("suggest", "L1")
+              assert not result["consistent"]
+
+      class TestSeverity:
+          def test_adjacent_layer_medium(self):
+              c = CrossTrackChecker()
+              r = c.check("suggest", "L1")
+              assert r["severity"] == "medium"
+
+          def test_skip_layer_high(self):
+              c = CrossTrackChecker()
+              r = c.check("suggest", "L2")
+              assert r["severity"] == "high"
+
+          def test_unknown_type_skipped(self):
+              c = CrossTrackChecker()
+              r = c.check("unknown_action", "L0")
+              assert r["consistent"]
+
+      class TestBatchAndSummary:
+          def test_batch_check(self):
+              c = CrossTrackChecker()
+              results = c.check_batch([("suggest", "L0"), ("challenge", "L0")])
+              assert len(results) == 2
+
+          def test_summary_counts(self):
+              c = CrossTrackChecker()
+              results = c.check_batch([("suggest", "L0"), ("challenge", "L0")])
+              s = c.summary(results)
+              assert s["total"] == 2
+              assert s["consistent"] == 1
+      ```
+
+      基线 8 个测试。
+    </step>
+  </implementation_steps>
+
+  <file_change_summary>
+    <change file="src/coach/cross_track.py" type="new">~120 行: CrossTrackChecker + 映射表 + check/check_batch/summary/suggest_correction</change>
+    <change file="tests/test_cross_track.py" type="new">~70 行: 8 个测试用例</change>
+  </file_change_summary>
+
+  <success_criteria>
+    1. check() 返回全部 5 个键（consistent/expected/actual/severity/description）
+    2. suggest↔L0 一致→consistent=True, severity=none
+    3. suggest↔L1 相邻偏离→severity=medium
+    4. suggest↔L2 跨层偏离→severity=high
+    5. 未知 action_type 跳过检查→consistent=True
+    6. batch_check 返回正确数量的结果
+    7. summary 统计正确
+    8. 8 个测试全部通过
+    9. 881 已有测试无回归
+  </success_criteria>
+</prompt>
