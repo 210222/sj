@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 23 — S23.1 遗忘曲线估计</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>23</phase>
+  <sub_stage>S23.1</sub_stage>
+  <sub_stage_name>BKTEngine 新增 estimate_retention() 方法</sub_stage_name>
+
+  <role>
+    你需要给 BKTEngine 新增一个 estimate_retention() 方法。
+    它不修改 BKT 内部状态，只根据 mastery+时间计算保留率。
+    参考: Ebbinghaus 遗忘曲线 + Duolingo HLR 的半衰期回归思路。
+  </role>
+
+  <context>
+    === 当前代码 ===
+    flow.py BKTEngine 有 predict() 方法返回 P(learned)，但每次调用结果一样（不随时间衰减）。
+
+    === 约束 ===
+    - 不修改 BKTEngine 现有 predict()/fit() 方法
+    - 只新增 estimate_retention() 方法
+    - 不需要外部依赖（纯数学计算）
+    - 全量回归 1284+ 必须通过
+  </context>
+
+  <task>
+
+    ── 在 BKTEngine 类末尾（约第 57 行，现有 predict 方法后）新增：──
+
+    ```python
+    def estimate_retention(self, mastery: float, days_since_last_ practiced: float,
+                           half_life: float = 7.0) -> float:
+        """估计技能保留率（基于遗忘曲线）。
+
+        Args:
+            mastery: 最后一次练习时的 P(learned)，范围 [0, 1]
+            days_since_last_ practiced: 距最后一次练习的天数
+            half_life: 半衰期（天），默认 7 天
+
+        Returns:
+            保留率 [0, 1]。低于 0.6 建议安排复习。
+        """
+        mastery = max(0.01, min(1.0, mastery))
+        days = max(0.0, days_since_last_ practiced)
+        # Ebbinghaus 遗忘曲线: R = mastery * 0.5 ^ (days / half_life)
+        retention = mastery * (0.5 ** (days / max(half_life, 0.5)))
+        return round(max(0.0, min(1.0, retention)), 4)
+    ```
+
+    说明:
+    - 第 0 天 (刚练完): retention = mastery * 1.0 = mastery
+    - 第 half_life 天: retention = mastery * 0.5
+    - 第 2*half_life 天: retention = mastery * 0.25
+    - half_life=7 表示 1 周后忘记一半
+    - 半衰期可以按技能类型调整（编程技能=7，数学公式=14，概念知识=30）
+  </task>
+
+  <verification_method>
+    ```python
+    from src.coach.flow import BKTEngine
+    bkt = BKTEngine()
+    r0 = bkt.estimate_retention(0.8, 0)    # 刚练完: 0.8
+    r7 = bkt.estimate_retention(0.8, 7)    # 1 周后: ~0.4
+    r14 = bkt.estimate_retention(0.8, 14)  # 2 周后: ~0.2
+    assert r0 == 0.8, f'第 0 天应等于 mastery, got {r0}'
+    assert r7 < r0, f'第 7 天应小于第 0 天, got {r7}'
+    assert r14 < r7, f'第 14 天应小于第 7 天, got {r14}'
+    print(f'retention: day0={r0} day7={r7} day14={r14}')
+    ```
+  </verification_method>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>第 0 天 retention = mastery（不变）</item>
+    <item>第 7 天 retention ≈ mastery/2（半衰期）</item>
+    <item>mastery=0 或 days=0 边界不崩溃</item>
+  </success_criteria>
+</prompt>

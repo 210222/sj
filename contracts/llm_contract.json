@@ -1,0 +1,28 @@
+{
+  "contract": "llm_contract",
+  "version": "1.0.0",
+  "status": "frozen",
+  "description": "LLM 内容生成引擎接口合约 — 教练引擎与 LLM 之间的边界定义",
+  "interfaces": {
+    "LLMClient": {
+      "generate": {
+        "input": "coach_context: dict (system prompt + user message + action_type)",
+        "output": "LLMResponse (content, model, tokens_used, finish_reason)"
+      }
+    },
+    "LLMOutputValidator": {
+      "validate": {
+        "input": "payload: dict",
+        "output": "tuple[bool, list[str]] (is_valid, errors)"
+      }
+    }
+  },
+  "required_output_fields": ["statement"],
+  "optional_output_fields": ["question", "step", "option", "hint", "difficulty"],
+  "safety_rules": {
+    "llm_does_not_select_action_type": true,
+    "llm_does_not_bypass_gates": true,
+    "llm_fallback_to_rules_on_error": true,
+    "api_key_not_persisted": true
+  }
+}

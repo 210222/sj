@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 18 — S18.2 并行执行框架</name>
+  <version>1.0.0</version>
+  <track>COACH_RESEARCH</track>
+  <phase>18</phase>
+  <sub_stage>S18.2</sub_stage>
+  <sub_stage_name>并行执行框架 — asyncio.gather + 单次 LLM 调用内省</sub_stage_name>
+
+  <role>
+    你是 Coherence 研究管线的执行框架设计者。
+    你的任务是让 Agent 1/2/3 可以通过 asyncio 并发执行，
+    每个 Agent 在单次 LLM 调用内完成自省、迭代和收敛。
+  </role>
+
+  <context>
+    === 当前状态 ===
+    Agent 顺序执行——3 个 Agent 串行需要 3 倍时间。
+    每个 Agent 需要多次人工迭代才能收敛。
+
+    === 目标 ===
+    并发启动 3 Agent，每个在 1 次 API 调用中内部收敛。
+  </context>
+
+  <spec>
+
+    <change name="asyncio 并发调度">
+      <problem>Agent 1/2/3 串行执行</problem>
+      <file>run_research_pipeline.py — phase_1_parallel()</file>
+      <code>
+        async def phase_1_parallel(ss):
+            tasks = [
+                run_agent("agent1", "agent1_code_audit.md", ss),
+                run_agent("agent2", "agent2_data_audit.md", ss),
+                run_agent("agent3", "agent3_research.md", ss),
+            ]
+            await asyncio.gather(*tasks)
+      </code>
+    </change>
+
+    <change name="单次 LLM 调用内省">
+      <problem>Agent 需要多次自省迭代，每次是一次独立的思考</problem>
+      <file>run_research_pipeline.py — _build_llm_payload()</file>
+      <prompt_design>
+        prompt 中要求 LLM "在输出前在你的思维中完成全部自省和迭代"。
+        不依赖多次 API 调用，单次响应内包含从"读代码→找发现→自省→收敛"的完整轨迹。
+      </prompt_design>
+      <iteration_log>
+        每次迭代在输出中记录：
+          "iteration_log": "第1轮: 读agent.py. 第2轮: 发现GAP-003与DATA-005关联. 第3轮: 自检通过,收敛"
+      </iteration_log>
+    </change>
+
+    <change name="收敛条件">
+      <problem>Agent 可能无限迭代</problem>
+      <file>run_research_pipeline.py — _build_llm_payload() 执行要求节</file>
+      <conditions>
+        - 连续 3 次自省未发现新缺口 → 收敛
+        - 同一个文件区域连续 2 次未找到新发现 → 收敛
+        - 边际收益低于阈值的自我评估 → 收敛
+      </conditions>
+    </change>
+
+  </spec>
+
+  <success_criteria>
+    1. asyncio.gather 成功并发 Agent 1/2/3
+    2. 每个 Agent 单次调用返回有效 findings
+    3. 所有 Agent 标记 converged
+  </success_criteria>
+
+</prompt>

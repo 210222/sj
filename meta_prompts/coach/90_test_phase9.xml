@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase9_comprehensive_test description="Phase 9 全子阶段集成测试 — API层/Web前端/管理后台/无障碍">
+
+  <metadata>
+    <stage>S9.1 + S9.2 + S9.3 + S9.4</stage>
+    <total_python_tests>1269</total_python_tests>
+    <total_frontend_tests>51</total_frontend_tests>
+    <phase10_baseline>1219</phase10_baseline>
+    <expected>全部 pass, 无 TypeScript 错误, 无构建错误</expected>
+  </metadata>
+
+  <test_categories>
+
+    <!-- ==================== S9.1 API Layer ==================== -->
+    <category id="s9_1_api" name="API 层 (S9.1)">
+      <check id="s9.1-01" mandatory="true">python -m pytest tests/ -q — 全部 pass (1219 baseline + ~50 API 测试)</check>
+      <check id="s9.1-02" mandatory="true">PulseService.should_block(): 前 2 次 True, 第 3 次 False</check>
+      <check id="s9.1-03" mandatory="true">PulseService.get_blocking_mode(): 'hard' | 'soft' | 'none' 三态正确</check>
+      <check id="s9.1-04" mandatory="true">PulseService 会话隔离: 不同 session_id 计数独立</check>
+      <check id="s9.1-05" mandatory="true">PulseService 窗口重置: 10 分钟后恢复 hard 模式</check>
+      <check id="s9.1-06" mandatory="true">IAMSkeleton.issue_anonymous_token(): UUID4 有效</check>
+      <check id="s9.1-07" mandatory="true">IAMSkeleton.validate_token(): 有效/无效 token 正确判定</check>
+      <check id="s9.1-08" mandatory="true">IAMSkeleton.is_admin(): 正确识别管理员</check>
+      <check id="s9.1-09" mandatory="true">GET /api/v1/dashboard/user: 返回 ttm_radar + sdt_rings + progress</check>
+      <check id="s9.1-10" mandatory="true">GET /api/v1/admin/gates/status: 8 门禁 + overall (管理员)</check>
+      <check id="s9.1-11" mandatory="true">GET /api/v1/admin/gates/status: 非管理员返回 403</check>
+      <check id="s9.1-12" mandatory="true">速率限制: 超阈返回 429, 窗口重置后恢复</check>
+      <check id="s9.1-13" mandatory="true">不修改任何已有 api/ 文件——只新增</check>
+    </category>
+
+    <!-- ==================== S9.2 Web Frontend ==================== -->
+    <category id="s9_2_frontend" name="Web 前端 (S9.2)">
+      <check id="s9.2-01" mandatory="true">npx tsc --noEmit — 0 errors</check>
+      <check id="s9.2-02" mandatory="true">npx vite build — 构建成功, 无 warning</check>
+      <check id="s9.2-03" mandatory="true">npx vitest run — 51 tests 全部 pass (9 test files)</check>
+      <check id="s9.2-04" mandatory="true">theme.ts 11 色 Hex 码精确对照设计文档第 4.1 节</check>
+      <check id="s9.2-05" mandatory="true">TTM 6 态映射表完整 (unknown/precontemplation/contemplation/preparation/action/maintenance/relapse)</check>
+      <check id="s9.2-06" mandatory="true">PulsePanel 三态渲染测试 (hard/soft/none)</check>
+      <check id="s9.2-07" mandatory="true">PulsePanel 毛玻璃: backdrop-filter: blur(12px)</check>
+      <check id="s9.2-08" mandatory="true">ExcursionOverlay 切换: CSS transition 300ms</check>
+      <check id="s9.2-09" mandatory="true">useWebSocket: 连接/断开/重连 (exponential backoff, max 3 次)</check>
+      <check id="s9.2-10" mandatory="true">useCoachState: useReducer 管理 8 字段</check>
+      <check id="s9.2-11" mandatory="true">useAdaptivePulse: sessionStorage 计数 + 10 分钟重置</check>
+      <check id="s9.2-12" mandatory="true">每个组件 4 态: 正常/空数据/加载中/错误</check>
+      <check id="s9.2-13" mandatory="true">气泡 source_tag 前端渲染为小型标签</check>
+    </category>
+
+    <!-- ==================== S9.3 Admin Dashboard ==================== -->
+    <category id="s9_3_admin" name="管理后台 (S9.3)">
+      <check id="s9.3-01" mandatory="true">GatePipeline: 8 门禁渲染, 展开/折叠下钻</check>
+      <check id="s9.3-02" mandatory="true">GatePipeline: 空数据态 "门禁数据暂未加载"</check>
+      <check id="s9.3-03" mandatory="true">AuditLogViewer: 筛选栏 (all/P0/P1/pass), 分页</check>
+      <check id="s9.3-04" mandatory="true">AuditLogViewer: 空数据 "暂无审计日志", 加载 "加载中..."</check>
+      <check id="s9.3-05" mandatory="true">RiskDashboard: F 型排序 (high→medium→low), 3 条默认风险</check>
+      <check id="s9.3-06" mandatory="true">GateShieldBadge: 三色盾牌 + AI 拟人话术 (无技术术语)</check>
+      <check id="s9.3-07" mandatory="true">GateShieldBadge: 屏蔽 gate/pipeline/audit/P0/P1/block 词汇</check>
+      <check id="s9.3-08" mandatory="true">ProgressTimeline: 核心指标 + TTM 里程碑</check>
+      <check id="s9.3-09" mandatory="true">ProgressTimeline: ttmStage 为空时显示 "旅程开始" ✨</check>
+      <check id="s9.3-10" mandatory="true">useAuth: RBAC 三层 (user/admin/debug), sessionStorage 持久化</check>
+    </category>
+
+    <!-- ==================== S9.4 Accessibility & Degradation ==================== -->
+    <category id="s9_4_a11y" name="无障碍与自适应降级 (S9.4)">
+      <check id="s9.4-01" mandatory="true">contrastCheck: hexToRgb 6-digit/3-digit/无#</check>
+      <check id="s9.4-02" mandatory="true">relativeLuminance: 白≈1, 黑≈0</check>
+      <check id="s9.4-03" mandatory="true">WCAG AA: 正常文本≥4.5:1, 大文本≥3:1, 组件≥3:1</check>
+      <check id="s9.4-04" mandatory="true">auditColorPalette: 全调色板 O(n²) 自动审计 PASS/FAIL</check>
+      <check id="s9.4-05" mandatory="true">colorAdapt: 20:00-06:00 夜间暖色偏移 +5%</check>
+      <check id="s9.4-06" mandatory="true">test_api_pulse_degradation: 3 次脉冲 → 2 次阻断 + 1 次降级</check>
+      <check id="s9.4-07" mandatory="true">soft 降级仍记录审计日志</check>
+      <check id="s9.4-08" mandatory="true">10 分钟窗口过期后恢复 hard</check>
+      <check id="s9.4-09" mandatory="true">会话隔离: 不同 session 独立计数</check>
+      <check id="s9.4-10" mandatory="true">13 个对比度测试全部 pass</check>
+    </category>
+
+  </test_categories>
+
+  <regression_gates>
+    <gate id="gate-python" critical="true">Python 回归测试 1269 全部 pass</gate>
+    <gate id="gate-ts" critical="true">TypeScript 编译 0 error</gate>
+    <gate id="gate-build" critical="true">Vite 生产构建成功</gate>
+    <gate id="gate-vitest" critical="true">前端 51 测试全部 pass</gate>
+    <gate id="gate-pulse" critical="true">自适应降级全链路: hard→soft→恢复hard</gate>
+    <gate id="gate-rbac" critical="true">管理员/用户视图正确隔离</gate>
+    <gate id="gate-wcag" critical="true">WCAG AA 全部色彩组合通过</gate>
+  </regression_gates>
+
+  <execution_protocol>
+    <step>1. `python -m pytest tests/ -q` — 回归确认 (1269 pass)</step>
+    <step>2. `cd frontend && npx tsc --noEmit` — 类型检查</step>
+    <step>3. `cd frontend && npx vite build` — 构建验证</step>
+    <step>4. `cd frontend && npx vitest run` — 组件测试</step>
+    <step>5. `python reports/audit_s9_1_api.py` — API 静态审计</step>
+    <step>6. `npx vitest run frontend/tests/utils/test_contrastCheck.ts` — WCAG AA 验证</step>
+    <step>7. 生成报告 `reports/audit_phase9_report.md`</step>
+  </execution_protocol>
+
+  <known_limitations>
+    <limitation severity="LOW">PulseService._pulse_log 纯内存 — 重启后脉冲计数清零（单用户场景可接受）</limitation>
+    <limitation severity="LOW">IAMSkeleton._tokens / _state_tree 纯内存 — 重启后 token 丢失（需重新创建会话）</limitation>
+    <limitation severity="LOW">RateLimiter._windows 纯内存 — 重启后限流计数归零</limitation>
+    <limitation severity="LOW">ADMIN_TOKENS 默认空 — 未配置时管理后台永远 403</limitation>
+    <limitation severity="LOW">色温适配仅根据浏览器时间，不响应系统色温 API (window.matchMedia('(prefers-color-scheme: dark)'))</limitation>
+  </known_limitations>
+
+</phase9_comprehensive_test>

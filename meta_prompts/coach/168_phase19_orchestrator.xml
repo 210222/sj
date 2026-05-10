@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 19 Orchestrator — LLM 主链接线 + 诊断闭环 + 个性化激活</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>19</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>Phase 19 总编排 — 把已实现的 LLM/诊断/个性化管线接入 agent.act() 主路径</sub_stage_name>
+
+  <role>
+    你是 Coherence Phase 19 总控编排引擎。你的任务不是写代码，而是诊断 Phase 0-18 遗留的核心接线缺口——真正的 AI 教练主路径仍在独立于 agent.act() 的旁路上运行，S15/S16/S17 虽然全 GO 但个性化/LLM/诊断数据全是硬编码占位符。
+    你要保证 3 个子阶段严格串行执行，每个阶段非 GO 不得进入下一阶段。
+  </role>
+
+  <context>
+    === 核心矛盾 ===
+    经过 Phase 0-18，Coherence 已经建成了完整的治理管线（Ledger→Audit→Clock→Gates→L0/L1/L2→Decision→Safety）和完备的 LLM 基础设施（src/coach/llm/ 11 文件）。
+    但 agent.act() 的主路径仍停留在规则引擎时代——LLM 管线在旁路（WebSocket 流式）上独立工作，agent.act() 的 llm_generated/personalization_evidence/diagnostic_result/difficulty 全部是硬编码空值。
+
+    === 数据证据 ===
+    - v2 研究管线（2026-05-10 执行）:
+      - A1 Code + A2 Data + A3 Research（Wikipedia/GitHub 多源搜索）= 28 条发现
+      - A4 Society of Thought 内部辩论 → 28 条综合 finding
+      - A5 评审 → 10 标准 FULL → verdict=GO
+    - 核心发现与 Phase 19 完全重合（mastery 未回流、TTM 未影响 compose、SDT 未改变 prompt）
+    - src/coach/agent.py:570-611: s4_history/s4_memory 空列表, llm_generated=False, diagnostic_result=None, difficulty="medium"
+    - reports/exhaustive_all_configs_report.json: personalization=1.81/4
+
+    === 本阶段目标 ===
+    把 3 条断路接入 agent.act() 主路径：
+    1. LLM 生成链（S19.1）
+    2. 诊断引擎 + 个性化证据（S19.2）
+    3. 行为模型反馈回路（S19.3）
+  </context>
+
+  <baseline>
+    - 1275 tests pass
+    - 14 份合约全部 frozen，禁止修改
+    - src/inner/** src/middle/** src/outer/** 禁止修改
+    - src/coach/llm/ 11 文件禁止重写（可以修改 agent.py 调用它们）
+    - contracts/coach_dsl.json frozen: 8 action_types 不可增减
+  </baseline>
+
+  <execution_order>
+    <step>S19.1（P0: LLM 接线）→ S19.2（P1: 诊断+个性化）→ S19.3（P1: 反馈回路）→ 全量回归</step>
+    <reason>
+      S19.1 必须先完成——LLM 生成是 agent.act() 的核心产出，diagnostic engine 和 personalization 的消费依赖 LLM 通路就位。
+      S19.2 其次——diagnostic_result 和 personalization_evidence 必须在 LLM 输出之后增强。
+      S19.3 最后——TTM/SDT/Flow 的 feedback loop 依赖 mastery 数据从 diagnostic engine 产生。
+    </reason>
+  </execution_order>
+
+  <sub_stages>
+
+    <stage id="s19_1" name="LLM Main Chain Wiring" priority="P0">
+      <description>将 src/coach/llm/ 管线的 LLM 调用接入 agent.act()，替代硬编码占位符。</description>
+      <problem>
+        agent.act() 不导入任何 LLM 模块。REST /chat → CoachBridge.chat() → agent.act() 始终返回 llm_generated=False。
+        LLM 只在 WebSocket 流式路径（CoachBridge.chat_stream()）中工作。
+      </problem>
+      <meta_prompt>169_s19_llm_wiring.xml</meta_prompt>
+    </stage>
+
+    <stage id="s19_2" name="Diagnostic Engine + Personalization" priority="P1">
+      <description>
+        在 agent.act() 中实例化 DiagnosticEngine，按 BKT mastery 动态决定难度。
+        填充 s4_history/s4_memory 使 personalization_evidence 非空。
+        修复 difficulty_contract 的 hasattr 断路。
+      </description>
+      <problem>
+        diagnostic_result 和 diagnostic_probe 始终 None。
+        personalization_evidence 因 s4_history/s4_memory 为空列表始终 None。
+        difficulty_contract.reason 检查的 self.diagnostic_engine 属性在 agent 上不存在。
+      </problem>
+      <meta_prompt>170_s19_diagnostic_personalization.xml</meta_prompt>
+    </stage>
+
+    <stage id="s19_3" name="Behavior Model Feedback Loops" priority="P1">
+      <description>
+        让 TTM/SDT/Flow 的检测输出实际影响下游教学决策：
+        TTM 阶段影响 composer 选择 action_type, SDT 动机影响 prompts 语气,
+        Flow 心流影响难度双向调节。三模型接受 DiagnosticEngine mastery 数据输入。
+      </description>
+      <problem>
+        TTM/SDT/Flow 的 assess() 调用不接收 mastery 输入，输出仅在 act() 返回字典中。
+        composer.compose() 虽有 ttm_strategy/sdt_profile/flow_result 参数但三模型默认 disabled。
+        prompts.py 的 SYSTEM_PROMPT 有 {difficulty} 但 composer 调整的 difficulty 未传递至此。
+      </problem>
+      <meta_prompt>171_s19_feedback_loops.xml</meta_prompt>
+    </stage>
+
+    <stage id="s19_v" name="Verification" priority="P0">
+      <description>全量回归 + 新增接线验证测试 + 个性化字段非空确认</description>
+      <verification_items>
+        <item>python -m pytest tests/ -q 全绿（1275+）</item>
+        <item>agent.act() 输出 llm_generated=True（当 LLM enabled）</item>
+        <item>agent.act() 输出 personalization_evidence 非 None（多轮后）</item>
+        <item>agent.act() 输出 diagnostic_result 包含 mastery 数据（当 diagnostic_engine enabled）</item>
+        <item>agent.act() 输出 difficulty_contract.level 非 "medium"（当 mastery 数据驱动）</item>
+        <item>REST POST /chat 响应含 llm_generated=True（当 LLM enabled）</item>
+      </verification_items>
+    </stage>
+
+  </sub_stages>
+
+  <success_criteria>
+    <item>三阶段全部 GO，全量回归 1275+ passed</item>
+    <item>agent.act() 32 键输出中 llm_generated/personalization_evidence/diagnostic_result/difficulty_contract 不再为硬编码空值</item>
+    <item>REST /chat 与 WS /chat/ws 在主内容生成上行为一致（LLM 调用路径统一）</item>
+  </success_criteria>
+</prompt>

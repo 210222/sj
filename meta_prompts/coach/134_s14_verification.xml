@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S14.V 验证与穷举重测</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>14</phase>
+  <sub_stage>S14.V</sub_stage>
+  <sub_stage_name>验证 — 单元测试 + 全量回归 + 穷举 256 组合重测 + comparison analysis</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 14 验证者。
+    你的任务是：确认 S14.1-S14.4 全部正确实现，运行全量回归和穷举重测，
+    量化验证诊断-适应闭环闭合的效果。
+  </role>
+
+  <context>
+    === 激活清单 ===
+    S14.1 ✅ Composer prompt 注入 difficulty 参数
+    S14.2 ✅ Agent 根据 BKT mastery 决策难度
+    S14.3 ✅ Context window → 上下文引用提升 Personalization
+    S14.4 ✅ 话题追踪 + 连贯对话流
+
+    === 基线（Phase 13 穷举测试结果） ===
+    LLM OFF avg: 14.5/24
+    LLM ON avg: 16.8/24
+    Overall avg: 15.6/24
+    Personalization: 1.81/4
+    256/256 PASS, 0 FAILED
+    1251 PASS / 10 expected failures
+
+    === 预期变化 ===
+    诊断-适应闭环闭合后：
+    - Personalization 从 1.81/4 提升到 2.8+/4（上下文引用注入）
+    - LLM OFF avg 从 14.5/24 提升到 15.5+/24（难度分级模板）
+    - LLM ON avg 从 16.8/24 提升到 17.5+/24（难度自适应 + context）
+    - 最低组合从 12.0/24 提升到 13.0+/24（难度自适应减少极端低分）
+  </context>
+
+  <verification_steps>
+
+    <step name="1. 确认所有变更文件存在">
+      <commands>
+        git diff --name-only
+        git status --short
+      </commands>
+      <expected>src/coach/composer.py、src/coach/agent.py、src/coach/fallback.py 有变更</expected>
+    </step>
+
+    <step name="2. 单元测试 — S14.1 Composer difficulty 注入">
+      <commands>
+        python -m pytest tests/test_composer_difficulty.py -v --tb=short 2>&1
+      </commands>
+      <expected>5+ tests pass: difficulty 默认值、三级注入、LLM prompt 包含难度指令、FallbackEngine 模板分级、降级行为</expected>
+    </step>
+
+    <step name="3. 单元测试 — S14.2 Agent 难度决策">
+      <commands>
+        python -m pytest tests/test_agent_difficulty.py -v --tb=short 2>&1
+      </commands>
+      <expected>5+ tests pass: mastery→difficulty 映射、无数据降级、disabled 降级、参数传递</expected>
+    </step>
+
+    <step name="4. 单元测试 — S14.3 上下文引用">
+      <commands>
+        python -m pytest tests/test_context_reference.py -v --tb=short 2>&1
+      </commands>
+      <expected>4+ tests pass: context_window 维护、prompt 注入、Fallback 占位符填充</expected>
+    </step>
+
+    <step name="5. 单元测试 — S14.4 话题追踪">
+      <commands>
+        python -m pytest tests/test_topic_flow.py -v --tb=short 2>&1
+      </commands>
+      <expected>4+ tests pass: current_topic 追踪、过渡语生成、低掌握技能选择</expected>
+    </step>
+
+    <step name="6. 全量回归">
+      <command>python -m pytest tests/ -q 2>&1 | tail -5</command>
+      <expected>1250+ passed（新增 20+ 测试全通过）</expected>
+    </step>
+
+    <step name="7. 集成测试 — 难度自适应全链路">
+      <command>
+        python -c "
+        import sys; sys.path.insert(0, '.')
+        from src.coach.agent import CoachAgent
+
+        agent = CoachAgent(...)
+
+        # 设置低掌握度
+        agent._diagnostic_engine._store.update('python_variable', False)
+        agent._diagnostic_engine._store.update('python_variable', False)
+
+        # 验证难度决策
+        diff = agent._resolve_difficulty('python_variable')
+        print(f'Low mastery → difficulty: {diff}')
+        assert diff == 'easy', f'Expected easy, got {diff}'
+
+        # 设置高掌握度
+        agent._diagnostic_engine._store.update('python_list', True)
+        agent._diagnostic_engine._store.update('python_list', True)
+        agent._diagnostic_engine._store.update('python_list', True)
+
+        diff = agent._resolve_difficulty('python_list')
+        print(f'High mastery → difficulty: {diff}')
+        assert diff == 'hard', f'Expected hard, got {diff}'
+
+        print('Difficulty adaptation: OK')
+        "
+      </command>
+      <expected>低掌握→easy，高掌握→hard，全链路通</expected>
+    </step>
+
+    <step name="8. 集成测试 — 上下文引用">
+      <command>
+        python -c "
+        import sys; sys.path.insert(0, '.')
+        from src.coach.agent import CoachAgent
+
+        agent = CoachAgent(...)
+
+        # 模拟多轮对话
+        r1 = agent.act('我试了 age = 18')
+        r2 = agent.act('好像理解了')
+
+        # 验证 context_window
+        print(f'Context window: {agent._context_window}')
+        assert len(agent._context_window) > 0, 'Context window empty'
+
+        # 验证回复中包含引用
+        stmt = r2.get('payload', {}).get('statement', '')
+        has_ref = any(w in stmt[:200] for w in ['你说的', '你刚才', 'age = 18'])
+        print(f'Has reference: {has_ref}')
+        print(f'Statement preview: {stmt[:100]}')
+        "
+      </command>
+      <expected>context_window 非空，回复引用前轮用户发言</expected>
+    </step>
+
+    <step name="9. 穷举重测 — 全量 256 组合">
+      <note>仅当步骤 1-8 全部通过后执行</note>
+      <command>
+        export DEEPSEEK_API_KEY="YOUR_DEEPSEEK_API_KEY"
+        export PYTHONIOENCODING=utf-8
+        cd /d/Claudedaoy/coherence && \
+        rm -f reports/exhaustive_all_configs_progress.json && \
+        python tests/test_exhaustive_all_configs.py
+      </command>
+      <expected>256/256 PASS, 0 FAILED</expected>
+      <expected_duration>~60 min</expected_duration>
+    </step>
+
+  </verification_steps>
+
+  <comparison_analysis>
+    <metrics>
+      <metric name="Personalization">
+        <baseline>1.81/4</baseline>
+        <expected_min>2.5/4</expected_min>
+        <target>2.8+/4</target>
+      </metric>
+      <metric name="LLM OFF avg">
+        <baseline>14.5/24</baseline>
+        <expected_min>14.5/24</expected_min>
+        <target>15.5+/24</target>
+      </metric>
+      <metric name="LLM ON avg">
+        <baseline>16.8/24</baseline>
+        <expected_min>16.5/24</expected_min>
+        <target>17.5+/24</target>
+      </metric>
+      <metric name="Overall avg">
+        <baseline>15.6/24</baseline>
+        <expected_min>15.6/24</expected_min>
+        <target>16.5+/24</target>
+      </metric>
+      <metric name="最低组合">
+        <baseline>12.0/24</baseline>
+        <expected_min>12.0/24</expected_min>
+        <target>13.0+/24</target>
+      </metric>
+      <metric name="difficulty 参数传递">
+        <baseline>不存在</baseline>
+        <expected>Agent→Composer→LLM prompt 全链路传递</expected>
+      </metric>
+      <metric name="context_window 引用">
+        <baseline>无</baseline>
+        <expected>回复中包含对前轮用户发言的引用</expected>
+      </metric>
+    </metrics>
+
+    <pass_criteria>
+      <criterion id="c1" weight="P0">256/256 PASS, 0 FAILED</criterion>
+      <criterion id="c2" weight="P0">LLM OFF avg &gt;= 14.5/24（不退步）</criterion>
+      <criterion id="c3" weight="P0">LLM ON avg &gt;= 16.5/24</criterion>
+      <criterion id="c4" weight="P1">Personalization &gt;= 2.5/4</criterion>
+      <criterion id="c5" weight="P1">回复中包含上下文引用</criterion>
+      <criterion id="c6" weight="P1">difficulty 参数从 Agent 传递到 LLM prompt</criterion>
+    </pass_criteria>
+  </comparison_analysis>
+
+  <deliverables>
+    <item>reports/exhaustive_all_configs_report.json — 完整结构化报告</item>
+    <item>reports/exhaustive_all_configs_test.log — FINAL REPORT</item>
+    <item>
+      Phase 14 comparison table:
+      | 指标 | Phase 13 | Phase 14 | Δ |
+      | Personalization | 1.81 | target 2.8+ | +1.0 |
+      | LLM OFF | 14.5 | target 15.5+ | +1.0 |
+      | LLM ON | 16.8 | target 17.5+ | +0.7 |
+    </item>
+  </deliverables>
+
+</prompt>

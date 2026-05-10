@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S12 验证与穷举重测</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>12</phase>
+  <sub_stage>S12.V</sub_stage>
+  <sub_stage_name>验证 — 单元测试 + 穷举重测 + 回归</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 12 验证者。
+    你的任务是：为 S12.1-S12.4 编写测试，并运行穷举重测验证改进效果。
+  </role>
+
+  <tests_to_write>
+
+    <test name="test_fallback_templates_exist">
+      <description>确认 fallback_templates 配置已加载，至少覆盖 20 个意图</description>
+      <file>tests/test_fallback_engine.py</file>
+      <code>
+def test_fallback_templates_exist():
+    from src.coach.fallback import FallbackEngine
+    import yaml
+    from pathlib import Path
+    cfg = yaml.safe_load(open(Path(__file__).parent.parent / "config" / "coach_defaults.yaml"))
+    ft = cfg.get("fallback_templates", {})
+    total = sum(len(v) for v in ft.values())
+    assert total >= 20, f"fallback_templates only covers {total} intents"
+      </code>
+    </test>
+
+    <test name="test_fallback_generates_content">
+      <description>确认 FallbackEngine.generate() 返回有实际内容的回复</description>
+      <file>tests/test_fallback_engine.py</file>
+      <code>
+def test_fallback_generates_content():
+    engine = FallbackEngine(test_config)
+    payload = engine.generate("scaffold", "变量是什么")
+    assert len(payload.get("statement", "")) > 30  # 至少 30 字
+    assert len(payload.get("steps", [])) >= 2      # 至少 2 步
+    assert len(payload.get("question", "")) > 5    # 有追问
+      </code>
+    </test>
+
+    <test name="test_fallback_template_has_analogy">
+      <description>确认模板包含比喻（像/就像/好比）</description>
+      <file>tests/test_fallback_engine.py</file>
+      <code>
+def test_fallback_template_has_analogy():
+    engine = FallbackEngine(test_config)
+    payload = engine.generate("scaffold", "变量是什么")
+    stmt = payload.get("statement", "")
+    has_analogy = any(w in stmt for w in ["像", "就像", "好比", "相当于", "可以理解为"])
+    assert has_analogy, f"Statement lacks analogy: {stmt[:80]}"
+      </code>
+    </test>
+
+    <test name="test_fallback_encouragement">
+      <description>确认 fallback 回复包含鼓励性语言</description>
+      <file>tests/test_fallback_engine.py</file>
+      <code>
+def test_fallback_encouragement():
+    engine = FallbackEngine(test_config)
+    payload = engine.generate("scaffold", "变量是什么", {"turn": 3})
+    stmt = payload.get("statement", "")
+    has_enc = any(w in stmt for w in ["好", "棒", "不错", "很好", "加油", "对"])
+    assert has_enc, f"Statement lacks encouragement: {stmt[:80]}"
+      </code>
+    </test>
+
+    <test name="test_fallback_context_reference">
+      <description>确认上下文引用（用户确认时回复以"你说得对"开头）</description>
+      <file>tests/test_fallback_engine.py</file>
+      <code>
+def test_fallback_context_reference():
+    engine = FallbackEngine(test_config)
+    payload = engine.generate("scaffold", "所以变量就像盒子", {
+        "turn": 1, "prev_user": "变量是什么",
+    })
+    stmt = payload.get("statement", "")
+    assert "你说得对" in stmt or "是的" in stmt
+      </code>
+    </test>
+
+    <test name="test_fallback_probe_relevant">
+      <description>确认 probe 生成的内容与 skill 相关</description>
+      <file>tests/test_fallback_engine.py</file>
+      <code>
+def test_fallback_probe_relevant():
+    engine = FallbackEngine(test_config)
+    payload = engine.generate("probe", "python_variable")
+    question = payload.get("question", "")
+    assert any(w in question for w in ["变量", "age", "赋值", "int", "str"])
+      </code>
+    </test>
+
+    <test name="test_fallback_no_empty_responses">
+      <description>确认所有 action_type 都不会返回空回复</description>
+      <file>tests/test_fallback_engine.py</file>
+      <code>
+def test_fallback_no_empty_responses():
+    engine = FallbackEngine(test_config)
+    for at in ["scaffold", "suggest", "reflect", "challenge", "probe"]:
+        payload = engine.generate(at, "python 学习")
+        assert payload.get("statement", ""), f"{at} returned empty statement"
+        assert payload.get("question", ""), f"{at} returned empty question"
+      </code>
+    </test>
+
+  </tests_to_write>
+
+  <verification_steps>
+
+    <step name="1. 单元测试">
+      <command>python -m pytest tests/test_fallback_engine.py -v</command>
+      <expected>8+ tests pass</expected>
+    </step>
+
+    <step name="2. 全量回归">
+      <command>python -m pytest tests/ -q</command>
+      <expected>1300+ pass</expected>
+    </step>
+
+    <step name="3. 穷举重测 (LLM OFF)">
+      <note>仅测试 LLM OFF 的 128 组合（规则引擎本身）</note>
+      <command>
+        python -c "
+import sys, json, subprocess, os, itertools
+sys.path.insert(0, '.')
+from tests.test_exhaustive_all_configs import generate_all_combos, run_combo_subprocess, build_dialogue_pool
+
+pool = build_dialogue_pool()
+topics = list(pool.keys())
+combos = [(l,c) for l,c in generate_all_combos() if not c.get('llm.enabled')]
+
+total = []
+for i, (label, combo) in enumerate(combos[:20]):  # 样本 20 组合
+    topic = topics[i % len(topics)]
+    r = run_combo_subprocess(label, combo, pool[topic], topic)
+    if r.get('ok'):
+        for t in r['results']:
+            total.append(t['total_score'])
+if total:
+    print(f'Sample LLM OFF avg: {sum(total)/len(total):.1f}/24 (n={len(total)})')
+        "
+      </command>
+      <expected>从 2.8/24 提升至 8+/24</expected>
+    </step>
+
+    <step name="4. 穷举全量">
+      <command>
+        export DEEPSEEK_API_KEY="YOUR_DEEPSEEK_API_KEY"
+        cd /d/Claudedaoy/coherence
+        python tests/test_exhaustive_all_configs.py
+      </command>
+      <expected>LLM OFF avg: 12+/24, LLM ON avg: 17+/24, 256/256 pass</expected>
+    </step>
+
+  </verification_steps>
+
+  <phase12_expected_improvement>
+    <metric name="LLM OFF avg quality" before="2.8/24" after="12+/24"/>
+    <metric name="encouragement" before="0.00/4" after="2.0+/4"/>
+    <metric name="personalization" before="0.05/4" after="1.5+/4"/>
+    <metric name="structure" before="0.73/4" after="2.5+/4"/>
+    <metric name="relevance" before="0.05/4" after="2.0+/4"/>
+    <metric name="probe relevance" before="100%问认知主权" after="100%与教学话题一致"/>
+  </phase12_expected_improvement>
+
+</prompt>

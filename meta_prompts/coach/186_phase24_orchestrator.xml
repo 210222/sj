@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 24 Orchestrator -- 纵向评测</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>24</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>让系统能证明用户学到了什么</sub_stage_name>
+
+  <role>
+    Phase 19-23 建立了完整的教学循环: LLM 生成 -> 诊断追踪 -> 难度调节 -> 间隔重复。
+    但评测体系仍然只测"响应格式"不测"学习效果"。
+    Phase 24 新增纵向评测维度和测试, 让系统能量化"用户进步了多少"。
+  </role>
+
+  <context>
+    test_s15_quick.py:46-78 score_response():
+      relevance = len(statement) > 100
+      personalization = sources_count > 0
+      没有任何维度测量 mastery 变化或学习效果
+
+    === 约束 ===
+    - 不修改 contracts/ 内圈/中圈/外圈
+    - 不修改现有评分维度的计算方式
+    - 全量回归 1284+ 必须通过
+  </context>
+
+  <execution_order>
+    <step>S24.1 (test_s15_quick.py 新维度) -> S24.2 (纵向测试) -> S24.3 (dashboard 趋势)</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s24_1" name="新评分维度" priority="P0">
+      <description>score_response() 新增 mastery_progress + knowledge_retention 维度</description>
+      <meta_prompt>186_s24_1_scoring.xml</meta_prompt>
+      <files>tests/test_s15_quick.py +20 行</files>
+    </stage>
+    <stage id="s24_2" name="纵向测试" priority="P1">
+      <description>模拟 N 轮教学 -> 验证 mastery 是否提升</description>
+      <meta_prompt>187_s24_2_longitudinal.xml</meta_prompt>
+      <files>tests/test_phase24_longitudinal.py +40 行</files>
+    </stage>
+    <stage id="s24_3" name="Dashboard 趋势数据" priority="P1">
+      <description>dashboard_aggregator.py 新增 mastery 趋势查询</description>
+      <meta_prompt>188_s24_3_trend.xml</meta_prompt>
+      <files>api/services/dashboard_aggregator.py +20 行</files>
+    </stage>
+  </sub_stages>
+</prompt>

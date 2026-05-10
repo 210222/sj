@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S15.1 Personalization Contract</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>15</phase>
+  <sub_stage>S15.1</sub_stage>
+  <sub_stage_name>个性化契约固化 — 从机械引用升级为可证据化教学适配</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 15 S15.1 实现者。
+    你的任务是：把“个性化”从提示词层面的引用要求，升级为一个可打分、可解释、可回溯的教学契约。
+    你要明确：哪些信号算真实个性化，哪些只是表面引用，哪些属于过度臆测。
+  </role>
+
+  <context>
+    === 数据证据 ===
+    reports/handover_to_next_claude_s15.md 明确指出 personalization=1.81/4 是当前主要短板。
+    reports/exhaustive_all_configs_report.json 显示 personalization / encouragement 仍为弱维度。
+
+    当前 personalization 的问题不是“完全没有引用”，而是：
+    1. 评测口径偏浅，容易被“你刚才说...”这种机械句式刷分。
+    2. Prompt 中有 history / memory / covered_topics，但没有明确定义“如何用这些信号支撑教学决策”。
+    3. 前后端没有一个统一字段来暴露个性化证据。
+
+    === 目标 ===
+    定义一个 personalization contract，让系统能够明确说明：
+    - 它基于什么历史/画像/掌握度在适配教学
+    - 这次适配集中在什么卡点/目标
+    - 哪些场景必须引用前文，哪些场景不该强行引用
+  </context>
+
+  <task>
+    1) 审视 `src/coach/llm/prompts.py`、`src/coach/agent.py`、`src/coach/llm/memory_context.py` 的现状，
+       明确当前个性化注入点与缺口。
+
+    2) 设计 personalization contract：
+       - 区分“历史引用、画像跟随、卡点跟随、掌握度跟随、目标跟随”五类证据
+       - 明确哪些字段是内部证据，哪些字段需要对外暴露
+       - 定义最小证据字段：`personalization_evidence`、`teaching_focus`、`learner_state_summary`
+
+    3) 升级 prompt 契约：
+       - 不能只要求“引用用户原话”
+       - 必须要求回复围绕用户当前目标/最近卡点推进
+       - 必须禁止凭空编造用户偏好或历史
+
+    4) 设计评测口径：
+       - 弱个性化：只有泛化鼓励或机械引用
+       - 合格个性化：引用真实信号并围绕卡点推进
+       - 过度臆测：虚构偏好/经验/掌握度
+
+    5) 产出对照样例与回归样本。
+  </task>
+
+  <output_files>
+    <file>src/coach/llm/prompts.py</file>
+    <file>src/coach/agent.py</file>
+    <file>api/models/schemas.py</file>
+    <file>reports/phase15_personalization_contract.md</file>
+    <file>reports/phase15_personalization_examples.json</file>
+  </output_files>
+
+  <personalization_contract_spec>
+
+    === 个性化证据类型 ===
+    1. history_reference: 引用最近对话中的真实问题、比喻、错误点
+    2. learner_goal_alignment: 回复围绕用户当前目标推进，而不是重讲无关内容
+    3. struggle_tracking: 回复针对最近一轮卡点而不是泛化讲解
+    4. mastery_alignment: 若有诊断掌握度，教学深度需跟随 mastery 状态
+    5. preference_safe_use: 仅在有真实信号时使用用户偏好；没有证据时保持中性
+
+    === 必备输出字段建议 ===
+    - personalization_evidence: [{type, source, summary}]
+    - teaching_focus: 当前教学聚焦的知识点/卡点/目标
+    - learner_state_summary: 对用户当前阶段的中性总结（禁止伪心理分析）
+
+    === Prompt 新要求 ===
+    - 你必须优先围绕用户当前目标或卡点推进，而不是只重复用户原话
+    - 只有当历史信号确实相关时才回引
+    - 不得把不存在的偏好、背景、掌握度写成事实
+    - 若无足够个性化信号，明确保持“中性但贴题”的教学回复
+
+    === 评分口径 ===
+    - 0: 完全泛化，无个性化证据
+    - 1: 仅有表面引用或弱确认，未影响教学推进
+    - 2: 使用一个真实信号推进当前回复
+    - 3: 使用多个真实信号，并明显改变教学组织方式
+    - 4: 个性化证据充分、推进贴合、无虚构、无过度重复
+
+  </personalization_contract_spec>
+
+  <implementation_principles>
+    <principle>不把“你刚才说...”当成个性化本身，而是把真实信号驱动教学组织方式当成个性化。</principle>
+    <principle>所有个性化字段都必须能映射到具体输入来源。</principle>
+    <principle>宁可中性，也不凭空编造用户画像。</principle>
+    <principle>新增字段以可观测为目的，不改变既有 DSL 主字段含义。</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. 形成一份明确的 personalization contract。
+    2. Prompt 对“真实个性化”和“机械引用”做出区分。
+    3. 至少定义 3 个可观测字段承载个性化证据。
+    4. 产出弱/合格/过度臆测三类对照样例。
+    5. 为后续 WS/frontend/report 链路提供稳定字段基线。
+  </success_criteria>
+
+</prompt>

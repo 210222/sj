@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S12.3 鼓励性与个性化模板</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>12</phase>
+  <sub_stage>S12.3</sub_stage>
+  <sub_stage_name>鼓励性与个性化模板 — 从 0 分到 2+ 分</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 12 S12.3 实现者。
+    你的任务是：在 FallbackEngine 中注入鼓励性语言和个性化引用。
+    穷举测试显示 LLM OFF 的 encouragement = 0.00/4, personalization = 0.05/4 ——几乎为零。
+  </role>
+
+  <context>
+    === 数据 ===
+    LLM OFF 鼓励性评分 0.00/4：纯规则回复中没有任何鼓励性词语。
+    LLM ON 鼓励性也仅 1.34/4：DeepSeek 本身也不擅长使用鼓励性语言。
+
+    === 什么是好的鼓励？===
+    从 120 轮终极测试中提取高鼓励分样本：
+    - "你观察得很仔细！" (enc=3)
+    - "你发现了类型存在的核心问题。" (enc=3)
+    - "你的理解很准确。" (enc=3)
+    - "你已经亲自验证了不同类型的存在，这很棒。" (enc=3)
+
+    特征：具体肯定（指出用户做对了什么）+ 积极反馈 + 偶尔使用"棒/好/不错"
+    特征：不是空洞的"加油"，而是基于用户实际行为的肯定。
+  </context>
+
+  <task>
+    1) 在 `config/coach_defaults.yaml` 新增鼓励语分级库：
+
+    ```yaml
+    fallback_encouragement:
+      # 新手鼓励（前 3 轮、明显困惑时）：力度大
+      beginner:
+        - "问得好！这个问题正好触及了关键点。"
+        - "很棒的问题！说明你在认真思考。"
+        - "你能想到这个，已经走在正确的路上了。"
+        - "很好奇！这种探索心态正是学编程最重要的。"
+      # 确认鼓励（用户答对/理解正确时）：具体肯定
+      confirmation:
+        - "没错，正是这样！你的理解很准确。"
+        - "你说得对！看来你已经掌握了这个思路。"
+        - "完全正确！你的推理能力很好。"
+        - "对的，就是这样理解的。"
+      # 进阶鼓励（用户自己发现规律时）：强调自主性
+      discovery:
+        - "你自己发现了这个规律，很棒！"
+        - "你能自己推导出这个结论，说明真的理解了。"
+        - "不错，你已经学会举一反三了。"
+      # 坚持鼓励（连续多轮学习时）：肯定努力
+      persistence:
+        - "你一直保持专注，做得很好。"
+        - "能坚持学到这一步，说明你很有耐心。"
+    ```
+
+    2) 增强 `src/coach/fallback.py`：
+
+    ```python
+    class FallbackEngine:
+        def __init__(self, config: dict):
+            self._templates = config.get("fallback_templates", {})
+            self._encouragement = config.get("fallback_encouragement", {})
+            self._dialog_context = DialogueContext()
+            # 去重: 已经用过的鼓励语
+            self._used_encouragements: set = set()
+
+        def _select_encouragement(self, context: DialogueContext) -> str:
+            \"\"\"根据对话上下文选择最合适的鼓励语.\"\"\"
+            # 可用鼓励语（排除已用过的）
+            pool = self._encouragement
+
+            if context.turn_count <= 3:
+                category = "beginner"
+            elif context.last_outcome == "correct":
+                category = "confirmation"
+            elif context.last_outcome == "discovery":
+                category = "discovery"
+            elif context.turn_count >= 5:
+                category = "persistence"
+            else:
+                category = "beginner"
+
+            candidates = [s for s in pool.get(category, [])
+                         if s not in self._used_encouragements]
+            if not candidates:
+                candidates = pool.get("beginner", [])
+
+            if candidates:
+                import random
+                chosen = random.choice(candidates)
+                self._used_encouragements.add(chosen)
+                return chosen
+            return ""
+
+        def _inject_encouragement(self, payload: dict,
+                                  context: DialogueContext) -> dict:
+            \"\"\"在 statement 中注入鼓励语.\"\"\"
+            stmt = payload.get("statement", "")
+            if not stmt:
+                return payload
+
+            encouragement = self._select_encouragement(context)
+            if encouragement:
+                # 随机决定加在开头还是结尾
+                import random
+                if random.random() < 0.6:
+                    stmt = encouragement + stmt.lstrip()
+                else:
+                    stmt = stmt.rstrip("。") + "。" + encouragement
+                payload["statement"] = stmt
+
+            return payload
+    ```
+
+    3) 修改 `generate()` 方法：
+
+    ```python
+    def generate(self, action_type, intent, context=None):
+        payload = self._match_and_render(action_type, intent)
+        payload = self._inject_context(payload, self._dialog_context)
+        payload = self._inject_encouragement(payload, self._dialog_context)
+        return payload
+    ```
+
+    4) 个性化引用增强（S12.2 的延续）：
+
+    ```python
+    def _inject_personalization(self, payload: dict, ctx: DialogueContext) -> dict:
+        \"\"\"在回复中引用用户之前说过的话.\"\"\"
+        stmt = payload.get("statement", "")
+        question = payload.get("question", "")
+
+        # 如果用户之前用过比喻，回复中引用
+        if ctx.user_metaphors:
+            metaphor = ctx.user_metaphors[-1]
+            ref_phrase = f"就像你刚才说的{metaphor}"
+            if ref_phrase not in stmt:
+                stmt = stmt.replace("比如", f"{ref_phrase}，比如", 1)
+                # 如果没有"比如"，加在中间
+                if ref_phrase not in stmt:
+                    stmt = stmt[:len(stmt)//2] + ref_phrase + "，" + stmt[len(stmt)//2:]
+
+        payload["statement"] = stmt
+        payload["question"] = question
+        return payload
+    ```
+
+  </task>
+
+  <output_files>
+    <file>config/coach_defaults.yaml (新增 fallback_encouragement, ~30 行)</file>
+    <file>src/coach/fallback.py (新增鼓励/个性化注入, ~50 行)</file>
+  </output_files>
+
+  <success_criteria>
+    1. fallback_encouragement 包含至少 4 类 20 句鼓励语
+    2. FallbackEngine 按语境选择鼓励语（新手/确认/发现/坚持）
+    3. 鼓励语不重复使用（用完一轮后重置）
+    4. 个性化引用在 user_metaphors 非空时生效
+    5. LLM OFF encouragement 从 0.00/4 → 2.0+/4 (穷举验证)
+    6. LLM OFF personalization 从 0.05/4 → 1.5+/4 (穷举验证)
+    7. 全量回归: pytest tests/ -q → 1300+ pass
+  </success_criteria>
+
+</prompt>

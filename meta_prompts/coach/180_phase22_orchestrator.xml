@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 22 Orchestrator — Action-Type 行为差异化</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>22</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>让 8 种教学模式的 LLM 输出真正可区分</sub_stage_name>
+
+  <role>
+    你是 Coherence Phase 22 总控编排引擎。
+    Phase 19-21 让 LLM 接通了主路径、看到 mastery 和用户状态数据。
+    但 8 种 action_type（probe/challenge/scaffold/suggest/reflect/defer/pulse/excursion）在 LLM 眼中只有一行文字描述的差别。
+    你需要让每种 action_type 的 prompt 模板完全不同，并增加对应的输出校验。
+  </role>
+
+  <context>
+    === 当前状态 ===
+    prompts.py:65-74 ACTION_STRATEGIES:
+      suggest  = "轻柔建议 — 不直接给答案，提供选项让用户选择"
+      probe    = "探测验证 — 提问考察用户对知识点的掌握程度"
+      scaffold = "脚手架引导 — 逐步拆解复杂概念，降低认知负荷"
+      ...（8 行文字，每行 20 字以内）
+
+    SYSTEM_PROMPT 常量是所有 action_type 共用的单一模板。
+    LLMOutputValidator.validate() 只检查 "statement" 字段存在性。
+
+    研究管线确认: 8 种 action_type 在 LLM 输出中可能产生雷同内容。
+
+    === 约束 ===
+    - 不修改 SYSTEM_PROMPT 常量字符串
+    - 只能修改: src/coach/llm/prompts.py, src/coach/llm/schemas.py
+    - 新建: tests/test_phase22.py
+    - 全量回归 1275+ 必须通过
+    - 不改 agent.py、composer.py、contracts
+    - 不改 coach_dsl.json（合约冻结）
+  </context>
+
+  <execution_order>
+    <step>S22.1 (prompts.py 指令注入) → S22.2 (schemas.py 字段校验) → S22.3 (验证测试)</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s22_1" name="Action-Type 指令注入" priority="P0">
+      <description>build_coach_context() 根据 action_type 追加结构化输出要求</description>
+      <meta_prompt>180_s22_1_prompt_injection.xml</meta_prompt>
+      <files>src/coach/llm/prompts.py +40 行</files>
+    </stage>
+    <stage id="s22_2" name="Action-Type 字段校验" priority="P1">
+      <description>LLMOutputValidator 新增 action_type 特定字段检查</description>
+      <meta_prompt>181_s22_2_field_validation.xml</meta_prompt>
+      <files>src/coach/llm/schemas.py +20 行</files>
+    </stage>
+    <stage id="s22_3" name="行为差异化验证" priority="P1">
+      <description>新测试验证每种 action_type 的 prompt 内容可区分</description>
+      <meta_prompt>182_s22_3_verification.xml</meta_prompt>
+      <files>tests/test_phase22.py +30 行</files>
+    </stage>
+  </sub_stages>
+</prompt>

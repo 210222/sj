@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase11_orchestrator description="Phase 11 教练交互质量升级 — 结构化教学/个性化/诊断题质量/行为模型差异化">
+
+  <metadata>
+    <stage>S11.1 + S11.2 + S11.3 + S11.4</stage>
+    <origin>120 轮质量测试诊断 — 六维评分中 structure (2.12)、personalization (2.77)、relevance (2.42) 为弱点</origin>
+    <expected_improvement>总体 avg quality 从 16.4/24 → 19+/24</expected_improvement>
+    <baseline>1261 tests pass</baseline>
+  </metadata>
+
+  <sub_stages>
+
+    <!-- ==================== S11.1 ==================== -->
+    <stage id="s11_1" name="结构化教学协议" priority="P0">
+      <description>强制 LLM 在 scaffold/suggest 动作中输出 steps 步骤数组</description>
+      <files>
+        <file>src/coach/llm/prompts.py</file>
+        <file>src/coach/composer.py</file>
+        <file>config/coach_defaults.yaml</file>
+      </files>
+      <changes>
+        <change>SYSTEM_PROMPT 新增结构化教学协议段落</change>
+        <change>scaffold payload 从 hint 字符串改为 steps 数组结构</change>
+        <change>新增 structure_level 上下文变量</change>
+      </changes>
+      <tests>~5 新增</tests>
+    </stage>
+
+    <!-- ==================== S11.2 ==================== -->
+    <stage id="s11_2" name="个性化增强" priority="P1">
+      <description>强制 LLM 引用用户之前说过的话</description>
+      <files>
+        <file>src/coach/llm/prompts.py</file>
+        <file>src/coach/llm/memory_context.py</file>
+        <file>src/coach/agent.py</file>
+      </files>
+      <changes>
+        <change>SYSTEM_PROMPT 新增个性化引用协议段落</change>
+        <change>新增 extract_user_quotes() 工具</change>
+        <change>agent.py 注入 personalization_snippets 到 LLM 上下文</change>
+      </changes>
+      <tests>~3 新增</tests>
+    </stage>
+
+    <!-- ==================== S11.3 ==================== -->
+    <stage id="s11_3" name="诊断题质量修复" priority="P0">
+      <description>修复 probe 总是问"认知主权"的 bug</description>
+      <files>
+        <file>src/coach/agent.py</file>
+        <file>src/coach/diagnostic_engine.py</file>
+        <file>src/coach/llm/prompts.py</file>
+      </files>
+      <changes>
+        <change>agent.py: 用真实 covered_topics 替代空列表</change>
+        <change>diagnostic_engine: intent=general 时回退到 covered_topics</change>
+        <change>DIAGNOSTIC_PROBE_PROMPT 新增对话上下文字段</change>
+      </changes>
+      <tests>~3 新增</tests>
+    </stage>
+
+    <!-- ==================== S11.4 ==================== -->
+    <stage id="s11_4" name="行为模型差异化" priority="P2">
+      <description>增强 TTM/SDT/Flow 对 LLM 回复的差异化影响</description>
+      <files>
+        <file>src/coach/llm/prompts.py</file>
+        <file>src/coach/composer.py</file>
+        <file>config/coach_defaults.yaml</file>
+      </files>
+      <changes>
+        <change>SYSTEM_PROMPT 中行为模型从静态说明改为动态策略指令</change>
+        <change>composer SDT/Flow 分支扩展</change>
+        <change>新增差异化验证测试</change>
+      </changes>
+      <tests>~5 新增</tests>
+    </stage>
+
+  </sub_stages>
+
+  <execution_order>
+    <step priority="P0">S11.3 → S11.1 → S11.2 → S11.4</step>
+    <reason>P0 修复最核心的 probe bug 和结构化缺失，P1 个性化增强，P2 差异化最后</reason>
+  </execution_order>
+
+  <regression_gates>
+    <gate id="gate-python" critical="true">pytest tests/ -q → 1261+ pass</gate>
+    <gate id="gate-probe" critical="true">probe 不再问"认知主权"，与对话话题一致</gate>
+    <gate id="gate-steps" critical="true">scaffold 回复至少 50% 包含步骤拆解</gate>
+    <gate id="gate-quote" critical="true">coach 回复中至少 30% 包含用户引用</gate>
+  </regression_gates>
+
+  <verification>
+    <step>1. pytest tests/ -q — 回归确认</step>
+    <step>2. python run_quality_test.py — 重新跑 12 种配置质量测试</step>
+    <step>3. 对比 S11 修复前后的六维评分</step>
+    <step>4. 确认 probe 问题与对话话题一致</step>
+    <step>5. 确认 scaffold 回复包含步骤拆解</step>
+  </verification>
+
+</phase11_orchestrator>

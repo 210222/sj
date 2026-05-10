@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S11.4 行为模型差异化</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>11</phase>
+  <sub_stage>S11.4</sub_stage>
+  <sub_stage_name>行为模型差异化增强 — TTM/SDT/Flow 显式影响 LLM 策略</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 11 S11.4 实现者。
+    你的任务是：增强 TTM/SDT/Flow 行为模型对 LLM 回复的差异化影响。
+    12 种配置的测试显示行为模型在短对话中几乎没有可见差异——修复这个根本性缺陷。
+  </role>
+
+  <context>
+    === 数据证据 ===
+    12 种配置的 action_type 分布完全一致：
+    ```
+    {scaffold: 3, reflect: 1, suggest: 5, probe: 1}
+    ```
+
+    TTM 阶段在 10 轮对话中全部为 None/contemplation：
+    ```
+    "ttm_stages": {}  (全部配置)
+    ```
+
+    评分最高的 rules_diag (17.9) 和最低的 safety_full (15.2)
+    差距仅 2.7 分，且 rules_diag 没有启用任何行为模型。
+
+    === 根因 ===
+    1. TTM 状态变化阈值过高，短对话中无法触发阶段转换
+    2. SDT 的 adjust_autonomy_support 极少为 True
+    3. Flow 的 adjust_difficulty 在短对话中恒为 0
+    4. LLM 自身风格的覆盖效应：DeepSeek 的回复风格在所有配置中一致
+    5. composer 的 action_type 选择由关键词驱动，行为模型仅做微调
+
+    === 修复范围 ===
+    | 文件 | 改动 |
+    |------|------|
+    | src/coach/llm/prompts.py | SYSTEM_PROMPT 中行为模型影响显式化为教学策略指令 |
+    | src/coach/composer.py | SDT 路径加强，增加更多差异化判断 |
+    | config/coach_defaults.yaml | composer_rules 新增场景化策略 |
+  </context>
+
+  <task>
+    1) 修改 `src/coach/llm/prompts.py`：
+       - SYSTEM_PROMPT 中 TTM 阶段的描述从静态说明改为动态策略指令
+       - SDT 的 autonomy/competence/relatedness 低分时给出具体教学操作
+       - Flow channel 直接映射到语气/难度调整指令
+
+    2) 修改 `src/coach/composer.py`：
+       - SDT 分支扩展: 除了 adjust_autonomy_support，增加 competence/relatedness 判断
+       - Flow 分支扩展: boredom/anxiety 直接改变 action_type 选择
+
+    3) 修改 `config/coach_defaults.yaml`：
+       - composer_rules 增加行为模型场景化策略段
+
+    4) 编写差异化验证测试脚本
+
+    === SYSTEM_PROMPT 改造 ===
+
+    当前（纯说明性文本）:
+    ```
+    用户画像:
+    - TTM 阶段: {ttm_stage}（{ttm_explanation}）
+    - 自主性: {autonomy}/1.0（{autonomy_guide}）
+    ```
+
+    改为（策略指令）:
+    ```
+    教学策略指令（基于行为模型）:
+    - TTM 阶段 {ttm_stage}: {ttm_teaching_instruction}
+      例: preparation → "用户已准备好行动，给出具体可执行的步骤"
+    - 自主性 {autonomy}/1.0: {autonomy_teaching_action}
+      例: 低自主性 → "提供 2-3 个明确选项，避免开放式提问"
+    - 胜任感 {competence}/1.0: {competence_teaching_action}
+      例: 低胜任感 → "降低难度，先巩固基础"
+    ```
+
+    新增映射表:
+
+    | TTM Stage | ttm_teaching_instruction |
+    |-----------|-------------------------|
+    | precontemplation | "用户未意识到需要学习，以无压力的信息呈现为主，不提要求" |
+    | contemplation | "用户在权衡利弊，展示学习该知识的具体好处" |
+    | preparation | "用户已决定学习，给出具体可执行的步骤和资源" |
+    | action | "用户正在实践，提供即时反馈和正向强化" |
+    | maintenance | "用户已掌握基础，提供深度挑战和交叉联系" |
+    | relapse | "用户遇到挫折，降低难度，聚焦已掌握的部分重建信心" |
+
+    | SDT 维度 | 低分 (<0.4) | 中分 (0.4-0.7) | 高分 (>0.7) |
+    |----------|-------------|----------------|-------------|
+    | autonomy | "提供 2-3 个明确选项" | "推荐但让用户选择" | "完全开放" |
+    | competence | "降低难度，先复习基础" | "维持当前难度" | "增加挑战" |
+    | relatedness | "多使用'我们'，建立连接" | "保持友好" | "可以适当幽默" |
+
+    | Flow Channel | 教学操作 |
+    |-------------|---------|
+    | boredom | "增加挑战：提速、追问、给更难的问题" |
+    | anxiety | "降低难度：减速、给更多提示、聚焦基础" |
+    | flow | "维持当前节奏" |
+
+  </task>
+
+  <output_files>
+    <file>src/coach/llm/prompts.py</file>
+    <file>src/coach/composer.py</file>
+    <file>config/coach_defaults.yaml</file>
+  </output_files>
+
+  <behavior_diff_spec>
+
+    === composer.py SDT 分支增强 ===
+
+    当前（仅检查 adjust_autonomy_support）:
+    ```python
+    if sdt_profile and sdt_profile.get("advice", {}).get("adjust_autonomy_support"):
+        action_type = "reflect"
+    ```
+
+    改为:
+    ```python
+    if sdt_profile:
+        advice = sdt_profile.get("advice", {})
+        # 低胜任感 → prefer scaffold over suggest
+        if advice.get("adjust_difficulty") == "lower":
+            if action_type in ("suggest", "challenge"):
+                action_type = "scaffold"
+        # 低自主性 → prefer reflect with options
+        if advice.get("adjust_autonomy_support"):
+            if action_type in ("suggest", "scaffold"):
+                action_type = "reflect"
+        # 低关联性 → 保留 action_type 但修改 payload
+        if advice.get("adjust_relatedness_support"):
+            if "payload" in action:
+                pass  # 在 payload 中添加情感连接标记
+    ```
+
+    === composer.py Flow 分支增强 ===
+
+    当前（仅 adjust_difficulty +-1）:
+    ```python
+    if flow_result and flow_result.get("adjust_difficulty"):
+        # nudge difficulty up/down
+    ```
+
+    改为:
+    ```python
+    if flow_result:
+        channel = flow_result.get("flow_channel")
+        adjust = flow_result.get("adjust_difficulty", 0)
+        if channel == "boredom" and action_type in ("scaffold", "suggest"):
+            action_type = "challenge"  # 升挑战
+        elif channel == "anxiety" and action_type in ("challenge", "probe"):
+            action_type = "scaffold"   # 降难度
+    ```
+
+    === config/coach_defaults.yaml 新增 ===
+
+    ```yaml
+    # S11.4 行为模型场景化策略
+    behavior_strategy:
+      ttm_teaching_instructions:
+        precontemplation: "以无压力的信息呈现为主，不提要求"
+        contemplation: "展示学习该知识的具体好处"
+        preparation: "给出具体可执行的步骤和资源"
+        action: "提供即时反馈和正向强化"
+        maintenance: "提供深度挑战和交叉联系"
+        relapse: "降低难度，聚焦已掌握的部分"
+      sdt_low_actions:
+        autonomy: "提供 2-3 个明确选项"
+        competence: "降低难度，先复习基础"
+        relatedness: "多使用'我们'，建立情感连接"
+      flow_channel_actions:
+        boredom: "增加挑战"
+        anxiety: "降低难度"
+    ```
+
+    === 差异化验证脚本 ===
+
+    在 `tests/test_s11_behavior_diff.py` 中编写：
+
+    ```python
+    def test_ttm_stage_changes_action_selection():
+        """不同 TTM 阶段导致不同 action_type"""
+        agent = CoachAgent()
+        # preparation → 倾向 scaffold
+        # precontemplation → 倾向 suggest
+        ...
+
+    def test_sdt_low_competence_prefers_scaffold():
+        """低胜任感时跳过 challenge"""
+        ...
+
+    def test_flow_boredom_promotes_challenge():
+        """无聊时主动升挑战"""
+        ...
+    ```
+
+  </behavior_diff_spec>
+
+  <implementation_principles>
+    <principle>不改变 TTM/SDT/Flow 模型自身的计算逻辑——只改变 composer 和 prompt 对其输出的利用方式</principle>
+    <principle>行为模型差异通过 LLM prompt 中的策略指令和 composer 的 action_type 变化两条路径同时影响</principle>
+    <principle>LLM prompt 策略指令是主要路径（直接影响回复内容），composer 是辅助路径（影响 action_type）</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. TTM 不同阶段产生不同的 LLM 策略指令文本
+    2. SDT 低胜任感时 composer 优先选 scaffold
+    3. Flow boredom 时 composer 优先选 challenge
+    4. LLM prompt 中行为模型部分从纯说明变为可操作策略指令
+    5. 差异化测试验证 TTM ON/OFF 输出文本差异
+    6. 全量回归 1261+ pass
+  </success_criteria>
+
+</prompt>

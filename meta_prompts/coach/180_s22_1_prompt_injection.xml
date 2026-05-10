@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 22 — S22.1 Action-Type 指令注入</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>22</phase>
+  <sub_stage>S22.1</sub_stage>
+  <sub_stage_name>build_coach_context() 根据 action_type 追加结构化输出要求</sub_stage_name>
+
+  <role>
+    当前所有 action_type 共享同一条 SYSTEM_PROMPT 模板。8 种教学模式的差异仅是一行文字描述。
+    你需要在 build_coach_context() 中根据 action_type 追加结构化指令，让每种模式的 LLM 输出真正可区分。
+    你不修改 SYSTEM_PROMPT 常量——你在 format() 之后追加内容。
+  </role>
+
+  <context>
+    === 当前代码 ===
+    prompts.py:116-138 build_coach_context():
+    ```python
+    return {
+        "system": SYSTEM_PROMPT.format(
+            action_type_strategy=ACTION_STRATEGIES.get(action_type, "温和引导"),
+            ...
+        ),
+        "user_message": user_message,
+        "action_type": action_type,
+    }
+    ```
+
+    ACTION_STRATEGIES 字典（第 65-74 行）:
+    ```python
+    "suggest": "轻柔建议 — 不直接给答案，提供选项让用户选择",
+    "probe": "探测验证 — 提问考察用户对知识点的掌握程度",
+    "scaffold": "脚手架引导 — 逐步拆解复杂概念，降低认知负荷",
+    ...
+    ```
+
+    这些只是一行文字描述。LLM 收到的完整 prompt 中，唯一的 action_type 差异就是这行文字。
+
+    === 约束 ===
+    - 不修改 SYSTEM_PROMPT 常量字符串（第 8-54 行不动）
+    - 不修改 ACTION_STRATEGIES 字典（保持现有映射）
+    - 只在 build_coach_context() 返回值前追加内容
+    - 全量回归 1275+ 必须通过
+  </context>
+
+  <task>
+
+    ── 改动 1: 新增 _ACTION_TYPE_INSTRUCTIONS 字典（在 ACTION_STRATEGIES 之后，约第 75 行）──
+
+    ```python
+    # Phase 22: Action-Type 结构化输出要求
+    _ACTION_TYPE_INSTRUCTIONS = {
+        "probe": """
+    【探测验证模式 - 输出要求】
+    你必须生成一条探测性问题来评估用户的知识掌握程度。
+    JSON 必须包含以下字段:
+    - "statement": 简短引导语（如"来检测一下你的理解"）
+    - "question": 探测性问题（必须有区分度，不能人人都答对）
+    - "expected_answer": 正确答案要点描述
+    - "skill": 探测的技能名称
+    - "difficulty": 难度（easy/medium/hard）
+    - "topics": 涉及的知识点列表
+    """,
+        "scaffold": """
+    【脚手架引导模式 - 输出要求】
+    你必须将概念拆解为 2-4 个步骤，逐步引导。
+    JSON 必须包含以下字段:
+    - "statement": 简短引言
+    - "steps": 步骤数组，每项含 order(int)/action(str)/expected(str)
+    - "step_count": int，步骤总数
+    - "question": 引导性问题
+    - "difficulty": 当前步骤难度
+    """,
+        "challenge": """
+    【挑战模式 - 输出要求】
+    你需要生成一个略高于用户当前水平的任务。
+    JSON 必须包含以下字段:
+    - "statement": 任务描述
+    - "objective": 具体目标
+    - "difficulty": 难度等级（medium/hard）
+    - "hints_allowed": bool，是否允许多步提示
+    - "hint_count": int，最多提示次数
+    - "success_criteria": 完成标准描述
+    """,
+        "suggest": """
+    【建议模式 - 输出要求】
+    你需要提供多个选项供用户选择，而不是给出单一答案。
+    JSON 必须包含以下字段:
+    - "statement": 你的建议概述
+    - "options": 数组（2-4 项），每项含 label/description
+    - "alternatives": 替代方案简要列表
+    - "question": 引导用户选择的追问
+    """,
+        "reflect": """
+    【反思模式 - 输出要求】
+    你需要引导用户自我反思他们的学习过程或理解。
+    JSON 必须包含以下字段:
+    - "statement": 反思引导语
+    - "question": 反思性问题（开放式，不能是/否作答）
+    - "context_ids": 引用的上文消息 ID 列表
+    - "reflection_prompts": 引导反思的角度列表（2-3 项）
+    """,
+        "defer": """
+    【退一步模式 - 输出要求】
+    你需要让用户知道当前暂停是可以的，并给出清晰的恢复路径。
+    JSON 必须包含以下字段:
+    - "statement": 确认暂停的消息
+    - "reason": 暂停原因
+    - "fallback_intensity": 回退强度（minimal/low）
+    - "resume_condition": 用户可以如何继续
+    - "alternative_topics": 可替代的学习方向
+    """,
+        "pulse": """
+    【主权确认模式 - 输出要求】
+    你需要在高影响建议前确认用户是否接受该方向。
+    JSON 必须包含以下字段:
+    - "statement": 确认询问
+    - "accept_label": 接受按钮文本
+    - "rewrite_label": 改写按钮文本
+    - "implication": 接受该前提的影响说明
+    """,
+        "excursion": """
+    【探索模式 - 输出要求】
+    你需要鼓励用户自由联想，不受已有学习路径限制。
+    JSON 必须包含以下字段:
+    - "statement": 探索引导语
+    - "theme": 探索主题
+    - "options": 探索方向列表（2-3 项）
+    - "bias_disabled": true
+    - "duration_hint": 建议探索时长
+    """,
+    }
+    ```
+
+    ── 改动 2: 在 build_coach_context() 返回前追加 action_type 指令（约第 116 行）──
+
+    在 `return {` 之前（约第 115 行，topics_text 赋值之后），插入：
+
+    ```python
+    # Phase 22: 追加 action_type 结构化输出要求
+    action_type_instruction = _ACTION_TYPE_INSTRUCTIONS.get(action_type, "")
+    system_prompt = SYSTEM_PROMPT.format(
+        action_type_strategy=ACTION_STRATEGIES.get(action_type, "温和引导"),
+        intent=intent,
+        ttm_stage=stage,
+        ttm_explanation=TTM_EXPLANATIONS.get(stage, "用户处于学习过程中"),
+        autonomy=int(autonomy * 100),
+        autonomy_signal=autonomy_signal,
+        competence=int(competence * 100),
+        competence_signal=competence_signal,
+        relatedness=int(relatedness * 100),
+        behavior_signals=behavior_signals,
+        ttm_strategy_signal=ttm_signal,
+        history=history_text,
+        covered_topics=topics_text,
+        memory=memory_text,
+        difficulty=difficulty,
+    )
+    if action_type_instruction:
+        system_prompt += "\n" + action_type_instruction
+
+    return {
+        "system": system_prompt,
+        "user_message": user_message,
+        "action_type": action_type,
+    }
+    ```
+
+    ── 改动 3: 删除 build_coach_context() 中现有的 SYSTEM_PROMPT.format() return 写法──
+
+    将原来直接 return {"system": SYSTEM_PROMPT.format(...)} 的写法改为上述先 format + 追加 + return 的写法。
+    注意保持所有 format 参数不变。
+
+  </task>
+
+  <verification_method>
+    ```bash
+    cd D:/Claudedaoy/coherence
+    python -c "
+    from src.coach.llm.prompts import build_coach_context
+    # 测试每种 action_type 的 prompt 差异
+    types = ['probe', 'scaffold', 'challenge', 'suggest', 'reflect', 'defer', 'pulse', 'excursion']
+    prompts = {}
+    for t in types:
+        ctx = build_coach_context(action_type=t, intent='python')
+        prompts[t] = ctx['system']
+    # 验证不同型有不同的关键词
+    assert 'expected_answer' in prompts['probe'], 'probe 应包含 expected_answer'
+    assert 'steps' in prompts['scaffold'], 'scaffold 应包含 steps'
+    assert 'objective' in prompts['challenge'], 'challenge 应包含 objective'
+    assert 'options' in prompts['suggest'], 'suggest 应包含 options'
+    assert 'reflection_prompts' in prompts['reflect'], 'reflect 应包含 reflection_prompts'
+    assert 'resume_condition' in prompts['defer'], 'defer 应包含 resume_condition'
+    assert 'accept_label' in prompts['pulse'], 'pulse 应包含 accept_label'
+    assert 'bias_disabled' in prompts['excursion'], 'excursion 应包含 bias_disabled'
+    print('ALL PASS: 8 action_types produce distinct prompts')
+    "
+    python -m pytest tests/ -q
+    ```
+  </verification_method>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>8 种 action_type 的 prompt 内容各不相同（通过关键词验证）</item>
+    <item>不修改 SYSTEM_PROMPT 常量字符串</item>
+    <item>build_coach_context 返回格式不变（仍是 {"system": str, "user_message": str, "action_type": str}）</item>
+  </success_criteria>
+</prompt>

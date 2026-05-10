@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S16.3 Awakening UI</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>16</phase>
+  <sub_stage>S16.3</sub_stage>
+  <sub_stage_name>前端能力唤醒面板 — 将静态欢迎语升级为动态能力展示</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 16 S16.3 实现者。
+    你的任务是：当 API 返回中带有 _awakening 标记时，在前端展示能力唤醒面板，
+    替换现有的静态欢迎语。
+  </role>
+
+  <context>
+    === 现状 ===
+    前端 App.tsx 当 messages.length === 0 时显示：
+    <p>欢迎来到 Coherence Coach</p>
+    <p>我是你的认知主权教练，开始对话吧</p>
+    这是纯前端文案，不依赖后端。
+
+    === 目标 ===
+    首个 coach 回复中如果有 _awakening，显示 AwakeningPanel 替换静态欢迎文本。
+    面板展示可启用的高级能力列表，用户可"了解更多"或"开启"。
+  </context>
+
+  <task>
+    1) 新建 frontend/src/components/chat/AwakeningPanel.tsx。
+    2) 修改 frontend/src/App.tsx：
+       - 当检测到消息中有 _awakening 时，显示 AwakeningPanel
+       - 替换 messages.length === 0 的静态欢迎区域。
+    3) AwakeningPanel 应包含：
+       - 简短标题
+       - 能力列表（首次最多显示 3 个核心能力）
+       - "了解更多"展开详情
+       - "看看所有能力"跳转到 Settings 完整列表
+       - 关闭按钮（用户可以选择不启用直接使用）
+  </task>
+
+  <output_files>
+    <file>frontend/src/components/chat/AwakeningPanel.tsx — 新建</file>
+    <file>frontend/src/App.tsx — 改造欢迎区</file>
+  </output_files>
+
+  <awakening_ui_spec>
+
+    === 面板设计原则 ===
+    1. 不阻断：用户可以关闭面板直接开始对话
+    2. 渐进式：首次只展示 3 个核心推荐模块（diagnostic_engine / ttm / sdt）
+    3. 可回溯：任何时刻可在 Settings 查看完整能力列表
+    4. 可操作：每个模块可直接启用或查看详情
+
+    === 核心交互 ===
+    - 每个模块显示名称 + 一句话作用
+    - 点击"详情"展示 impact + recommended_for + risk
+    - 点击"启用"立即调用 PUT /api/v1/config 修改配置
+    - 启用后模块标记为"已启用"并更新面板
+    - 关闭面板后对话正常继续，不再重新展示
+
+    === 视觉风格 ===
+    - 与现有 PulsePanel 保持一致（主题色、圆角、内联定位）
+    - soft 级别——不阻断，不覆层
+
+  </awakening_ui_spec>
+
+  <implementation_principles>
+    <principle>不阻断用户使用——关闭面板即可正常对话。</principle>
+    <principle>不用额外 LLM 调用——所有文案从 capabilities 段读取。</principle>
+    <principle>保持一致的产品视觉语言：颜色/字体/间距与现有组件对齐。</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. 新用户第一条回复后显示 AwakeningPanel
+    2. 面板可关闭，关闭后不重现
+    3. 模块可逐个启用，启用后立即生效
+    4. 回访用户不显示面板
+  </success_criteria>
+
+</prompt>

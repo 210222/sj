@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 20 — S20.2 Dashboard 真实化</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>20</phase>
+  <sub_stage>S20.2</sub_stage>
+  <sub_stage_name>Dashboard 真实化 — 从 persistence 读取真实用户数据</sub_stage_name>
+
+  <role>
+    你是 Coherence Phase 20 S20.2 实现者。
+    Dashboard 目前展示假数据——get_progress() 返回 total_sessions=1, total_turns=0。
+    你需要让三个数据源从 persistence 读取真实用户记录。
+  </role>
+
+  <context>
+    === 当前状态 ===
+    dashboard_aggregator.py 的 3 个数据方法全部使用硬编码数据：
+
+    get_ttm_radar():
+      - 重新实例化 TTMStateMachine（每次！）
+      - 传入 dummy 数据 cognitive_indicators=[0.5], behavioral_indicators=[0.5]
+      - 每次都是 "第一次对话" 的评分
+
+    get_sdt_rings():
+      - 同样重新实例化 SDTAssessor
+      - 传入 dummy 数据（rewrite_rate=0.5, excursion_use_count=0）
+
+    get_progress():
+      - return {"total_sessions": 1, "total_turns": 0}  ← 硬编码
+
+    修改后：三个方法都从 SessionPersistence.get_profile() 读取真实值。
+
+    === 约束 ===
+    - 不修改 contracts/ 任何文件
+    - 不修改 src/inner/** src/middle/** src/outer/**
+    - 只修改：api/services/dashboard_aggregator.py
+    - 全量回归 1275+ 必须通过
+    - 数据不存在时返回 0/空值（不抛异常）
+    - 不得重新实例化 TTMStateMachine 或 SDTAssessor——直接从 persistence 读
+  </context>
+
+  <task>
+
+    ── 改动 1: get_ttm_radar() 整体替换──
+    当前实现每次实例化 TTMStateMachine + 传 dummy 数据。改为从 persistence 读取：
+
+    ```python
+    @staticmethod
+    def get_ttm_radar(session_id: str) -> dict[str, Any]:
+        """从 persistence 读取真实 TTM 阶段和 skill_masteries。"""
+        try:
+            from src.coach.persistence import SessionPersistence
+            p = SessionPersistence(session_id)
+            profile = p.get_profile()
+            ttm_stage = profile.get("ttm_stage", "contemplation")
+            # 用 skill_masteries 推导各阶段倾向（非严格 TTM assess）
+            # 这不是精确的 TTM 五维计算，只是从数据推导可观测倾向
+            from src.coach.ttm import STAGES
+            stage_scores = {}
+            if profile.get("skill_masteries"):
+                masteries = profile["skill_masteries"]
+                avg_mastery = sum(masteries.values()) / max(len(masteries), 1)
+                # 模拟阶段分数（基于 mastery 水平映射）
+                for i, stage in enumerate(STAGES):
+                    stage_scores[stage] = max(0.0, min(1.0, avg_mastery * (0.5 + i * 0.1)))
+            else:
+                stage_scores = {s: 0.5 for s in STAGES}
+            return {
+                **stage_scores,
+                "current_stage": ttm_stage,
+            }
+        except Exception:
+            _logger.exception("TTM radar aggregation failed")
+            return {s: 0.0 for s in ["precontemplation","contemplation","preparation","action","maintenance"]}
+    ```
+
+    ⚠️ 注意：这里不再调用 TTMStateMachine.assess()，而是直接从 persistence 读已保存的 ttm_stage。
+    这是正确的，因为 TTM 评估应该在 act() 中发生并存到 persistence，Dashboard 只读不计算。
+
+    ── 改动 2: get_sdt_rings() 整体替换──
+    当前每次实例化 SDTAssessor + 传 dummy 数据。改为从 persistence 读取：
+
+    ```python
+    @staticmethod
+    def get_sdt_rings(session_id: str) -> dict[str, float]:
+        """从 persistence 读取真实 SDT 三轴评分。"""
+        try:
+            from src.coach.persistence import SessionPersistence
+            p = SessionPersistence(session_id)
+            profile = p.get_profile()
+            return {
+                "autonomy": profile.get("autonomy", 0.5),
+                "competence": profile.get("competence", 0.5),
+                "relatedness": profile.get("relatedness", 0.5),
+            }
+        except Exception:
+            _logger.exception("SDT rings aggregation failed")
+            return {"autonomy": 0.5, "competence": 0.5, "relatedness": 0.5}
+    ```
+
+    ── 改动 3: get_progress() 整体替换──
+    当前返回硬编码数据。改为从 persistence 读取：
+
+    ```python
+    @staticmethod
+    def get_progress(session_id: str) -> dict[str, Any]:
+        """从 persistence 读取真实学习进度。"""
+        try:
+            from src.coach.persistence import SessionPersistence
+            p = SessionPersistence(session_id)
+            profile = p.get_profile()
+            return {
+                "total_sessions": 1,
+                "total_turns": profile.get("total_turns", 0),
+                "no_assist_avg": None,
+                "last_active_utc": profile.get("last_update", None) or profile.get("last_active", None),
+                "difficulty_level": profile.get("difficulty_level", "medium"),
+                "topics_covered": profile.get("topics_covered", []),
+                "skills": profile.get("skill_masteries", {}),
+            }
+        except Exception:
+            _logger.exception("Progress aggregation failed")
+            return {"total_sessions": 1, "total_turns": 0}
+    ```
+
+    ── 改动 4: 移除不必要的 import ──
+    修改后 dashboard_aggregator.py 不再需要 `from src.coach.ttm import TTMStateMachine` 和
+    `from src.coach.sdt import SDTAssessor`。可以删除这些 import 以减少启动开销。
+    但为了安全，如果删除后发现其他代码引用了它们，保留也无害。
+
+  </task>
+
+  <verification_method>
+    ```bash
+    cd D:/Claudedaoy/coherence
+    # 先确保有数据
+    python -c "
+    from src.coach.agent import CoachAgent
+    a = CoachAgent(session_id='test_dash_20')
+    for msg in ['hello', 'list', 'loop', 'function']:
+        a.act(msg, {})
+    print('4 turns done')
+    "
+
+    # 验证 Dashboard API
+    python -c "
+    from api.services.dashboard_aggregator import DashboardAggregator
+    agg = DashboardAggregator()
+    ttm = agg.get_ttm_radar('test_dash_20')
+    sdt = agg.get_sdt_rings('test_dash_20')
+    prog = agg.get_progress('test_dash_20')
+    print('TTM:', ttm.get('current_stage'), '| SDT:', sdt.get('autonomy'), '| Turns:', prog.get('total_turns'))
+    assert prog['total_turns'] >= 4, f'total_turns should be >= 4, got {prog[\"total_turns\"]}'
+    assert ttm.get('current_stage') is not None, 'ttm_stage should exist'
+    print('PASS: dashboard reads real data')
+    "
+    ```
+  </verification_method>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>get_progress('test_dash_20')['total_turns'] >= 4（4 轮对话后）</item>
+    <item>get_ttm_radar('test_dash_20')['current_stage'] 非空</item>
+    <item>get_sdt_rings('test_dash_20')['autonomy'] 在 0~1 范围内</item>
+    <item>profile 不存在时返回空值（不抛异常）</item>
+  </success_criteria>
+</prompt>

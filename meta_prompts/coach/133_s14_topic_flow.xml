@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S14.4 话题追踪 + 连贯对话流</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>14</phase>
+  <sub_stage>S14.4</sub_stage>
+  <sub_stage_name>话题追踪 — Agent 维护 current_topic + 低掌握技能自动延续 + 过渡语</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 14 S14.4 实现者。
+    你的任务是：让 Agent 维护一个 current_topic 字段，跨轮次保持话题一致性。
+    当 DiagnosticEngine 检测到低掌握技能时，自动将该技能列为下一轮话题候选。
+    话题切换时生成过渡语。
+  </role>
+
+  <context>
+    === 现状 ===
+    Agent 每轮 act() 独立，不跟踪当前在教什么话题。
+    DiagnosticEngine 已经识别出低掌握技能（mastery &lt; 0.3），但没有人用这个信息
+    来决定"下一轮教什么"。
+
+    穷举数据 TTM ON 组合中 action_type 更丰富（reflect+challenge 占比高），
+    但话题连续性差——从 "for 循环" 跳到 "函数" 没有平滑过渡。
+
+    === 目标 ===
+    1. Agent 维护 current_topic，每轮保持
+    2. DiagnosticEngine 的低掌握技能自动成为下一轮话题候选
+    3. 话题切换时生成过渡语（"我们刚才讲了 X，接下来看 Y 和 X 有什么关系"）
+
+    === 设计原则 ===
+    - 不新建模块，只在 Agent 加字段
+    - 话题切换过渡语用现有 Composer 生成（不新建模板）
+    - 低掌握技能是"候选"不是"强制"——TTM/SDT 仍然有最终决定权
+  </context>
+
+  <spec>
+
+    <change name="Agent.current_topic 字段">
+      <problem>Agent 不跟踪当前话题，每轮执行无连续性。</problem>
+      <file>src/coach/agent.py</file>
+      <changes>
+        - __init__ 中初始化 self.current_topic: str | None = None
+        - act() 中如果 intent 明确（非 "general"），更新 current_topic
+        - 如果 intent 是 "general" 但 previous_topic 存在，保持 current_topic
+        - 同时维护 self.previous_topic: str | None = None（切换前的话题）
+      </changes>
+      <code>
+        # __init__:
+        self.current_topic: str | None = None
+        self.previous_topic: str | None = None
+
+        # act() 中每次调用 composer 后:
+        if intent != "general":
+            self.previous_topic = self.current_topic
+            self.current_topic = intent
+      </code>
+    </change>
+
+    <change name="低掌握技能自动成为话题候选">
+      <problem>DiagnosticEngine 的低掌握技能列表无人消费，Agent 不知道学生哪里不会。</problem>
+      <file>src/coach/agent.py（diagnostic_engine.should_and_generate 附近）</file>
+      <changes>
+        - should_and_generate() 返回空时，检查是否有低掌握技能
+        - 如果有低掌握技能（mastery &lt; 0.3），将 intent 覆写为该技能
+        - 目的是让对话自然转向学生最薄弱的环节
+      </changes>
+      <code>
+        # should_and_generate 返回 None 时:
+        if self.diagnostic_engine and self.diagnostic_engine.enabled:
+            low_skills = self.diagnostic_engine.store.get_low_mastery(
+                self.diagnostic_engine._min_confidence)
+            if low_skills and low_skills[0] != self.current_topic:
+                intent = low_skills[0]
+      </code>
+    </change>
+
+    <change name="话题切换过渡语">
+      <problem>话题切换时没有过渡，从"变量"直接跳到"循环"让学生困惑。</problem>
+      <file>src/coach/agent.py</file>
+      <changes>
+        - 检测到话题切换（current_topic != intent）
+        - 通过 composer 生成一句过渡语追加到回复开头
+        - 过渡语格式: "刚才我们讲了{previous_topic}，接下来看看{new_topic}..."
+        - LLM ON 时让 LLM 自己生成过渡语（更自然）
+        - LLM OFF 时使用模板
+      </changes>
+      <code>
+        # 在 composer.generate() 调用后:
+        if (self.previous_topic
+            and self.current_topic != intent
+            and intent not in ("general", self.current_topic)):
+            transition = self._generate_transition(self.previous_topic, intent)
+            if transition:
+                payload["statement"] = transition + "\n\n" + payload.get("statement", "")
+
+      def _generate_transition(self, prev_topic: str, new_topic: str) -> str:
+        return f"刚才我们讲了「{prev_topic}」，接下来看看「{new_topic}」——它们之间有什么联系。"
+      </code>
+    </change>
+
+    <change name="Topic change dedup">
+      <problem>连续多次切换话题产生重复的过渡语，打断教学节奏。</problem>
+      <file>src/coach/agent.py</file>
+      <changes>
+        - 话题切换冷却：同一方向的话题切换每 3 轮最多触发一次过渡语
+        - 连续切换时不重复生成
+        - 过渡语和常规回复平滑拼接，不打断
+      </changes>
+    </change>
+
+  </spec>
+
+  <testing>
+    <test name="current_topic_tracking">
+      <command>调用 Agent.act("python_variable") → 换话题 → 再调用</command>
+      <expected>current_topic 正确更新，previous_topic 保存旧值</expected>
+    </test>
+    <test name="transition_generated_on_switch">
+      <command>Agent 检测到话题切换时调用 _generate_transition</command>
+      <expected>返回非空过渡语句</expected>
+    </test>
+    <test name="no_transition_on_same_topic">
+      <command>连续两次相同话题</command>
+      <expected>不生成过渡语</expected>
+    </test>
+    <test name="low_mastery_topic_selection">
+      <command>diagnostic_engine 有低掌握技能时的话题选择</command>
+      <expected>intent 被覆写为低掌握技能</expected>
+    </test>
+  </testing>
+
+</prompt>

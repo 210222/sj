@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S13.2 TTM 阶段检测激活</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>13</phase>
+  <sub_stage>S13.2</sub_stage>
+  <sub_stage_name>TTM 阶段检测 — 从 disabled 到 enabled，让对话策略按用户阶段差异化</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 13 S13.2 实现者。
+    你的任务是：开启 TTM 阶段变化模型，验证其对对话策略的影响。
+    这是"三模型启用顺序"的第一步。
+  </role>
+
+  <context>
+    === 理论背景 ===
+    TTM（跨理论模型，Transtheoretical Model）将行为改变分为五个阶段：
+    - Precontemplation（前意向）：用户没意识到需要改变
+    - Contemplation（意向）：用户开始考虑
+    - Preparation（准备）：用户准备行动
+    - Action（行动）：用户正在实践
+    - Maintenance（维持）：用户巩固成果
+
+    === 当前状态 ===
+    src/coach/ttm.py 中的 TTMStateMachine 已实现：
+    - detect_stage(conversation_history) → stage
+    - get_optimal_strategy(stage) → action_type 偏好
+    - transition_check(current, signal) → new_stage
+
+    agent.py 中 TTM 的集成点（约第 370-390 行）已存在但被 enabled:false 跳过：
+
+    ```python
+    if self.ttm:
+        ttm_stage = self.ttm.detect_stage(...)
+        ttm_strategy = self.ttm.get_optimal_strategy(ttm_stage)
+        # TTM 策略影响 action_type 选择权重
+    ```
+
+    === 穷举测试数据 ===
+    256 组合中 TTM ON=15.3/24, TTM OFF=16.0/24, 差距 -0.65。
+
+    分析 bottom 10: 全部是 TTM 开启的配置。
+    分析 TTM 开启时的 action_type 分布：
+    - reflect 和 challenge 占比增高（TTM 在 preparation 阶段倾向于挑战用户认知）
+    - scaffold 和 suggest 占比降低
+
+    这个降分是 TTM 的 design intent——reflect/challenge 输出内容较少
+    （statement 更短，steps 可能为空），但要求用户更多思考。
+    6 维度评分偏向"说得多"而非"教得好"，所以 TTM 的"促思考"策略在评分上吃亏。
+
+    === 关键假设 ===
+    我们需要验证：TTM 是否真的正确检测了用户阶段？
+    穷举测试用的是脚本化的多轮对话——TTM 在实际对话中的表现未知。
+    所以第一步是"激活 + 观测"，不是"激活 + 信任"。
+  </context>
+
+  <task>
+    1) 修改 `config/coach_defaults.yaml` 将 ttm.enabled 设为 true：
+
+    ```yaml
+    ttm:
+      enabled: true
+      detect:
+        confidence_threshold: 0.6
+        min_interactions: 5
+      transition:
+        action_to_maintenance_turns: 10
+        allow_forward_jump: false
+    ```
+
+    2) 检查 `src/coach/agent.py` 中 TTM 集成点，确保打开后正常运行。
+       关键代码段（约 370-390 行）需要确认：
+
+    ```python
+    # 4a. Phase 4: TTM 阶段检测
+    if self.ttm:
+        try:
+            ttm_stage = self.ttm.detect_stage(
+                conversation_history=...,  # 对话历史
+                intent=intent,
+            )
+            # TTM 策略偏好 → 影响 action_type 选择权重
+            strategy = self.ttm.get_optimal_strategy(ttm_stage)
+            if strategy and "preferred_actions" in strategy:
+                # 将偏好传递给 composer 的 action_type 选择
+                action_type_preferences = strategy["preferred_actions"]
+        except Exception:
+            pass
+    ```
+
+    3) 在 `agent.py` 的 act() 方法中增加 TTM 阶段的日志记录，方便后续分析：
+
+    ```python
+    # TTM 日志记录
+    if self.ttm and ttm_stage:
+        _logger.info("TTM stage=%s strategy=%s", ttm_stage, strategy.get("name", ""))
+    ```
+
+    4) 验证 TTM 的输出确实传递到 composer。关键检查点：
+       - TTM 的 preferred_actions 是否被 composer 的 _select_action_type 消费
+       - 如果 TTM 推荐 reflect/composer 是否优先选择 reflect
+
+    === 不变更 ===
+    * 不要修改 TTMStateMachine 的逻辑（置信度阈值、阶段定义、策略矩阵）
+    * 不要修改 composer 的 action_type 选择逻辑（只检查是否已连接）
+    * 不要修改任何测试
+  </task>
+
+  <testing>
+    <test name="test_ttm_enabled_in_config">
+      <code>
+def test_ttm_enabled_in_config():
+    import yaml
+    cfg = yaml.safe_load(open("config/coach_defaults.yaml"))
+    assert cfg["ttm"]["enabled"] is True
+      </code>
+    </test>
+    <test name="test_ttm_loads_and_detects">
+      <code>
+def test_ttm_loads_and_detects():
+    from src.coach.ttm import TTMStateMachine
+    ttm = TTMStateMachine({"enabled": True, "detect": {"min_interactions": 1}})
+    history = ["我想学 Python", "变量是什么", "我试了一下", "好像懂了"]
+    stage = ttm.detect_stage(conversation_history=history)
+    assert stage is not None
+    strategy = ttm.get_optimal_strategy(stage)
+    assert strategy is not None
+    assert "preferred_actions" in strategy
+      </code>
+    </test>
+    <test name="test_ttm_no_crash_on_empty_history">
+      <code>
+def test_ttm_no_crash_on_empty_history():
+    from src.coach.ttm import TTMStateMachine
+    ttm = TTMStateMachine({"enabled": True})
+    stage = ttm.detect_stage(conversation_history=[])
+    # 空历史应该返回默认阶段（precontemplation），不崩溃
+    assert stage is not None
+      </code>
+    </test>
+  </testing>
+
+  <verification>
+    <step name="1. 确认 TTM 配置生效">
+      <command>python -c "import yaml; cfg=yaml.safe_load(open('config/coach_defaults.yaml')); print('TTM enabled:', cfg['ttm']['enabled'])"</command>
+      <expected>TTM enabled: True</expected>
+    </step>
+    <step name="2. 确认 TTM 单元测试通过">
+      <command>python -m pytest tests/test_ttm.py -v --tb=short 2>&1 | tail -10</command>
+      <expected>All TTM tests PASS</expected>
+    </step>
+    <step name="3. 快速集成测试">
+      <command>
+        python -c "
+import sys; sys.path.insert(0, '.')
+from src.coach.agent import CoachAgent
+agent = CoachAgent()
+# 检查 TTM 属性（不会报错）
+ttm = agent.ttm
+print(f'TTM loaded: {ttm is not None}')
+if ttm:
+    print(f'TTM type: {type(ttm).__name__}')
+"
+      </command>
+      <expected>TTM loaded: True</expected>
+    </step>
+  </verification>
+
+  <success_criteria>
+    1. ttm.enabled: true 配置生效
+    2. TTMStateMachine.detect_stage 在对话中返回非 None 阶段
+    3. get_optimal_strategy 返回 preferred_actions 且被 composer 消费
+    4. TTM 开启后不导致 agent.act() 抛出异常
+    5. 全量回归: python -m pytest tests/ -q → 1250+ pass
+    6. 穷举测试 TTM 段日志可观测到阶段变化
+  </success_criteria>
+
+  <rollback>
+    <condition>TTM 导致穷举测试 LLM ON 质量从 16.8 降至 15 以下</condition>
+    <action>将 ttm.enabled 改回 false，记录 TTM 策略矩阵数据，等待 Phase 14 再激活</action>
+  </rollback>
+
+</prompt>

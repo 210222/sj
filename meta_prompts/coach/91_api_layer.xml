@@ -1,0 +1,278 @@
+<prompt>
+  <name>Coherence Coach Track — S9.1 API 服务层 (Backend-for-Frontend)</name>
+  <version>2.0.0</version>
+  <track>COACH</track>
+  <phase>9</phase>
+  <sub_stage>S9.1</sub_stage>
+  <sub_stage_name>API 服务层 — PulseService 自适应降级 + IAM 骨架 + 仪表盘聚合 + 路由增强</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 9 S9.1 实现者。
+    你的任务是：在已冻结的 Coach 后端 + 已运行的 Phase 10 LLM 引擎之上，搭建 PulseService 自适应降级、IAM 骨架、仪表盘数据聚合服务，并增强现有 API 路由。
+    注意：api/ 目录已有 Phase 10 S1-S5 的 LLM 路由（chat+ws+code_executor），S9.1 只新增不修改已有文件。
+  </role>
+
+  <phase10_context>
+    <note>Phase 10 已完成，LLM 模式已启用。现有 api/ 文件包含：</note>
+    <existing_files>
+      <file>api/main.py — FastAPI 应用入口，已有 lifespan + CORS + 路由注册</file>
+      <file>api/config.py — CORS/限流/WS 配置</file>
+      <file>api/routers/chat.py — POST /chat + WS /chat/ws（含流式/非流式双路径）</file>
+      <file>api/routers/code_executor.py — POST /code/execute（Phase 10 S5）</file>
+      <file>api/models/schemas.py — Pydantic 模型（含 Phase 10 LLM 元数据字段）</file>
+      <file>api/models/websocket.py — WS 消息类型枚举</file>
+      <file>api/services/coach_bridge.py — CoachAgent 适配器（含 ThreadPoolExecutor + chat_stream）</file>
+      <file>api/middleware/rate_limit.py — 速率限制</file>
+    </existing_files>
+    <principle>不修改上述已有文件。S9.1 新增文件如下方 output_files 所列。</principle>
+  </phase10_context>
+
+  <context>
+    设计对齐源：`前端和移动端页面设计.txt` + `reports/phase9_design_thinking.md`
+
+    === 自适应降级（第 5.1 节/深度思考 1.2）===
+    核心矛盾：脉冲确认阻断过度 → 用户决策疲劳 → 主权保护形同虚设
+    解决：三态自适应降级
+    - hard: 窗口内脉冲 < 2 次 → 阻断式 Slide-to-Confirm
+    - soft: 窗口内脉冲 ≥ 2 次 → 珊瑚糖高亮标记，不阻断流程
+    - none: 非 HIGH 强度动作 → 正常对话，无脉冲 UI
+    窗口：10 分钟/每 session，跨窗口重置
+    PulseService 必须支持 should_block() + record_pulse() + get_blocking_mode() 三个方法
+
+    === IAM 骨架（第 5.3 节/深度思考 1.5）===
+    不出登录 UI，但状态树必须有 token 根节点
+    - 签发 UUID4 匿名 token
+    - _state_tree[token][session_id] = {...}
+    - 管理员 token 通过 ADMIN_TOKENS 环境变量或默认配置注入
+    - 不实现密码/OAuth/JWT——留到真正多租户版本
+
+    === 仪表盘数据聚合（第 3.2/3.3 节）===
+    GET /api/v1/dashboard/user 返回:
+      ttm_radar: { precontemplation, contemplation, preparation, action, maintenance }
+      sdt_rings: { autonomy, competence, relatedness }
+      progress:  { total_sessions, total_turns, no_assist_avg }
+
+    === 全链路降级（深度思考 4.2）===
+    PulseService → WebSocket 推送 pulse_event → 前端 useAdaptivePulse
+    blocking_mode 必须通过 WS 消息传递，不可仅依赖 HTTP 响应
+  </context>
+
+  <task>
+    1) 实现 PulseService 自适应降级（时间窗口 + 三态判定）
+    2) 实现 IAM 骨架（匿名 token + 状态树 + 管理员检测）
+    3) 实现 dashboard_aggregator 服务（TTM/SDT/Progress 数据聚合）
+    4) 新增 dashboard/user 和 admin/gates + admin/logs 路由
+    5) 增强 WebSocket 推送（集成 PulseService）
+    6) 新增 API 集成测试（含全链路降级测试基础）
+  </task>
+
+  <output_files>
+    <file>api/services/pulse_service.py — 自适应降级核心服务</file>
+    <file>api/services/dashboard_aggregator.py — TTM/SDT 数据聚合</file>
+    <file>api/middleware/auth.py — IAM 骨架（匿名 token 签发 + 验证 + 状态树）</file>
+    <file>api/routers/dashboard.py — GET /api/v1/dashboard/user</file>
+    <file>api/routers/admin.py — GET /api/v1/admin/gates/status + GET /api/v1/admin/audit/logs</file>
+    <file>reports/audit_s9_1_api.py — S9.1 静态审计脚本</file>
+    <file>tests/test_api_pulse.py — 脉冲决策 + 自适应降级三态测试</file>
+    <file>tests/test_api_dashboard.py — 仪表盘数据聚合测试</file>
+    <file>tests/test_api_rate_limit.py — 限流击中/恢复/窗口重置</file>
+  </output_files>
+
+  <pulse_service_spec>
+    ```python
+    # api/services/pulse_service.py
+    class PulseService:
+        MAX_BLOCKING_PULSES = 2
+        WINDOW_MINUTES = 10
+
+        def __init__(self):
+            self._pulse_log: dict[str, list[dict]] = {}  # session_id → [{timestamp, decision}]
+            self._lock = threading.Lock()
+
+        def should_block(self, session_id: str) -> bool:
+            """窗口内脉冲 < MAX_BLOCKING → True(阻断); ≥ → False(旁路)"""
+            with self._lock:
+                now = time.time()
+                window_start = now - self.WINDOW_MINUTES * 60
+                pulses = self._pulse_log.get(session_id, [])
+                # 只统计窗口内的脉冲
+                recent = [p for p in pulses if p["timestamp"] >= window_start]
+                self._pulse_log[session_id] = recent  # 清理过期记录
+                return len(recent) < self.MAX_BLOCKING_PULSES
+
+        def record_pulse(self, session_id: str, decision: str):
+            """记录脉冲事件"""
+            with self._lock:
+                self._pulse_log.setdefault(session_id, [])
+                self._pulse_log[session_id].append({
+                    "timestamp": time.time(),
+                    "decision": decision,
+                })
+
+        def get_blocking_mode(self, session_id: str) -> str:
+            """返回 'hard' | 'soft' | 'none'"""
+            if self.should_block(session_id):
+                return "hard"  # 阻断
+            # 有记录但在窗口外 → soft（曾有脉冲但已降级）
+            pulses = self._pulse_log.get(session_id, [])
+            return "soft" if pulses else "none"
+
+    _instance: PulseService | None = None
+    _instance_lock = threading.Lock()
+
+    def get_pulse_service() -> PulseService:
+        """PulseService 单例"""
+        global _instance
+        if _instance is None:
+            with _instance_lock:
+                if _instance is None:
+                    _instance = PulseService()
+        return _instance
+    ```
+  </pulse_service_spec>
+
+  <iam_spec>
+    ```python
+    # api/middleware/auth.py
+    import uuid
+    import os
+
+    class IAMSkeleton:
+        def __init__(self):
+            self._tokens: dict[str, float] = {}       # token → created_at
+            self._state_tree: dict[str, dict] = {}     # token → {session_id → state}
+            # 管理员 token 列表，从环境变量读取
+            self._admin_tokens: set[str] = set()
+            admin_env = os.environ.get("ADMIN_TOKENS", "")
+            if admin_env:
+                for t in admin_env.split(","):
+                    self._admin_tokens.add(t.strip())
+
+        def issue_anonymous_token(self) -> str:
+            token = str(uuid.uuid4())
+            self._tokens[token] = time.time()
+            return token
+
+        def validate_token(self, token: str) -> bool:
+            return token in self._tokens
+
+        def is_admin(self, token: str) -> bool:
+            return token in self._admin_tokens
+
+        def get_session_tree(self, token: str, session_id: str) -> dict:
+            return self._state_tree.get(token, {}).get(session_id, {})
+    ```
+  </iam_spec>
+
+  <dashboard_aggregator_spec>
+    ```python
+    # api/services/dashboard_aggregator.py
+    class DashboardAggregator:
+        def __init__(self):
+            self._cfg_path = self._resolve_cfg_path()
+
+        def get_ttm_radar(self, session_id: str) -> dict[str, float]:
+            """返回 TTM 五维倾向性评分"""
+            ttm_stage = CoachBridge.get_ttm_stage(session_id)
+            if ttm_stage is None or ttm_stage == "unknown":
+                return self._default_ttm_radar()
+            # 映射当前阶段 → 五维向量
+            stage_profile = TTM_STAGE_VECTORS.get(ttm_stage, self._default_ttm_radar())
+            return stage_profile
+
+        def get_sdt_rings(self, session_id: str) -> dict[str, float]:
+            """返回 SDT 三核评分"""
+            return CoachBridge.get_sdt_scores(session_id)
+
+        def get_progress(self, session_id: str) -> dict:
+            """返回学习进度摘要"""
+            # 从 CoachAgent 读取交互历史统计
+            return {"total_sessions": 1, "total_turns": 0, "no_assist_avg": None}
+    ```
+  </dashboard_aggregator_spec>
+
+  <admin_routes_spec>
+    ```python
+    # api/routers/admin.py
+    @router.get("/admin/gates/status")
+    async def get_gates_status(
+        request: Request,
+        token: str = Query(...),
+    ):
+        """仅管理员可访问。返回 8 门禁实时状态"""
+        auth = get_iam_skeleton()
+        if not auth.is_admin(token):
+            raise HTTPException(status_code=403, detail="Forbidden")
+        # 从 CoachAgent 或 Ledger 读取门禁状态
+        gates = [
+            {"id": 1, "name": "Agency Gate", "status": "pass", "metric": 0.85},
+            # ... 8 gates
+        ]
+        overall = "pass" if all(g["status"] == "pass" for g in gates) else \
+                  "warn" if any(g["status"] == "warn" for g in gates) else "block"
+        return {"gates": gates, "overall": overall}
+    ```
+  </admin_routes_spec>
+
+  <implementation_principles>
+    <principle>不修改已有 api/ 文件——所有新增为独立文件</principle>
+    <principle>PulseService 使用 threading.Lock 保护 _pulse_log——单用户场景但需线程安全</principle>
+    <principle>PulseService 单例通过 get_pulse_service() 获取，全局唯一</principle>
+    <principle>IAM token 纯内存存储——重启后 token 丢失，用户需重新创建会话</principle>
+    <principle>管理员 token 默认空——未配置时管理后台永远 403</principle>
+    <principle>dashboard_aggregator 读取 CoachBridge 的已有方法，不直接调用 CoachAgent</principle>
+    <principle>admin 路由的 token 通过 Query 参数传递——适用于单用户本地场景，后续升级为 Authorization header</principle>
+  </implementation_principles>
+
+  <test_spec>
+    ```python
+    # tests/test_api_pulse.py
+    def test_pulse_hard_mode():
+        """前 2 次脉冲返回 should_block=True (hard 模式)"""
+        ps = PulseService()
+        for i in range(2):
+            assert ps.should_block("test-session")
+            ps.record_pulse("test-session", "accept")
+
+    def test_pulse_soft_degradation():
+        """第 3 次脉冲返回 should_block=False (soft 降级)"""
+        ps = PulseService()
+        for i in range(2):
+            ps.record_pulse("test-session", "accept")
+        assert not ps.should_block("test-session")
+        assert ps.get_blocking_mode("test-session") == "soft"
+
+    def test_window_reset():
+        """10 分钟后窗口重置，恢复 hard 模式"""
+        ps = PulseService()
+        # mock 时间... 或验证窗口逻辑
+
+    def test_session_isolation():
+        """不同 session 的脉冲计数独立"""
+        ps = PulseService()
+        ps.record_pulse("session-a", "accept")
+        assert ps.should_block("session-b")  # session-b 不受影响
+
+    def test_blocking_mode_none():
+        """无脉冲记录时返回 'none'"""
+        ps = PulseService()
+        assert ps.get_blocking_mode("fresh-session") == "none"
+    ```
+  </test_spec>
+
+  <success_criteria>
+    1. PulseService: should_block() 前 2 次返回 True，第 3 次返回 False
+    2. PulseService: get_blocking_mode() 返回 'hard' | 'soft' | 'none'
+    3. PulseService: 会话隔离，不同 session 独立计数
+    4. IAMSkeleton: issue_anonymous_token() 签发有效 UUID4
+    5. IAMSkeleton: validate_token() 正确验证
+    6. IAMSkeleton: is_admin() 正确识别管理员
+    7. GET /api/v1/dashboard/user 返回 ttm_radar + sdt_rings + progress
+    8. GET /api/v1/admin/gates/status 返回 8 门禁 + overall（仅管理员）
+    9. GET /api/v1/admin/gates/status 非管理员返回 403
+    10. 速率限制超阈返回 429
+    11. 全部新增测试 pass + 1219 已有测试零回归
+    12. 不修改 src/coach/、contracts/ 等冻结文件
+  </success_criteria>
+</prompt>

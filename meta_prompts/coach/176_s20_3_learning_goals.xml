@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 20 — S20.3 学习目标追踪</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>20</phase>
+  <sub_stage>S20.3</sub_stage>
+  <sub_stage_name>学习目标追踪 — persistence 加 goal 字段 + composer 技能选 topic</sub_stage_name>
+
+  <role>
+    你是 Coherence Phase 20 S20.3 实现者。
+    系统目前不知道用户想学什么——没有 learning_goal、没有 current_topic。
+    composer 选择 action_type 时也不考虑用户的技能缺口。
+    你需要在 persistence 中新增学习目标字段，在 composer 中新增根据 mastery 自动选 topic 的逻辑。
+  </role>
+
+  <context>
+    === 当前状态 ===
+    - persistence.py get_profile() 返回字段: ttm_stage, autonomy, competence, relatedness,
+      total_turns, topics_covered, skill_masteries, difficulty_level, consent_status
+    - 无 learning_goal, current_topic, goal_progress
+    - composer.py compose() 的 action_type 选择基于 intent，不基于 mastery
+    - TTM 策略已有 avoid/recommended 但没有"选 topic"逻辑
+
+    === 前置条件 ===
+    - S20.1a 已完成——act() 每轮写 persistence
+    - S20.1b 已完成——profile_history 表就绪
+
+    === 约束 ===
+    - 不修改 contracts/ 任何文件
+    - 不修改 src/inner/** src/middle/** src/outer/**
+    - 只修改: src/coach/persistence.py, src/coach/composer.py
+    - 全量回归 1275+ 必须通过
+    - profiles 表使用 ALTER TABLE ADD COLUMN（try/except OperationalError 幂等模式）
+    - 新增字段默认值为 None/空，不影响旧 session 数据
+  </context>
+
+  <task>
+
+    ── 改动 1: persistence.py 新增 learning_goal 字段（ALTER TABLE 幂等）──
+
+    在 `_get_db()` 函数中（约第 42 行，已有 consent_status 迁移代码旁边），新增：
+
+    ```python
+    # Phase 20: 学习目标字段迁移
+    for col in ["learning_goal", "current_topic", "goal_progress"]:
+        try:
+            conn.execute(f"ALTER TABLE profiles ADD COLUMN {col} TEXT")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass
+    # goal_progress 是 REAL 类型，特殊处理
+    try:
+        conn.execute("ALTER TABLE profiles ADD COLUMN goal_progress REAL DEFAULT 0.0")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass
+    ```
+
+    ── 改动 2: persistence.py get_profile() 返回新增字段──
+
+    在 get_profile() 的返回字典中（约第 127-133 行）追加：
+
+    ```python
+    "learning_goal": row[11] if len(row) > 11 else "",
+    "current_topic": row[12] if len(row) > 12 else "",
+    "goal_progress": row[13] if len(row) > 13 else 0.0,
+    ```
+
+    ⚠️ 使用 if len(row) > n 防御性读取，因为旧 session 的行可能没有这些列。
+
+    ── 改动 3: persistence.py 新增 save_learning_goal() / save_current_topic() 方法──
+
+    在 `save_difficulty()` 方法后（约第 113 行）新增：
+
+    ```python
+    # ── Phase 20: 学习目标 ──
+
+    def save_learning_goal(self, goal: str) -> None:
+        old = self.load_learning_goal()
+        self.db.execute(
+            "UPDATE profiles SET learning_goal = ? WHERE session_id = ?",
+            (goal, self.session_id))
+        self.db.commit()
+        if old != goal:
+            self.save_history_snapshot("learning_goal", old, goal)
+
+    def load_learning_goal(self) -> str:
+        row = self.db.execute(
+            "SELECT learning_goal FROM profiles WHERE session_id = ?",
+            (self.session_id,)).fetchone()
+        return row[0] if row and row[0] else ""
+
+    def save_current_topic(self, topic: str) -> None:
+        self.db.execute(
+            "UPDATE profiles SET current_topic = ? WHERE session_id = ?",
+            (topic, self.session_id))
+        self.db.commit()
+
+    def save_goal_progress(self, progress: float) -> None:
+        self.db.execute(
+            "UPDATE profiles SET goal_progress = ? WHERE session_id = ?",
+            (max(0.0, min(1.0, progress)), self.session_id))
+        self.db.commit()
+    ```
+
+    ── 改动 4: composer.py 新增 _select_topic_by_mastery() 方法──
+
+    在 PolicyComposer 类中（约第 240 行，在 _infer_domain 之后）新增：
+
+    ```python
+    # ── Phase 20: 学习目标支持 ──
+
+    @staticmethod
+    def _select_topic_by_mastery(mastery_summary: dict | None) -> str | None:
+        """从技能掌握度中选择掌握度最低的 topic。
+
+        Args:
+            mastery_summary: diagnostic_engine.get_mastery_summary() 的输出
+                {"skills": {"python_list": 0.73, "python_loop": 0.45}, ...}
+
+        Returns:
+            掌握度最低的 skill 名称，无数据时返回 None
+        """
+        if not mastery_summary:
+            return None
+        skills = mastery_summary.get("skills", {})
+        if not skills:
+            return None
+        return min(skills, key=skills.get)
+    ```
+
+    ── 改动 5: composer.py compose() 使用 _select_topic_by_mastery──
+
+    在 compose() 方法中的 compose() 调用后（约第 100 行，在 return action 之前）插入：
+
+    ```python
+    # Phase 20: 根据 mastery 选择教学 topic（辅助信号，不覆盖 intent）
+    weakest_topic = self._select_topic_by_mastery(
+        context.get("mastery_summary") if isinstance(context, dict) else None
+    ) if False else None  # 预留：当前不自动覆盖，未来可启用
+    ```
+
+    注意：此行代码是预留锚点（当前被 `if False else None` 短路），只是为了标记
+    这个钩子的存在。实际的 topic 覆盖逻辑将在 TTM 策略增强时一并启用。
+    当前阶段只实现 _select_topic_by_mastery() 方法本身，不改变 compose() 的 action_type 选择。
+
+  </task>
+
+  <verification_method>
+    ```bash
+    cd D:/Claudedaoy/coherence
+    python -c "
+    from src.coach.agent import CoachAgent
+    from src.coach.persistence import SessionPersistence
+
+    # 验证新增字段持久化
+    p = SessionPersistence('test_goal_20')
+    p.save_learning_goal('掌握 Python 基础')
+    p.save_current_topic('列表推导式')
+    p.save_goal_progress(0.3)
+    profile = p.get_profile()
+    print('learning_goal:', profile.get('learning_goal'))
+    print('current_topic:', profile.get('current_topic'))
+    print('goal_progress:', profile.get('goal_progress'))
+    assert profile['learning_goal'] == '掌握 Python 基础'
+    assert profile['current_topic'] == '列表推导式'
+
+    # 验证 composer 选 topic
+    from src.coach.composer import PolicyComposer
+    topic = PolicyComposer._select_topic_by_mastery({
+        'skills': {'python_list': 0.73, 'python_loop': 0.45, 'function': 0.9}
+    })
+    print('weakest topic:', topic)
+    assert topic == 'python_loop', f'expected python_loop, got {topic}'
+
+    print('PASS: learning goals work')
+    "
+    ```
+  </verification_method>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>get_profile() 返回 learning_goal/current_topic/goal_progress 字段（新 session 为空字符串）</item>
+    <item>_select_topic_by_mastery 返回掌握度最低的 skill</item>
+    <item>无 skills 数据时返回 None</item>
+    <item>旧 profiles 行在 ALTER TABLE 后仍可正常读取（空字符串回退）</item>
+  </success_criteria>
+</prompt>

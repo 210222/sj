@@ -1,0 +1,180 @@
+{
+  "contract": "api_contract",
+  "version": "1.0.0",
+  "status": "frozen",
+  "description": "Coherence Coach API 接口合约 — 移动端/外部客户端的单一真相源",
+  "base_url": "/api/v1",
+  "rate_limits": {
+    "default": { "requests": 30, "window_s": 60 },
+    "session": { "requests": 10, "window_s": 60 },
+    "chat": { "requests": 30, "window_s": 60 },
+    "pulse": { "requests": 30, "window_s": 60 },
+    "excursion": { "requests": 5, "window_s": 60 },
+    "dashboard": { "requests": 10, "window_s": 60 },
+    "admin_gates": { "requests": 30, "window_s": 60 },
+    "admin_audit": { "requests": 20, "window_s": 60 },
+    "health": { "requests": 60, "window_s": 60 }
+  },
+  "error_codes": {
+    "SESSION_NOT_FOUND": { "http": 404, "reason_code": "ORCH_INVALID_INPUT" },
+    "RATE_LIMITED": { "http": 429, "reason_code": "ORCH_PIPELINE_ERROR" },
+    "INVALID_TOKEN": { "http": 401, "reason_code": "ORCH_INVALID_INPUT" },
+    "FORBIDDEN": { "http": 403, "reason_code": "ORCH_INVALID_INPUT" },
+    "INTERNAL_ERROR": { "http": 500, "reason_code": "ORCH_PIPELINE_ERROR" }
+  },
+  "endpoints": [
+    {
+      "path": "/session",
+      "method": "POST",
+      "description": "创建或恢复会话，返回 TTM 阶段 + SDT 评分",
+      "request": {
+        "body": {
+          "session_id": "string | null",
+          "token": "string | null"
+        }
+      },
+      "response": {
+        "session_id": "string",
+        "token": "string",
+        "ttm_stage": "string | null",
+        "sdt_scores": { "autonomy": "float", "competence": "float", "relatedness": "float" },
+        "created_at_utc": "string (ISO 8601)"
+      },
+      "rate_limit": "session"
+    },
+    {
+      "path": "/chat",
+      "method": "POST",
+      "description": "发送消息到 CoachAgent，返回 DSL 响应",
+      "request": {
+        "body": {
+          "session_id": "string (min:1, max:128)",
+          "message": "string (min:1, max:32000)"
+        }
+      },
+      "response": {
+        "action_type": "string (8 types: challenge|probe|scaffold|reflect|suggest|defer|pulse|excursion)",
+        "payload": "object (slots vary by action_type)",
+        "trace_id": "string (UUID)",
+        "intent": "string",
+        "domain_passport": { "domain": "string", "evidence_level": "string", "source_tag": "string", "epistemic_warning": "string | null" },
+        "safety_allowed": "boolean",
+        "gate_decision": "string",
+        "audit_level": "string",
+        "premise_rewrite_rate": "float",
+        "ttm_stage": "string | null",
+        "sdt_profile": "object | null",
+        "flow_channel": "string | null",
+        "pulse": "object | null (present only when action_type=pulse)"
+      },
+      "rate_limit": "chat"
+    },
+    {
+      "path": "/chat/ws",
+      "method": "WEBSOCKET",
+      "description": "实时推流通道，支持 user_message/coach_response/pulse_event/pulse_decision/pulse_timeout/excursion_event",
+      "messages": {
+        "client_to_server": ["user_message", "pulse_decision"],
+        "server_to_client": ["coach_response", "pulse_event", "pulse_timeout", "excursion_event", "ping", "error"]
+      },
+      "config": {
+        "ping_interval_s": 30,
+        "max_idle_s": 300
+      }
+    },
+    {
+      "path": "/pulse/respond",
+      "method": "POST",
+      "description": "接收用户的脉冲决策（接受/改写）",
+      "request": {
+        "body": {
+          "session_id": "string",
+          "pulse_id": "string",
+          "decision": "accept | rewrite",
+          "rewrite_content": "string | null"
+        }
+      },
+      "response": {
+        "status": "string",
+        "next_action": "object | null",
+        "blocking_mode": "hard | soft"
+      },
+      "rate_limit": "pulse"
+    },
+    {
+      "path": "/excursion/enter",
+      "method": "POST",
+      "description": "进入远足探索模式（全局暗调主题）",
+      "request": { "body": { "session_id": "string" } },
+      "response": { "status": "string", "excursion_id": "string", "theme": "dark" },
+      "rate_limit": "excursion"
+    },
+    {
+      "path": "/excursion/exit",
+      "method": "POST",
+      "description": "退出远足探索模式",
+      "request": { "body": { "session_id": "string", "excursion_id": "string" } },
+      "response": { "status": "string" },
+      "rate_limit": "excursion"
+    },
+    {
+      "path": "/dashboard/user",
+      "method": "GET",
+      "description": "获取用户仪表盘数据",
+      "params": { "session_id": "string (required)" },
+      "response": {
+        "session_id": "string",
+        "ttm_radar": { "precontemplation": "float", "contemplation": "float", "preparation": "float", "action": "float", "maintenance": "float", "current_stage": "string" },
+        "sdt_rings": { "autonomy": "float", "competence": "float", "relatedness": "float" },
+        "progress": { "total_sessions": "int", "total_turns": "int", "no_assist_avg": "float | null", "last_active_utc": "string | null" }
+      },
+      "rate_limit": "dashboard"
+    },
+    {
+      "path": "/admin/gates/status",
+      "method": "GET",
+      "description": "获取 8 门禁实时状态（需要管理员 Authorization header）",
+      "auth": "Bearer token (管理员)",
+      "response": {
+        "gates": [{ "id": "int (1-8)", "name": "string", "status": "pass | warn | block", "metric": "string" }],
+        "overall": "pass | warn | block"
+      },
+      "rate_limit": "admin_gates"
+    },
+    {
+      "path": "/admin/audit/logs",
+      "method": "GET",
+      "description": "获取审计日志分页（需要管理员 Authorization header）",
+      "auth": "Bearer token (管理员)",
+      "params": {
+        "page": "int (>=1, default 1)",
+        "severity": "all | P0 | P1 | pass (default all)"
+      },
+      "response": {
+        "logs": [{ "event_id": "string", "timestamp_utc": "string", "severity": "string", "summary": "string", "trace_id": "string | null" }],
+        "total": "int",
+        "page": "int",
+        "page_size": "int"
+      },
+      "rate_limit": "admin_audit"
+    },
+    {
+      "path": "/health",
+      "method": "GET",
+      "description": "健康检查端点",
+      "response": { "status": "ok", "version": "9.0.0", "timestamp_utc": "string (ISO 8601)" },
+      "rate_limit": "health"
+    }
+  ],
+  "websocket_protocol": {
+    "version": "1.0.0",
+    "message_types": {
+      "user_message": { "direction": "client→server", "fields": ["type", "session_id", "content"] },
+      "coach_response": { "direction": "server→client", "fields": ["type", "action_type", "payload", "trace_id", "ttm_stage", "sdt_profile", "flow_channel"] },
+      "pulse_event": { "direction": "server→client", "fields": ["type", "pulse_id", "statement", "accept_label", "rewrite_label", "blocking_mode"] },
+      "pulse_decision": { "direction": "client→server", "fields": ["type", "session_id", "pulse_id", "decision"] },
+      "pulse_timeout": { "direction": "server→client", "fields": ["type", "pulse_id"] },
+      "excursion_event": { "direction": "server→client", "fields": ["type", "active"] }
+    }
+  }
+}

@@ -1,0 +1,200 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 10 S4.2 Learning Path Tracking</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>10</phase>
+  <sub_stage>S4.2</sub_stage>
+  <sub_stage_name>Learning Path Tracking — 知识覆盖追踪 + agent.py 集成</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 10 S4.2 实现者。
+    你的任务是实现知识覆盖追踪 + 将 S4.1 的上下文增强集成到 agent.py。
+    这是 S4 多轮上下文的集成闭合。
+  </role>
+
+  <context>
+    S4.1 已经实现了 build_coach_context 增强。
+    现在需要:
+    1. 在 agent.py 中追踪已覆盖的知识领域（covered_topics）
+    2. 从 SessionMemory 和 ArchivalMemory 获取数据传给 build_coach_context
+    3. 确保首次对话 / LLM 禁用 时零影响
+
+    知识覆盖追踪是轻量方案：关键词集合 dict[str, int]。
+    关键词来源：intent 解析的匹配词 + LLM 返回的 topics 字段。
+
+    设计前提:
+    - 不修改 SessionMemory / ArchivalMemory / memory.py
+    - 不修改 contracts/ 下任何文件
+    - llm.enabled: false 时知识覆盖不追踪
+    - 首次对话 covered_topics 为空 dict
+  </context>
+
+  <instructions>
+
+    === 变更一: CoachAgent 新增知识追踪（src/coach/agent.py）===
+
+    在 __init__ 或类级别初始化:
+    ```python
+    self._covered_topics: dict[str, int] = {}  # 知识点 → 提及次数
+    ```
+
+    新增方法:
+    ```python
+    def _track_coverage(self, intent: str, llm_topics: list[str] | None = None) -> dict[str, int]:
+        """追踪本轮涉及的知识点.
+
+        来源:
+        1. intent 中提取的关键词（规则引擎的 intent 标签）
+        2. LLM 返回的 topics 字段（LLM JSON 中的可选字段）
+
+        非教学 action_type 不追踪（pulse, excursion）。
+        """
+        non_teaching = {"pulse", "excursion", "defer"}
+        atype = self._last_action_type if hasattr(self, '_last_action_type') else ""
+        if atype in non_teaching:
+            return self._covered_topics
+
+        # intent 关键词提取（已有 intent 值如 "scaffold_python" → ["python"]）
+        keywords = _extract_keywords(intent)
+
+        if llm_topics:
+            keywords.extend(llm_topics)
+
+        for kw in keywords:
+            kw = kw.strip().lower()
+            if kw:
+                self._covered_topics[kw] = self._covered_topics.get(kw, 0) + 1
+
+        return self._covered_topics
+    ```
+
+    _extract_keywords 辅助函数:
+    ```python
+    def _extract_keywords(intent: str) -> list[str]:
+        \"\"\"从 intent 标签中提取知识点关键词.
+
+        intent 格式示例:
+        - "scaffold_python" → ["python"]
+        - "probe_recursion" → ["recursion", "递归"]
+        - "general" → []
+        - "challenge_sorting" → ["sorting", "排序"]
+        """
+        # 去掉 action_type 前缀
+        parts = intent.split("_", 1)
+        if len(parts) < 2:
+            return []
+        keyword = parts[1].strip().lower()
+        if not keyword or keyword in ("general", "default"):
+            return []
+        return [keyword]
+    ```
+
+    === 变更二: agent.py §4.5 调用 build_coach_context 时传入新参数 ===
+
+    ```python
+    # 从记忆系统获取历史
+    recent_history = self.memory.recall(intent, limit=5) if hasattr(self, 'memory') else []
+
+    # 从长期记忆搜索
+    archival_memories = []
+    try:
+        from src.coach.memory import ArchivalMemory
+        arch = ArchivalMemory()
+        archival_memories = arch.search(intent, limit=3)
+    except Exception:
+        pass
+
+    # 构建增强上下文
+    ctx = build_coach_context(
+        intent=intent,
+        action_type=action.get("action_type", "suggest"),
+        ttm_stage=ttm_stage,
+        sdt_profile=sdt_profile,
+        user_message=user_input,
+        # ★ S4 新增
+        recent_history=recent_history,
+        archival_memories=archival_memories,
+        covered_topics=self._covered_topics,
+    )
+    ```
+
+    === 变更三: agent.py §4.5 LLM 调用后更新知识追踪 ===
+
+    在 LLM 返回 payload 之后、校验之前:
+    ```python
+    llm_topics = llm_payload.get("topics", None) if isinstance(llm_payload, dict) else None
+    self._track_coverage(intent, llm_topics)
+    ```
+
+    === 变更四: 规则路径也可追踪知识（即使 LLM 禁用）===
+
+    规则路径（无 LLM）在 intent 解析后也可以追踪:
+    ```python
+    # 规则路径
+    if not use_llm:
+        self._track_coverage(intent)
+    ```
+
+    这样即使 LLM 禁用，知识覆盖也是累积的。当切换到 LLM 模式时，covered_topics 已有数据。
+
+    === 变更五: 非教学 action_type 跳过追踪 ===
+
+    `_track_coverage` 方法内处理:
+    ```python
+    _NON_TEACHING = {"pulse", "excursion", "defer"}
+    if atype in _NON_TEACHING:
+        return self._covered_topics  # 不追踪
+    ```
+  </instructions>
+
+  <behavior_examples>
+    例1: 连续教学对话
+      Round 1: intent="scaffold_python", LLM topics=["python", "variables"]
+        → _covered_topics = {"python": 1, "variables": 1}
+      Round 2: intent="scaffold_python", LLM topics=["loops", "for"]
+        → _covered_topics = {"python": 2, "variables": 1, "loops": 1, "for": 1}
+      Round 3: intent="probe_recursion"
+        → _covered_topics 新增 "recursion": 1
+
+    例2: 脉冲不追踪
+      action_type="pulse"
+        → _covered_topics 不变
+
+    例3: 纯规则路径（LLM 禁用）
+      intent="scaffold_python"
+        → _covered_topics = {"python": 1}
+      （规则路径没有 LLM topics，只从 intent 提取）
+  </behavior_examples>
+
+  <testing>
+    在 tests/test_llm_s4_integration.py 中实现以下测试:
+
+    1. test_track_coverage_from_intent — intent 关键词被追踪
+    2. test_track_coverage_from_llm_topics — LLM topics 被追踪
+    3. test_track_coverage_repeated_topic — 重复话题计数增加
+    4. test_track_coverage_non_teaching — pulse/excursion 不追踪
+    5. test_track_coverage_empty_intent — 空 intent 不追踪
+    6. test_extract_keywords — _extract_keywords 正确解析
+    7. test_extract_keywords_general — general intent 返回空
+    8. test_agent_history_in_context — agent.act() 调用时 history 传入 prompt
+    9. test_agent_no_history_first_turn — 首次对话无历史
+    10. test_agent_llm_disabled_no_tracking — llm disabled 时仍追踪意图
+
+    测试策略:
+    - 直接调用 _track_coverage 测试知识追踪逻辑
+    - mock LLMClient 验证 context 中包含历史字段
+    - 使用 CoachAgent(test_config) 验证集成路径
+  </testing>
+
+  <quality_gates>
+    <gate>python -c "
+from src.coach.agent import CoachAgent
+import inspect
+assert hasattr(CoachAgent, '_track_coverage'), '_track_coverage missing'
+print('OK')
+"</gate>
+    <gate>pytest tests/test_llm_s4_context.py tests/test_llm_s4_integration.py -v (全部通过)</gate>
+    <gate>pytest tests/ -q (1192 tests 全部 pass)</gate>
+  </quality_gates>
+</prompt>

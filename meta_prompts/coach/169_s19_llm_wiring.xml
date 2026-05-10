@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 19 — S19.1 LLM Main Chain Wiring</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>19</phase>
+  <sub_stage>S19.1</sub_stage>
+  <sub_stage_name>LLM 主链接线 — 把 src/coach/llm/ 管线接入 agent.act() 主路径</sub_stage_name>
+
+  <role>
+    你是 Coherence Phase 19 S19.1 实现者。
+    你的任务是：把 src/coach/llm/ 中已完备的 LLM 生成管线（LLMClient + build_coach_context + LLMDSLAligner + LLMSafetyFilter）接入 agent.act() 主路径，
+    替代第 570-611 行的硬编码空占位符。
+    你不写新 LLM 基础设施——你只接线。
+  </role>
+
+  <context>
+    === 当前状态 ===
+    agent.act() 的 32 键输出字典中，与 LLM 相关的字段全部硬编码为空：
+    - agent.py:597: llm_generated = False, llm_model = "", llm_tokens = 0
+    - agent.py:570-571: s4_history = [], s4_memory = []（历史为空 → personalization_evidence 永远 None）
+    - agent.py:573-574: current_difficulty = "medium", diagnostic_result = None
+    - agent.py:608-611: difficulty_contract.level = "medium", reason = "default"
+
+    同时 src/coach/llm/ 的 11 个文件已经完备并通过测试。CoachBridge.chat_stream() 在 api/services/coach_bridge.py:195-240 提供了参考实现——它调用 build_coach_context() → LLMClient.generate_stream() → LLMDSLAligner → LLMSafetyFilter → LLMOutputValidator。
+
+    === 参考实现 ===
+    api/services/coach_bridge.py:195-240 的 chat_stream() 方法（非流式版本需要稍作调整）：
+    ```python
+    from src.coach.llm.config import LLMConfig
+    from src.coach.llm.client import LLMClient
+    from src.coach.llm.prompts import build_coach_context
+    llm_config = LLMConfig.from_yaml(cfg)
+    client = LLMClient(llm_config)
+    ctx = build_coach_context(
+        intent=rule_action_type,
+        action_type=rule_action_type,
+        ttm_stage=ttm_stage,
+        sdt_profile=sdt_profile,
+        user_message=message,
+    )
+    ```
+
+    === 约束 ===
+    - 禁止修改 contracts/ 任何文件
+    - 禁止修改 src/coach/llm/ 中已存在的 LLM 代码（client.py/prompts.py/schemas.py/safety_filter.py 等）
+    - 禁止修改 src/inner/** src/middle/** src/outer/**
+    - 只能修改: src/coach/agent.py, api/services/coach_bridge.py, config/coach_defaults.yaml
+    - 全量回归 1275+ 必须保持通过
+    - LLM 调用必须可回退：API 失败时走规则引擎降级路径，不崩
+
+    === 前置条件：coach_defaults.yaml 必须新增 llm: 配置段 ===
+    重要: coach_defaults.yaml 当前没有 `llm:` 配置段。`LLMConfig.from_yaml()` 读取 `cfg.get("llm", {})`，
+    若无此段则 `enabled` 永远 False。你必须先在 coach_defaults.yaml 末尾新增：
+    ```yaml
+    # Phase 19: LLM 配置（S19.1 新增）
+    llm:
+      enabled: false
+      provider: "openai"
+      model: "deepseek-chat"
+      base_url: "https://api.deepseek.com/v1"
+      api_key_env: "DEEPSEEK_API_KEY"
+      timeout_s: 30
+      max_retries: 2
+      temperature: 0.7
+      max_tokens: 2000
+      fallback_to_rules: false
+      streaming: false
+    ```
+    这是 LLM 能接通的必要条件——没有这个配置段，所有 llm.enabled 检查都返回 False。
+  </context>
+
+  <task>
+    你在 agent.act() 中需要修改 3 个区域，按顺序执行：
+
+    ── 区域 A: agent.py 顶层新增导入（在现有 import 块末尾）──
+    添加以下导入：
+    ```python
+    from src.coach.llm.config import LLMConfig
+    from src.coach.llm.client import LLMClient, LLMError
+    from src.coach.llm.prompts import build_coach_context
+    from src.coach.llm.schemas import LLMDSLAligner, LLMOutputValidator
+    from src.coach.llm.safety_filter import LLMSafetyFilter
+    ```
+
+    ── 区域 B: act() 中 compose() 之后、DSLBuilder.build() 之前（约第 425-487 行之间）──
+    插入 LLM 调用逻辑：
+    B1. 检查 llm.enabled. 若 disabled，跳过整个 LLM 步骤（维持现有规则路径）
+    B2. 构建 coach context:
+        ```python
+        llm_cfg = self._cfg()
+        if llm_cfg.get("llm", {}).get("enabled", False):
+            try:
+                llm_config = LLMConfig.from_yaml(llm_cfg)
+                client = LLMClient(llm_config)
+                ctx = build_coach_context(
+                    intent=intent,
+                    action_type=action.get("action_type", "suggest"),
+                    ttm_stage=ttm_stage,
+                    sdt_profile=sdt_profile,
+                    user_message=user_input,
+                    history=self.memory.recall(intent, user_state)[:5],
+                    memory_snippets=None,
+                    covered_topics=None,
+                    difficulty=action.get("payload", {}).get("difficulty", "medium"),
+                )
+                llm_response = client.generate(ctx)
+                payload = llm_response.to_payload()
+                # DSL 对齐
+                aligned_payload, align_report = LLMDSLAligner.align(payload, action.get("action_type", "suggest"))
+                # 安全过滤
+                forbidden = _coach_cfg.get("relational_safety", {}).get("forbidden_phrases", [])
+                filtered_payload, triggered = LLMSafetyFilter.filter_payload(aligned_payload, forbidden)
+                filtered_payload = LLMSafetyFilter.enforce_action_type(filtered_payload, action.get("action_type", "suggest"))
+                valid, errors = LLMOutputValidator.validate(filtered_payload)
+                if valid and align_report.get("valid", False):
+                    action["payload"] = filtered_payload
+                    llm_generated = True
+                    llm_model = llm_config.model
+                    llm_tokens_used = llm_response.tokens_used
+                else:
+                    _logger.warning("LLM output validation failed: %s; using rule fallback", errors)
+                    llm_generated = False
+                    llm_model = ""
+                    llm_tokens_used = 0
+            except LLMError as e:
+                _logger.warning("LLM generation failed: %s; using rule fallback", e)
+                llm_generated = False
+                llm_model = ""
+                llm_tokens_used = 0
+        else:
+            llm_generated = False
+            llm_model = ""
+            llm_tokens_used = 0
+        ```
+
+    ── 区域 C: act() 返回字典中替换硬编码值（第 597-611 行）──
+    将原来硬编码的：
+    ```python
+    "llm_generated": False, "llm_model": "", "llm_tokens": 0,
+    ```
+    替换为：
+    ```python
+    "llm_generated": llm_generated,
+    "llm_model": llm_model,
+    "llm_tokens": llm_tokens_used,
+    ```
+
+    将原来硬编码的 personalization_evidence 块（第 602-605 行）暂保留（S19.2 会完善）：
+    但 memory_status 仍保持现有逻辑。
+
+    ── 降级保障 ──
+    LLM 调用失败的完整降级路径：
+    - LLM API 超时/报错 → LLMError caught → 规则引擎 action 保持不变 → llm_generated=False
+    - 安全校验不通过 → 日志警告 → 规则引擎 action 保持不变 → llm_generated=False
+    - config 中 llm.enabled=false → 跳过全部 LLM 步骤 → 保持现有行为不变
+  </task>
+
+  <output_files>
+    <file>config/coach_defaults.yaml — 新增 llm: 配置段</file>
+    <file>src/coach/agent.py — 区域 A/B/C 三处修改</file>
+  </output_files>
+
+  <post_condition>
+    S19.1 完成后 REST /chat 路径（agent.act()）已接通 LLM。但 WebSocket /chat/ws 路径（CoachBridge.chat_stream()）
+    仍独立调用 LLM，存在两条并行路径。此问题在 S19.2/S19.3 完成后统一处理，不在本轮修改范围内。
+  </post_condition>
+
+  <implementation_principles>
+    <principle>wire 不 rewrite：llm/ 目录的文件一个都不改</principle>
+    <principle>LLM 失败时规则引擎保底：任何异常不能导致 act() 抛出</principle>
+    <principle>llm.enabled=false 时行为零变化：现有的 1275 测试不能因为 LLM disabled 就挂</principle>
+    <principle>参考实现 api/services/coach_bridge.py:195-240 但改成同步调用：act() 是同步方法</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>llm.enabled=true + DEEPSEEK_API_KEY 设置时，act() 输出 llm_generated=True</item>
+    <item>llm.enabled=false 时，act() 输出 llm_generated=False（行为不变）</item>
+    <item>LLM API 不可用时 act() 不抛出异常，返回规则引擎结果</item>
+    <item>REST POST /chat 响应的 payload.statement 为 LLM 生成内容（当 enabled）</item>
+  </success_criteria>
+</prompt>

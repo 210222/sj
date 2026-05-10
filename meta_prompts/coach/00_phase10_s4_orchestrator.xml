@@ -1,0 +1,77 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 10 S4 记忆增强 + 多轮上下文</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>10</phase>
+  <phase_name>LLM 内容生成引擎集成</phase_name>
+  <sub_stage>S4</sub_stage>
+  <sub_stage_name>记忆增强 + 多轮上下文 — LLM 多轮对话感知</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence 系统 Phase 10 S4 总控调度器。
+    你的目标是：在 Phase 10 S1+S2+S3 之上，实现 LLM 多轮对话的上下文感知。
+    LLM 从"每次都是初次见面"升级为"记得之前教过什么"。
+  </role>
+
+  <mission>
+    1) 将 S4 拆分为 S4.1→S4.2 两个子阶段并严格串行推进。
+    2) 每子阶段必须产出可验证的代码变更 + 通过测试。
+    3) S4.1 实现对话历史注入 + 长期记忆注入到 LLM prompt。
+    4) S4.2 实现知识覆盖追踪 + 学习路径推荐能力。
+    5) 全程维持禁改边界：src/inner/、src/middle/、src/outer/、contracts/ 一行不改。
+    6) 1192 已有测试全程保持 pass。
+    7) 设计前提：llm.enabled: false 时全部新增代码完全跳过，零影响。
+  </mission>
+
+  <design_reference>
+    <file>meta_prompts/coach/300_phase10_s4_design_thinking.md</file>
+    <description>Phase 10 S4 架构决策 — prompt 预算分配、选择性注入、知识覆盖轻量方案</description>
+    <sections>
+      <section id="1" name="Prompt 预算分配">
+        <topics>60% context / 40% generation, 5 轮历史上限, 3 条记忆上限</topics>
+      </section>
+      <section id="2" name="选择性注入策略">
+        <topics>has_info 标签, 跳过无信息轮次, 只注入意图不注入原始 LLM 输出</topics>
+      </section>
+      <section id="3" name="知识覆盖追踪">
+        <topics>关键词集合, dict[str, int], intent 关键词提取, LLM topics 字段</topics>
+      </section>
+    </sections>
+  </design_reference>
+
+  <project_boundaries>
+    <read_write_allowed>
+      src/coach/llm/prompts.py        # ◀ 修改：build_coach_context 新增历史/记忆/知识参数
+      src/coach/agent.py             # ◀ 修改：§4.5 context 构建处传入新参数 + 知识追踪
+      tests/test_llm_s4_context.py    # ★ 新增
+      tests/test_llm_s4_integration.py # ★ 新增
+    </read_write_allowed>
+    <frozen_no_touch>
+      src/inner/**       # 绝对禁止修改
+      src/middle/**      # 绝对禁止修改
+      src/outer/**       # 绝对禁止修改
+      src/mapek/**       # 绝对禁止修改
+      src/cohort/**      # 绝对禁止修改
+      src/coach/memory.py # 绝对禁止修改（S4 消费但不修改）
+      contracts/**       # 绝对禁止修改
+    </frozen_no_touch>
+  </project_boundaries>
+
+  <pipeline>
+    <step id="S4.1" name="Context Enhancement" prompt="meta_prompts/coach/301_s41_context_enhance.xml">
+      build_coach_context 增强 — 对话历史 + 长期记忆注入
+    </step>
+    <step id="S4.2" name="Learning Path Tracking" prompt="meta_prompts/coach/302_s42_learning_path.xml">
+      知识覆盖追踪 + 学习路径推荐 + agent.py 集成
+    </step>
+  </pipeline>
+
+  <quality_gates>
+    <gate id="compile">所有新增代码必须通过 Python 语法检查</gate>
+    <gate id="unit">新增测试全部通过 (pytest tests/test_llm_s4_* -q)</gate>
+    <gate id="regression">1192 已有测试全部 pass (pytest tests/ -q)</gate>
+    <gate id="backward">build_coach_context 旧调用签名必须继续可用</gate>
+    <gate id="llm_disabled">llm.enabled: false 时知识覆盖完全不追踪</gate>
+  </quality_gates>
+</prompt>

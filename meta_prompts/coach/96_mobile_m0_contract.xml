@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>M0 — 合约冻结 + 环境准备</name>
+  <version>1.0.0</version>
+  <phase>9.5</phase>
+  <stage>M0</stage>
+  <stage_name>合约冻结 + Flutter SDK 环境准备</stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <prerequisites>
+    <item>Phase 9 S9.1-S9.4 全部 GO</item>
+    <item>1139 Python tests pass</item>
+    <item>51 前端 tests pass</item>
+  </prerequisites>
+
+  <mission>
+    1) 创建 contracts/api_contract.json — 定义全部 API 端点签名、请求/响应 schema、错误码、速率限制
+    2) 创建或更新 config/api_defaults.yaml — 移动端专用配置段
+    3) 安装 Flutter SDK 并验证工具链
+    4) 创建 mobile/ 目录占位
+    5) 验证前置条件：1139 Python tests + 51 前端 tests 全部 pass
+  </mission>
+
+  <tasks>
+
+    <task id="M0.1" name="冻结 api_contract.json">
+      <description>
+        根据现有的 frontend/src/types/api.ts 和 frontend/src/api/client.ts 的实际接口签名，创建完整的 API 合约。
+        这是移动端和任何未来客户端的单一真相源。
+
+        必须包含以下端点定义（每个端点含 method/path/request schema/response schema/error_codes/rate_limit）：
+        - POST /api/v1/session — 会话创建/恢复
+        - POST /api/v1/chat — 消息对话
+        - WS /api/v1/chat/ws — WebSocket 实时推流
+        - POST /api/v1/pulse/respond — 脉冲决策
+        - POST /api/v1/excursion/enter — 进入远足
+        - POST /api/v1/excursion/exit — 退出远足
+        - GET /api/v1/dashboard/user — 仪表盘数据
+        - GET /api/v1/admin/gates/status — 门禁状态
+        - GET /api/v1/admin/audit/logs — 审计日志
+        - GET /api/v1/health — 健康检查
+
+        每个端点的 request/response 必须精确匹配 api/models/schemas.py 的 Pydantic 模型字段。
+        错误码枚举必须包含: SESSION_NOT_FOUND(404), RATE_LIMITED(429), INVALID_TOKEN(401), INTERNAL_ERROR(500)
+      </description>
+      <files_to_create>
+        contracts/api_contract.json
+      </files_to_create>
+      <verification>
+        文件格式为有效 JSON，所有 10 个端点已定义，请求/响应类型与后端一致
+      </verification>
+    </task>
+
+    <task id="M0.2" name="安装 Flutter SDK">
+      <description>
+        安装 Flutter SDK（稳定版最新）。
+        Windows 环境下：
+        1. 从 https://docs.flutter.dev/get-started/install/windows 下载 Flutter SDK
+        2. 解压到合适位置（如 D:/tools/flutter）
+        3. 将 flutter/bin 添加到 PATH
+        4. 运行 flutter doctor 验证
+
+        如果用户环境已安装 Flutter，跳过安装步骤，直接验证。
+      </description>
+      <verification>
+        flutter doctor 无 blocking issues
+      </verification>
+    </task>
+
+    <task id="M0.3" name="创建 mobile/ 占位">
+      <description>
+        创建 mobile/ 目录，写入 .gitkeep 占位文件。
+        在 reports/coach_global_state.json 中标记 phase_9_mobile → IN_PROGRESS。
+      </description>
+      <verification>
+        mobile/ 目录存在，global_state 已更新
+      </verification>
+    </task>
+
+    <task id="M0.4" name="验证前置回归">
+      <description>
+        运行全量回归确保基线未被破坏：
+        - python -m pytest tests/ -q → 1139 pass
+        - cd frontend && npx vitest run → 51 pass
+        - cd frontend && npx tsc --noEmit → 0 errors
+      </description>
+      <verification>
+        全部 pass
+      </verification>
+    </task>
+
+  </tasks>
+
+  <artifacts>
+    <file>contracts/api_contract.json</file>
+    <file>config/api_defaults.yaml (追加移动端配置段)</file>
+    <file>reports/coach_global_state.json (phase_9_mobile → GO)</file>
+  </artifacts>
+
+  <exit_criteria>
+    contracts/api_contract.json 已冻结且格式正确
+    flutter doctor 验证通过
+    全量回归全部 pass
+    global_state M0 → GO
+  </exit_criteria>
+</prompt>

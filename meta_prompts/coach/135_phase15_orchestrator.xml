@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase15_orchestrator description="Phase 15 个性化闭环固化 — 个性化/诊断/难度/可观测/验收五链合一">
+
+  <metadata>
+    <stage>S15.1 + S15.2 + S15.3 + S15.4 + S15.5 + S15.6</stage>
+    <origin>
+      S15 交接文档确认：当前系统已进入 LLM-Only 个性化闭环阶段，
+      主要短板不是功能缺失，而是 personalization、diagnostic adaptation、difficulty regulation、
+      frontend observability、evaluation acceptance 尚未形成可追踪、可回放、可审计的闭环。
+    </origin>
+    <baseline>
+      reports/handover_to_next_claude_s15.md: overall_avg_quality=15.6/24, personalization=1.81/4。
+      reports/ai_teaching_summary.json: 18/28 pass，存在 CONTENT_TOO_BRIEF 与动作偏置。
+      reports/exhaustive_all_configs_report.json: personalization / encouragement 为弱维度。
+    </baseline>
+    <expected_improvement>
+      个性化从“引用用户一句原话”升级为“基于历史、画像、掌握度、卡点的可证据化教学适配”；
+      诊断与难度从隐式信号升级为统一契约；
+      HTTP / WebSocket / frontend / reports 共享同一套教学证据；
+      S14 vs S15 对比验收具备固定矩阵与失败案例索引。
+    </expected_improvement>
+  </metadata>
+
+  <system_anatomy>
+    <description>当前系统在五条链路上的真实断点</description>
+    <gaps>
+      <gap id="gap_a" name="个性化定义过浅">
+        <path>prompt 要求引用用户 → 评测只看是否引用/确认 → 容易刷分但不一定真的更个性化</path>
+        <fix>先定义 personalization contract，再让 prompt / schema / reports 共同遵守</fix>
+      </gap>
+      <gap id="gap_b" name="记忆注入可靠性不足">
+        <path>memory_context → recall() 签名不稳 → 异常被吞 → prompt 中 memory 可能经常为空</path>
+        <fix>显式区分 hit / miss / error，并把记忆来源和失败原因做成可观测字段</fix>
+      </gap>
+      <gap id="gap_c" name="诊断与难度信号分裂">
+        <path>DiagnosticEngine / Flow / persistence 都持有难度相关信号，但 Agent 只做粗粒度 difficulty 注入</path>
+        <fix>统一 difficulty contract + reason codes + 决策优先级</fix>
+      </gap>
+      <gap id="gap_d" name="观测链路不一致">
+        <path>HTTP 有字段、WebSocket 缺字段、frontend 看不到完整证据、dashboard 仍有占位值</path>
+        <fix>做 WS/HTTP parity 与 frontend observability contract</fix>
+      </gap>
+      <gap id="gap_e" name="验收不成体系">
+        <path>有单轮质量报告与专项教学报告，但缺固定的 S14 vs S15 A/B 验收工件</path>
+        <fix>建立执行方案、验收矩阵、失败案例索引与 final audit</fix>
+      </gap>
+    </gaps>
+  </system_anatomy>
+
+  <execution_order>
+    <step>S15.1 → S15.2 → S15.3 → S15.4 → S15.5 → S15.6</step>
+    <reason>
+      先定义“什么叫个性化”，再修输入来源（记忆），再统一诊断/难度，
+      再打通观测链路，最后才能做可信的 A/B 验收与审计收口。
+    </reason>
+  </execution_order>
+
+  <sub_stages>
+
+    <stage id="s15_1" name="Personalization Contract" priority="P0">
+      <description>把个性化升级为可打分、可解释、可回溯的教学契约。</description>
+      <files>
+        <file>meta_prompts/coach/137_s15_personalization_contract.xml</file>
+        <file>src/coach/llm/prompts.py</file>
+        <file>src/coach/agent.py</file>
+        <file>api/models/schemas.py</file>
+      </files>
+    </stage>
+
+    <stage id="s15_2" name="Memory Reliability" priority="P0">
+      <description>修复 memory/history/topic 注入的不可靠性，让 hit / miss / error 三态可审计。</description>
+      <files>
+        <file>meta_prompts/coach/138_s15_memory_reliability.xml</file>
+        <file>src/coach/llm/memory_context.py</file>
+        <file>src/coach/memory.py</file>
+        <file>src/coach/persistence.py</file>
+        <file>src/coach/agent.py</file>
+      </files>
+    </stage>
+
+    <stage id="s15_3" name="Diagnostic + Difficulty Contract" priority="P0">
+      <description>统一诊断、自适应、难度决策，形成单一 contract 与 reason codes。</description>
+      <files>
+        <file>meta_prompts/coach/139_s15_diagnostic_difficulty_contract.xml</file>
+        <file>src/coach/diagnostic_engine.py</file>
+        <file>src/coach/flow.py</file>
+        <file>src/coach/agent.py</file>
+        <file>src/coach/llm/prompts.py</file>
+      </files>
+    </stage>
+
+    <stage id="s15_4" name="Observability Parity" priority="P0">
+      <description>让 HTTP / WebSocket / frontend / dashboard 看到同一套教学证据。</description>
+      <files>
+        <file>meta_prompts/coach/140_s15_observability_parity.xml</file>
+        <file>api/services/coach_bridge.py</file>
+        <file>api/routers/chat.py</file>
+        <file>api/models/schemas.py</file>
+        <file>api/services/dashboard_aggregator.py</file>
+        <file>frontend/src/App.tsx</file>
+        <file>frontend/src/hooks/useWebSocket.ts</file>
+        <file>frontend/src/components/chat/ChatBubble.tsx</file>
+      </files>
+    </stage>
+
+    <stage id="s15_5" name="Evaluation Harness" priority="必须">
+      <description>固定 S14 vs S15 的 A/B 执行方案、验收矩阵、失败案例索引。穷尽测试由其他大模型执行。</description>
+      <files>
+        <file>meta_prompts/coach/141_s15_evaluation_harness.xml</file>
+        <file>reports/phase15_ab_acceptance_matrix.json</file>
+        <file>reports/phase15_exhaustive_execution_plan.md</file>
+        <file>reports/phase15_failure_case_index.json</file>
+      </files>
+    </stage>
+
+    <stage id="s15_6" name="Final Audit" priority="必须">
+      <description>汇总前五阶段全部证据，生成可签收、可交接的最终审计结论。</description>
+      <files>
+        <file>meta_prompts/coach/142_s15_final_audit.xml</file>
+        <file>reports/phase15_final_audit.md</file>
+        <file>reports/phase15_handover.md</file>
+      </files>
+    </stage>
+
+  </sub_stages>
+
+  <regression_gates>
+    <gate id="gate-personalization-contract" critical="true">必须存在明确的 personalization 评分口径、证据字段与反例说明</gate>
+    <gate id="gate-memory-visibility" critical="true">memory hit / miss / error 三态必须可观测，不允许静默失败</gate>
+    <gate id="gate-difficulty-trace" critical="true">每轮难度决策必须可解释，并能指出诊断/flow/persistence 来源</gate>
+    <gate id="gate-parity" critical="true">HTTP 与 WebSocket 的教练响应字段必须做 parity diff 并收敛</gate>
+    <gate id="gate-ab-matrix" critical="true">必须生成 S14 vs S15 A/B 验收矩阵与失败案例索引</gate>
+    <gate id="gate-final-audit" critical="true">Final audit 必须逐条引用证据文件，输出 GO / CONDITIONAL-GO / NO-GO</gate>
+  </regression_gates>
+
+  <rollback_conditions>
+    <condition critical="true">若个性化契约无法映射到真实输入信号，停止后续观测与验收阶段，回到 S15.1 重定义。</condition>
+    <condition critical="true">若记忆链路仍存在静默失败，禁止进入难度契约阶段。</condition>
+    <condition critical="true">若 WS/HTTP 无法对齐关键字段，禁止进入正式 A/B 验收阶段。</condition>
+    <condition>若 A/B 验收只有均值没有失败案例索引，视为 NO-GO。</condition>
+  </rollback_conditions>
+
+</phase15_orchestrator>

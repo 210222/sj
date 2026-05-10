@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase14_orchestrator description="Phase 14 诊断-适应闭环闭合 — 三条注入线">
+
+  <metadata>
+    <stage>S14.1 + S14.2 + S14.3 + S14.4 + S14.V</stage>
+    <origin>
+      Phase 13 激活了 DiagnosticEngine + TTM + SDT，但诊断数据未被消费。
+      穷举测试证实：personalization=1.81/4（不引用前文），难度自适应=无（全统一难度），
+      话题连贯性=无（每轮独立）。
+    </origin>
+    <baseline>1251 PASS / 10 expected failures, LLM OFF=14.5/24, LLM ON=16.8/24, Personalization=1.81/4</baseline>
+    <expected_improvement>
+      Personalization 从 1.8→2.8+（上下文引用），LLM OFF 从 14.5→15.5+（难度分级），
+      LLM ON 从 16.8→17.5+（难度自适应+context），最低组合从 12.0→13.0+（减少极端低分）。
+    </expected_improvement>
+  </metadata>
+
+  <system_anatomy>
+    <description>诊断-适应闭环的三个缺口</description>
+    <gaps>
+      <gap id="gap_a" name="难度自适应缺口">
+        <path>DiagnosticEngine → BKT mastery → Agent(不消费) → Composer(不消费)</path>
+        <fix>Agent 读 mastery 决定 difficulty，Composer 注入 prompt</fix>
+      </gap>
+      <gap id="gap_b" name="上下文引用缺口">
+        <path>用户发言 → Agent(不保存) → Composer(不引用) → LLM(失忆)</path>
+        <fix>Agent 维护 context_window，Composer 注入 prompt</fix>
+      </gap>
+      <gap id="gap_c" name="话题连贯缺口">
+        <path>每轮 act() 独立 → current_topic 不维护 → 话题切换无过渡</path>
+        <fix>Agent 维护 current_topic + 低掌握技能自动延续</fix>
+      </gap>
+    </gaps>
+  </system_anatomy>
+
+  <execution_order>
+    <step>S14.1 (Composer 注入 difficulty) → S14.2 (Agent 决策难度) → (S14.3 + S14.4 并行) → S14.V</step>
+    <reason>
+      Composer 的 prompt 注入是基础（必须先能接收难度参数），Agent 决策层依赖 Composer 能力，
+      上下文引用和话题连贯可并行实现，验证最终确认。
+    </reason>
+  </execution_order>
+
+  <sub_stages>
+
+    <stage id="s14_1" name="Composer prompt 注入 — difficulty 参数" priority="P0">
+      <description>让 Composer 的 LLM prompt 和 FallbackEngine 选择支持 difficulty 参数（easy/medium/hard）。</description>
+      <problem>
+        Composer 的 LLM prompt 当前不包含难度指令，FallbackEngine 的 _TEMPLATES 没有按难度分级。
+        无论学生掌握度如何，教学内容深度一样。
+      </problem>
+      <files>
+        <file>src/coach/composer.py — generate() 增加 difficulty 参数 + prompt 注入 (~20 行)</file>
+        <file>src/coach/fallback.py — _TEMPLATES 增加 difficulty 分级字段 (~30 行)</file>
+      </files>
+    </stage>
+
+    <stage id="s14_2" name="Agent 难度决策逻辑" priority="P0">
+      <description>Agent 根据 DiagnosticEngine 的 BKT mastery 数据自动决定当前轮次的 difficulty。</description>
+      <problem>
+        Mastery 数据在 DiagnosticEngine 中实时更新，但 Agent 不读取。
+        `diagnostic_engine.store.get_mastery(skill)` 返回 0-1 的掌握度，无人消费。
+      </problem>
+      <files>
+        <file>src/coach/agent.py — act() 中读取 mastery → 决策 difficulty → 传入 composer (~20 行)</file>
+      </files>
+    </stage>
+
+    <stage id="s14_3" name="上下文引用提升 Personalization" priority="P0">
+      <description>Agent 维护 context_window（最近 2-3 轮用户发言），Composer 注入 LLM prompt 使回复引用前文。</description>
+      <problem>
+        穷举数据 Personalization=1.81/4。Composer 不传递前轮用户发言，LLM 回复像失忆。
+        FallbackEngine 的 {prev_user_said} 占位符从未被填充。
+      </problem>
+      <files>
+        <file>src/coach/agent.py — 维护 context_window 环形 buffer (~10 行)</file>
+        <file>src/coach/composer.py — prompt 注入前轮用户发言摘要 (~15 行)</file>
+        <file>src/coach/fallback.py — {prev_user_said} 占位符实际填充验证 (~5 行)</file>
+      </files>
+    </stage>
+
+    <stage id="s14_4" name="话题追踪 + 连贯对话流" priority="P1">
+      <description>Agent 维护 current_topic，低掌握技能自动成为下一轮话题候选，切换时有过渡语。</description>
+      <problem>
+        Agent 每轮独立，不跟踪当前话题。DiagnosticEngine 的低掌握技能列表无法影响下一轮教学方向。
+        话题切换生硬（从 "for 循环" 跳到 "函数" 没有过渡）。
+      </problem>
+      <files>
+        <file>src/coach/agent.py — current_topic 字段 + 过渡语生成 (~20 行)</file>
+      </files>
+    </stage>
+
+    <stage id="s14_v" name="验证 + 穷举重测" priority="必须">
+      <description>单元测试 + 全量回归 + 穷举 256 组合 + comparison analysis</description>
+      <tests>
+        <test>S14.1-S14.4 各自 5-10 个单元测试</test>
+        <test>python -m pytest tests/ -q — 1250+ PASS</test>
+        <test>穷举 256 组合重测</test>
+      </tests>
+    </stage>
+
+  </sub_stages>
+
+  <rollback_conditions>
+    <condition critical="true">穷举测试 LLM OFF 从 14.5 降至 13 以下 → 回退所有 change</condition>
+    <condition critical="true">穷举测试 LLM ON 从 16.8 降至 15 以下 → 回退所有 change</condition>
+    <condition>Personalization 未提升 (1.81→<2.0) → 上下文注入需重新设计</condition>
+    <condition>全量回归测试失败 → 修复后再激活</condition>
+  </rollback_conditions>
+
+</phase14_orchestrator>

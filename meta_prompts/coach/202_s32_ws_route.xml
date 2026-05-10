@@ -1,0 +1,195 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 10 S3.2 WS Route + ChatStream + EOS Validate</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>10</phase>
+  <sub_stage>S3.2</sub_stage>
+  <sub_stage_name>WS 路由流式分支 + CoachBridge.chat_stream() + 终点校验</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 10 S3.2 实现者。
+    你的任务是实现 WS 路由流式分支 + CoachBridge.chat_stream() + 流式终点安全校验。
+    这是 S3 流式推送的集成闭合。
+  </role>
+
+  <context>
+    S3.1 已实现 LLMClient.generate_stream() — 异步生成器逐 chunk 产出文本。
+    现在需要:
+    1. 将流式能力暴露到 WebSocket 路由
+    2. 流式终点时做 S2 安全校验
+    3. 保留现有非流式路径完全不变
+
+    CoachBridge 是 CoachAgent 的适配层。现有 chat() 方法通过线程池调用 CoachAgent.act()。
+    chat_stream() 需要一条新路径: 先生成规则侧上下文 → 走 LLMClient.generate_stream() → 逐 chunk 推 WS → 终点校验。
+
+    设计前提:
+    - llm.enabled: false 时完全走现有路径
+    - streaming: false 时完全走现有路径
+    - 不修改 CoachAgent.act() 任何代码
+    - 不修改 CoachBridge.chat() 任何代码
+    - S2 安全护栏在流式终点必须执行
+  </context>
+
+  <instructions>
+
+    === 变更一: WSMessageType 枚举扩展（api/models/websocket.py）===
+
+    新增枚举值:
+    ```python
+    COACH_CHUNK = "coach_chunk"          # 流式内容块
+    COACH_STREAM_END = "coach_stream_end" # 流式结束，含完整 payload + 校验结果
+    SAFETY_OVERRIDE = "safety_override"   # 安全校验失败，前端需覆盖已渲染内容
+    ```
+
+    === 变更二: CoachBridge.chat_stream()（api/services/coach_bridge.py）===
+
+    新增静态方法，签名:
+    ```python
+    @staticmethod
+    async def chat_stream(
+        message: str,
+        session_id: str,
+    ) -> AsyncGenerator[dict, None]:
+        """WebSocket 流式推送适配器.
+
+        Yields:
+            包含 type 和 data 的 dict:
+            - {"type": "coach_chunk", "content": "..."}  # 流式内容块
+            - {"type": "coach_stream_end", "payload": {...}, "safety": {...}}  # 终点信号
+            - {"type": "safety_override", "message": "..."}  # 安全校验失败覆盖
+
+        Raises:
+            Exception: 仅在致命错误时抛出（调用方 catch）
+        """
+    ```
+
+    实现步骤:
+    1. 构造 CoachAgent 实例（与 chat() 相同）
+    2. 调用 agent._cfg() 获取 llm 配置
+    3. 调用 agent.act() 中的规则部分获取 action_type、intent、TTM 信息
+       - 注意: 这里不能直接调用 agent.act()（会触发同步 LLM 路径）
+       - 通过 agent 的内部状态构造 coach_context（复用 build_coach_context）
+    4. 构造 LLMClient + CoachContext
+    5. async for chunk in client.generate_stream(ctx):
+       - yield {"type": "coach_chunk", "content": chunk}
+    6. 拼接完整 content → 构造 payload（同 LLMResponse.to_payload 逻辑）
+    7. 调用 S2 安全校验:
+       - LLMDSLAligner.align(payload, action_type) → aligned, alignment_report
+       - LLMSafetyFilter.filter_payload(aligned, forbidden) → filtered, triggered
+    8. 根据校验结果 yield 终点消息:
+       - 校验成功: {"type": "coach_stream_end", "payload": filtered_payload, "safety": {"valid": True, ...}}
+       - 校验失败: {"type": "safety_override", "message": "内容安全校验未通过，已替换为安全版本", "safe_payload": {...}}
+
+    关键约束:
+    - chat_stream 是 async 方法（不走线程池，因为 generate_stream 是异步的）
+    - 不修改 CoachAgent 任何代码（通过已有公共方法访问配置）
+
+    === 变更三: WS 路由流式分支（api/routers/chat.py）===
+
+    在 chat_websocket() 的 USER_MESSAGE 处理中新增流式分支:
+
+    ```python
+    if msg_type == WSMessageType.USER_MESSAGE.value:
+        # 检查是否支持流式
+        # 判断条件: llm.enabled and streaming (通过 CoachBridge 判断)
+        if _should_stream(session_id):
+            # ★ 流式路径
+            async for event in CoachBridge.chat_stream(content, session_id):
+                if event["type"] == "coach_chunk":
+                    await _send(WSMessageType.COACH_CHUNK, {"content": event["content"]})
+                elif event["type"] == "coach_stream_end":
+                    await _send(WSMessageType.COACH_STREAM_END, {
+                        "payload": event["payload"],
+                        "safety": event["safety"],
+                        "action_type": result_action_type,
+                        "trace_id": trace_id,
+                    })
+                elif event["type"] == "safety_override":
+                    await _send(WSMessageType.SAFETY_OVERRIDE, {
+                        "message": event["message"],
+                        "safe_payload": event["safe_payload"],
+                    })
+        else:
+            # ★ 现有非流式路径（完全不变）
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(
+                _executor, CoachBridge.chat, content, session_id,
+            )
+            # ... 后续逻辑不变 ...
+    ```
+
+    实现 _should_stream 辅助函数:
+    ```python
+    def _should_stream(session_id: str) -> bool:
+        """检查当前 session 是否应使用流式输出."""
+        CoachAgent = _import_coach_agent()
+        agent = CoachAgent(session_id=session_id)
+        cfg = agent._cfg()
+        llm_cfg = cfg.get("llm", {})
+        return llm_cfg.get("enabled", False) and llm_cfg.get("streaming", False)
+    ```
+  </instructions>
+
+  <ws_message_format>
+    流式路径的消息序列:
+
+    ```
+    客户端 → {"type": "user_message", "session_id": "s-001", "content": "教我 Python"}
+       ↓
+    服务端 → {"type": "coach_chunk", "content": "Python"}
+    服务端 → {"type": "coach_chunk", "content": " 是"}
+    服务端 → {"type": "coach_chunk", "content": " 一门"}
+    服务端 → {"type": "coach_chunk", "content": " 编程语言"}
+       ...
+    服务端 → {"type": "coach_stream_end", "payload": {"statement": "Python 是一门编程语言..."}, "safety": {"valid": true, "triggered_phrases": []}, "action_type": "scaffold", "trace_id": "t-xxx"}
+    ```
+
+    安全校验失败时的消息序列:
+
+    ```
+    服务端 → {"type": "coach_chunk", "content": "我比你更了解你"}
+    服务端 → {"type": "coach_chunk", "content": "，应该这样做"}
+       ...
+    服务端 → {"type": "safety_override", "message": "内容安全校验未通过", "safe_payload": {"statement": "已替换为安全版本"}}
+    ```
+  </ws_message_format>
+
+  <testing>
+    在 tests/test_ws_stream.py 中实现以下测试:
+
+    1. test_ws_stream_sends_chunks — 流式路径发送 coach_chunk
+    2. test_ws_stream_ends_with_stream_end — 流式结束发送 coach_stream_end
+    3. test_ws_stream_non_streaming_fallback — streaming:false 走非流式路径（coach_response）
+    4. test_ws_stream_llm_disabled — llm.enabled:false 走非流式路径
+    5. test_ws_stream_safety_override — 安全校验失败发 safety_override
+    6. test_ws_stream_context_integrity — 流式消息字段完整（session_id, trace_id 等）
+    7. test_chat_stream_async_generator — chat_stream 是 async generator
+    8. test_should_stream — _should_stream 判断逻辑
+
+    测试策略:
+    - 使用 TestClient 模拟 WebSocket 连接（FastAPI 内置支持）
+    - mock LLMClient.generate_stream 控制流式输出
+    - mock CoachAgent 控制配置
+    - 不需要真实 API Key 或真实 LLM 调用
+  </testing>
+
+  <quality_gates>
+    <gate>python -c "
+from api.services.coach_bridge import CoachBridge
+import inspect
+assert hasattr(CoachBridge, 'chat_stream'), 'chat_stream missing'
+assert inspect.isasyncgenfunction(CoachBridge.chat_stream), 'must be async generator'
+print('OK')
+"</gate>
+    <gate>python -c "
+from api.models.websocket import WSMessageType
+for name in ('COACH_CHUNK', 'COACH_STREAM_END', 'SAFETY_OVERRIDE'):
+    assert hasattr(WSMessageType, name), f'{name} missing'
+print('OK')
+"</gate>
+    <gate>pytest tests/test_ws_stream.py -v (全部通过)</gate>
+    <gate>pytest tests/test_llm_stream.py tests/test_ws_stream.py -q (全部通过)</gate>
+    <gate>pytest tests/ -q (1162 tests 全部 pass)</gate>
+  </quality_gates>
+</prompt>

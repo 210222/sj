@@ -1,0 +1,97 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 10 S2 LLM 输出校验 + 安全对齐</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>10</phase>
+  <phase_name>LLM 内容生成引擎集成</phase_name>
+  <sub_stage>S2</sub_stage>
+  <sub_stage_name>LLM 输出校验 + 安全对齐</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence 系统 Phase 10 S2 总控调度器。
+    你的目标是：在 Phase 10 S1（LLM 客户端 + 基础集成）之上，插入三层安全护栏——DSL Schema 对齐、内容安全过滤、门禁后审计。
+    这层安全护栏确保 LLM 输出始终符合 DSL 合约、不包含禁止表述、不篡改教练策略、且被门禁阻断时有完整审计链路。
+  </role>
+
+  <mission>
+    1) 将 S2 拆分为 S2.1→S2.4 四个子阶段并严格串行推进。
+    2) 每子阶段必须产出可验证的代码变更 + 通过测试。
+    3) S2.1 实现 LLMDSLAligner — LLM payload → DSL schema 对齐。
+    4) S2.2 实现 LLMSafetyFilter — forbidden 短语过滤 + action_type 强制。
+    5) S2.3 实现 LLMGateAuditor — LLM 门禁阻断审计日志。
+    6) S2.4 集成关闭 — agent.py 接入三层校验 + 全量回归 + 合约更新。
+    7) 全程维持禁改边界：src/inner/、src/middle/、src/outer/、contracts/ 已有合约一行不改。
+    8) 1162 已有测试全程保持 pass。
+    9) 设计前提：llm.enabled: false 时全部新增代码完全跳过，零影响。
+  </mission>
+
+  <design_reference>
+    <file>reports/phase10_s2_plan.md</file>
+    <description>Phase 10 S2 完整落地方案 — 三层安全护栏设计</description>
+    <sections>
+      <section id="1" name="DSL Schema 对齐">
+        <topics>LLMDSLAligner, payload 字段白名单, slot 缺省值填充, dropped_fields 追踪</topics>
+      </section>
+      <section id="2" name="内容安全过滤">
+        <topics>LLMSafetyFilter, forbidden_phrases 递归过滤, action_type 强制覆盖</topics>
+      </section>
+      <section id="3" name="门禁后审计">
+        <topics>LLMGateAuditor, 阻断记录, 500 字符截断, 按门禁统计</topics>
+      </section>
+      <section id="4" name="agent.py 集成">
+        <topics>§4.6 LLM 输出校验, §6.1 LLM 门禁审计, 响应字段扩展</topics>
+      </section>
+    </sections>
+  </design_reference>
+
+  <design_thinking>
+    <file>meta_prompts/coach/100_phase10_s2_design_thinking.md</file>
+    <description>S2 架构决策文档 — 三层顺序不可互换, action_type 硬约束, 独立审计模块, 边界情况处理</description>
+  </design_thinking>
+
+  <project_boundaries>
+    <read_write_allowed>
+      src/coach/llm/schemas.py      # ◀ 修改：新增 LLMDSLAligner
+      src/coach/llm/safety_filter.py # ★ 新增
+      src/coach/llm/audit.py         # ★ 新增
+      src/coach/agent.py             # ◀ 修改：§4.6 + §6.1
+      config/coach_defaults.yaml     # ◀ 可选：新增审计配置
+      tests/test_llm_s2_schema.py    # ★ 新增
+      tests/test_llm_s2_safety.py    # ★ 新增
+      tests/test_llm_s2_audit.py     # ★ 新增
+      tests/test_llm_s2_integration.py # ★ 新增
+    </read_write_allowed>
+    <frozen_no_touch>
+      src/inner/**     # 绝对禁止修改
+      src/middle/**    # 绝对禁止修改
+      src/outer/**     # 绝对禁止修改
+      src/mapek/**     # 绝对禁止修改
+      src/cohort/**    # 绝对禁止修改
+      contracts/coach_dsl.json  # 已冻结
+      contracts/llm_contract.json  # 已冻结
+    </frozen_no_touch>
+  </project_boundaries>
+
+  <pipeline>
+    <step id="S2.1" name="DSL Schema Aligner" prompt="meta_prompts/coach/101_s21_schema_align.xml">
+      LLMDSLAligner — payload 字段白名单 + slot 对齐 + dropped_fields 追踪
+    </step>
+    <step id="S2.2" name="Content Safety Filter" prompt="meta_prompts/coach/102_s22_safety_filter.xml">
+      LLMSafetyFilter — forbidden_phrases 过滤 + action_type 强制
+    </step>
+    <step id="S2.3" name="Gate Audit Logger" prompt="meta_prompts/coach/103_s23_gate_audit.xml">
+      LLMGateAuditor — 门禁阻断记录 + 按门禁统计
+    </step>
+    <step id="S2.4" name="Integration Close" prompt="meta_prompts/coach/104_s24_regression_close.xml">
+      agent.py §4.6 + §6.1 接入 + 全量回归 + 合约冻结
+    </step>
+  </pipeline>
+
+  <quality_gates>
+    <gate id="compile">所有新增代码必须通过 Python 语法检查 (python -c "import ast; ast.parse(...)")</gate>
+    <gate id="unit">新增测试全部通过 (pytest tests/test_llm_s2_* -q)</gate>
+    <gate id="regression">1162 已有测试全部 pass (pytest tests/ -q)</gate>
+    <gate id="llm_disabled">llm.enabled: false 时响应中不含 llm_alignment/llm_safety 字段</gate>
+  </quality_gates>
+</prompt>

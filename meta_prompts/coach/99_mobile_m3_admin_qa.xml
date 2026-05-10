@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>M3 — 管理后台 + 最终回归</name>
+  <version>1.0.0</version>
+  <phase>9.5</phase>
+  <stage>M3</stage>
+  <stage_name>管理后台 + 无障碍 + 全量最终回归</stage_name>
+  <scope>D:/Claudedaoy/coherence/mobile</scope>
+
+  <prerequisites>
+    <item>M2 → GO (聊天 + 仪表盘全部实现)</item>
+    <item>1139 Python tests + 51 前端 tests 全部 pass</item>
+  </prerequisites>
+
+  <mission>
+    本子阶段实现管理后台 RBAC 视图 + 设置页面 + 无障碍加固 + 全量最终回归。
+
+    这是移动端最后一步，完成后 Phase 9 移动端全部完成。
+
+    核心交付：
+    1) SettingsScreen — 用户偏好 + 角色切换 + 关于页面
+    2) AdminScreen — 管理员仪表盘入口（RBAC 门禁）
+    3) GatePipeline — 8 门禁实时状态 + 展开下钻
+    4) AuditLogViewer — 审计日志 + 严重级别筛选 + 分页
+    5) RiskDashboard — 风险评估 F 型排列
+    6) WCAG 对比度验证（从 frontend 移植 contrastCheck.dart）
+    7) 环境光色温适配（从 frontend 移植 colorAdapt.dart）
+    8) 全量最终回归
+  </mission>
+
+  <tasks>
+
+    <task id="M3.1" name="SettingsScreen">
+      <description>
+        实现设置页面。
+
+        SettingsScreen:
+        - 用户信息区域: 显示当前角色 + token 前缀(如有)
+        - 角色切换: SegmentedButton 或 DropdownButton
+          - user: 终端用户模式
+          - admin: 管理员模式（显示管理后台入口）
+          - debug: 调试模式（显示原始数据开关）
+        - RBAC 门禁: 非 admin/debug 角色不显示管理后台入口
+        - "管理后台"按钮 → Navigator.push(AdminScreen)
+        - 关于区域: App 版本 (1.0.0) + 后端版本 (从 /health 获取)
+        - 服务器连接状态（绿点/红点）
+        - "断开连接"按钮 → 清除 token 返回初始状态
+        - 使用 ListTile 列表布局
+      </description>
+      <files_to_create>
+        screens/settings/settings_screen.dart (替换 M1 的占位)
+      </files_to_create>
+      <test_files>
+        test/screens/settings/settings_screen_test.dart (角色切换/RBAC 门禁)
+      </test_files>
+      <verification>
+        Widget 测试验证: user 角色看不到管理后台入口, admin 角色可以看到
+      </verification>
+    </task>
+
+    <task id="M3.2" name="AdminScreen — 管理后台主页">
+      <description>
+        实现管理后台主页。
+
+        AdminScreen:
+        - 从 AuthProvider 读取角色，非 admin/debug 显示 403 页面
+        - 403 页面: "需要管理员权限" + 返回按钮
+        - 管理员视图: 三个模块入口卡片
+          1. "门禁流水线" → GatePipeline
+          2. "审计日志" → AuditLogViewer
+          3. "风险评估" → RiskDashboard
+        - 每个卡片: 标题 + 简短描述 + 箭头图标
+        - 顶部 AppBar: "管理后台" + 返回按钮
+        - 数据总览行（从 GET /api/v1/admin/gates/status 获取整体状态）
+          - 显示整体 pass/warn/block + 通过门禁数/总数
+      </description>
+      <files_to_create>
+        screens/admin/admin_screen.dart
+      </files_to_create>
+      <test_files>
+        test/screens/admin/admin_screen_test.dart (RBAC 门禁/管理员视图)
+      </test_files>
+      <verification>
+        Widget 测试验证: 非 admin 角色显示 403, admin 角色显示管理面板
+      </verification>
+    </task>
+
+    <task id="M3.3" name="GatePipeline">
+      <description>
+        实现 8 门禁流水线管理员全展开视图。
+
+        GatePipeline:
+        - 从 AdminGatesResponse 渲染 8 个 Gate 行
+        - 每个 Gate 行: 状态指示器(绿点/橙警告/红点) + 名称 + 指标值 + 状态标签
+        - 状态标签颜色: pass→sageGreen, warn→coralCandy, block→charcoal
+        - 可展开/折叠: ExpansionTile 或自定义 AnimatedContainer
+        - 展开后显示:
+          - Gate 描述（来自 GATE_DESCRIPTIONS 映射表）
+          - 裁决详情（JSON 格式化显示）
+          - 历史趋势占位（"暂无数据"）
+        - 顶部整体状态: 大圆点 + "治理门禁 — 全部通过/存在警告/已阻断" + AND 逻辑提示
+        - block 状态时整体圆点有呼吸发光动画
+        - 空态: "门禁数据暂未加载"
+        - 下拉刷新: RefreshIndicator
+
+        GATE_DESCRIPTIONS 映射表（与 Web 前端 GatePipeline.tsx 一致）:
+        1: 检测用户是否频繁改写系统前提假设
+        2: 追踪探索行为的证据深度和频率
+        3: 评估无辅助场景下的独立思考轨迹
+        4: 监测用户对教练建议的顺从信号
+        5: 因果推断三诊断 (平衡/负控制/安慰剂)
+        6: 审计事件日志健康度评分
+        7: 独立框架思维审计通过率
+        8: 窗口期 schema 版本一致性检查
+      </description>
+      <files_to_create>
+        screens/admin/gate_pipeline.dart
+      </files_to_create>
+      <test_files>
+        test/screens/admin/gate_pipeline_test.dart (8 门禁渲染/展开/空态/下拉刷新)
+      </test_files>
+      <verification>
+        Widget 测试验证 8 行渲染 + 展开/折叠交互 + 空态
+      </verification>
+    </task>
+
+    <task id="M3.4" name="AuditLogViewer">
+      <description>
+        实现审计日志查看器。
+
+        AuditLogViewer:
+        - 顶部筛选栏: 全部 / P0 严重 / P1 警告 / 正常（Chip 或 SegmentedButton）
+        - 默认选中"全部"
+        - 日志列表: 每条日志显示
+          - 严重级别标签（颜色编码: P0→block 红, P1→warn 橙, pass→pass 绿）
+          - 摘要文本
+          - 时间戳 + trace_id（可选）
+        - 左侧边框颜色编码（与严重级别一致）
+        - 分页: 上一页/下一页 + "当前页/总页数"
+        - 初始 pageSize = 50（与后端一致）
+        - 空态: "暂无审计日志"
+        - 加载态: CircularProgressIndicator 居中
+        - 从 AdminAuditResponse 读取 total/page/page_size
+      </description>
+      <files_to_create>
+        screens/admin/audit_log_viewer.dart
+      </files_to_create>
+      <test_files>
+        test/screens/admin/audit_log_viewer_test.dart (筛选/分页/空态/加载态)
+      </test_files>
+      <verification>
+        Widget 测试验证筛选切换 + 分页翻页 + 空态
+      </verification>
+    </task>
+
+    <task id="M3.5" name="RiskDashboard">
+      <description>
+        实现风险评估面板。
+
+        RiskDashboard:
+        - 从 API 获取风险列表（或使用默认 3 条风险）
+        - F 型布局: 按严重程度排序 high→medium→low
+        - 每条风险:
+          - 严重级别标签（高/中/低, 颜色编码）
+          - 摘要文本
+          - → 推荐操作（陈述句结论）
+          - 分类标签（合规/性能/运维等）
+        - 左侧 3px 颜色边框（与严重级别一致）
+        - 默认 3 条风险（与 Web 前端 RiskDashboard.tsx 一致）:
+          1. 合规·低: "单用户架构 — 巴士因子=1" → "引入第二开发者前保持现状"
+          2. 性能·中: "MMRT 低流量时样本不足" → "样本不足时诊断自动 pass，无需干预"
+          3. 运维·低: "无 CI/CD pipeline — 本地单用户运行" → "当前阶段不需要自动化构建"
+        - 空态: 无风险时显示"当前无风险评估项"
+      </description>
+      <files_to_create>
+        screens/admin/risk_dashboard.dart
+      </files_to_create>
+      <test_files>
+        test/screens/admin/risk_dashboard_test.dart (排序/默认风险/空态)
+      </test_files>
+      <verification>
+        Widget 测试验证排序正确 + 默认 3 条渲染
+      </verification>
+    </task>
+
+    <task id="M3.6" name="WCAG 无障碍 + 工具函数移植">
+      <description>
+        将 Web 前端的工具函数移植到 Flutter。
+
+        contrast_check.dart（从 frontend/src/utils/contrastCheck.ts 移植）:
+        - hexToRgb: 解析 6 位/3 位 Hex → RGB
+        - relativeLuminance: WCAG 2.1 相对亮度计算
+        - getContrastRatio: 两个 Hex 颜色对比度
+        - checkWCAG_AA: 验证 WCAG AA（正常文本≥4.5:1, 大文本≥3:1）
+        - auditColorPalette: 全调色板自动扫描
+
+        color_adapt.dart（从 frontend/src/utils/colorAdapt.ts 移植）:
+        - getTimeBasedAdjustment: 根据时间返回色温偏移
+        - 夜间 (20:00-06:00): 暖色偏移 +5% 红色通道
+        - 日间 (06:00-20:00): 基准色温
+
+        state_machine.dart（从 frontend/src/utils/stateMachine.ts 移植）:
+        - TTM_UI_MAP: 5 阶段 → UI 组件映射表
+        - getTTMConfig(ttmStage): 返回对应阶段的 theme/inputMode/pulseMode
+      </description>
+      <files_to_create>
+        utils/contrast_check.dart
+        utils/color_adapt.dart
+        utils/state_machine.dart
+      </files_to_create>
+      <test_files>
+        test/utils/contrast_check_test.dart
+        test/utils/color_adapt_test.dart
+        test/utils/state_machine_test.dart
+      </test_files>
+      <verification>
+        Dart 测试覆盖与 TypeScript 版本一致的测试用例
+      </verification>
+    </task>
+
+    <task id="M3.7" name="全量回归">
+      <description>
+        最终全量回归，验证系统完整性。
+
+        检查清单：
+        1. flutter analyze — 0 errors, 0 warnings
+        2. flutter test — 40+ 测试全部 pass
+        3. python -m pytest tests/ -q — 1139 pass
+        4. cd frontend && npx vitest run — 51 pass
+        5. cd frontend && npx tsc --noEmit — 0 errors
+        6. cd frontend && npx vite build — 构建成功
+        7. python -X utf8 reports/audit_s9_1_api.py — 审计可运行
+
+        如果移动端测试不足 40，补充 Widget 测试直到达到最低线。
+      </description>
+      <verification>
+        全部 7 项检查 pass
+      </verification>
+    </task>
+
+  </tasks>
+
+  <dependencies>
+    <dependency>M2 的 ChatProvider/AuthProvider</dependency>
+    <dependency>contracts/api_contract.json 的管理员端点定义</dependency>
+  </dependencies>
+
+  <artifacts>
+    ~6 个新源文件（screens/admin/*, screens/settings/*, utils/*）
+    ~10 Widget + 工具函数测试 pass
+    管理后台完整可用（RBAC 门禁保护）
+    全量回归全部 pass
+    reports/coach_global_state.json phase_9_mobile → GO
+    reports/phase9_mobile_completion.md（新建）
+  </artifacts>
+
+  <exit_criteria>
+    全部测试通过（Flutter 40+ + Python 1139 + 前端 51）
+    flutter analyze 0 errors
+    管理后台可通过 admin 角色访问
+    GatePipeline 8 门禁展开/折叠正常
+    AuditLogViewer 筛选+分页正常
+    RiskDashboard 排序+默认风险正常
+    WCAG 工具函数测试通过
+    global_state M3 → GO
+    Phase 9 移动端第二阶段全部完成
+  </exit_criteria>
+</prompt>

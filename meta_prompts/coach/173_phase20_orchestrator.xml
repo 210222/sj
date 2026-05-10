@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 20 Orchestrator — 可观测性 + 用户模型</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>20</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>Phase 20 总编排 — 让系统能证明用户在进步</sub_stage_name>
+
+  <role>
+    你是 Coherence Phase 20 总控编排引擎。
+    Phase 19 完成了 LLM/诊断/个性化的主链接线。Phase 20 的目的是让系统能"看见自己教得怎么样"——用户模型存历史趋势、Dashboard 显示真实数据、系统开始追踪学习目标。
+  </role>
+
+  <context>
+    === 核心矛盾 ===
+    Phase 19 之后 LLM 内容生成、诊断引擎、行为模型全部接通主路径。
+    但所有数据覆盖式写入 profiles 表——当前值覆盖旧值，无时间序列。
+    Dashboard 仍然 return {total_sessions: 1, total_turns: 0}。
+    系统不知道用户想学什么。
+
+    === 数据证据 ===
+    - dashboard_aggregator.py:106-111: get_progress() 返回硬编码 `total_sessions=1, total_turns=0`
+    - agent.py 全文 0 次调用 save_ttm_stage/save_sdt_scores/save_difficulty
+    - persistence.py:16-42: profiles 表是单行覆盖式，无历史表
+    - persistence.py:121-133: get_profile() 返回字段无 learning_goal
+
+    === 本阶段目标 ===
+    1. S20.1: act() 每轮写 persistence + 新增 profile_history 表
+    2. S20.2: Dashboard 从 persistence 读真实数据
+    3. S20.3: 系统开始追踪学习目标
+  </context>
+
+  <baseline>
+    - Phase 19 GO（LLM/诊断/个性化已接通）
+    - 1275+ tests pass
+    - 14 份合约全部 frozen
+    - src/inner/** src/middle/** src/outer/** 禁止修改
+    - src/coach/ttm.py sdt.py flow.py 冻结（不改算法）
+  </baseline>
+
+  <execution_order>
+    <step>S20.1a (每轮持久化) → S20.1b (历史表) → S20.2 (Dashboard) → S20.3 (学习目标) → 全量回归</step>
+    <reason>
+      S20.1a 必须先做——没有 agent.py 的持久化调用，profiles 表永远是空数据库。
+      S20.1b 其次——profile_history 表依赖已写入 profiles 表的数据。
+      S20.2 第三——Dashboard 改造直接从 persistence 读 profiles 表字段。
+      S20.3 最后——学习目标是独立新增，不依赖历史表但依赖 profiles 表结构就绪。
+    </reason>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s20_1a" name="每轮持久化写入" priority="P0">
+      <description>agent.act() 每轮结束时调用 persistence 保存 TTM/SDT/Flow 状态</description>
+      <problem>agent.py 只调 persistence 做 consent 保存，不保存教学状态</problem>
+      <meta_prompt>173_s20_1a_persist_writes.xml</meta_prompt>
+      <files>src/coach/agent.py (+25 行)</files>
+    </stage>
+    <stage id="s20_1b" name="历史趋势表" priority="P0">
+      <description>persistence.py 新增 profile_history 表 + get_mastery_trend() 查询</description>
+      <problem>只有当前值，没有时间序列，无法回答"进步了吗"</problem>
+      <meta_prompt>174_s20_1b_history_table.xml</meta_prompt>
+      <files>src/coach/persistence.py (+80 行)</files>
+    </stage>
+    <stage id="s20_2" name="Dashboard 真实化" priority="P1">
+      <description>dashboard_aggregator.py 从 persistence 读真实数据</description>
+      <problem>Dashboard 展示硬编码占位符</problem>
+      <meta_prompt>175_s20_2_dashboard.xml</meta_prompt>
+      <files>api/services/dashboard_aggregator.py (+60 行)</files>
+    </stage>
+    <stage id="s20_3" name="学习目标追踪" priority="P1">
+      <description>persistence 加 learning_goal 字段 + composer 技能选 topic</description>
+      <problem>系统不知道用户想学什么</problem>
+      <meta_prompt>176_s20_3_learning_goals.xml</meta_prompt>
+      <files>src/coach/persistence.py + src/coach/composer.py (+80 行)</files>
+    </stage>
+  </sub_stages>
+
+  <success_criteria>
+    <item>3 轮对话后 persistence 中 total_turns > 0</item>
+    <item>Dashboard API 返回 real total_turns > 0</item>
+    <item>get_mastery_trend() 返回有时间戳的数组</item>
+    <item>composer._select_topic_by_mastery() 返回 topic 字符串</item>
+    <item>全量回归 1275+ passed</item>
+  </success_criteria>
+</prompt>

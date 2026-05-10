@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S15.5 Evaluation Harness</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>15</phase>
+  <sub_stage>S15.5</sub_stage>
+  <sub_stage_name>评测执行方案固化 — S14 vs S15 A/B 验收矩阵 + 失败案例索引</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 15 S15.5 实现者。
+    你的任务是：把 S14 vs S15 的评测和签收做成固定工件。
+    注意：穷尽/穷举测试由其他大模型执行；你负责的是执行方案、矩阵、输入输出格式、失败案例索引和最终汇总模板。
+  </role>
+
+  <context>
+    === 已知基线 ===
+    - reports/handover_to_next_claude_s15.md: overall_avg_quality=15.6/24, personalization=1.81/4
+    - reports/ai_teaching_summary.json: 18/28 pass, CONTENT_TOO_BRIEF 和动作偏置显著
+    - reports/exhaustive_all_configs_report.json / reports/ultimate_quality_report.json / reports/exhaustive_isolated_report.json
+      已提供多组质量基线，但尚未形成一套固定的 S14 vs S15 A/B 验收工件。
+
+    === 本阶段目标 ===
+    不是自己运行穷举，而是让其他模型可以无歧义地执行，并把结果喂回 final audit。
+  </context>
+
+  <task>
+    1) 固化 S14 baseline 模板与 S15 对照模板。
+    2) 定义 A/B 维度：relevance, clarity, interactive, structure, personalization, encouragement，
+       外加 Phase 15 新增的 evidence-based personalization 指标。
+    3) 设计失败案例索引：
+       - 低分组合
+       - 失败标签
+       - 典型对话片段
+       - 原因归因字段
+    4) 输出穷尽/穷举执行方案：
+       - 测试目标
+       - 输入格式
+       - 输出格式
+       - 汇总模板
+       - 通过阈值
+       - NO-GO 条件
+  </task>
+
+  <output_files>
+    <file>reports/phase15_ab_acceptance_matrix.json</file>
+    <file>reports/phase15_ab_summary.md</file>
+    <file>reports/phase15_exhaustive_execution_plan.md</file>
+    <file>reports/phase15_failure_case_index.json</file>
+  </output_files>
+
+  <evaluation_harness_spec>
+
+    === 基础维度 ===
+    - relevance
+    - clarity
+    - interactive
+    - structure
+    - personalization
+    - encouragement
+
+    === Phase 15 新增维度建议 ===
+    - personalization_evidence_quality
+    - diagnostic_adaptation_visibility
+    - difficulty_explainability
+    - observability_parity
+
+    === 失败案例索引最小字段 ===
+    - case_id
+    - scenario
+    - config_signature
+    - failed_dimensions
+    - failure_tags
+    - excerpt
+    - likely_root_cause
+
+    === 执行方案要求 ===
+    - 不允许挑样本
+    - 不允许只报均值
+    - 必须输出失败案例索引
+    - 必须说明是由其他大模型执行穷尽测试
+    - Claude 只产出执行方案与汇总模板
+
+    === 通过阈值建议 ===
+    - personalization 与 personalization_evidence_quality 必须双提升
+    - 不允许出现 overall 提升但 evidence 维度退化的“伪优化”
+    - 若失败案例集中在相同链路（如 WS 缺字段 / 记忆 error），必须标记 CONDITIONAL-GO 或 NO-GO
+
+  </evaluation_harness_spec>
+
+  <implementation_principles>
+    <principle>验收工件必须让外部执行者不需要猜测评分含义。</principle>
+    <principle>报告必须同时展示提升与失败，而不是只展示漂亮数字。</principle>
+    <principle>新维度必须能追溯到真实字段与可观测证据。</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. 形成一份可执行的穷尽评测方案。
+    2. 形成 S14 vs S15 A/B 验收矩阵模板。
+    3. 形成失败案例索引格式。
+    4. 明确 GO / CONDITIONAL-GO / NO-GO 阈值。
+    5. 明确标注穷尽测试由其他大模型执行。
+  </success_criteria>
+
+</prompt>

@@ -1,190 +1,283 @@
-# Coherence Coach — CCA-T 教练引擎可调参数
-# Phase 1 基线，阶段 2-4 逐步扩展
-
-default_intent: "general"
-default_domain_passport: "medium"
-memory_recall_limit: 5
-
+capabilities:
+  counterfactual:
+    auto_affects: []
+    impact: 安全优先
+    name: 反事实仿真
+    purpose: 假设模拟
+    recommended: false
+    recommended_for: 安全优先
+    risk: low
+  diagnostic_engine:
+    auto_affects: []
+    impact: 收集数据
+    name: 诊断引擎
+    purpose: 效果验证
+    recommended: false
+    recommended_for: 量化反馈
+    risk: medium
+  diagnostics:
+    auto_affects: []
+    impact: 升档检查
+    name: 因果诊断
+    purpose: 因果验证
+    recommended: false
+    recommended_for: 严谨归因
+    risk: medium
+  excursion:
+    auto_affects: []
+    impact: 自由模式
+    name: 远足权
+    purpose: 自主探索
+    recommended: false
+    recommended_for: 自主探索
+    risk: low
+  flow:
+    auto_affects: []
+    impact: 自动调节
+    name: 心流优化
+    purpose: 动态调节难度
+    recommended: false
+    recommended_for: 明确目标
+    risk: low
+  llm:
+    auto_affects: []
+    impact: LLM生成
+    name: LLM增强
+    purpose: 自然回复
+    recommended: false
+    recommended_for: 自然对话
+    risk: medium
+  mapek:
+    auto_affects: []
+    impact: 协调层
+    name: MAPE-K
+    purpose: 多智能体决策
+    recommended: false
+    recommended_for: 高级用户
+    risk: medium
+  mrt:
+    auto_affects: []
+    impact: 策略变体
+    name: MRT
+    purpose: 随机实验
+    recommended: false
+    recommended_for: 数据驱动
+    risk: medium
+  precedent_intercept:
+    auto_affects: []
+    impact: 降级建议
+    name: 先例拦截
+    purpose: 历史学习
+    recommended: false
+    recommended_for: 历史学习
+    risk: low
+  relational_safety:
+    auto_affects: []
+    impact: 越界防护
+    name: 关系安全
+    purpose: 禁语过滤
+    recommended: false
+    recommended_for: 关系边界
+    risk: low
+  sdt:
+    auto_affects: []
+    impact: 风格微调
+    name: SDT
+    purpose: 动机评估
+    recommended: true
+    recommended_for: 个性化
+    risk: low
+  sovereignty_pulse:
+    auto_affects: []
+    impact: 确认机制
+    name: 主权脉冲
+    purpose: 认知主权
+    recommended: false
+    recommended_for: 认知主权
+    risk: low
+  ttm:
+    auto_affects: []
+    impact: 阶段匹配策略
+    name: TTM
+    purpose: 学习阶段检测
+    recommended: true
+    recommended_for: 持续学习
+    risk: low
 composer_rules:
-  probe:
-    - "探"
-    - "测测"
-    - "检验"
-    - "检验一下"
-    - "测试"
-    - "测试一下"
-    - "探查"
-    - "考考"
   challenge:
-    - "挑战"
-    - "难的"
-    - "难点"
-    - "困难"
-    - "高难度"
-    - "难题"
-  reflect:
-    - "为什么"
-    - "反思"
-    - "复盘"
-    - "回顾"
-    - "想想看"
-    - "你觉得"
-  scaffold:
-    - "帮"
-    - "帮助"
-    - "教教"
-    - "教我"
-    - "指导"
-    - "怎么"
-    - "如何"
-    - "如何做"
+  - 挑战
+  - 难的
+  - 难点
+  - 困难
+  - 高难度
+  - 难题
   defer:
-    - "退出"
-    - "暂停"
-    - "停止"
-    - "停一下"
-    - "等等"
-
-# ── V18.8 主权脉冲 [Phase 3 frozen] ─────────
-sovereignty_pulse:
-  enabled: false                      # 默认关闭，不影响已有行为
-  high_intensity_threshold: 0.7       # composer action 强度 >= 此值触发脉冲
-  max_pulse_rounds: 3                 # 每轮对话最多脉冲次数
-  pulse_cooldown_turns: 5             # 脉冲后冷却回合数
-
-# ── V18.8 模型外远足权 [Phase 3 frozen] ─────
-excursion:
-  enabled: false                      # 默认关闭
-  command_prefix: "/excursion"        # 触发命令
-  duration_turns: 3                   # 远足持续回合数
-
-# ── V18.8 关系安全层 [Phase 3 frozen] ──────
-relational_safety:
-  enabled: false                      # 默认关闭
-  forbidden_phrases:
-    - "我比你更了解你"
-    - "你应该听我的"
-    - "我知道你在想什么"
-  sovereignty_statement: "你可以拒绝、改写或退出当前画像——这是你的认知主权。"
-  sovereignty_interval_turns: 10      # 每 N 回合插入一次主权声明
-  compliance_thresholds:
-    passive_agreement_max: 0.7        # 被动同意率上限
-    rewrite_decline_rate: 0.5         # 改写率下降触发线
-  coach_mode: false                   # 顺从超阈时自动切换为教练模式
-
-# ── Phase 4: TTM 阶段变化理论 [Phase 4 frozen] ──
-ttm:
-  enabled: false
-  detect:
-    confidence_threshold: 0.6       # 阶段检测置信度阈值
-    min_interactions: 5              # 最小检测交互次数
-  transition:
-    allow_forward_jump: false       # 是否允许跨阶段跳跃
-    action_to_maintenance_turns: 10  # 行动→维持所需回合数
-  weights:
-    cognitive: 0.3                   # 认知指标权重
-    behavioral: 0.3                 # 行为指标权重
-    emotional: 0.2                  # 情绪指标权重
-    social: 0.2                     # 社交指标权重
-
-# ── Phase 4: SDT 自决理论 [Phase 4 frozen] ────
-sdt:
-  enabled: false
-  weights:
-    autonomy: 0.35          # 自主性权重（综合得分中占比）
-    competence: 0.35        # 胜任感权重
-    relatedness: 0.30       # 关联性权重
-  thresholds:
-    autonomy_low: 0.3       # 低于此值 → 增加自主性支持
-    competence_low: 0.3     # 低于此值 → 降低难度
-    relatedness_low: 0.3    # 低于此值 → 增加社交互动
-  signal_decay: 0.9         # 历史信号衰减因子
-
-# ── Phase 4: 心流 + BKT [Phase 4 frozen] ──────
-flow:
-  enabled: false
-  bkt:
-    prior: 0.3             # 初始掌握概率
-    guess: 0.1             # 猜对概率
-    slip: 0.1              # 失误概率
-    learn: 0.2             # 学习率
-  flow_zone:
-    optimal_low: 0.4       # 心流区间下限 (I/H(M) 比例)
-    optimal_high: 0.6      # 心流区间上限
-    boredom_threshold: 0.2 # 低于此值→无聊（需提高难度）
-    anxiety_threshold: 0.8 # 高于此值→焦虑（需降低难度）
-  adjustment:
-    max_step: 0.2          # 单次最大难度调整幅度
-    cooldown_turns: 3      # 调整后冷却回合数
-
-# ── Phase 5: 语义安全三件套 [Phase 5 frozen] ──
+  - 退出
+  - 暂停
+  - 停止
+  - 停一下
+  - 等等
+  probe:
+  - 探
+  - 测测
+  - 检验
+  - 检验一下
+  - 测试
+  - 测试一下
+  - 探查
+  - 考考
+  reflect:
+  - 为什么
+  - 反思
+  - 复盘
+  - 回顾
+  - 想想看
+  - 你觉得
+  scaffold:
+  - 帮
+  - 帮助
+  - 教教
+  - 教我
+  - 指导
+  - 怎么
+  - 如何
+  - 如何做
 counterfactual:
   enabled: false
   simulation:
-    deterioration_threshold: 0.3   # 假设下恶化超过此阈值→标记风险
-    stabilization_factor: 0.2      # 假设推演中的稳定因子
-    max_hypotheses: 3             # 生成假设数
+    deterioration_threshold: 0.3
+    max_hypotheses: 3
+    stabilization_factor: 0.2
   weights:
-    best_case: 0.3                # 最佳历史权重
-    worst_case: 0.4               # 最差历史权重
-    alt_path: 0.3                 # 替换路径权重
-
-# [Phase 5 frozen] — S5.5 冻结后不可修改已有阈值
-# ── Phase 6: MAPE-K 闭环 + 多智能体 [Phase 6 frozen] ──
-mapek:
+    alt_path: 0.3
+    best_case: 0.3
+    worst_case: 0.4
+default_domain_passport: medium
+default_intent: general
+diagnostic_engine:
   enabled: false
-  loop:
-    min_interval_ms: 100
-    max_interval_ms: 5000
-    adaptive: true
-    backpressure_threshold: 0.8
-  monitor:
-    buffer_size: 100
-    dedup_window_s: 5
+diagnostics:
+  balance_check:
+    smd_threshold: 0.25
+  enabled: false
+  negative_control:
+    min_control_events: 5
+    overlap_threshold: 0.8
+  placebo_window:
+    p_value_threshold: 0.05
+    window_hours_before: 2
+excursion:
+  command_prefix: /excursion
+  duration_turns: 3
+  enabled: false
+flow:
+  adjustment:
+    cooldown_turns: 3
+    max_step: 0.2
+  bkt:
+    guess: 0.1
+    learn: 0.2
+    prior: 0.3
+    slip: 0.1
+  enabled: false
+  flow_zone:
+    anxiety_threshold: 0.8
+    boredom_threshold: 0.2
+    optimal_high: 0.6
+    optimal_low: 0.4
+llm:
+  api_key_env: DEEPSEEK_API_KEY
+  base_url: https://api.deepseek.com/v1
+  enabled: false
+  fallback_to_rules: false
+  max_retries: 2
+  max_tokens: 2000
+  model: deepseek-chat
+  provider: openai
+  temperature: 0.7
+  timeout_s: 30
+mapek:
   analyze:
     min_confidence: 0.3
-  plan:
-    max_horizon_steps: 5
+  enabled: false
   execute:
     max_retries: 2
   knowledge:
-    confidence_decay_rate: 0.05
     archival_after_days: 30
-
-precedent_intercept:
-  enabled: false
-  matching:
-    min_confidence: 0.3          # 先例最低置信度
-    max_results: 5               # 最多返回先例数
-    text_similarity_threshold: 0.4  # 文本匹配阈值
-  action:
-    on_hit: "block"              # "block"|"warn" 命中后动作
-
-# ── Phase 7: 因果稳健 + 治理闭环 [Phase 7 frozen] ──
+    confidence_decay_rate: 0.05
+  loop:
+    adaptive: true
+    backpressure_threshold: 0.8
+    max_interval_ms: 5000
+    min_interval_ms: 100
+  monitor:
+    buffer_size: 100
+    dedup_window_s: 5
+  plan:
+    max_horizon_steps: 5
+memory_recall_limit: 5
 mrt:
+  eligible_action_types:
+  - challenge
+  - probe
+  - reflect
+  - scaffold
   enabled: false
+  estimation:
+    confidence_level: 0.95
+    min_sample_per_variant: 10
+  outcome_metrics:
+  - engagement_score
+  - completion_rate
+  - satisfaction_rating
   randomization_rate: 0.2
   window_hours: 24
-  eligible_action_types:
-    - challenge
-    - probe
-    - reflect
-    - scaffold
-  outcome_metrics:
-    - engagement_score
-    - completion_rate
-    - satisfaction_rating
-  estimation:
-    min_sample_per_variant: 10
-    confidence_level: 0.95
-
-diagnostics:
+precedent_intercept:
+  action:
+    on_hit: block
   enabled: false
-  balance_check:
-    smd_threshold: 0.25
-  negative_control:
-    overlap_threshold: 0.8
-    min_control_events: 5
-  placebo_window:
-    window_hours_before: 2
-    p_value_threshold: 0.05
+  matching:
+    max_results: 5
+    min_confidence: 0.3
+    text_similarity_threshold: 0.4
+relational_safety:
+  coach_mode: false
+  compliance_thresholds:
+    passive_agreement_max: 0.7
+    rewrite_decline_rate: 0.5
+  enabled: false
+  forbidden_phrases:
+  - 我比你更了解你
+  - 你应该听我的
+  - 我知道你在想什么
+  sovereignty_interval_turns: 10
+  sovereignty_statement: 你可以拒绝、改写或退出当前画像——这是你的认知主权。
+sdt:
+  enabled: false
+  signal_decay: 0.9
+  thresholds:
+    autonomy_low: 0.3
+    competence_low: 0.4
+    relatedness_low: 0.3
+  weights:
+    autonomy: 0.35
+    competence: 0.35
+    relatedness: 0.3
+sovereignty_pulse:
+  enabled: false
+  high_intensity_threshold: 0.7
+  max_pulse_rounds: 3
+  pulse_cooldown_turns: 5
+ttm:
+  detect:
+    confidence_threshold: 0.6
+    min_interactions: 3
+  enabled: false
+  transition:
+    action_to_maintenance_turns: 10
+    allow_forward_jump: false
+  weights:
+    behavioral: 0.3
+    cognitive: 0.3
+    emotional: 0.2
+    social: 0.2

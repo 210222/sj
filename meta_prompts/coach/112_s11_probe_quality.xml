@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S11.3 诊断题质量与话题锚定</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>11</phase>
+  <sub_stage>S11.3</sub_stage>
+  <sub_stage_name>诊断题质量修复 — 话题锚定 + 对话上下文注入 + covered_topics 贯通</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 11 S11.3 实现者。
+    你的任务是：修复 probe 动作在第 10 轮始终问"认知主权"的问题，确保诊断题锚定在对话的实际教学内容上。
+  </role>
+
+  <context>
+    === 数据证据 ===
+    跨 12 种配置，第 10 轮（用户说"能考考我今天学的东西吗"）的 probe 问题全部跑题：
+
+    ```
+    baseline_rules: "认知主权保护系统的主要目标是什么？"
+    llm_only: "在中文中，'怎么'通常用来询问什么？"
+    full_stack: "什么是认知主权？"
+    ```
+
+    用户学了一整轮的 Python 变量/循环/列表，probe 却问完全不相关的问题。
+    这导致 relevance 得分从 turn 9 的 4/4 骤降到 turn 10 的 1-2/4。
+
+    === 根因 ===
+    1. agent.py 中 covered_topics 硬编码为空列表 []
+    2. intent="general" → _select_candidate_skill() 兜底到 "general" 作为 skill
+    3. skill="general" → fallback probe / LLM probe 都生成系统级概念题
+    4. DIAGNOSTIC_PROBE_PROMPT 没有对话上下文，不知道用户学了什么
+
+    === 修复范围 ===
+    | 文件 | 改动 |
+    |------|------|
+    | src/coach/agent.py | 将真实 covered_topics 传入 diagnostic_engine |
+    | src/coach/diagnostic_engine.py | _select_candidate_skill() 加入对话主题兜底 |
+    | src/coach/llm/prompts.py | 新增 probe 专用 prompt 模板 |
+  </context>
+
+  <task>
+    1) 修复 `src/coach/agent.py`：
+       - 在 should_and_generate() 调用前获取 LearningPathTracker 的真实 covered_topics
+       - 传给 diagnostic_engine.should_and_generate(covered_topics=real_topics)
+       - 删除硬编码的 covered = []
+
+    2) 修复 `src/coach/diagnostic_engine.py`：
+       - _select_candidate_skill() 中当 intent="general" 时回到 covered_topics
+       - 如果 covered_topics 也空，用最近记忆中的主题
+       - _generate_probe() 传入对话历史摘要
+
+    3) 修复 `src/coach/llm/prompts.py`：
+       - 新增 PROBE_PROMPT 模板（与 DIAGNOSTIC_PROBE_PROMPT 合并增强）
+       - 包含 {conversation_summary} 上下文
+
+    4) 编写测试覆盖：
+       - covered_topics 从空修复为真实数据
+       - intent="general" 时正确回退
+       - probe 生成的 skill 与最近话题一致
+  </task>
+
+  <output_files>
+    <file>src/coach/agent.py</file>
+    <file>src/coach/diagnostic_engine.py</file>
+    <file>src/coach/llm/prompts.py</file>
+  </output_files>
+
+  <probe_quality_spec>
+
+    === agent.py 修改 ===
+
+    删除当前代码（约 line 496-500）:
+    ```python
+    covered = []
+    diagnostic_probe = self.diagnostic_engine.should_and_generate(
+        covered_topics=covered, ...
+    ```
+
+    改为：
+    ```python
+    try:
+        from src.coach.llm.learning_path import get_learning_path
+        tracker = get_learning_path()
+        real_topics = tracker.get_covered_topics()
+    except Exception:
+        real_topics = []
+    diagnostic_probe = self.diagnostic_engine.should_and_generate(
+        covered_topics=real_topics,
+        llm_client=client if llm_cfg.get("enabled", False) else None,
+        intent=intent,
+    )
+    ```
+
+    NOTE: 需要把 client 变量的作用域上提，或仅在不需 LLM 时传 None。
+    目前 client 在 line 483 创建，在 LLM 块内。简单方案：
+    如果 llm_cfg.get("enabled")，在 LLM 块前创建 client，传给 diagnostic_engine
+    （但如果不想提前创建，可以先传 None 使用 fallback probe）
+
+    === diagnostic_engine._select_candidate_skill() 修改 ===
+
+    当前 intent 兜底 (line 401-403):
+    ```python
+    if intent and intent != "general":
+        return intent
+    return None
+    ```
+
+    改为：
+    ```python
+    if intent and intent != "general":
+        return intent
+    if covered_topics:
+        return covered_topics[0]
+    return None
+    ```
+
+    这样当用户说"考考我"（intent=general）时，会从 covered_topics 选第一个
+    真实话题（如 "python"）作为 skill。
+
+    === DIAGNOSTIC_PROBE_PROMPT 增强 ===
+
+    当前模板：
+    ```
+    你是 Coherence 自适应教练系统的诊断问题生成器。
+    目标: 生成一个探测性问题来评估用户在「{skill}」方面的掌握程度。
+    ```
+
+    新增字段 {conversation_summary}，紧接在目标之后：
+    ```
+    对话上下文: {conversation_summary}
+    ```
+
+    如果 conversation_summary 非空，probe 必须基于该上下文出题。
+
+    === _generate_probe() 修改 ===
+
+    新增参数 conversation_summary: str = ""，
+    如果不为空则注入到 DIAGNOSTIC_PROBE_PROMPT。
+
+    来源：从 agent.py 传入最近 2 轮的用户输入摘要。
+
+  </probe_quality_spec>
+
+  <implementation_principles>
+    <principle>probe 问题必须与当前对话的教学内容一致</principle>
+    <principle>不生成"general"或系统概念的诊断题——只测用户实际学过的内容</principle>
+    <principle>当 intent 无法明确时，优先从 covered_topics 推断话题</principle>
+    <principle>diagnostic_engine 不自行获取 LLM client——由 agent.py 控制</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. agent.py 将真实 covered_topics 传入 diagnostic_engine
+    2. intent="general" 时回退到 covered_topics[0]
+    3. probe 不再问"什么是认知主权"等系统概念
+    4. probe 问题与当前对话的教学主题一致
+    5. ~3 新增测试 pass
+    6. 全量回归 1261+ pass
+  </success_criteria>
+
+</prompt>

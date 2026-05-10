@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S15.4 Observability Parity</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>15</phase>
+  <sub_stage>S15.4</sub_stage>
+  <sub_stage_name>可观测一致性固化 — HTTP / WebSocket / frontend / dashboard 共享同一套教学证据</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 15 S15.4 实现者。
+    你的任务是：把后端内部知道的教学证据，稳定传到 HTTP、WebSocket、frontend 和 dashboard，解决“系统知道，但用户看不到”的问题。
+  </role>
+
+  <context>
+    === 已知断点 ===
+    1. `api/routers/chat.py` 的 WebSocket `coach_response` 与 HTTP chat response 字段不一致。
+    2. frontend 试图显示部分字段，但 WS 链路本身没有发出来。
+    3. `dashboard_aggregator.py` 中部分数据仍是占位值，不能支撑真实教学观测。
+    4. Phase 15 的个性化/记忆/难度字段如果不贯穿到前端，就无法形成可验收闭环。
+
+    === 目标 ===
+    让 HTTP / WS / frontend / dashboard 共享同一套核心教学证据，并产出 parity diff 报告。
+  </context>
+
+  <task>
+    1) 审视 `api/services/coach_bridge.py`、`api/routers/chat.py`、`api/models/schemas.py`、
+       `api/services/dashboard_aggregator.py`、`frontend/src/App.tsx`、`frontend/src/hooks/useWebSocket.ts`、
+       `frontend/src/components/chat/ChatBubble.tsx`、`frontend/src/utils/stateMachine.ts`。
+
+    2) 设计 observability parity contract：
+       - 哪些字段必须 HTTP / WS 都有
+       - 哪些字段要进消息气泡
+       - 哪些字段适合放侧边栏或 dashboard
+
+    3) 产出 parity diff：
+       - 当前缺失字段
+       - 计划新增字段
+       - 兼容层策略
+
+    4) 为前端定义最小可见集合：
+       - 个性化摘要
+       - 诊断摘要
+       - 难度摘要
+       - 关键来源标签
+  </task>
+
+  <output_files>
+    <file>api/services/coach_bridge.py</file>
+    <file>api/routers/chat.py</file>
+    <file>api/models/schemas.py</file>
+    <file>api/services/dashboard_aggregator.py</file>
+    <file>frontend/src/App.tsx</file>
+    <file>frontend/src/hooks/useWebSocket.ts</file>
+    <file>frontend/src/components/chat/ChatBubble.tsx</file>
+    <file>frontend/src/utils/stateMachine.ts</file>
+    <file>reports/phase15_ws_http_parity_diff.md</file>
+    <file>reports/phase15_frontend_observability_contract.md</file>
+  </output_files>
+
+  <observability_parity_spec>
+
+    === HTTP / WS 最低一致字段 ===
+    - action_type
+    - payload
+    - trace_id
+    - ttm_stage
+    - sdt_profile
+    - flow_channel
+    - personalization_evidence
+    - memory_status
+    - diagnostic_result
+    - diagnostic_probe
+    - difficulty_contract / difficulty_axes / difficulty_reason_codes
+    - domain_passport / source_tag（如适用）
+
+    === 前端展示分层 ===
+    1. ChatBubble: 简短摘要（来源标签、个性化摘要、诊断/难度徽标）
+    2. Sidebar / Dashboard: 展示更结构化的学习状态、难度原因、最近诊断与掌握度趋势
+    3. Admin / Debug view: parity 差异、reason codes、失败标签
+
+    === dashboard 要求 ===
+    - 尽量从真实 session / persistence / agent 状态聚合，不再长期依赖固定占位值
+    - 若仍无真实数据，必须显式标记 unavailable，而不是伪造默认健康状态
+
+  </observability_parity_spec>
+
+  <implementation_principles>
+    <principle>先保证字段链路一致，再追求复杂 UI 呈现。</principle>
+    <principle>可观测字段不能污染主回复内容，应以 metadata 形式存在。</principle>
+    <principle>dashboard 缺数据时必须显式表明，而不是继续返回看似健康的占位值。</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. 产出一份 HTTP / WS parity diff 报告。
+    2. 前端能看见个性化、诊断、难度三类摘要证据。
+    3. dashboard 至少对 unavailable 与 placeholder 做显式区分。
+    4. 新字段在 schema / WS / frontend 类型中命名一致。
+    5. 后续 A/B 验收可以直接使用这些可观测字段。
+  </success_criteria>
+
+</prompt>

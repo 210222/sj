@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S13.3 SDT 胜任感评估激活</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>13</phase>
+  <sub_stage>S13.3</sub_stage>
+  <sub_stage_name>SDT 胜任感评估 — 从 disabled 到 enabled，让教学风格随用户自感能力自适应</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 13 S13.3 实现者。
+    你的任务是：开启 SDT 自决理论模型，使其接收 DiagnosticEngine 的诊断信号，
+    校准胜任感（competence）、自主性（autonomy）和关联性（relatedness）评分。
+  </role>
+
+  <context>
+    === 理论背景 ===
+    SDT（自决理论，Self-Determination Theory）认为学习动机取决于三个基本心理需求：
+    - 胜任感（Competence）：用户觉得自己能做到
+    - 自主性（Autonomy）：用户觉得自己有选择
+    - 关联性（Relatedness）：用户觉得被理解
+
+    SDTAssessor 评估这三个维度并影响教学风格：
+    - 低胜任感 → 降难度、多 scaffold、多鼓励
+    - 低自主性 → 多给选项、让用户选择
+    - 低关联性 → 个性化引用、共鸣
+
+    === 当前状态 ===
+    src/coach/sdt.py 的 SDTAssessor 已实现：
+    - assess(conversation_history) → {autonomy, competence, relatedness} 分数
+    - get_recommendation(sdt_scores) → 教学风格建议（support_level, autonomy_support, etc.）
+
+    agent.py 中 SDT 集成点（约第 395-415 行）：
+    ```python
+    if self.sdt:
+        sdt_scores = self.sdt.assess(...)
+        sdt_rec = self.sdt.get_recommendation(sdt_scores)
+        # SDT 推荐影响 support_level 和 autonomy_support
+    ```
+
+    agent.py 中 DiagnosticEngine 的 process_turn 已经写了：
+    ```python
+    if diagnostic_result and diagnostic_result.get("evaluated"):
+        signal = 1.0 if diagnostic_result["correct"] else 0.0
+        self._no_assist_scores.append(signal)
+    ```
+    但 SDT 从未读取 `_no_assist_scores`。
+
+    === 数据 ===
+    穷举测试: SDT ON=15.8, OFF=15.5, 差距 +0.23。
+    SDT 是唯一有正向作用的模型，但从未被激活。
+
+    注意：穷举测试中的 SDT ON 分数包含了 SDT 代码运行但没有诊断输入的情况。
+    SDT 实际上在"盲校"——没有真实的 BKT 掌握度数据支撑。
+    激活 DiagnosticEngine 后 SDT 的效果可能更好。
+  </context>
+
+  <task>
+    1) 修改 `config/coach_defaults.yaml` 将 sdt.enabled 设为 true：
+
+    ```yaml
+    sdt:
+      enabled: true
+      signal_decay: 0.9
+      thresholds:
+        autonomy_low: 0.3
+        competence_low: 0.3
+        relatedness_low: 0.3
+      weights:
+        autonomy: 0.35
+        competence: 0.35
+        relatedness: 0.3
+    ```
+
+    2) 检查并修复 `src/coach/agent.py` 中 SDT 与 DiagnosticEngine 的信号连接。
+       DiagnosticEngine 的 process_turn 已经将诊断信号追加到
+       self._no_assist_scores，但 SDTAssessor 需要从某个地方读取这个列表。
+
+       检查 SDTAssessor.__init__ 是否接收 competence_scores 参数。
+       如果未连接，需要在 agent.py 中桥接：
+
+    ```python
+    # 在 SDT assess 调用前注入诊断信号
+    if self.sdt and self._no_assist_scores:
+        # 将诊断正确率传递给 SDT 的胜任感评估
+        recent_scores = self._no_assist_scores[-5:] if self._no_assist_scores else []
+        if recent_scores:
+            avg_competence = sum(recent_scores) / len(recent_scores)
+            # 传递给 SDT assess 方法（具体参数名需查看 sdt.py 接口）
+    ```
+
+    3) 阅读 `src/coach/sdt.py` 的 SDTAssessor.assess() 方法签名，
+       确认如何传入 competence 信号。如果 assess() 已有 competence_signal 参数，
+       直接传入；如果没有，添加一个：
+
+    ```python
+    def assess(self, conversation_history, recent_performance=None):
+        \"\"\"
+        recent_performance: list[float] — 最近诊断正确率（0.0-1.0）
+        \"\"\"
+        if recent_performance:
+            avg = sum(recent_performance) / len(recent_performance)
+            # 校准 competence 评分：表现好→胜任感高
+            competence_boost = (avg - 0.5) * 0.2  # 温和校准
+            self._scores["competence"] = min(1.0, max(0.0,
+                self._scores.get("competence", 0.5) + competence_boost))
+    ```
+
+    4) 确认 SDT 的 get_recommendation() 输出被 composer 消费。
+       主要检查点：support_level 和 autonomy_support 是否传递到
+       composer.compose() 的参数中。
+
+    === 不变更 ===
+    * 不要修改 SDT 的核心算法（权重、阈值、衰减速率）
+    * 不要修改 composer 的现有逻辑（只检查连接）
+    * 不要修改 DiagnosticEngine 的 process_turn（已有信号输出）
+  </task>
+
+  <testing>
+    <test name="test_sdt_enabled_in_config">
+      <code>
+def test_sdt_enabled_in_config():
+    import yaml
+    cfg = yaml.safe_load(open("config/coach_defaults.yaml"))
+    assert cfg["sdt"]["enabled"] is True
+      </code>
+    </test>
+    <test name="test_sdt_receives_diagnostic_signal">
+      <code>
+def test_sdt_receives_diagnostic_signal():
+    from src.coach.sdt import SDTAssessor
+    sdt = SDTAssessor({"enabled": True})
+    # 模拟诊断信号：连续 3 次正确
+    result = sdt.assess(
+        conversation_history=["a", "b", "c"],
+        recent_performance=[1.0, 1.0, 1.0],
+    )
+    if result and "competence" in result:
+        assert result["competence"] > 0.5  # 表现好→胜任感较高
+      </code>
+    </test>
+    <test name="test_sdt_no_crash_without_diagnostic">
+      <code>
+def test_sdt_no_crash_without_diagnostic():
+    from src.coach.sdt import SDTAssessor
+    sdt = SDTAssessor({"enabled": True})
+    result = sdt.assess(conversation_history=["hello"])
+    # 没有诊断信号时正常运行
+    assert result is not None
+    assert "autonomy" in result
+    assert "competence" in result
+    assert "relatedness" in result
+      </code>
+    </test>
+    <test name="test_sdt_recommendation_has_support_level">
+      <code>
+def test_sdt_recommendation_has_support_level():
+    from src.coach.sdt import SDTAssessor
+    sdt = SDTAssessor({"enabled": True})
+    scores = {"autonomy": 0.4, "competence": 0.3, "relatedness": 0.5}
+    rec = sdt.get_recommendation(scores)
+    assert "support_level" in rec
+    assert "autonomy_support" in rec
+      </code>
+    </test>
+  </testing>
+
+  <verification>
+    <step name="1. 确认 SDT 配置生效">
+      <command>python -c "import yaml; cfg=yaml.safe_load(open('config/coach_defaults.yaml')); print('SDT enabled:', cfg['sdt']['enabled'])"</command>
+      <expected>SDT enabled: True</expected>
+    </step>
+    <step name="2. 确认 SDT 单元测试通过">
+      <command>python -m pytest tests/test_sdt.py -v --tb=short 2>&1 | tail -10</command>
+      <expected>All SDT tests PASS</expected>
+    </step>
+    <step name="3. 快速集成测试">
+      <command>
+        python -c "
+import sys; sys.path.insert(0, '.')
+from src.coach.agent import CoachAgent
+agent = CoachAgent()
+sdt = agent.sdt
+print(f'SDT loaded: {sdt is not None}')
+"
+      </command>
+      <expected>SDT loaded: True</expected>
+    </step>
+  </verification>
+
+  <success_criteria>
+    1. sdt.enabled: true 配置生效
+    2. SDTAssessor.assess() 接收 recent_performance 参数（诊断信号）
+    3. 诊断信号正确校准 competence 评分
+    4. get_recommendation 的 support_level 被 composer 消费
+    5. 全量回归: python -m pytest tests/ -q → 1250+ pass
+    6. 穷举测试中 SDT 开启组合的 competence 与 BKT 掌握度正相关
+  </success_criteria>
+
+</prompt>

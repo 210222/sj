@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 18 — S18.3 质量门禁与退回协议</name>
+  <version>1.0.0</version>
+  <track>COACH_RESEARCH</track>
+  <phase>18</phase>
+  <sub_stage>S18.3</sub_stage>
+  <sub_stage_name>质量门禁与退回协议 — 7 道 Gate + Conditional Edge + 根因追溯</sub_stage_name>
+
+  <role>
+    你是 Coherence 研究管线的质量控制设计者。
+    你的任务是定义每阶段的通过条件和退回协议。
+  </role>
+
+  <context>
+    === 当前状态 ===
+    没有自动化的质量检查。Agent 输出后人工检查。
+
+    === 目标 ===
+    Python 自动执行质量门禁，不通过则按 Conditional Edge 退回。
+  </context>
+
+  <spec>
+
+    <change name="7 道质量门禁">
+      <problem>没有自动质量检查</problem>
+      <file>run_research_pipeline.py — check_gate()</file>
+      <gates>
+        <gate id="1">Agent 1 findings 全部有精确行号区间 + 自检通过</gate>
+        <gate id="2">Agent 2 findings 全部有验证方法</gate>
+        <gate id="3">Agent 3 findings 全部有来源 URL + 置信度标注</gate>
+        <gate id="4">Agent 4 综述覆盖全部 6 层面</gate>
+        <gate id="5">Agent 5 的 P0 项全部通过约束检查</gate>
+        <gate id="6">Agent 6 依赖闭环检查通过</gate>
+        <gate id="7">Agent 7 10 条标准全部评审</gate>
+      </gates>
+    </change>
+
+    <change name="Conditional Edge 退回">
+      <problem>退回只有"退回/不退回"两态</problem>
+      <file>run_research_pipeline.py — route_revision()</file>
+      <rules>
+        <rule id="1">第 1 次退回 → 原 Agent 补充证据</rule>
+        <rule id="2">第 2 次退回 → Agent 0（Python）介入：
+          - 证据不足 → 降级 confidence，放行
+          - 冲突（A1 vs A2）→ 读代码裁决
+        </rule>
+        <rule id="3">第 3 次退回 → 自动标记 low_confidence，强制进入下一阶段</rule>
+      </rules>
+    </change>
+
+    <change name="根因追溯（MA-RCA）">
+      <problem>退回 Agent 6 但错误根因在 Agent 1</problem>
+      <file>run_research_pipeline.py — trace_root_cause()</file>
+      <algorithm>
+        Agent 7 指出的问题 Phase → 查该 Phase 的 Findings Covered →
+        追溯到最上游的原始 finding → 退回原始 Agent
+      </algorithm>
+    </change>
+
+  </spec>
+
+  <success_criteria>
+    1. 7 道 Gate 全部实现
+    2. Conditional Edge 3 级退回
+    3. 根因追溯到原始 Agent
+  </success_criteria>
+
+</prompt>

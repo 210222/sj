@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S13.1 DiagnosticEngine + FallbackEngine 题库连接</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>13</phase>
+  <sub_stage>S13.1</sub_stage>
+  <sub_stage_name>DiagnosticEngine + FallbackEngine 题库 — probe 从泛泛通用变为精准教学</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 13 S13.1 实现者。
+    你的任务是：让 DiagnosticEngine 的 fallback probe 使用 FallbackEngine 的教学题库，
+    而不是通用文本模板。这是诊断-适应闭环的基础步骤。
+  </role>
+
+  <context>
+    === 现状 ===
+    DiagnosticEngine._fallback_probe() 仍然在使用通用模板（行 463-483）：
+
+    ```python
+    templates = {
+        "easy": {
+            "question": f"请简要说明「{skill}」是什么，并举一个例子。",
+            "expected_answer": f"{skill}的基本概念和定义",
+        },
+        "medium": {
+            "question": f"请描述「{skill}」的核心原理和使用场景。",
+            "expected_answer": f"{skill}的核心原理和典型应用场景",
+        },
+        ...
+    }
+    ```
+
+    这些模板与具体教学话题无关——无论是 python_variable 还是 python_list，
+    生成的都是"请简要说明 Python 变量是什么"这种泛泛的问题。
+
+    === FallbackEngine 已有资源 ===
+    S12.4 在 config/coach_defaults.yaml 的 fallback_templates.probe 段中建了 8+ 技能专属题库：
+
+    ```yaml
+    fallback_templates:
+      probe:
+        python_variable:
+          question: "在 Python 中，变量 age = 18 把什么存进了变量？"
+          expected_answer: "数字 18"
+          options: ["字符串'18'", "数字 18", "变量名 age"]
+          correct_index: 1
+        python_list:
+          question: "colors[0] 从列表 ['red','blue','green'] 中取出什么？"
+          expected_answer: "red"
+          ...
+    ```
+
+    但 DiagnosticEngine 从 FallbackEngine 读取这些模板。
+
+    === 数据证据 ===
+    穷举测试 256 组合中，diagnostic_engine.enabled=false 时 probe 分数不可测量。
+    一旦启用，probe 将成为教学质量的直接组成部分。当前 _fallback_probe()
+    的通用模板在穷举测试中将获得极低的 relevance 分数。
+
+    === 依赖 ===
+    - diagnostic_engine.py 第 5 行: from src.coach.flow import BKTEngine
+    - fallback.py 的 FallbackEngine 类需要可被 diagnostic_engine.py import
+    - config/coach_defaults.yaml 已有 diagnostic_engine 配置段和 fallback_templates.probe 段
+  </context>
+
+  <task>
+    1) 修改 `src/coach/diagnostic_engine.py` 的 `_fallback_probe()` 方法：
+
+    ```python
+    def _fallback_probe(self, skill: str, difficulty: str) -> dict | None:
+        \"\"\"从 FallbackEngine 获取诊断题模板，匹配不到时用通用兜底.\"\"\"
+        try:
+            from src.coach.fallback import FallbackEngine
+            # 读取完整 config（需要访问 fallback_templates）
+            if not hasattr(self, '_fallback_engine'):
+                from src.coach.agent import _coach_cfg
+                self._fallback_engine = FallbackEngine(_coach_cfg)
+
+            fallback_payload = self._fallback_engine.generate(
+                "probe", skill,
+                context={"difficulty": difficulty, "use_quiz_template": True},
+            )
+            question = fallback_payload.get("question", "")
+            expected = fallback_payload.get("expected_answer", "")
+            if question:
+                options = fallback_payload.get("options", [])
+                correct_idx = fallback_payload.get("correct_index", -1)
+                return {
+                    "question": question,
+                    "expected_answer": expected or f"{skill}的核心概念",
+                    "skill": skill,
+                    "options": options if options else None,
+                    "correct_index": correct_idx,
+                    "from_fallback_engine": True,
+                }
+        except Exception:
+            pass
+
+        # 旧有兜底（保留）
+        ...
+    ```
+
+    2) 修改 `src/coach/diagnostic_engine.py` 的 `_select_candidate_skill()` 方法，确保
+       当 intent="general" 且 covered_topics 为空时，能从 FallbackEngine 已知的 skill 列表中
+       选择一个：
+
+    ```python
+    def _select_candidate_skill(self, covered_topics=None, intent="general"):
+        # ... 现有逻辑优先 ...
+        # 新增: 从 FallbackEngine 已知 skill 中选一个
+        if not skill_found:
+            try:
+                from src.coach.fallback import FallbackEngine
+                known_skills = FallbackEngine.list_known_skills(
+                    self._cfg if hasattr(self, '_cfg') else {}
+                )
+                if known_skills:
+                    # 从未测试过的 skill 中选
+                    tested = set(self._store.get_all_masteries().keys())
+                    untested = [s for s in known_skills if s not in tested]
+                    if untested:
+                        return untested[0]
+                    return known_skills[0]
+            except Exception:
+                pass
+        # ... 继续兜底 ...
+    ```
+
+    3) 在 `src/coach/fallback.py` 的 FallbackEngine 中新增静态方法：
+
+    ```python
+    @staticmethod
+    def list_known_skills(config: dict) -> list[str]:
+        \"\"\"返回 fallback_templates.probe 中已定义的全部技能.\"\"\"
+        ft = config.get("fallback_templates", {})
+        probe_templates = ft.get("probe", {})
+        return [k for k in probe_templates.keys() if k != "_default"]
+    ```
+
+    4) 修改 `config/coach_defaults.yaml` 将 diagnostic_engine.enabled 设为 true：
+
+    ```yaml
+    diagnostic_engine:
+      enabled: true
+      interval_turns: 5
+      max_probes_per_session: 3
+      min_confidence: 0.3
+      difficulty_default: medium
+      llm_evaluation: true
+      bkt:
+        prior: 0.3
+        guess: 0.1
+        slip: 0.1
+        learn: 0.2
+    ```
+
+    5) 在 `fallback.py` 的 FallbackEngine.generate() 中增加 probe 的 quiz_template 支持，
+       使得 generate("probe", skill, {"use_quiz_template": True}) 返回格式为：
+
+    ```python
+    {
+        "question": "...",
+        "expected_answer": "...",
+        "options": ["...", "...", "..."],
+        "correct_index": 0,
+    }
+    ```
+
+  </task>
+
+  <testing>
+    <test name="test_diagnostic_fallback_uses_fallback_engine">
+      <code>
+def test_diagnostic_fallback_uses_fallback_engine():
+    from src.coach.diagnostic_engine import DiagnosticEngine
+    engine = DiagnosticEngine({"enabled": True, "llm_evaluation": False})
+    result = engine._fallback_probe("python_variable", "medium")
+    assert result is not None
+    assert "question" in result
+    # FallbackEngine 的 python_variable 模板应该包含"变量"
+    assert "变量" in result["question"] or "age" in result["question"]
+      </code>
+    </test>
+    <test name="test_diagnostic_fallback_has_options">
+      <code>
+def test_diagnostic_fallback_has_options():
+    from src.coach.diagnostic_engine import DiagnosticEngine
+    engine = DiagnosticEngine({"enabled": True, "llm_evaluation": False})
+    result = engine._fallback_probe("python_variable", "medium")
+    if result.get("from_fallback_engine"):
+        assert "options" in result
+        assert len(result["options"]) >= 2
+      </code>
+    </test>
+    <test name="test_list_known_skills">
+      <code>
+def test_list_known_skills():
+    from src.coach.fallback import FallbackEngine
+    yaml_content = """
+fallback_templates:
+  probe:
+    python_variable: {question: "?", expected_answer: "?"}
+    python_list: {question: "?", expected_answer: "?"}
+    _default: {question: "?", expected_answer: "?"}
+"""
+    import yaml
+    cfg = yaml.safe_load(yaml_content)
+    skills = FallbackEngine.list_known_skills(cfg)
+    assert "python_variable" in skills
+    assert "python_list" in skills
+    assert "_default" not in skills  # 默认模板不应该暴露为 skill
+      </code>
+    </test>
+  </testing>
+
+  <success_criteria>
+    1. _fallback_probe("python_variable") 返回 FallbackEngine 的题库内容
+    2. 题库匹配不到时正确回退到通用模板（不崩溃）
+    3. FallbackEngine.list_known_skills() 返回 8+ 技能
+    4. _select_candidate_skill 能自动选择 FallbackEngine 中未测试的技能
+    5. diagnostic_engine.enabled: true 配置生效
+    6. 全量回归: python -m pytest tests/ -q → 1250+ pass
+  </success_criteria>
+
+</prompt>

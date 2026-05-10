@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 22 — S22.2 Action-Type 字段校验</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>22</phase>
+  <sub_stage>S22.2</sub_stage>
+  <sub_stage_name>LLMOutputValidator 新增 action_type 特定字段检查</sub_stage_name>
+
+  <role>
+    当前 LLMOutputValidator.validate() 只检查 "statement" 字段存在性。
+    S22.1 已为每种 action_type 添加了结构化输出要求，但 LLM 可能不遵守。
+    你需要在 validate() 中增加 action_type 特定的必填字段检查。
+  </role>
+
+  <context>
+    === 当前代码 ===
+    schemas.py:42-56 LLMOutputValidator.validate():
+    ```python
+    @classmethod
+    def validate(cls, payload: dict) -> tuple[bool, list[str]]:
+        errors = []
+        if not isinstance(payload, dict):
+            return False, ["payload must be a dict"]
+        if "statement" not in payload:
+            errors.append("missing 'statement' field")
+        ...
+        return len(errors) == 0, errors
+    ```
+    只检查 "statement"。不检查 action_type 特定字段。
+
+    === 约束 ===
+    - 不修改 contracts/ 任何文件
+    - 可以修改: src/coach/llm/schemas.py
+    - validate() 签名不变（兼容现有调用方）
+    - 全量回归 1275+ 必须通过
+  </context>
+
+  <task>
+
+    ── 改动: LLMOutputValidator 新增 validate_by_action_type() 和增强 validate()──
+
+    在 LLMOutputValidator 类中（约第 56 行）新增：
+
+    ```python
+    # Phase 22: Action-Type 特定必填字段
+    ACTION_TYPE_REQUIRED_FIELDS = {
+        "probe": {"question", "expected_answer"},
+        "scaffold": {"steps"},
+        "challenge": {"objective", "difficulty"},
+        "suggest": {"options"},
+        "reflect": {"question"},
+        "defer": {"resume_condition"},
+        "pulse": {"accept_label", "rewrite_label"},
+        "excursion": {"bias_disabled"},
+    }
+
+    @classmethod
+    def validate_by_action_type(cls, payload: dict, action_type: str) -> list[str]:
+        """校验 action_type 特定的必填字段。
+
+        Args:
+            payload: LLM 生成的 payload 字典
+            action_type: 当前策略的 action_type（来自 compose）
+
+        Returns:
+            缺失字段名称列表（空列表 = 全部通过）
+        """
+        required = cls.ACTION_TYPE_REQUIRED_FIELDS.get(action_type, set())
+        return [f"missing '{f}' for action_type '{action_type}'"
+                for f in required if f not in payload]
+    ```
+
+    ── 同时: 在 LLMOutputValidator.validate() 末尾增加 action_type 参数（可选）──
+
+    保持现有 validate(payload) 签名不变，新增一个带 action_type 的重载类方法：
+
+    ```python
+    @classmethod
+    def validate_with_type(cls, payload: dict, action_type: str | None = None
+                           ) -> tuple[bool, list[str]]:
+        """校验并附带 action_type 特定检查。
+
+        用法: 替换现有的 validate(payload) 调用。
+        """
+        is_valid, errors = cls.validate(payload)
+        if action_type:
+            type_errors = cls.validate_by_action_type(payload, action_type)
+            errors.extend(type_errors)
+        return len(errors) == 0, errors
+    ```
+
+  </task>
+
+  <verification_method>
+    ```bash
+    cd D:/Claudedaoy/coherence
+    python -c "
+    from src.coach.llm.schemas import LLMOutputValidator
+
+    # probe 缺少 expected_answer 应报错
+    v, e = LLMOutputValidator.validate_with_type(
+        {'statement': 'test'}, 'probe')
+    assert not v, 'probe 缺少 expected_answer 应返回 False'
+    assert any('expected_answer' in x for x in e), f'应提示缺少 expected_answer, got {e}'
+
+    # scaffold 有 steps 应通过
+    v, e = LLMOutputValidator.validate_with_type(
+        {'statement': 'test', 'steps': []}, 'scaffold')
+    assert v, f'scaffold 有 steps 应通过, got {e}'
+
+    # 无 action_type 时行为不变
+    v, e = LLMOutputValidator.validate_with_type({'statement': 'test'})
+    assert v, '无 action_type 时应保持旧行为'
+
+    print('ALL PASS: action_type validation works')
+    "
+    python -m pytest tests/ -q
+    ```
+  </verification_method>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>probe 无 expected_answer 时验证不通过</item>
+    <item>scaffold 有 steps 时验证通过</item>
+    <item>无 action_type 时行为不变</item>
+    <item>原有 validate(payload) 签名不变</item>
+  </success_criteria>
+</prompt>

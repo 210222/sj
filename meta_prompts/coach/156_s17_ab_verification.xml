@@ -1,0 +1,18 @@
+<sub_phase id="s17.4" name="A/B 对照组验证">
+  <objective>
+    构建聚焦的 A/B 测试，带统计置信度，证明 full_stack 优于 llm_only。
+  </objective>
+  <changes>
+    <change file="tests/test_s17_ab_evaluation.py">
+      独立脚本（非 pytest）。复用 apply_config + score_response 模式。
+      2 配置 × 5 场景 × 5 轮 = 50 轮测评。
+      10 维度评分（8 原始 + autonomy_support + stage_awareness），满分 40。
+      统计输出：均值、标准差、95% CI、Cohen's d（每维度）。
+      输出 reports/s17_ab_report.json。
+    </change>
+  </changes>
+  <expected_result>
+    full_stack 预期在 personalization、autonomy_support、stage_awareness 维度显著优于 llm_only。
+    Cohen's d > 0.8 表示大效应量（practical significance）。
+  </expected_result>
+</sub_phase>

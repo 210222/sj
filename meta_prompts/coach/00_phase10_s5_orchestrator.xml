@@ -1,0 +1,78 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 10 S5 代码沙箱</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>10</phase>
+  <phase_name>LLM 内容生成引擎集成</phase_name>
+  <sub_stage>S5</sub_stage>
+  <sub_stage_name>代码沙箱 — LLM 生成代码的安全执行环境</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence 系统 Phase 10 S5 总控调度器。
+    你的目标是：在 Phase 10 S1-S4 之上，实现安全的代码执行沙箱。
+    LLM 生成的代码经过安全过滤 + 用户确认后，在资源受限的沙箱中执行。
+  </role>
+
+  <mission>
+    1) 将 S5 拆分为 S5.1→S5.2 两个子阶段并严格串行推进。
+    2) 每子阶段必须产出可验证的代码变更 + 通过测试。
+    3) S5.1 实现 CodeSandbox — subprocess 沙箱执行器，含 timeout + 资源限制。
+    4) S5.2 实现 LLM 代码生成集成 — agent.py 接入 + 安全过滤 + 结果回存。
+    5) 全程维持禁改边界：src/inner/、src/middle/、src/outer/、contracts/ 一行不改。
+    6) 1192 已有测试全程保持 pass。
+    7) 设计前提：代码执行必须用户显式确认，绝不自动执行。
+  </mission>
+
+  <design_reference>
+    <file>meta_prompts/coach/400_phase10_s5_design_thinking.md</file>
+    <description>Phase 10 S5 架构决策 — subprocess 沙箱、主权脉冲确认、代码存储格式</description>
+    <sections>
+      <section id="1" name="沙箱方案选择">
+        <topics>subprocess + 资源限制, 路径白名单, 网络隔离</topics>
+      </section>
+      <section id="2" name="执行流程">
+        <topics>LLM 生成 → S2 校验 → 门禁 → 用户确认 → 沙箱执行 → 结果回存</topics>
+      </section>
+      <section id="3" name="安全红线">
+        <topics>禁止自动执行, 禁止网络, 禁止 root, timeout 硬限制</topics>
+      </section>
+    </sections>
+  </design_reference>
+
+  <project_boundaries>
+    <read_write_allowed>
+      src/coach/sandbox.py              # ★ 新增：代码沙箱执行器
+      src/coach/agent.py                # ◀ 修改：§4.5 新增 code 字段处理
+      config/coach_defaults.yaml        # ◀ 修改：新增 sandbox: 配置节
+      tests/test_sandbox.py             # ★ 新增
+      tests/test_s5_integration.py      # ★ 新增
+    </read_write_allowed>
+    <frozen_no_touch>
+      src/inner/**       # 绝对禁止修改
+      src/middle/**      # 绝对禁止修改
+      src/outer/**       # 绝对禁止修改
+      src/mapek/**       # 绝对禁止修改
+      src/cohort/**      # 绝对禁止修改
+      src/coach/llm/**   # 绝对禁止修改（S5 消费但不修改）
+      contracts/**       # 绝对禁止修改
+    </frozen_no_touch>
+  </project_boundaries>
+
+  <pipeline>
+    <step id="S5.1" name="CodeSandbox Executor" prompt="meta_prompts/coach/401_s51_sandbox.xml">
+      CodeSandbox — subprocess 沙箱 + timeout + 资源限制 + 路径白名单
+    </step>
+    <step id="S5.2" name="LLM Code Integration" prompt="meta_prompts/coach/402_s52_code_integration.xml">
+      agent.py 接入 + code 字段处理 + 结果回存 ArchivalMemory
+    </step>
+  </pipeline>
+
+  <quality_gates>
+    <gate id="compile">所有新增代码必须通过 Python 语法检查</gate>
+    <gate id="unit">新增测试全部通过 (pytest tests/test_sandbox.py tests/test_s5_integration.py -q)</gate>
+    <gate id="regression">1192 已有测试全部 pass (pytest tests/ -q)</gate>
+    <gate id="no_code_no_sandbox">不含 code 字段的 payload 不走沙箱路径</gate>
+    <gate id="timeout">无限循环代码在 10s 内被终止</gate>
+  </quality_gates>
+</prompt>

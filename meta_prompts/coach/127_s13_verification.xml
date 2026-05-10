@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S13.V 验证与穷举重测</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>13</phase>
+  <sub_stage>S13.V</sub_stage>
+  <sub_stage_name>验证 — 单元测试 + 全量回归 + 穷举 256 组合重测</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 13 验证者。
+    你的任务是：确认 S13.1-S13.4 全部正确激活，运行全量回归和穷举重测，
+    量化验证诊断-适应闭环的效果。
+  </role>
+
+  <context>
+    === 激活清单 ===
+    S13.1 ✅ DiagnosticEngine + FallbackEngine 题库连接
+    S13.2 ✅ TTM 阶段检测激活
+    S13.3 ✅ SDT 胜任感评估激活
+    S13.4 ✅ 跨会话持久化 + 难度自适应
+
+    === 基线（Phase 12 穷举测试结果） ===
+    LLM OFF avg: 14.5/24
+    LLM ON avg: 16.8/24
+    Total: 256/256 pass, 0 failed
+    Time: 62 min
+
+    === 预期变化 ===
+    激活诊断-适应闭环后：
+    - probe 组合的 relevance 应显著提升（题库 vs 通用模板）
+    - TTM/SDT 激活后 action_type 分布变化（reflect/challenge 增加）
+    - LLM OFF avg 不应低于 13.0/24（与基线 14.5 相比可有小幅波动）
+    - LLM ON avg 不应低于 16.0/24（与基线 16.8 相比）
+  </context>
+
+  <verification_steps>
+
+    <step name="1. 确认所有 enabled 配置">
+      <command>
+        python -c "
+import yaml
+cfg = yaml.safe_load(open('config/coach_defaults.yaml'))
+checks = {
+    'diagnostic_engine': cfg.get('diagnostic_engine', {}).get('enabled', False),
+    'ttm': cfg.get('ttm', {}).get('enabled', False),
+    'sdt': cfg.get('sdt', {}).get('enabled', False),
+}
+for k, v in checks.items():
+    print(f'{k}.enabled = {v}')
+assert all(checks.values()), 'Not all modules enabled!'
+print('All modules enabled: OK')
+"
+      </command>
+      <expected>All modules enabled: OK</expected>
+    </step>
+
+    <step name="2. 单元测试全面回归">
+      <commands>
+        python -m pytest tests/test_diagnostic_engine.py -v --tb=short
+        python -m pytest tests/test_ttm.py -v --tb=short
+        python -m pytest tests/test_sdt.py -v --tb=short
+        python -m pytest tests/test_fallback_engine.py -v --tb=short
+      </commands>
+      <expected>全部 PASS</expected>
+    </step>
+
+    <step name="3. 全量回归">
+      <command>python -m pytest tests/ -q 2>&1 | tail -5</command>
+      <expected>1250+ passed</expected>
+    </step>
+
+    <step name="4. 集成测试 — DiagnosticEngine 加载 FallbackEngine 题库">
+      <command>
+        python -c "
+import sys; sys.path.insert(0, '.')
+from src.coach.diagnostic_engine import DiagnosticEngine
+engine = DiagnosticEngine({'enabled': True, 'llm_evaluation': False})
+
+# 测试 FallbackEngine 题库
+result = engine._fallback_probe('python_variable', 'medium')
+print(f'python_variable probe: {result[\"question\"][:60] if result else \"NONE\"}')
+
+result = engine._fallback_probe('python_list', 'medium')
+print(f'python_list probe:     {result[\"question\"][:60] if result else \"NONE\"}')
+
+# 测试 FallbackEngine 题库的兜底（不存在 skill 时用通用模板）
+result = engine._fallback_probe('nonexistent_skill_xyz', 'medium')
+print(f'Unknown skill fallback: {result[\"question\"][:60] if result else \"NONE\"}')
+
+# 测试 generate 全链路（LLM 不可用时走 fallback）
+result = engine.should_and_generate(
+    turn_count=0,
+    covered_topics=['python_variable'],
+    llm_client=None,
+    intent='python',
+)
+print(f'generate(LLM OFF): skill={result.get(\"skill\",\"?\") if result else \"NONE\"}')
+print(f'  question: {result[\"question\"][:60] if result else \"NONE\"}')
+"
+      </command>
+      <expected>probe 问题具体且与技能相关，不生成泛泛的"请简要说明"</expected>
+    </step>
+
+    <step name="5. 集成测试 — TTM 检测 + 策略输出">
+      <command>
+        python -c "
+import sys; sys.path.insert(0, '.')
+from src.coach.ttm import TTMStateMachine
+import yaml
+cfg = yaml.safe_load(open('config/coach_defaults.yaml'))
+ttm = TTMStateMachine(cfg.get('ttm', {}))
+
+# 模拟一个完整学习对话
+history = [
+    '我想学编程，但不知道从哪里开始',
+    'Python 是什么？',
+    '变量是怎么用的？',
+    '我试了一下 age = 18',
+    '好像有点理解了',
+    '那列表呢？',
+]
+stage = ttm.detect_stage(conversation_history=history)
+strategy = ttm.get_optimal_strategy(stage)
+print(f'TTM stage: {stage}')
+print(f'Strategy: {strategy.get(\"name\", \"N/A\")}')
+print(f'Preferred actions: {strategy.get(\"preferred_actions\", \"N/A\")}')
+"
+      </command>
+      <expected>TTM 返回非 None 阶段，strategy 包含 preferred_actions</expected>
+    </step>
+
+    <step name="6. 集成测试 — SDT 接收诊断信号">
+      <command>
+        python -c "
+import sys; sys.path.insert(0, '.')
+from src.coach.sdt import SDTAssessor
+sdt = SDTAssessor({})
+
+# 无诊断信号
+r1 = sdt.assess(conversation_history=['hello', 'world'])
+print(f'No diagnostic: competence={r1.get(\"competence\",\"N/A\")}')
+
+# 有诊断信号（3 次正确）
+r2 = sdt.assess(
+    conversation_history=['hello', 'world'],
+    recent_performance=[1.0, 1.0, 1.0],
+)
+print(f'All correct:   competence={r2.get(\"competence\",\"N/A\")}')
+
+# 有诊断信号（3 次错误）
+r3 = sdt.assess(
+    conversation_history=['hello', 'world'],
+    recent_performance=[0.0, 0.0, 0.0],
+)
+print(f'All wrong:     competence={r3.get(\"competence\",\"N/A\")}')
+"
+      </command>
+      <expected>诊断信号正确校准 competence 评分</expected>
+    </step>
+
+    <step name="7. 集成测试 — 持久化跨会话">
+      <command>
+        python -c "
+import sys, os, tempfile, json
+sys.path.insert(0, '.')
+from src.coach.diagnostic_engine import DiagnosticEngine
+
+with tempfile.TemporaryDirectory() as tmpdir:
+    fp = os.path.join(tmpdir, 'mastery.json')
+    e1 = DiagnosticEngine({'enabled': True})
+    e1._store.update('python', True)
+    e1._store.update('python', True)
+    e1._store.update('java', False)
+    m1 = e1._store.get_mastery('python')
+    e1.save_state(fp)
+    print(f'Original mastery(python)={m1:.3f}')
+    print(f'Saved to: {fp}')
+
+    e2 = DiagnosticEngine({'enabled': True})
+    ok = e2.restore_state(fp)
+    m2 = e2._store.get_mastery('python')
+    print(f'Restored mastery(python)={m2:.3f}')
+    print(f'Restore ok={ok}')
+    print(f'Match={abs(m1-m2)<0.01}')
+"
+      </command>
+      <expected>restore 后掌握度与保存前一致</expected>
+    </step>
+
+    <step name="8. 穷举重测 — 全量 256 组合">
+      <note>仅当步骤 1-7 全部通过后执行</note>
+      <command>
+        export DEEPSEEK_API_KEY="YOUR_DEEPSEEK_API_KEY"
+        export PYTHONIOENCODING=utf-8
+        cd /d/Claudedaoy/coherence && \
+        rm -f reports/exhaustive_all_configs_progress.json && \
+        python tests/test_exhaustive_all_configs.py
+      </command>
+      <expected>256/256 PASS, 0 FAILED</expected>
+      <expected_duration>~60 min</expected_duration>
+    </step>
+
+  </verification_steps>
+
+  <comparison_analysis>
+    <metrics>
+      <metric name="LLM OFF avg quality">
+        <baseline>14.5/24</baseline>
+        <expected_min>13.0/24</expected_min>
+        <note>三个模型激活可能略微降分（TTM 选 reflect/challenge），13.0 为可接受下限</note>
+      </metric>
+      <metric name="LLM ON avg quality">
+        <baseline>16.8/24</baseline>
+        <expected_min>16.0/24</expected_min>
+      </metric>
+      <metric name="probe 相关性">
+        <baseline>通用模板（无话题针对性）</baseline>
+        <expected>improved（题库匹配）</expected>
+      </metric>
+      <metric name="action_type 分布">
+        <baseline>reflect/challenge 比例低</baseline>
+        <expected>TTM 开启后 reflect/challenge 比例上升</expected>
+      </metric>
+      <metric name="TTM 阶段可观测">
+        <baseline>无 TTM 日志</baseline>
+        <expected>测试日志中包含 TTM 阶段信息</expected>
+      </metric>
+    </metrics>
+
+    <pass_criteria>
+      <criterion id="c1" weight="P0">256/256 PASS, 0 FAILED</criterion>
+      <criterion id="c2" weight="P0">LLM OFF avg >= 13.0/24</criterion>
+      <criterion id="c3" weight="P0">LLM ON avg >= 16.0/24</criterion>
+      <criterion id="c4" weight="P1">TTM 阶段信息在日志中可观测</criterion>
+      <criterion id="c5" weight="P1">probe 使用 FallbackEngine 题库（非通用模板）</criterion>
+    </pass_criteria>
+  </comparison_analysis>
+
+  <deliverables>
+    <item>reports/exhaustive_all_configs_report.json — 完整结构化报告</item>
+    <item>reports/exhaustive_all_configs_test.log — 末尾 FINAL REPORT + TTM 阶段日志</item>
+    <item>以上全部测试步骤的控制台输出</item>
+  </deliverables>
+
+</prompt>

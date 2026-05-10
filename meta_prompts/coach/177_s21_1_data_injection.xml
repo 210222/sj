@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 21 — S21.1 数据注入补全</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>21</phase>
+  <sub_stage>S21.1</sub_stage>
+  <sub_stage_name>补全 build_coach_context() 的 memory_snippets 和 covered_topics 参数</sub_stage_name>
+
+  <role>
+    当前 agent.py 调 build_coach_context() 时传 memory_snippets=None, covered_topics=None。
+    LLM 收不到用户的记忆和掌握度数据，相当于每次对话都"失忆"。
+    你需要在 agent.py 中填充这两个参数，让 LLM 真正看见用户状态。
+  </role>
+
+  <context>
+    === 当前代码 ===
+    agent.py:600-613:
+    ```python
+    ctx = build_coach_context(
+        ...
+        memory_snippets=None,         # ← 永远 None
+        covered_topics=None,          # ← 永远 None
+        ...
+    )
+    ```
+
+    而可用的数据源：
+    - self.diagnostic_engine.get_mastery_summary() → {"skills": {"python_loop": 0.45}, ...}
+    - src.coach.llm.memory_context.extract_memory_snippets() → (["..."], {"status": "hit", ...})
+
+    同时 prompts.py 的 SYSTEM_PROMPT 中已有：
+    - {covered_topics} → 被 LLM 读到的是"（新用户，无历史学习记录）"
+    - {memory} → 被 LLM 读到的是"（无相关记忆）"
+
+    === 约束 ===
+    - 可以修改: src/coach/agent.py
+    - 可以修改: src/coach/llm/prompts.py（build_coach_context 函数签名和内部逻辑，不改 SYSTEM_PROMPT 字符串）
+    - 全量回归 1275+ 必须通过
+    - diagnostic_engine 未启用时传默认空值（不报错）
+    - extract_memory_snippets 失败时回退空列表（不阻断）
+  </context>
+
+  <task>
+
+    ── 改动 1: agent.py 填充 memory_snippets 和 covered_topics ──
+
+    在 build_coach_context() 调用前（约第 598 行），插入：
+
+    ```python
+    # Phase 21: 填充记忆和掌握度数据
+    _memory_snippets = None
+    _covered_topics = None
+    try:
+        if self.diagnostic_engine:
+            mastery = self.diagnostic_engine.get_mastery_summary()
+            skills = mastery.get("skills", {})
+            if skills:
+                _covered_topics = [f"{k}(掌握度:{v:.0%})" for k, v in skills.items()][:10]
+        from src.coach.llm.memory_context import extract_memory_snippets
+        _mem_list, _mem_status = extract_memory_snippets(self.memory, self.session_id)
+        if _mem_list:
+            _memory_snippets = _mem_list[:3]
+    except Exception:
+        pass
+    ```
+
+    然后将 build_coach_context() 调用中的 None 替换为变量：
+
+    ```python
+    memory_snippets=_memory_snippets,
+    covered_topics=_covered_topics,
+    ```
+
+    ── 改动 2: prompts.py build_coach_context() 中格式化 mastery 数据──
+
+    build_coach_context() 函数（约第 88 行），在 `topics_text` 赋值处（第 105 行）：
+    当前是 `topics_text = ", ".join(covered_topics) if covered_topics else "（新用户，无历史学习记录）"`
+
+    Agent 1 传入的 _covered_topics 格式是 `["python_list(掌握度:73%)", "python_loop(掌握度:45%)"]`。
+    这个格式已经可以直接被 LLM 理解，不需要额外格式化。确认现有代码可以正常处理：
+
+    ```python
+    # 已存在，确认可正常工作
+    topics_text = ", ".join(covered_topics) if covered_topics else "（新用户，无历史学习记录）"
+    ```
+
+    ⚠️ 不需要修改 prompts.py 的代码，只要确认 agent.py 传入的数据格式正确。
+
+  </task>
+
+  <verification_method>
+    完成修改后运行：
+    ```bash
+    cd D:/Claudedaoy/coherence
+    python -c "
+    from src.coach.agent import CoachAgent
+    a = CoachAgent(session_id='test_data_21')
+    # 先跑几轮生成数据
+    for msg in ['hello', 'python list', 'python loop', 'function']:
+        r = a.act(msg, {})
+    # 验证数据注入
+    # 查看 build_coach_context 收到的内容
+    print('PASS if no errors')
+    "
+    python -m pytest tests/ -q
+    ```
+  </verification_method>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>diagnostic_engine disabled 时 covered_topics=None（行为不变）</item>
+    <item>memory_snippets 为空时传 None（行为不变）</item>
+    <item>所有 try/except 分支测试通过（模拟异常）</item>
+  </success_criteria>
+</prompt>

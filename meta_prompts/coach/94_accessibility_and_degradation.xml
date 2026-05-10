@@ -1,0 +1,224 @@
+<prompt>
+  <name>Coherence Coach Track — S9.4 无障碍加固 + 自适应降级联调</name>
+  <version>2.0.0</version>
+  <track>COACH</track>
+  <phase>9</phase>
+  <sub_stage>S9.4</sub_stage>
+  <sub_stage_name>无障碍加固 — WCAG AA 对比度 + 环境光色温 + 自适应降级全链路验证</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 9 S9.4 实现者。
+    你的任务是：对 Phase 9 已有代码进行质量加固——WCAG AA 无障碍验证、环境光色温适配、
+    自适应降级全链路集成测试。纯加固阶段，不新增功能组件。
+  </role>
+
+  <context>
+    设计对齐源：`前端和移动端页面设计.txt` + `reports/phase9_design_thinking.md`
+
+    === WCAG AA 标准（深度思考 3.4）===
+    - 正常文本: 对比度 ≥ 4.5:1
+    - 大文本(≥18px bold 或 ≥24px): 对比度 ≥ 3:1
+    - 用户界面组件: 对比度 ≥ 3:1
+
+    === 关键色彩对验证计划 ===
+    | 前景 | 背景 | 预期 ≥ | 场景 |
+    | #6E5B4E (深摩卡) | #F5F1EA (暖白) | 4.5:1 | 正文文本 |
+    | #AFC7E2 (柔和蓝) | #F5F1EA (暖白) | 3:1 | CTA 按钮(大文本) |
+    | #9CB59B (鼠尾草绿) | #F5F1EA (暖白) | 3:1 | 成功状态(大组件) |
+    | #FEDDD8 (珊瑚糖) | #F5F1EA (暖白) | 3:1 | 警告背景(组件) |
+
+    === 环境光色温（深度思考 3.4）===
+    - 20:00-06:00 → 夜间模式 → CSS 变量暖色偏移 +5%
+    - 06:00-20:00 → 日间模式 → 基准色温
+
+    === 自适应降级全链路（深度思考 1.2 + 4.2）===
+    后端 PulseService.should_block() → 决定 blocking_mode
+      → 通过 WebSocket 推送 pulse_event (含 blocking_mode)
+      → 前端 useAdaptivePulse 消费 blocking_mode
+      → 决定 PulsePanel 渲染: hard(阻断) / soft(旁路) / none(无)
+
+    === 全链路验证场景 ===
+    hard 阻断: 脉冲轮次 1-2 → blocking_mode='hard' → PulsePanel 阻断式渲染
+    soft 降级: 脉冲轮次 3 → blocking_mode='soft' → 仅珊瑚糖高亮标记
+    窗口重置: 10 分钟后恢复 hard
+    日志完整: soft 降级仍记录审计日志
+  </context>
+
+  <task>
+    1) 实现 WCAG AA 对比度自动化验证工具（contrastCheck.ts）
+    2) 自动扫描 theme.ts 全部 11 色组合并输出 PASS/FAIL 报告
+    3) 修复不达标的色彩组合（如有）——优先调辅助色，不动主色
+    4) 实现环境光色温适配（colorAdapt.ts：getHours 判断 + CSS 变量切换）
+    5) 编写自适应降级全链路集成测试（API → WS → useAdaptivePulse）
+    6) 最终全量回归验证: 1219 已有 + ~110 新增 = ~1329 pass
+  </task>
+
+  <output_files>
+    <file>frontend/src/utils/contrastCheck.ts       — WCAG AA 对比度计算 + 全调色板自动审计</file>
+    <file>frontend/src/utils/colorAdapt.ts         — 增强版：时间自动色温偏移 + CSS 变量注入</file>
+    <file>frontend/tests/utils/test_contrastCheck.ts — 对比度计算 + WCAG AA 判定测试</file>
+    <file>frontend/tests/utils/test_colorAdapt.ts   — 色温偏移正确性测试</file>
+    <file>tests/test_api_pulse_degradation.py       — 全链路降级集成测试</file>
+  </output_files>
+
+  <contrast_check_code>
+    ```typescript
+    // frontend/src/utils/contrastCheck.ts
+    // WCAG 2.1 相对亮度公式 + 对比度计算 + 全调色板审计
+
+    export function hexToRgb(hex: string): [number, number, number] {
+      // 支持 6-digit (#F5F1EA), 3-digit (#FFF), 无 # 前缀
+      const h = hex.replace(/^#/, '');
+      if (h.length === 3) {
+        return [
+          parseInt(h[0] + h[0], 16),
+          parseInt(h[1] + h[1], 16),
+          parseInt(h[2] + h[2], 16),
+        ];
+      }
+      return [
+        parseInt(h.slice(0, 2), 16),
+        parseInt(h.slice(2, 4), 16),
+        parseInt(h.slice(4, 6), 16),
+      ];
+    }
+
+    function srgbLinearize(channel: number): number {
+      const s = channel / 255;
+      return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+    }
+
+    export function relativeLuminance(r: number, g: number, b: number): number {
+      // L = 0.2126 * R + 0.7152 * G + 0.0722 * B
+      return (
+        0.2126 * srgbLinearize(r) +
+        0.7152 * srgbLinearize(g) +
+        0.0722 * srgbLinearize(b)
+      );
+    }
+
+    export function getContrastRatio(hex1: string, hex2: string): number {
+      const [r1, g1, b1] = hexToRgb(hex1);
+      const [r2, g2, b2] = hexToRgb(hex2);
+      const l1 = relativeLuminance(r1, g1, b1) + 0.05;
+      const l2 = relativeLuminance(r2, g2, b2) + 0.05;
+      return Math.max(l1, l2) / Math.min(l1, l2);
+    }
+
+    export function checkWCAG_AA(
+      hex1: string, hex2: string, isLargeText = false
+    ): boolean {
+      const ratio = getContrastRatio(hex1, hex2);
+      return isLargeText ? ratio >= 3.0 : ratio >= 4.5;
+    }
+
+    export interface ContrastReport {
+      foreground: string;
+      background: string;
+      ratio: number;
+      pass: boolean;
+      usage: string;
+    }
+
+    export function auditColorPalette(colors: Record<string, string>): ContrastReport[] {
+      // 遍历所有 (fg, bg) 组合，返回 PASS/FAIL 报告
+      // 预定义关键色彩对: [fg_name, bg_name, isLargeText, usage]
+    }
+    ```
+  </contrast_check_code>
+
+  <color_adapt_code>
+    ```typescript
+    // frontend/src/utils/colorAdapt.ts
+
+    type TimePeriod = 'night' | 'day';
+
+    export function getTimePeriod(): TimePeriod {
+      const hour = new Date().getHours();
+      return (hour >= 20 || hour < 6) ? 'night' : 'day';
+    }
+
+    export function getColorTemperatureShift(): { warmth: number; label: string } {
+      const period = getTimePeriod();
+      return period === 'night'
+        ? { warmth: 0.05, label: '2700K-3000K' }  // 暖色偏移 +5%
+        : { warmth: 0, label: '4000K-5000K' };     // 基准色温
+    }
+
+    export function applyColorAdaptation(): void {
+      const shift = getColorTemperatureShift();
+      document.documentElement.style.setProperty(
+        '--color-warmth-shift', String(shift.warmth)
+      );
+    }
+    ```
+  </color_adapt_code>
+
+  <degradation_integration_test>
+    ```python
+    # tests/test_api_pulse_degradation.py — 全链路自适应降级集成测试
+
+    def test_adaptive_degradation_chain():
+        """模拟 3 次高强度脉冲 → 前 2 次阻断, 第 3 次降级为 soft"""
+        ps = PulseService()
+        # 第 1-2 次: should_block → True (hard)
+        assert ps.should_block("sid-1")
+        ps.record_pulse("sid-1", "accept")
+        assert ps.should_block("sid-1")
+        ps.record_pulse("sid-1", "accept")
+        # 第 3 次: should_block → False (soft)
+        assert not ps.should_block("sid-1")
+        assert ps.get_blocking_mode("sid-1") == "soft"
+
+    def test_blocking_mode_matches_backend():
+        """PulseService.should_block() 与 get_blocking_mode() 一致"""
+        ps = PulseService()
+        assert ps.get_blocking_mode("fresh") == "none"
+        ps.record_pulse("sid-2", "accept")
+        assert ps.get_blocking_mode("sid-2") == "hard"  # 仍可阻断
+
+    def test_soft_degradation_still_logs():
+        """降级为 soft 后仍然记录脉冲事件到日志"""
+        ps = PulseService()
+        for _ in range(3):
+            ps.record_pulse("sid-log", "accept")
+        # 验证 _pulse_log 有 3 条记录
+        assert len(ps._pulse_log.get("sid-log", [])) >= 3
+
+    def test_window_resets_after_10_minutes():
+        """10 分钟窗口过期后, 恢复 hard 模式（通过 mock time 验证窗口逻辑）"""
+        # 验证 PulseService.should_block() 中的窗口过滤逻辑
+        ...
+
+    def test_session_isolation():
+        """不同 session 脉冲计数独立"""
+        ps = PulseService()
+        ps.record_pulse("sid-a", "accept")
+        ps.record_pulse("sid-a", "accept")
+        assert ps.should_block("sid-b")  # sid-b 不受 sid-a 影响
+    ```
+  </degradation_integration_test>
+
+  <implementation_principles>
+    <principle>不改 S9.1-S9.3 的功能逻辑——只做色彩调校和对比度修复</principle>
+    <principle>色彩组合不达标时: 优先调整辅助色(sage/lavender), 不动主色(warmWhite/deepMocha)</principle>
+    <principle>色温适配不侵入业务逻辑——纯 CSS 变量层调整</principle>
+    <principle>自适应降级测试覆盖 API → WS → 前端 useAdaptivePulse 完整链路</principle>
+    <principle>最终回归: 1219 已有 + API(50) + 前端(30) + 降级(10) = ~1329 tests 全部 pass</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. 全部前端色彩组合通过 WCAG AA 对比度验证（正常文本≥4.5:1 / 大文本≥3:1 / 组件≥3:1）
+    2. hexToRgb 正确解析 6-digit / 3-digit / 无# 三种格式
+    3. relativeLuminance 白≈1, 黑≈0
+    4. auditColorPalette 全调色板 O(n²) 自动审计
+    5. colorAdapt.ts 根据时间自动调整色温偏移（20:00-06:00 夜间 / 06:00-20:00 日间）
+    6. 自适应降级全链路集成测试: 模拟 3 次脉冲 → 2 次 hard + 1 次 soft
+    7. soft 降级仍记录审计日志
+    8. 10 分钟窗口过期后恢复 hard 模式
+    9. 会话隔离——不同 session 脉冲计数独立
+    10. 不修改 contracts/、src/ 等冻结文件
+    11. ~1329 tests 全部 pass
+  </success_criteria>
+</prompt>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 23 — S23.2 复习队列</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>23</phase>
+  <sub_stage>S23.2</sub_stage>
+  <sub_stage_name>persistence 查技能掌握度 + agent.py 触发复习</sub_stage_name>
+
+  <role>
+    S23.1 实现了 estimate_retention()。现在你需要:
+    1. 从 profiles 表读 skill_masteries（JSON blob） + profile_history 查上次活动时间
+    2. 在 agent.act() 中检查哪些技能需要复习，覆盖 action_type
+  </role>
+
+  <context>
+    === 关键修正 ===
+    profile_history 表实际字段: autonomy, competence, ttm_stage, learning_goal
+    -- 没有独立的 skill_% 字段。skill_masteries 存在 profiles 表的 skill_masteries JSON 列中。
+
+    所以: 不能 SELECT WHERE field_name LIKE 'skill_%'（永远空结果）。
+    正确做法: 从 get_profile() 读 skill_masteries dict，用 profile_history 最新时间戳算天数。
+
+    === 约束 ===
+    - 只修改: src/coach/persistence.py, src/coach/agent.py
+    - 不修改 BKTEngine（已新增 estimate_retention）
+    - 全量回归 1284+ 必须通过
+  </context>
+
+  <task>
+
+    -- 改动 1: persistence.py 新增 get_skills_with_recency() --
+
+    在 get_mastery_trend() 之后新增:
+
+    def get_skills_with_recency(self) -> dict[str, dict]:
+        """从 skill_masteries JSON blob 读取技能掌握度 + 距上次活动天数.
+
+        Returns:
+            {"python_loop": {"mastery": 0.85, "days_elapsed": 12.5}, ...}
+        """
+        import time, json
+        now = time.time()
+        profile = self.get_profile()
+        masteries = profile.get("skill_masteries", {})
+        if not masteries:
+            return {}
+
+        last_ts = now
+        try:
+            row = self.db.execute(
+                "SELECT MAX(timestamp) FROM profile_history WHERE session_id = ?",
+                (self.session_id,),
+            ).fetchone()
+            if row and row[0]:
+                last_ts = float(row[0])
+        except Exception:
+            pass
+
+        days_elapsed = max(0.0, (now - last_ts) / 86400.0)
+        result = {}
+        for skill_name, mastery_val in masteries.items():
+            try:
+                mv = float(mastery_val)
+            except (ValueError, TypeError):
+                mv = 0.5
+            result[skill_name] = {
+                "mastery": round(max(0.0, min(1.0, mv)), 4),
+                "days_elapsed": round(days_elapsed, 2),
+            }
+        return result
+
+    -- 改动 2: agent.py act() 中 compose() 之前插入复习覆盖 --
+
+    在 compose() 调用之前（约第 418 行）, 插入:
+
+    # Phase 23: 间隔重复 -- 检查复习队列
+    review_override = None
+    try:
+        if self._persistence and self.diagnostic_engine:
+            from src.coach.flow import BKTEngine
+            bkt = BKTEngine()
+            skills = self._persistence.get_skills_with_recency()
+            review_queue = []
+            for skill, data in skills.items():
+                ret = bkt.estimate_retention(data["mastery"], data["days_elapsed"])
+                if ret < 0.6:
+                    review_queue.append({"skill": skill, "retention": round(ret, 4)})
+            if review_queue:
+                review_queue.sort(key=lambda x: x["retention"])
+                worst = review_queue[0]
+                review_override = {
+                    "action_type": "probe",
+                    "payload_override": {
+                        "prompt": "review: " + worst["skill"],
+                        "expected_skill": worst["skill"],
+                        "max_duration_s": 300,
+                    }
+                }
+    except Exception:
+        pass
+
+    然后在 compose() 调用之后（约第 425 行）:
+
+    if review_override:
+        action["action_type"] = review_override["action_type"]
+        action["payload"] = review_override["payload_override"]
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>get_skills_with_recency() 返回 skill_masteries 中的技能</item>
+    <item>无 profile_history 数据时不报异常</item>
+    <item>retention < 0.6 时 compose 结果被覆盖为 probe</item>
+  </success_criteria>
+</prompt>

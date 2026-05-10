@@ -1,0 +1,117 @@
+<prompt>
+  <name>Coherence — S9.1 全量验证测试</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>9</phase>
+  <sub_stage>S9.1</sub_stage>
+  <sub_stage_name>S9.1 API 层 — 全量回归 + 边界测试 + WebSocket 集成</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 9 S9.1 验证者。
+    你的任务是：对已实现的 API 层执行全量回归和边界测试，确认所有 13 条成功标准达标。
+  </role>
+
+  <context>
+    S9.1 实现已就位，文件包括：
+    - api/main.py, config.py (FastAPI 入口 + CORS + 配置)
+    - api/routers/ (session, chat, pulse, excursion, dashboard, admin — 共 6 个)
+    - api/models/ (schemas.py — 17 个 Pydantic 模型, websocket.py — 6 种消息类型)
+    - api/middleware/ (auth.py — IAMSkeleton, rate_limit.py — RateLimiter)
+    - api/services/ (coach_bridge.py, pulse_service.py, dashboard_aggregator.py)
+
+    已有测试 5 个文件，~39 tests：
+    - test_api_session.py — 6 tests（会话 CRUD + token + 限流）
+    - test_api_chat.py — 8 tests（HTTP + WebSocket + 验证）
+    - test_api_pulse.py — 9 tests（脉冲决策 + 自适应降级）
+    - test_api_dashboard.py — 6 tests（仪表盘 + 管理后台）
+    - test_api_rate_limit.py — 10 tests（RateLimiter + Health + IAM）
+  </context>
+
+  <test_coverage_checklist>
+    <!-- 路由测试 -->
+    <item id="R1">POST /api/v1/session — 创建新会话返回 token+session_id</item>
+    <item id="R2">POST /api/v1/session — 复用已有 token</item>
+    <item id="R3">POST /api/v1/session — 自定义 session_id</item>
+    <item id="R4">POST /api/v1/session — 响应含 ttm_stage + sdt_scores</item>
+    <item id="R5">POST /api/v1/session — 限流 10/min 后返回 429</item>
+    <item id="R6">POST /api/v1/chat — 正常对话返回完整 DSL 响应 (8+ 字段)</item>
+    <item id="R7">POST /api/v1/chat — 空 message 返回 422</item>
+    <item id="R8">POST /api/v1/chat — 缺少 session_id 返回 422</item>
+    <item id="R9">POST /api/v1/chat — 限流 30/min 后返回 429</item>
+    <item id="R10">WS /api/v1/chat/ws — WebSocket 连接成功</item>
+    <item id="R11">WS /api/v1/chat/ws — 发送 user_message 接收 coach_response</item>
+    <item id="R12">WS /api/v1/chat/ws — 发送 invalid JSON 接收 error</item>
+    <item id="R13">WS /api/v1/chat/ws — 发送 pulse_decision 接收 coach_response</item>
+    <item id="R14">WS /api/v1/chat/ws — 客户端收到脉冲事件推进</item>
+    <item id="R15">POST /api/v1/pulse/respond — accept 决策返回 ok</item>
+    <item id="R16">POST /api/v1/pulse/respond — rewrite 决策返回 ok</item>
+    <item id="R17">POST /api/v1/pulse/respond — 非法 decision 返回 422</item>
+    <item id="R18">POST /api/v1/pulse/respond — 限流 30/min 后返回 429</item>
+    <item id="R19">POST /api/v1/pulse/respond — 响应含 blocking_mode</item>
+    <item id="R20">POST /api/v1/excursion/enter — 返回 excursion_id + theme:dark</item>
+    <item id="R21">POST /api/v1/excursion/enter — 限流 5/min 后返回 429</item>
+    <item id="R22">POST /api/v1/excursion/exit — 返回 ok</item>
+    <item id="R23">GET /api/v1/dashboard/user — 返回 TTM 五维雷达</item>
+    <item id="R24">GET /api/v1/dashboard/user — 返回 SDT 三环能量</item>
+    <item id="R25">GET /api/v1/dashboard/user — 返回 learning progress</item>
+    <item id="R26">GET /api/v1/dashboard/user — 限流 10/min 后返回 429</item>
+    <item id="R27">GET /api/v1/admin/gates/status — 无 token 返回 403</item>
+    <item id="R28">GET /api/v1/admin/gates/status — 合法 token 返回 8 门禁</item>
+    <item id="R29">GET /api/v1/admin/audit/logs — 合法 token 返回审计日志</item>
+    <item id="R30">GET /api/v1/health — 返回 status=ok + version=9.0.0</item>
+
+    <!-- 服务层测试 -->
+    <item id="S1">PulseService.should_block — 初始为 True</item>
+    <item id="S2">PulseService.should_block — 2 次脉冲后返回 False</item>
+    <item id="S3">PulseService.get_blocking_mode — 初始为 hard</item>
+    <item id="S4">PulseService.get_blocking_mode — 2 次后为 soft</item>
+    <item id="S5">PulseService.pulse_count — 记录后递增</item>
+    <item id="S6">PulseService — 时间窗口裁剪不超出 MAX_BLOCKING</item>
+    <item id="S7">RateLimiter.is_allowed — 窗口内允许</item>
+    <item id="S8">RateLimiter.is_allowed — 超限阻断</item>
+    <item id="S9">RateLimiter.remaining — 递减正确</item>
+    <item id="S10">RateLimiter.reset — 清除 key</item>
+    <item id="S11">RateLimiter — 不同 key 相互独立</item>
+    <item id="S12">IAMSkeleton.issue_anonymous_token — 返回 UUID4 格式</item>
+    <item id="S13">IAMSkeleton.validate_token — 合法 token 返回 True</item>
+    <item id="S14">IAMSkeleton.validate_token — 非法 token 返回 False</item>
+    <item id="S15">IAMSkeleton — 不同 token session 数据隔离</item>
+    <item id="S16">IAMSkeleton.is_admin — admin token 返回 True</item>
+    <item id="S17">IAMSkeleton.is_admin — 普通 token 返回 False</item>
+    <item id="S18">IAMSkeleton.cleanup_expired — 清理过期 token</item>
+
+    <!-- 禁改验证 -->
+    <item id="B1">不修改 src/coach/ 任何冻结代码</item>
+    <item id="B2">不修改 contracts/*.json</item>
+    <item id="B3">不修改 src/inner/ / src/middle/ / src/outer/</item>
+    <item id="B4">全部已有 1070 测试保持 pass</item>
+  </test_coverage_checklist>
+
+  <missing_tests_to_add>
+    当前测试覆盖 39/55 项。需补充以下 16 项：
+
+    1. excursion 路由测试（缺少 enter/exit 边界测试 + 限流击中）
+    2. admin audit logs 测试（仅有 gates 403 测试）
+    3. IAM is_admin 边界测试（admin token pass，普通 token fail）
+    4. PulseService 时间窗口自动裁剪测试（_prune_window）
+    5. chat 响应含 pulse 字段测试（pulse 事件在 HTTP 响应中被正确传递）
+    6. WebSocket pulse_event 消息类型验证
+    7. admin gates 成功路径测试（合法 token 返回 8 门禁）
+  </missing_tests_to_add>
+
+  <execution_plan>
+    1) 扫描已有测试，标记缺失项
+    2) 补全缺失的测试代码
+    3) 执行全量测试：python -m pytest tests/test_api_*.py -v
+    4) 执行全量回归：python -m pytest tests/ -q
+    5) 验证禁改边界：git diff --stat -- src/coach/ src/inner/ src/middle/ src/outer/ contracts/
+    6) 输出测试报告
+  </execution_plan>
+
+  <success_criteria>
+    全部 55 项测试（已有 39 + 新增 16）必须 pass。
+    1070 已有测试零回归。
+    禁改边界零触碰。
+  </success_criteria>
+</prompt>

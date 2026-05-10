@@ -1,0 +1,113 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 10 S2.3 Gate Audit Logger</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>10</phase>
+  <sub_stage>S2.3</sub_stage>
+  <sub_stage_name>Gate Audit Logger — LLM 门禁阻断审计日志</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 10 S2.3 实现者。
+    你的任务是实现 LLMGateAuditor — LLM 门禁阻断审计日志。
+    这是 S2 安全护栏的第三层。
+  </role>
+
+  <context>
+    S2.1 对齐了 LLM payload 到 DSL schema，S2.2 过滤了 forbidden 短语。
+    但 LLM 输出仍然可能被后续的 GateEngine（L0/L1/L2/Dec/Safety）阻断。
+    被阻断的 LLM 输出目前没有任何审计日志，无法追踪"LLM 说了什么被拦了"。
+
+    LLMGateAuditor 解决这个问题：当门禁阻断 LLM 输出时，记录完整的追溯信息。
+
+    设计前提:
+    - audit.py 是独立模块，不与现有 src/coach/audit_health.py 共用数据结构
+    - gate_result 来自 GateEngine 返回（只读，不修改门禁逻辑）
+    - llm_payload 只存前 500 字符（防止日志爆炸）
+    - LLM 使能时才记录（llm.enabled: false 时全路径跳过）
+    - 所有记录在内存中，不做持久化（系统重启后清空）
+  </context>
+
+  <instructions>
+    1. 新建 src/coach/llm/audit.py。
+    2. 实现 LLMGateAuditor 类，包含以下方法和类变量:
+
+    类变量:
+    - _logs: list[dict] — 审计日志存储（内存列表）
+
+    方法一: record_gate_block(cls, session_id, trace_id, action_type, llm_payload, gate_result, alignment_report=None, safety_report=None) → None
+    - 记录一次门禁阻断事件
+    - llm_payload 截断为前 500 字符，末尾添加 "...truncated"
+    - 记录字段: session_id, trace_id, timestamp (ISO 格式 UTC), action_type, llm_payload_truncated, gate_result, alignment_report, safety_report
+
+    方法二: get_recent_blocked(cls, limit=20) → list[dict]
+    - 返回最近被阻断的 LLM 输出（按时间倒序）
+    - limit 参数控制返回数量上限
+
+    方法三: count_blocked_by_gate(cls) → dict[str, int]
+    - 统计每个门禁的阻断次数
+    - 返回值格式: {"L2": 1, "Safety": 2, ...}
+
+    方法四: clear(cls) → None
+    - 清空所有审计日志（测试用）
+
+    3. 不修改现有审计逻辑（audit_health.py 等）。
+    4. 不调用 GateEngine，只记录 gate 结果。
+  </instructions>
+
+  <payload_truncation_detail>
+    llm_payload 传入可能是 dict 或 None。处理规则:
+    - None → 存 "<no_payload>"
+    - dict → json.dumps(ensure_ascii=False) 后截断
+    - 前 500 字符 + "...truncated"
+    - 注意中文编码: 使用 json.dumps(ensure_ascii=False) 保留中文
+  </payload_truncation_detail>
+
+  <behavior_examples>
+    例1: 阻断完整记录
+      LLMGateAuditor.record_gate_block(
+          session_id="s-001",
+          trace_id="t-abc",
+          action_type="challenge",
+          llm_payload={"statement": "这是一个很长的内容..."},
+          gate_result={"decision": "BLOCK", "gate": "L2"},
+          alignment_report={"dropped_fields": [], "filled_slots": {}, "valid": True},
+          safety_report={"triggered_phrases": []},
+      )
+      → _logs[0] = {
+          "session_id": "s-001", "trace_id": "t-abc",
+          "timestamp": "2026-05-05T12:00:00Z",
+          "action_type": "challenge",
+          "llm_payload_truncated": '{"statement": "这是一个很长的内容..."...truncated',
+          "gate_result": {"decision": "BLOCK", "gate": "L2"},
+          "alignment_report": {...},
+          "safety_report": {...},
+      }
+
+    例2: 按门禁统计
+      _logs = [block(L2), block(L2), block(Safety)]
+      count_blocked_by_gate() → {"L2": 2, "Safety": 1}
+
+    例3: 空 payload
+      record_gate_block(llm_payload=None, ...)
+      → llm_payload_truncated = "<no_payload>"
+  </behavior_examples>
+
+  <testing>
+    在 tests/test_llm_s2_audit.py 中实现以下测试:
+    1. test_record_gate_block — 完整记录一条阻断日志
+    2. test_get_recent_blocked_returns_ordered — 按时间倒序返回
+    3. test_get_recent_blocked_respects_limit — limit 参数生效
+    4. test_count_blocked_by_gate — 按门禁统计
+    5. test_count_blocked_by_gate_empty — 无阻断时返回空 dict
+    6. test_payload_truncation — 超长 payload 被截断到 500 字符 + ...truncated
+    7. test_payload_truncation_none — None payload 存为 "<no_payload>"
+    8. test_clear_removes_all_logs — clear() 后日志清空
+  </testing>
+
+  <quality_gates>
+    <gate>python -c "from src.coach.llm.audit import LLMGateAuditor; print('OK')"</gate>
+    <gate>pytest tests/test_llm_s2_audit.py -v (全部通过)</gate>
+    <gate>pytest tests/ -q (1162 tests 全部 pass)</gate>
+  </quality_gates>
+</prompt>

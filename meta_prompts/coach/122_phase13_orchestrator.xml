@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase13_orchestrator description="Phase 13 诊断-适应闭环激活 — 四个子系统从 disabled→enabled">
+
+  <metadata>
+    <stage>S13.1 + S13.2 + S13.3 + S13.4 + S13.V</stage>
+    <origin>
+      穷举测试证实四个教学评估子系统全部 disabled：
+      DiagnosticEngine (enabled:false), TTM (enabled:false), SDT (enabled:false),
+      BKT 依赖 DiagnosticEngine 也无效。代码全部就绪，唯一缺的是激活。
+    </origin>
+    <baseline>1256 tests pass, LLM OFF avg=14.5/24, LLM ON avg=16.8/24</baseline>
+    <expected_improvement>
+      诊断题话题相关性从泛泛通用→精准匹配教学话题，
+      TTM 阶段感知使对话策略差异化，
+      SDT 胜任感校准使教学风格自适应，
+      跨会话 BKT 使第三次对话的诊断准确率大幅提升。
+    </expected_improvement>
+  </metadata>
+
+  <system_anatomy>
+    <description>当前系统四个评估/诊断模块全部处于 enabled:false 状态</description>
+    <modules>
+      <module name="TTM" file="src/coach/ttm.py" config_key="ttm.enabled" current="false"/>
+      <module name="SDT" file="src/coach/sdt.py" config_key="sdt.enabled" current="false"/>
+      <module name="DiagnosticEngine" file="src/coach/diagnostic_engine.py" config_key="diagnostic_engine.enabled" current="false"/>
+      <module name="BKT" embed="Flow + DiagnosticEngine" config_key="diagnostic_engine.bkt" current="indirect"/>
+    </modules>
+    <note>
+      四个模块代码全部实现并通过测试。激活仅涉及:
+      (1) config 改 enabled:true
+      (2) 连接各模块之间的信号线（DiagnosticEngine→TTM→SDT→Flow）
+      (3) 给 DiagnosticEngine 加 FallbackEngine 题库支持
+      (4) 加跨会话持久化
+    </note>
+  </system_anatomy>
+
+  <sub_stages>
+
+    <stage id="s13_1" name="DiagnosticEngine + FallbackEngine 题库" priority="P0">
+      <description>让 DiagnosticEngine 的 _fallback_probe() 使用 FallbackEngine 的 probe 题库，
+      而不是通用文本模板。</description>
+      <problem>
+        DiagnosticEngine 的 _fallback_probe() 当前生成:
+        "请简要说明「{skill}」是什么，并举一个例子。"
+        而 FallbackEngine 已有 8+ 技能专属诊断题库:
+        "在 Python 中，变量 age = 18 把什么存进了变量？"
+        DiagnosticEngine 不知道 FallbackEngine 的存在。
+      </problem>
+      <files>
+        <file>src/coach/diagnostic_engine.py (修改 _fallback_probe, ~20 行)</file>
+      </files>
+      <changes>
+        <change>_fallback_probe() 优先从 FallbackEngine 加载 probe 模板</change>
+        <change>匹配不到具体 skill 时使用通用兜底</change>
+        <change>config/coach_defaults.yaml diagnostic_engine.enabled: true</change>
+      </changes>
+    </stage>
+
+    <stage id="s13_2" name="TTM 阶段检测激活" priority="P0">
+      <description>开启 TTM，使其检测用户改变意愿阶段并影响 action_type 选择。</description>
+      <problem>
+        TTM 代码完成但从未激活。穷举测试数据:
+        TTM ON=15.3, OFF=16.0, 差距 -0.65
+        这个降分是 TTM 刻意选择 reflect/challenge 的结果。
+        需要验证: 短期降分是否值得长期教学效果。
+      </problem>
+      <files>
+        <file>config/coach_defaults.yaml (ttm.enabled: true)</file>
+        <file>src/coach/agent.py (确认 TTM 输出正确传递到 composer)</file>
+      </files>
+      <changes>
+        <change>ttm.enabled: true</change>
+        <change>检查 agent.py act() 中 TTM 输出是否影响 action_type 选择</change>
+        <change>不修改任何逻辑——只激活</change>
+      </changes>
+    </stage>
+
+    <stage id="s13_3" name="SDT 胜任感评估激活" priority="P0">
+      <description>开启 SDT，使其接收 DiagnosticEngine 的诊断信号校准胜任感评分。</description>
+      <problem>
+        SDT 代码完成但 disabled。DiagnosticEngine 的 process_turn 已经在
+        self._no_assist_scores.append(signal)，但 SDT 从不消费。
+      </problem>
+      <files>
+        <file>config/coach_defaults.yaml (sdt.enabled: true)</file>
+        <file>src/coach/agent.py (确认 SDT 消费 diagnostic 信号)</file>
+      </files>
+      <changes>
+        <change>sdt.enabled: true</change>
+        <change>确认 _no_assist_scores → SDT competence 的连接</change>
+        <change>不修改逻辑——只激活 + 验证</change>
+      </changes>
+    </stage>
+
+    <stage id="s13_4" name="跨会话持久化 + 难度自适应" priority="P1">
+      <description>使 SkillMasteryStore 跨会话保留，并让 composer 根据掌握度调整难度。</description>
+      <problem>
+        SkillMasteryStore.to_dict() 已实现但从未被调用。
+        每次重启会话，诊断数据归零。同时 _get_difficulty() 返回 easy/medium/hard
+        但没有下游消费这个信号。
+      </problem>
+      <files>
+        <file>src/coach/agent.py (保存/恢复掌握度, ~30 行)</file>
+        <file>src/coach/diagnostic_engine.py (to_file/from_file 方法, ~20 行)</file>
+        <file>src/coach/composer.py (消费难度信号, ~30 行)</file>
+      </files>
+      <changes>
+        <change>每次诊断更新后保存 to_file</change>
+        <change>agent 初始化时 from_file 恢复</change>
+        <change>composer 接收 mastery 信号调整 support_level</change>
+      </changes>
+    </stage>
+
+    <stage id="s13_v" name="验证 + 穷举重测" priority="必须">
+      <description>运行单元测试 + 全量回归 + 穷举 256 组合验证</description>
+      <tests>
+        <test>python -m pytest tests/test_diagnostic_engine.py -v — 42/42 PASS</test>
+        <test>python -m pytest tests/test_ttm.py -v — 全部 PASS</test>
+        <test>python -m pytest tests/test_sdt.py -v — 全部 PASS</test>
+        <test>python -m pytest tests/ -q — 1250+ PASS</test>
+        <test>穷举 256 组合重测 — 验证 probe 相关性 + 全系统无退化</test>
+      </tests>
+    </stage>
+
+  </sub_stages>
+
+  <execution_order>
+    <step>S13.1 → (S13.2 + S13.3 并行) → S13.4 → S13.V</step>
+    <reason>
+      DiagnosticEngine 是基础（必须先有诊断信号），TTM/SDT 可并行（互不依赖），
+      持久化是锦上添花，验证最终确认。
+    </reason>
+  </execution_order>
+
+  <rollback_conditions>
+    <condition critical="true">穷举测试显示 LLM OFF 质量从 14.5 降至 12 以下 → 回退所有 config 至 enabled:false</condition>
+    <condition>TTM 开启后 LLM ON 质量从 16.8 降至 15 以下 → TTM config 单独回退</condition>
+    <condition>全量回归测试失败 → 修复后再激活</condition>
+  </rollback_conditions>
+
+</phase13_orchestrator>

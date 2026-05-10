@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 24 -- S24.1 新评分维度</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>24</phase>
+  <sub_stage>S24.1</sub_stage>
+  <sub_stage_name>score_response() 新增纵向评测维度</sub_stage_name>
+
+  <role>
+    当前 score_response() 只有格式维度 (relevance=长度, personalization=字段存在)。
+    需要新增两个学习效果维度。注意: score_response(r) 只有 result dict, 没有 agent 实例。
+    不能实例化 DiagnosticEngine() (空实例无数据)。
+    必须从响应字典 r 中已有的字段推断学习效果。
+  </role>
+
+  <context>
+    score_response(r) 的输入是 agent.act() 返回的 dict, 包含:
+      difficulty_contract: {level, reason}
+      diagnostic_result: dict | None
+      personalization_evidence: dict | None
+      memory_status: dict
+
+    新增维度:
+      mastery_progress: diagnostic_result 非空 -> 有诊断数据
+      knowledge_retention: difficulty_contract.reason == "bkt_mastery" -> mastery 驱动难度
+
+    约束:
+    - 不修改现有维度的计算方式
+    - 总分变为 40 (原 32 + 新 8)
+    - 不需要 DEEPSEEK_API_KEY
+    - 全量回归 1284+ 必须通过
+  </context>
+
+  <task>
+
+    在 score_response() 末尾 (return s 之前) 新增:
+
+    # Phase 24: 纵向评测维度 (从响应 dict 推断)
+    diag = r.get("diagnostic_result")
+    dc = r.get("difficulty_contract")
+    s["mastery_progress"] = min(4, (
+        2 if diag and isinstance(diag, dict) and diag.get("evaluated") else 0
+    ) + (
+        2 if diag and isinstance(diag, dict) and diag.get("mastery_after", 0) > 0.5 else 0
+    ))
+    s["knowledge_retention"] = 4 if (
+        dc and isinstance(dc, dict) and dc.get("reason") == "bkt_mastery"
+    ) else 0
+
+    # 更新 total 包含新维度 (总分 40)
+    s["total"] = sum(v for k, v in s.items() if k != "total")
+
+    说明:
+    - mastery_progress: diagnostic_result 中有 mastery_after > 0.5 = 2分, 有 evaluated = 2分
+    - knowledge_retention: difficulty_contract.reason == "bkt_mastery" = 4分
+    - 两个维度在 diagnostic_engine disabled 时返回 0 (不影响旧评分)
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>新维度在 diagnostic_result 非空时值 > 0</item>
+    <item>新维度在 disabled 时返回 0</item>
+  </success_criteria>
+</prompt>

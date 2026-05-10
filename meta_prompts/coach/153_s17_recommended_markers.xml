@@ -1,0 +1,23 @@
+<sub_phase id="s17.1" name="推荐标记与分级展示">
+  <objective>
+    为 TTM/SDT 添加 recommended 标记，将唤醒展示分为"推荐"和"高级"两组。
+  </objective>
+  <changes>
+    <change file="config/coach_defaults.yaml">
+      为 ttm 和 sdt 的 capabilities 条目添加 recommended: true 字段。
+    </change>
+    <change file="src/coach/agent.py">
+      _build_awakening() 重写为分组返回：
+      - recommended: 禁用且 recommended=True 的模块
+      - advanced: 其他禁用模块 (max 5)
+      - 设置 _consent_pending = True
+      - 如 _consent_status 已是 consented/declined，返回 None
+    </change>
+    <change file="frontend/src/components/chat/AwakeningPanel.tsx">
+      双区布局：推荐区（带启用/跳过按钮）+ 高级区（无操作按钮）
+    </change>
+    <change file="frontend/src/App.tsx">
+      连接 AwakeningPanel：onEnableRecommended → handleSendMessage("启用推荐能力")
+    </change>
+  </changes>
+</sub_phase>

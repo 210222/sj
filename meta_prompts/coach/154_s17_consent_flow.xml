@@ -1,0 +1,20 @@
+<sub_phase id="s17.2" name="知情同意交互与批量启用">
+  <objective>
+    处理用户对推荐包的同意/拒绝，实现批量启用 TTM+SDT。
+  </objective>
+  <changes>
+    <change file="src/coach/agent.py">
+      __init__: 添加 _consent_pending (bool) 和 _consent_status (str) 状态字段。
+      _handle_consent_response(): 新增方法，匹配同意/拒绝模式。
+      act(): 插入 consent check 在 activation intent 之前（优先级更高）。
+    </change>
+    <consent_patterns>
+      同意: 好|启用推荐|启用推荐能力|是|yes|yeah|ok|okay|可以|行|来|试试|同意
+      拒绝: 不用|不|skip|拒绝|不需要|算了|不要|下次|later|no
+    </consent_patterns>
+    <batch_enable>
+      同意后调用 _enable_module("ttm"), _enable_module("sdt")。
+      auto_affects 由 _update_config() 自动处理。
+    </batch_enable>
+  </changes>
+</sub_phase>

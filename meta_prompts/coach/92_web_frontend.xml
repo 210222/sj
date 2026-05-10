@@ -1,0 +1,319 @@
+<prompt>
+  <name>Coherence Coach Track — S9.2 Web 前端核心框架</name>
+  <version>2.0.0</version>
+  <track>COACH</track>
+  <phase>9</phase>
+  <sub_stage>S9.2</sub_stage>
+  <sub_stage_name>Web 前端核心框架 — React + TypeScript + TTM 状态驱动 UI + 色彩系统</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 9 S9.2 实现者。
+    你的任务是：构建 React + TypeScript Web 前端——设计文档中行为科学驱动 UI 体系的完整工程实现。
+    S9.1 已提供：PulseService 自适应降级 + IAM 匿名 token + GET /dashboard/user + GET /admin/gates/status。
+  </role>
+
+  <context>
+    设计对齐源：`前端和移动端页面设计.txt` + `reports/phase9_design_thinking.md`
+
+    === 核心架构决策（深度思考 ADR-1 ~ ADR-5）===
+    - 框架: Vite + React 18 + TypeScript，零外部状态库（Context + useReducer）
+    - 样式: CSS 变量（:root 级）+ 纯 CSS 文件，不引入 Tailwind
+    - 数据获取: 手动 axios + 自定义 hooks（useWebSocket / useCoachState / useAdaptivePulse）
+    - WS 协议: 5 种消息类型（user_message / coach_response / coach_chunk / pulse_event / error）
+    - 状态管理: 一个 useReducer 管理 8 个字段（session / token / ttmStage / messages / pulse / excursion / gates / adminMode）
+
+    === TTM 状态驱动 UI（深度思考 1.3）===
+    关键决策：新用户 TTM unknown → 默认映射为 precontemplation 主题
+    → 极简界面 + suggest_only 输入模式 + pulse 禁用
+    → 5 轮后 TTM 有置信度，渐进式切换
+
+    完整的映射表（6 态）：
+    | TTM 阶段 | 主题 | 组件列表 | 输入模式 | 脉冲模式 |
+    |----------|------|---------|---------|---------|
+    | unknown | minimal | PassiveDashboard | suggest_only | disabled |
+    | precontemplation | minimal | PassiveDashboard | suggest_only | disabled |
+    | contemplation | balanced | DecisionBalanceCard, ... | reflect_first | gentle |
+    | preparation | active | GoalStepper, ... | scaffold | commitment |
+    | action | energetic | ProgressRing, CelebrationEffect | checkin | high_frequency |
+    | maintenance | calm | StreakHeatmap, BadgeWall | explore | milestone |
+    | relapse | gentle | IcebreakerCareCard, TimeMachine | recover | none |
+
+    === 色彩矩阵（第 4.1 节） — Hex 码一字不差 ===
+    warmWhite: '#F5F1EA'    softBlue: '#AFC7E2'    sageGreen: '#9CB59B'
+    lavenderGray: '#C6C1D2' deepMocha: '#6E5B4E'   coralCandy: '#FEDDD8'
+    sandalwoodMist: '#D8CBB8' creamPaper: '#F4EFE7' warmSand: '#B39A7C'
+    clayBrown: '#8A7C70'    charcoal: '#2F2C2A'
+
+    === 非阻断式 PulsePanel（深度思考 1.2）===
+    - 不是 Modal——使用内联毛玻璃面板，对话气泡区产生细微纵向位移
+    - "接受"通过滑动滑块（Slide-to-Confirm）增加仪式感
+    - "改写"设计为次级幽灵按钮（允许在原输入上修改）
+    - blocking_mode = hard → 阻断式 PulsePanel
+    - blocking_mode = soft → 仅珊瑚糖色高亮标记，不阻断
+    - blocking_mode = none → 不渲染
+
+    === ExcursionOverlay 视觉隔离（第 2.3 节）===
+    - 全局主题切换: 白底 → 深色暗调（深摩卡/雾灰色）
+    - 平滑 CSS transition 300ms
+    - 屏幕边缘微弱光晕发光效果
+    - 对话气泡边界曲率改变
+  </context>
+
+  <task>
+    1) 初始化 Vite + React 18 + TypeScript 项目，零外部状态库
+    2) 实现精确的色彩系统（theme.ts 11 色 const + global.css + animations.css）
+    3) 实现 TTM 6 态状态驱动 UI 映射表（stateMachine.ts）
+    4) 实现聊天核心组件（ChatBubble, ChatInput, PulsePanel, ExcursionOverlay）
+    5) 实现仪表盘组件（TTMStageCard 五维雷达, SDTEnergyRings 三环能量）
+    6) 实现共享组件（SlideToConfirm 滑动滑块, HealthShield 三色盾牌）
+    7) 实现 hooks（useWebSocket, useCoachState useReducer, useAdaptivePulse）
+    8) 实现 API 客户端（axios + WS 封装）
+    9) 每个组件处理 4 态: 正常渲染 / 空数据 / 加载中 / 错误
+    10) 新增 ~30 组件测试
+  </task>
+
+  <output_files>
+    <file>frontend/package.json</file>
+    <file>frontend/tsconfig.json</file>
+    <file>frontend/vite.config.ts</file>
+    <file>frontend/index.html</file>
+    <file>frontend/src/main.tsx</file>
+    <file>frontend/src/App.tsx</file>
+    <file>frontend/src/api/client.ts          — axios 实例 + WS 连接封装</file>
+    <file>frontend/src/api/session.ts         — POST /api/v1/session</file>
+    <file>frontend/src/api/chat.ts            — POST /api/v1/chat</file>
+    <file>frontend/src/api/dashboard.ts       — GET /api/v1/dashboard/user</file>
+    <file>frontend/src/components/chat/ChatBubble.tsx</file>
+    <file>frontend/src/components/chat/ChatInput.tsx</file>
+    <file>frontend/src/components/chat/PulsePanel.tsx     — Slide-to-Confirm 非阻断 + 毛玻璃</file>
+    <file>frontend/src/components/chat/ExcursionOverlay.tsx — 全局暗调切换 + 光晕 + 气泡曲率</file>
+    <file>frontend/src/components/dashboard/TTMStageCard.tsx       — 五维雷达图</file>
+    <file>frontend/src/components/dashboard/SDTEnergyRings.tsx     — 三环能量图 + 流体发光</file>
+    <file>frontend/src/components/shared/SlideToConfirm.tsx        — 滑动滑块组件</file>
+    <file>frontend/src/components/shared/HealthShield.tsx          — 三色盾牌 SVG</file>
+    <file>frontend/src/hooks/useWebSocket.ts</file>
+    <file>frontend/src/hooks/useCoachState.ts     — useReducer 状态管理</file>
+    <file>frontend/src/hooks/useAdaptivePulse.ts  — sessionStorage 脉冲计数 + 降级判断</file>
+    <file>frontend/src/styles/theme.ts             — 精确 Hex 矩阵 const</file>
+    <file>frontend/src/styles/global.css</file>
+    <file>frontend/src/styles/animations.css        — 心流动效 + TTM 状态转场</file>
+    <file>frontend/src/types/api.ts</file>
+    <file>frontend/src/types/coach.ts</file>
+    <file>frontend/src/utils/stateMachine.ts        — TTM 阶段 → UI 组件映射</file>
+    <file>frontend/tests/setup.ts</file>
+    <file>frontend/tests/components/test_PulsePanel.tsx</file>
+    <file>frontend/tests/components/test_TTMStageCard.tsx</file>
+    <file>frontend/tests/components/test_ExcursionOverlay.tsx</file>
+    <file>frontend/tests/components/test_ChatBubble.tsx</file>
+    <file>frontend/tests/components/test_HealthShield.tsx</file>
+    <file>frontend/tests/hooks/test_useAdaptivePulse.ts</file>
+    <file>frontend/tests/hooks/test_useCoachState.ts</file>
+  </output_files>
+
+  <state_management_pattern>
+    ```typescript
+    // useCoachState.ts — 单 useReducer 管理全部全局状态
+
+    interface CoachState {
+      sessionId: string | null;
+      token: string | null;
+      ttmStage: TTMStage;
+      messages: ChatMessage[];
+      pulse: PulseState | null;
+      excursion: boolean;
+      gates: GateSummary | null;
+      adminMode: boolean;
+      error: string | null;
+      loading: boolean;
+    }
+
+    const initialState: CoachState = {
+      sessionId: null,
+      token: null,
+      ttmStage: 'unknown',
+      messages: [],
+      pulse: null,
+      excursion: false,
+      gates: null,
+      adminMode: false,
+      error: null,
+      loading: false,
+    };
+
+    type CoachAction =
+      | { type: 'SET_SESSION'; sessionId: string; token: string }
+      | { type: 'ADD_MESSAGE'; message: ChatMessage }
+      | { type: 'SET_TTM_STAGE'; stage: TTMStage }
+      | { type: 'SET_PULSE'; pulse: PulseState | null }
+      | { type: 'SET_EXCURSION'; active: boolean }
+      | { type: 'SET_GATES'; gates: GateSummary }
+      | { type: 'SET_LOADING'; loading: boolean }
+      | { type: 'SET_ERROR'; error: string | null };
+
+    function coachReducer(state: CoachState, action: CoachAction): CoachState {
+      switch (action.type) {
+        case 'SET_SESSION':
+          return { ...state, sessionId: action.sessionId, token: action.token };
+        case 'ADD_MESSAGE':
+          return { ...state, messages: [...state.messages, action.message] };
+        // ... 其他 case
+        default:
+          return state;
+      }
+    }
+    ```
+  </state_management_pattern>
+
+  <websocket_pattern>
+    ```typescript
+    // useWebSocket.ts — WS 连接生命周期管理
+
+    export function useWebSocket(dispatch: React.Dispatch<CoachAction>) {
+      const wsRef = useRef<WebSocket | null>(null);
+      const reconnectAttempts = useRef(0);
+
+      useEffect(() => {
+        function connect() {
+          const ws = new WebSocket(`ws://localhost:8001/api/v1/chat/ws`);
+          wsRef.current = ws;
+
+          ws.onopen = () => { reconnectAttempts.current = 0; };
+
+          ws.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            switch (msg.type) {
+              case 'coach_response':
+                dispatch({ type: 'ADD_MESSAGE', message: msg.payload });
+                break;
+              case 'pulse_event':
+                dispatch({ type: 'SET_PULSE', pulse: msg });
+                break;
+              case 'error':
+                dispatch({ type: 'SET_ERROR', error: msg.detail });
+                break;
+            }
+          };
+
+          ws.onclose = () => {
+            if (reconnectAttempts.current < 3) {
+              setTimeout(connect, 1000 * Math.pow(2, reconnectAttempts.current));
+              reconnectAttempts.current++;
+            }
+          };
+        }
+        connect();
+        return () => { wsRef.current?.close(); };
+      }, []);
+    }
+    ```
+  </websocket_pattern>
+
+  <ttm_ui_mapping_code>
+    ```typescript
+    // stateMachine.ts — 完整的 TTM 6 态映射（含 unknown）
+    export type TTMStage = 'unknown' | 'precontemplation' | 'contemplation'
+      | 'preparation' | 'action' | 'maintenance' | 'relapse';
+
+    export const TTM_UI_MAP: Record<TTMStage, TTMUIConfig> = {
+      unknown: {
+        theme: 'minimal',
+        inputMode: 'suggest_only',
+        pulseMode: 'disabled',
+        description: '新用户默认态 — 极简界面，最少交互要求',
+      },
+      precontemplation: {
+        theme: 'minimal',
+        inputMode: 'suggest_only',
+        pulseMode: 'disabled',
+        description: '极简环境数据看板; 低频微轻推(Nudges); 客观信息图表',
+      },
+      contemplation: {
+        theme: 'balanced',
+        inputMode: 'reflect_first',
+        pulseMode: 'gentle',
+        description: '对比式Pros vs Cons决策平衡卡片; 用户故事轮播; 动态收益进度条',
+      },
+      preparation: {
+        theme: 'active',
+        inputMode: 'scaffold',
+        pulseMode: 'commitment',
+        description: '交互式目标拆解向导(Stepper); 微习惯日程表; 一键承诺确认按钮',
+      },
+      action: {
+        theme: 'energetic',
+        inputMode: 'checkin',
+        pulseMode: 'high_frequency',
+        description: '动态发光进度环; 全屏撒花动效; 一键式学习签到',
+      },
+      maintenance: {
+        theme: 'calm',
+        inputMode: 'explore',
+        pulseMode: 'milestone',
+        description: '连续打卡日历热力图; 数字成就徽章墙; 高阶探险解锁通知',
+      },
+      relapse: {
+        theme: 'gentle',
+        inputMode: 'recover',
+        pulseMode: 'none',
+        description: '破冰式关怀对话卡片("重新开始是旅程的一部分"); 一键恢复历史进度时光机',
+      },
+    } as const;
+    ```
+  </ttm_ui_mapping_code>
+
+  <component_states>
+    <!-- 每个组件必须处理 4 种状态: 正常/空数据/加载中/错误 -->
+    <component name="ChatBubble">
+      <normal>渲染消息文本 + source_tag 标签 + 时间戳</normal>
+      <empty>不渲染（无消息时 ChatList 显示空态提示）</empty>
+      <loading>消息发送中显示脉冲点动画</loading>
+      <error>消息发送失败显示"发送失败"状态 + 重试按钮</error>
+    </component>
+    <component name="PulsePanel">
+      <normal>hard 模式: 渲染 Slide-to-Confirm + 毛玻璃 + 改写按钮</normal>
+      <soft>soft 模式: 珊瑚糖色高亮标记 + 旁路提示文案</soft>
+      <none>不渲染</none>
+      <error>服务端返回 blocking_mode 异常 → 默认 hard</error>
+    </component>
+    <component name="TTMStageCard">
+      <normal>五维雷达图 + 当前阶段标注 + 趋势</normal>
+      <empty>TTM unknown → "系统正在了解你的学习模式..."</empty>
+      <loading>雷达图骨架屏</loading>
+      <error>"数据暂不可用" + 重试按钮</error>
+    </component>
+    <component name="HealthShield">
+      <normal>三色盾牌 + 拟人话术文案</normal>
+      <empty>pass → 绿色盾牌 + "一切正常"</empty>
+      <loading>灰色盾牌骨架</loading>
+      <error>红色问号盾牌 + "系统检测异常"</error>
+    </component>
+  </component_states>
+
+  <implementation_principles>
+    <principle>严格遵循第 4.1 节色彩矩阵——Hex 代码一字不差</principle>
+    <principle>PulsePanel 使用 Slide-to-Confirm 而非 Modal——内联非阻断式</principle>
+    <principle>PulsePanel 毛玻璃: backdrop-filter: blur(12px) + 半透明背景</principle>
+    <principle>ExcursionOverlay: CSS 变量根级替换 + transition 300ms + 边缘光晕 box-shadow</principle>
+    <principle>useAdaptivePulse 从 sessionStorage 读取脉冲计数——每 10 分钟重置</principle>
+    <principle>TTM unknown 映射为 precontemplation 主题——不产生空白 UI</principle>
+    <principle>所有组件默认隐藏/关闭——用户按需启用</principle>
+    <principle>每个组件处理 4 态: 正常 / 空数据 / 加载中 / 错误</principle>
+    <principle>气泡消息 source_tag 在前端渲染为小型标签标识（rule/statistical/hypothesis）</principle>
+    <principle>没有外部状态管理库——只用 Context + useReducer</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. npm run dev 正常启动，npm run build 无错误
+    2. npx tsc --noEmit 零类型错误
+    3. 色彩系统完整实现 6 主色 + 5 檀香辅助色，Hex 码准确
+    4. TTM 6 态（含 unknown + relapse）× UI 映射完整
+    5. PulsePanel 三态渲染（hard/soft/none）+ 毛玻璃 + 滑动确认
+    6. ExcursionOverlay 全局暗调切换 + 光晕 + 气泡曲率变化
+    7. useWebSocket 正确连接/断开/重连
+    8. useCoachState useReducer 管理全部 8 个字段
+    9. useAdaptivePulse 正确追踪计数 + 返回降级状态
+    10. 每个组件覆盖 4 种渲染状态
+    11. ~30 组件测试全部 pass
+  </success_criteria>
+</prompt>

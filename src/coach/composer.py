@@ -66,6 +66,9 @@ class PolicyComposer:
                 recommended = ttm_strategy.get("recommended_action_types", [])
                 if action_type in avoided and recommended:
                     action_type = recommended[0]
+                # S19.3: 弱推荐 — composer 默认选择不在推荐列表中时优先推荐
+                elif recommended and action_type not in recommended and not avoided:
+                    action_type = recommended[0]
 
             # 2. SDT 微调：低自主性→reflect，低胜任感→降难度
             if sdt_profile:
@@ -75,6 +78,11 @@ class PolicyComposer:
                         action_type = "reflect"
                 if advice.get("adjust_difficulty") == "lower":
                     self._adjust_difficulty_down(payload)
+                # S19.3: 高自主性 + 高胜任感 → 升级到 challenge
+                autonomy = sdt_profile.get("autonomy", 0.5)
+                competence = sdt_profile.get("competence", 0.5)
+                if autonomy > 0.7 and competence > 0.7 and action_type in ("suggest", "scaffold", "reflect"):
+                    action_type = "challenge"
 
             # 3. 心流定难度
             if flow_result:
@@ -278,3 +286,23 @@ class PolicyComposer:
             "source_tag": context.get("source_tag", "rule"),
             "epistemic_warning": context.get("epistemic_warning"),
         }
+
+    # ── Phase 20 S20.3: 学习目标支持 ──
+
+    @staticmethod
+    def _select_topic_by_mastery(mastery_summary: dict | None) -> str | None:
+        """从技能掌握度中选择掌握度最低的 topic。
+
+        Args:
+            mastery_summary: diagnostic_engine.get_mastery_summary() 的输出
+                {"skills": {"python_list": 0.73, "python_loop": 0.45}, ...}
+
+        Returns:
+            掌握度最低的 skill 名称，无数据时返回 None
+        """
+        if not mastery_summary:
+            return None
+        skills = mastery_summary.get("skills", {})
+        if not skills:
+            return None
+        return min(skills, key=skills.get)

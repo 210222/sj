@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase16_orchestrator description="Phase 16 能力唤醒 — 把可选的变成可知的">
+
+  <metadata>
+    <stage>S16.1 + S16.2 + S16.3 + S16.4 + S16.5 + S16.6</stage>
+    <origin>
+      Phase 15 代码全部落地且通过验证，但 9 个高级教学模块默认 disabled，
+      用户不知道它们存在，也不知道打开能带来什么。
+      这是"知情权 + 决策权"问题，不是代码缺失问题。
+    </origin>
+    <baseline>
+      1261 tests pass，Phase 15 GO。
+      9 个模块在 config 中 enabled:false，其中 6 个不在 EXPOSED_KEYS 白名单，
+      前端 SettingsPanel 只覆盖 3 个 toggle，没有任何 onboarding 或能力告知机制。
+    </baseline>
+    <expected_improvement>
+      首次用户聊天时能主动看到可用能力列表，
+      用户可以通过对话询问/启用/关闭任何模块，
+      SettingsPanel 完整展示所有模块 toggle，
+      系统会解释每项启用的影响，然后由用户决定是否执行。
+    </expected_improvement>
+  </metadata>
+
+  <system_anatomy>
+    <description>当前系统在能力唤醒上的缺失</description>
+    <gaps>
+      <gap id="gap_a" name="用户不知道不知道">
+        <path>9 个模块 enabled:false → 代码全写完 → 配置在 YAML → 用户看不到 → 等于不存在</path>
+        <fix>主动告知可用能力，解释影响，让用户选择</fix>
+      </gap>
+      <gap id="gap_b" name="没有首次引导">
+        <path>新用户创建 session → 静态欢迎语 → 直接进入问答</path>
+        <fix>首轮检测新用户 → 附加能力唤醒信息</fix>
+      </gap>
+      <gap id="gap_c" name="设置面板不完整">
+        <path>SettingsPanel 只有 3 个模块 toggle，EXPOSED_KEYS 只白名单 7 个 key</path>
+        <fix>补齐全部 9 个模块的 toggle，注册所有 key</fix>
+      </gap>
+      <gap id="gap_d" name="不能对话式操作">
+        <path>用户说"打开诊断引擎" → 系统不识别 → 需要手动编辑配置</path>
+        <fix>agent 识别启用意图，自动修改配置并告知影响</fix>
+      </gap>
+    </gaps>
+  </system_anatomy>
+
+  <execution_order>
+    <step>S16.1 → S16.2 → S16.3 → S16.4 → S16.5 → S16.6</step>
+    <reason>
+      先定义能力目录（标准化描述），再实现后端检测（何时触发），
+      再建前端 UI（如何展示），再支持对话启用（如何操作），
+      再补全设置面板（双通道），最后验证闭环。
+    </reason>
+  </execution_order>
+
+  <sub_stages>
+
+    <stage id="s16_1" name="Capability Inventory" priority="P0">
+      <description>将 9 个 disabled 模块标准化为结构化能力目录：名称、作用、影响、推荐场景、风险。</description>
+      <files>
+        <file>meta_prompts/coach/145_s16_capability_inventory.xml</file>
+        <file>config/coach_defaults.yaml — 新增 capabilities 配置段</file>
+        <file>reports/phase16_capability_inventory.md</file>
+      </files>
+    </stage>
+
+    <stage id="s16_2" name="Awakening Detection" priority="P0">
+      <description>在 backend 检测首次用户，注入能力唤醒标记。</description>
+      <files>
+        <file>meta_prompts/coach/146_s16_awakening_detection.xml</file>
+        <file>src/coach/agent.py — act() 首轮检测</file>
+        <file>api/services/coach_bridge.py — 透传 awakening 字段</file>
+        <file>api/models/schemas.py — awakening 响应字段</file>
+      </files>
+    </stage>
+
+    <stage id="s16_3" name="Awakening UI" priority="P0">
+      <description>前端呈现能力唤醒面板，替换静态欢迎语。</description>
+      <files>
+        <file>meta_prompts/coach/147_s16_awakening_ui.xml</file>
+        <file>frontend/src/App.tsx — 改造欢迎区</file>
+        <file>frontend/src/components/chat/AwakeningPanel.tsx — 新建唤醒面板</file>
+      </files>
+    </stage>
+
+    <stage id="s16_4" name="Conversational Activation" priority="P0">
+      <description>用户可通过自然语言启用/关闭/查询模块。</description>
+      <files>
+        <file>meta_prompts/coach/148_s16_conversational_activation.xml</file>
+        <file>src/coach/agent.py — 启用意图识别 + 配置修改</file>
+        <file>api/services/coach_bridge.py — 透传启用结果</file>
+      </files>
+    </stage>
+
+    <stage id="s16_5" name="Settings Completeness" priority="P1">
+      <description>补齐 SettingsPanel toggle 和 EXPOSED_KEYS 白名单。</description>
+      <files>
+        <file>meta_prompts/coach/149_s16_settings_completeness.xml</file>
+        <file>frontend/src/components/settings/SettingsPanel.tsx — 新增 toggle</file>
+        <file>api/routers/config_router.py — EXPOSED_KEYS 补全</file>
+      </files>
+    </stage>
+
+    <stage id="s16_6" name="Verification" priority="必须">
+      <description>验证唤醒流程端到端：首轮 / 非首轮 / 对话启用 / 全量回归。</description>
+      <files>
+        <file>meta_prompts/coach/150_s16_verification.xml</file>
+        <file>tests/test_s16_awakening.py — 新建测试</file>
+        <file>reports/phase16_verification.md</file>
+      </files>
+    </stage>
+
+  </sub_stages>
+
+  <regression_gates>
+    <gate id="gate-awakening-trigger" critical="true">新用户首轮响应含 awakening 标记</gate>
+    <gate id="gate-no-repeat" critical="true">回访用户不重复触发</gate>
+    <gate id="gate-conversational-enable" critical="true">用户说"打开 X" → 模块启用 → 影响说明返回</gate>
+    <gate id="gate-settings-complete" critical="true">SettingsPanel 展示全部 9 个模块 toggle</gate>
+    <gate id="gate-exposed-keys" critical="true">EXPOSED_KEYS 包含所有模块的 enabled key</gate>
+    <gate id="gate-regression" critical="true">全量回归 1261+ pass</gate>
+  </regression_gates>
+
+  <rollback_conditions>
+    <condition critical="true">首轮检测导致已有用户历史数据损坏或重复触发 → 回退所有 act() 改动</condition>
+    <condition critical="true">YAML 写入操作出现数据丢失 → 回退配置修改代码</condition>
+  </rollback_conditions>
+
+</phase16_orchestrator>

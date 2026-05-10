@@ -1,0 +1,25 @@
+<sub_phase id="s17.3" name="选择持久化">
+  <objective>
+    用户的选择跨会话持久化，不重复询问。
+  </objective>
+  <changes>
+    <change file="src/coach/persistence.py">
+      profiles 表添加 consent_status TEXT DEFAULT 'never_asked' 列。
+      新增 save_consent_status(status) 和 load_consent_status() 方法。
+      _ensure_consent_column() 迁移辅助函数（ALTER TABLE try/except）。
+    </change>
+    <change file="src/coach/agent.py">
+      _init_consent_persistence(): 延迟加载 SessionPersistence，读取 consent_status。
+      _persist_consent(status): 持久化同意/拒绝选择。
+      __init__: 调用 _init_consent_persistence()。
+      _build_awakening(): 如 _consent_status in ("consented", "declined") → 返回 None。
+      _handle_activation_intent(): 单个启用后隐性同意（consent_status = "consented"）。
+    </change>
+  </changes>
+  <data_flow>
+    新用户 → consent_status="never_asked" → 展示唤醒
+    同意 → consent_status="consented" → DB 写入 → 不再展示
+    拒绝 → consent_status="declined" → DB 写入 → 不再展示
+    下个会话 → __init__ 读取 DB → 跳过唤醒
+  </data_flow>
+</sub_phase>

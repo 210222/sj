@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S14.3 上下文引用提升 Personalization</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>14</phase>
+  <sub_stage>S14.3</sub_stage>
+  <sub_stage_name>上下文引用 — Agent 维护 context_window → Composer 注入 prompt → LLM 回复引用前文</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 14 S14.3 实现者。
+    你的任务是：让 Agent 维护最近 2-3 轮用户发言的 context_window，并将这个窗口传入 Composer，
+    Composer 将上下文注入 LLM prompt，使 LLM 回复时引用用户刚刚说过的话。
+    直接目标：将 Personalization 评分从 1.81/4 提升到 2.8+/4。
+  </role>
+
+  <context>
+    === 现状 ===
+    穷举数据 Personalization=1.81/4，是六维中最弱的维度。
+    根因：LLM 回复时像失忆，不引用用户上一轮说的话。
+
+    例如：
+      用户: "我试了 age = 18，好像理解了变量是什么"
+      Coach: "变量是存储数据的容器，用 = 赋值"（没有确认用户的尝试）
+
+    理想回复:
+      Coach: "对，你写的 age = 18 就是变量赋值。你已经理解了基本概念！接下来看看..."
+
+    FallbackEngine 已经提供了 {prev_user_said} 占位符（Phase 12），
+    但 Agent 从未传参填充它。
+
+    === 目标 ===
+    建立一条数据流:
+      用户发言 → Agent._context_window (环形 buffer, 2-3 轮)
+        → composer.generate(context_window=[...])
+          → LLM prompt 中注入 "用户刚才说: ..."
+            → LLM 回复引用前文
+          → FallbackEngine {prev_user_said} 占位符填充
+  </context>
+
+  <spec>
+
+    <change name="Agent._context_window 环形 buffer">
+      <problem>Agent 不保存前轮用户发言，Composer 无上下文可注入。</problem>
+      <file>src/coach/agent.py</file>
+      <changes>
+        - __init__ 中初始化 self._context_window: list[str] = []
+        - 每次 act() 结束时将本轮 user_input 追加到窗口
+        - 窗口上限 3 条，超出时移除最旧的
+        - 每条截断到 100 字（防 prompt 膨胀）
+      </changes>
+      <code>
+        # __init__ 中:
+        self._context_window: list[str] = []
+
+        # act() 末尾:
+        snippet = user_input[:100]  # 截断
+        self._context_window.append(snippet)
+        if len(self._context_window) > 3:
+            self._context_window.pop(0)
+      </code>
+    </change>
+
+    <change name="Composer.generate() 增加 context_window 参数">
+      <problem>Composer 的 generate() 没有接收上下文的能力。</problem>
+      <file>src/coach/composer.py</file>
+      <changes>
+        - generate() 增加可选参数 context_window: list[str] | None = None
+        - LLM prompt 构建时，如果有 context_window，注入上下文段
+        - Fallback 调用时，填充 {prev_user_said} 占位符
+      </changes>
+      <code>
+        def generate(
+            self,
+            intent: str,
+            action_type: str,
+            user_input: str,
+            difficulty: str = "medium",
+            context_window: list[str] | None = None,
+            **kwargs,
+        ) -> Any:
+            ...
+            if context_window:
+                # LLM ON: 注入到 prompt
+                context_summary = "用户刚才的发言:\n" + "\n".join(
+                    f"- {msg}" for msg in context_window[-2:]
+                )
+                # LLM OFF: 填充占位符
+                if len(context_window) > 0:
+                    kwargs["prev_user_said"] = context_window[-1]
+      </code>
+    </change>
+
+    <change name="LLM prompt 上下文注入">
+      <problem>LLM 不知道用户刚才说了什么，无法做针对性回复。</problem>
+      <file>src/coach/composer.py（prompt 构建部分）</file>
+      <changes>
+        - 在 system prompt 末尾增加上下文段（如果有）
+        - 格式: "以下是用户刚才的发言，请优先确认和引用：\n{context}"
+        - 上下文段只包含最近 2 轮（防止喧宾夺主）
+      </changes>
+      <code>
+        # 在 prompt 构建时:
+        prompt_parts = [system_prompt]
+        if context_window:
+            recent = context_window[-2:]
+            ctx = "\n".join(f"用户: {msg}" for msg in recent)
+            prompt_parts.append(
+                f"\n[对话上下文 - 请先确认用户刚才说的内容，再展开教学]\n{ctx}\n"
+            )
+      </code>
+    </change>
+
+    <change name="FallbackEngine {prev_user_said} 占位符实际填充">
+      <problem>Phase 12 在设计 FallbackEngine 时预留了 {prev_user_said} 占位符，
+      但从未在调用时传参，占位符从未被填充。</problem>
+      <file>src/coach/composer.py（Fallback 调用处）</file>
+      <changes>
+        - 调用 FallbackEngine.generate() 时传入 previous_payload
+        - 这是现成机制，只需要把 context_window 组装为 previous_payload 格式
+      </changes>
+    </change>
+
+  </spec>
+
+  <testing>
+    <test name="context_window_append_and_trim">
+      <command>调用 Agent.act() 4 次，检查 context_window 长度</command>
+      <expected>窗口最多 3 条，最早的一条被移除</expected>
+    </test>
+    <test name="context_window_empty">
+      <command>Agent.act() 首次调用时有 context_window</command>
+      <expected>空窗口不报错，不注入上下文段</expected>
+    </test>
+    <test name="llm_prompt_contains_context">
+      <command>Composer.generate(context_window=["我试了 age=18"]) 的 LLM prompt</command>
+      <expected>prompt 包含 "用户: 我试了 age=18" 或等效内容</expected>
+    </test>
+    <test name="fallback_placeholder_filled">
+      <command>FallbackEngine 调用时检查 {prev_user_said} 被填充</command>
+      <expected>占位符被替换为用户最后一条发言</expected>
+    </test>
+  </testing>
+
+</prompt>

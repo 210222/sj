@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 19 — S19.3 Behavior Model Feedback Loops</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>19</phase>
+  <sub_stage>S19.3</sub_stage>
+  <sub_stage_name>行为模型反馈回路 — TTM/SDT/Flow 消费 mastery 数据并影响输出</sub_stage_name>
+
+  <role>
+    你是 Coherence Phase 19 S19.3 实现者。
+    你的任务是：让 TTM/SDT/Flow 三个行为科学模型真正进入"感知→决策"闭环。
+    当前三个模型的 assess() 调用与下游决策完全隔离——它们的输出只出现在 act() 返回字典中供前端展示，不改变 compose() 的决策或 prompts.py 的生成。
+    你要让 mastery 数据流入 TTM/SDT 的评估，让 TTM 的输出流入 composer 的 action_type 选择。
+  </role>
+
+  <context>
+    === 当前状态 ===
+    三个行为模型在 agent.act() 中已有完整调用（第 356-401 行），但存在两个直流通路断路：
+
+    断路 1 — 数据输入隔离：TTM.assess() 输入只含 cognitive/behavioral 指标，不接收 DiagnosticEngine 的 mastery 数据。
+    SDT.assess() 输入含 no_assist_scores 但不含 get_competence_signal() 的输出。
+    Flow.compute_flow() 的 skill_probs 参数从 UserStateTracker.get_state().confidence 取值而非从 BKT mastery 取值。
+    三模型都"看不见"用户的真实掌握度。
+
+    断路 2 — 策略输出隔离：TTM 产出的 recommended_strategy（如 "increase_awareness"、"build_skills"）在 agent.py:418-425 传递给
+    composer.compose() 的 ttm_strategy 参数。composer 的 compose() 方法（composer.py:63-88）读取 ttm_strategy.get("avoid_action_types", [])
+    和 get("recommended_action_types", [])，但在 compose() 的 if/else 链中（第 48-109 行），TTM 的 redirect 逻辑分支（第 64-68 行）仅在
+    action_type in avoided and recommended 非空时生效——这是一条脆弱的单条件重定向。
+
+    === 数据证据 ===
+    - reports/research_pipeline/shared_state.json Agent 1 GAP-003: TTM 策略未生效
+    - reports/research_pipeline/shared_state.json Agent 1 GAP-004: SDT 输出未用
+    - reports/research_pipeline/shared_state.json Agent 1 GAP-001: Flow 计算孤立
+    - reports/ultimate_quality_report.json: full_stack（TTM+SDT+Flow+LLM）评分 17.2 低于 rules_diag 17.9——模型叠加反而降低质量
+
+    === 约束 ===
+    - 禁止修改 contracts/ 任何文件
+    - 禁止修改 src/inner/** src/middle/** src/outer/**
+    - 禁止修改 src/coach/llm/ 中的文件
+    - 禁止修改 src/coach/ttm.py、src/coach/sdt.py、src/coach/flow.py（这些是已冻结的行为模型实现）
+    - 只能修改: src/coach/agent.py, src/coach/composer.py, config/coach_defaults.yaml
+    - 全量回归 1275+ 必须通过
+    - 三模型默认 disabled 时行为零变化
+  </context>
+
+  <task>
+    修改 3 个文件——
+
+    ── 修改 1: config/coach_defaults.yaml — 为 Phase 17 知情同意启用后的三模型设置合理阈值 ──
+    确保 ttm/sdt/flow 的 enabled 在 coach_defaults.yaml 中明确标为 false（已存在），
+    但为 enabled=true 的场景准备好合理的默认值：
+    ```yaml
+    # S19.3: behavior model thresholds tuned for diagnostic engine integration
+    ttm:
+      enabled: false
+      detect:
+        confidence_threshold: 0.6
+        min_interactions: 3      # 从 5 降低到 3 — 加速冷启动
+    sdt:
+      enabled: false
+      thresholds:
+        autonomy_low: 0.3
+        competence_low: 0.4      # 从 0.3 提升到 0.4 — 更早检测低胜任感
+    flow:
+      enabled: false
+      flow_zone:
+        optimal_low: 0.4
+        optimal_high: 0.6
+      adjustment:
+        max_step: 0.2
+    ```
+    修改原则：只在注释中标记 S19.3，不改已有字段名称和类型。
+
+    ── 修改 2: src/coach/agent.py — 在 TTM/SDT/Flow 调用中注入 mastery 数据 ──
+    在 act() 第 356-401 行附近修改三处：
+
+    2a. TTM assess 调用（约第 360-372 行）：
+    当前 TTM 输入只有 cognitive_indicators 和 behavioral_indicators。新增 mastery 数据作为 cognitive_indicators 的补充：
+    ```python
+    # S19.3: 注入 diagnostic engine mastery 数据到 TTM
+    mastery_values = []
+    try:
+        if self.diagnostic_engine:
+            mastery_summary = self.diagnostic_engine.get_mastery_summary()
+            mastery_values = list(mastery_summary.get("skills", {}).values())
+    except Exception:
+        pass
+    if self.ttm:
+        cognitive_indicators = [user_state.get("confidence", 0.5)] + mastery_values
+        ttm_result = self.ttm.assess({
+            "cognitive_indicators": cognitive_indicators,
+            "behavioral_indicators": [1.0 if user_state.get("feasible", True) else 0.0],
+            "session_count": len(self._interaction_history),
+        }, history=self._interaction_history[-10:])
+    ```
+
+    2b. SDT assess 调用（约第 378-388 行）：
+    当前 SDT 输入使用 rewrite_rate/excursion_use_count/initiation_rate。新增 competence_signal 注入 competence 评分：
+    ```python
+    if self.sdt:
+        sdt_data = {
+            "rewrite_rate": self._get_premise_rewrite_rate(),
+            "excursion_use_count": len(self._excursion_evidence),
+            "initiation_rate": 0.5,
+            "no_assist_scores": self._no_assist_scores,
+            "session_count": len(self._interaction_history),
+        }
+        # S19.3: 注入 diagnostic engine competence signal
+        try:
+            if self.diagnostic_engine:
+                comp_signal = self.diagnostic_engine.get_competence_signal()
+                if comp_signal is not None:
+                    sdt_data["task_completion_rate"] = comp_signal
+        except Exception:
+            pass
+        sdt_result = self.sdt.assess(sdt_data)
+    ```
+
+    2c. Flow compute_flow 调用（约第 395-401 行）：
+    当前 skill_probs 从 user_state.get("confidence") 取值。改为从 BKT mastery 取值（更真实反映知识状态）：
+    ```python
+    if self.flow:
+        # S19.3: 用 BKT mastery 替代 confidence 作为技能概率
+        skill_probs = mastery_values if mastery_values else [user_state.get("confidence", 0.5)]
+        flow_result = self.flow.compute_flow(
+            skill_probs=skill_probs,
+            task_difficulty=0.5,
+        )
+    ```
+
+    ── 修改 3: src/coach/composer.py — 让 compose() 更充分地消费 TTM 策略 ──
+    在 compose() 方法（第 46-109 行）的 TTM 粗筛逻辑（第 63-68 行）做两处增强。
+
+    ⚠️ 安全约束：以下修改只在 `ttm_strategy` 非 None 时生效（即 ttm.enabled=true 时）。
+    默认 ttm.enabled=false 时，compose() 行为零变化，不影响现有测试。
+
+    3a. 增强 TTM 策略映射（约第 64-68 行之后）：
+    当前仅检查 avoid_action_types。新增：读取 ttm_strategy 中的 "recommended_action_types" 作为 composer 的 action_type 选择的加权输入：
+    ```python
+    # S19.3: TTM 推荐权重 — 当 TTM 推荐的 action_type 与 composer 选的不同时才覆盖
+    if ttm_strategy:
+        avoided = ttm_strategy.get("avoid_action_types", [])
+        recommended = ttm_strategy.get("recommended_action_types", [])
+        if action_type in avoided and recommended:
+            action_type = recommended[0]
+        elif recommended and action_type not in recommended and not avoided:
+            # 弱推荐：composer 的默认选择不在推荐列表中时，优先选择推荐列表的第一个
+            action_type = recommended[0]
+    ```
+
+    3b. 增强 SDT+Flow 的整合影响（约第 70-87 行）：
+    当前 SDT 微调只在 action_type 为 suggest/scaffold 时切换为 reflect。
+    新增 SDT 高自主性→增加 probe 和 challenge 的权重：
+    ```python
+    # S19.3: SDT 高自主性→增加 probe/challenge 倾向
+    if sdt_profile:
+        advice = sdt_profile.get("advice", {})
+        if advice.get("adjust_autonomy_support"):
+            if action_type in ("suggest", "scaffold"):
+                action_type = "reflect"
+        # 高自主性 + 高胜任感 → 升级到 challenge
+        autonomy = sdt_profile.get("autonomy", 0.5)
+        competence = sdt_profile.get("competence", 0.5)
+        if autonomy > 0.7 and competence > 0.7 and action_type in ("suggest", "scaffold", "reflect"):
+            action_type = "challenge"
+    ```
+  </task>
+
+  <output_files>
+    <file>config/coach_defaults.yaml — 阈值注释 + min_interactions/competence_low 微调</file>
+    <file>src/coach/agent.py — 2a/2b/2c 三处 mastery 注入</file>
+    <file>src/coach/composer.py — 3a/3b 两处 TTM/SDT 增强</file>
+  </output_files>
+
+  <verification_method>
+    完成修改后运行：
+    1. `python -m pytest tests/ -q` — 全量回归
+    2. `python -c "from src.coach.agent import CoachAgent; a=CoachAgent(); r=a.act('test',{}); print('ttm:', r.get('ttm_stage'), 'sdt:', r.get('sdt_profile') is not None, 'flow:', r.get('flow_channel'))"` — 返回类型正确
+    3. 编辑 coach_defaults.yaml 设 ttm.enabled=true、sdt.enabled=true、flow.enabled=true，重复步骤 2
+    4. 确认当 diagnostic_engine disabled 时三模型行为不变（mastery_values 为空）
+  </verification_method>
+
+  <implementation_principles>
+    <principle>不修改 TTM/SDT/Flow 的源文件：这些是 Phase 4 冻结模块，逻辑不变</principle>
+    <principle>mastery 注入作为 supplement 而非 replacement：cognitive_indicators 仍包含原有 confidence</principle>
+    <principle>全默认 disabled 时行为零变化：新增代码被 ttm/sdt/flow 的 enabled 检查短路</principle>
+    <principle>composer 的 TTM 增强应在不影响现有测试的前提下增加分支</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿（1275+）</item>
+    <item>TTM enabled + diagnostic engine enabled 时，ttm.assess() 输入含 mastery 数据</item>
+    <item>SDT enabled + mastery 数据存在时，sdt_data 含 task_completion_rate</item>
+    <item>Flow enabled + mastery 数据存在时，skill_probs 含 BKT 概率</item>
+    <item>三模型全部 disabled 时 act() 输出 ttm_stage/sdt_profile/flow_channel 均为 None（不变）</item>
+  </success_criteria>
+</prompt>

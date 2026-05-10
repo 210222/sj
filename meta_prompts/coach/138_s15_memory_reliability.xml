@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S15.2 Memory Reliability</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>15</phase>
+  <sub_stage>S15.2</sub_stage>
+  <sub_stage_name>记忆可靠性固化 — memory/history/topic 注入命中、未命中、失败三态可审计</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 15 S15.2 实现者。
+    你的任务是：修复个性化的输入来源问题，让 memory / history / topics / persistence 的注入链路稳定可见。
+    你要让系统明确知道：这轮记忆命中了什么、没有命中什么、哪里失败了。
+  </role>
+
+  <context>
+    === 已知断点 ===
+    1. `src/coach/llm/memory_context.py` 中的记忆提取可能因 `recall()` 签名不匹配而失败，且异常被吞。
+    2. `SessionPersistence` 中已有 topics_covered / skill_masteries / difficulty_level 等字段，但未完全贯通到 prompt 注入层。
+    3. 当前 prompt 里虽然有 history / memory / covered_topics，但无法判断它们是否真的来自有效输入。
+
+    === 目标 ===
+    把“记忆是否真的被使用”变成一个可审计事实，而不是隐式假设。
+  </context>
+
+  <task>
+    1) 审视 `src/coach/llm/memory_context.py`、`src/coach/memory.py`、`src/coach/persistence.py`、`src/coach/agent.py`。
+
+    2) 定义 memory reliability contract：
+       - hit: 成功读取且注入了有效记忆
+       - miss: 无相关记忆或无可用历史
+       - error: 读取失败、结构不合法、来源不可用
+
+    3) 设计可观测字段：
+       - `memory_status`
+       - `memory_sources`
+       - `memory_items_used`
+       - `topic_context_status`
+
+    4) 修复静默失败路径：
+       - 不允许继续只靠 try/except 吞掉异常
+       - 失败必须回写状态和原因标签
+
+    5) 明确 persistence 恢复与当前轮次新推断的边界。
+  </task>
+
+  <output_files>
+    <file>src/coach/llm/memory_context.py</file>
+    <file>src/coach/memory.py</file>
+    <file>src/coach/persistence.py</file>
+    <file>src/coach/agent.py</file>
+    <file>reports/phase15_memory_recall_audit.json</file>
+    <file>reports/phase15_memory_failure_matrix.md</file>
+  </output_files>
+
+  <memory_reliability_spec>
+
+    === 三态定义 ===
+    - hit: 有效 memory/history/topic 被成功注入 prompt，且有来源记录
+    - miss: 数据源可用，但没有可注入内容
+    - error: 数据源异常、格式异常、读取失败、字段不兼容
+
+    === 最低可观测字段 ===
+    - memory_status: hit | miss | error
+    - memory_sources: [history, session_memory, persistence_topics, persistence_skills]
+    - memory_items_used: 注入了多少项、被裁剪多少项
+    - memory_error_reason: 可选，error 时记录 reason code
+
+    === 关键边界 ===
+    - “读取不到” 与 “根本没有” 必须区分
+    - “上次会话恢复” 与 “本轮新推断” 必须区分
+    - 错误记忆不得进入 prompt
+
+    === 回归样本要求 ===
+    1. 有历史且命中
+    2. 有存储但无相关条目
+    3. persistence 文件/字段损坏
+    4. recall 参数不匹配或返回结构异常
+
+  </memory_reliability_spec>
+
+  <implementation_principles>
+    <principle>记忆链路允许 miss，但不允许 silent error。</principle>
+    <principle>失败必须变成可观测事实，而不是继续假装系统有个性化输入。</principle>
+    <principle>在可靠性没有解决前，不继续扩展更复杂的画像逻辑。</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. memory hit / miss / error 三态定义清晰。
+    2. 失败原因可通过字段或报告回溯。
+    3. prompt 注入的数据来源可追踪。
+    4. 形成最小回归矩阵覆盖正常/空/坏三类路径。
+    5. 后续 difficulty / observability 阶段可以复用这些字段。
+  </success_criteria>
+
+</prompt>

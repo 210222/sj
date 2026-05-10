@@ -161,6 +161,11 @@ def s80_stage_governance_audit():
     return governance.run(OUT)
 
 
+def s85_phase19_21_wiring():
+    from audit import layer_h_phase19_21
+    return layer_h_phase19_21.run(OUT)
+
+
 def s90_final_assembly():
     from audit import report
     return report.run(OUT)
@@ -181,10 +186,11 @@ PIPELINE = [
     ('S65', 'Layer F — Phase 6 Integration Health (MAPE-K / CEO / Manager wiring)', s65_phase6_health),
     ('S70', 'Risk Scoring + Tech Debt Capitalization', s70_risk_scoring),
     ('S80', 'Stage Governance Coverage', s80_stage_governance_audit),
+    ('S85', 'Layer H — Phase 19-21 Wiring + Exhaustive Integration', s85_phase19_21_wiring),
     ('S90', '8-Chapter Report Assembly', s90_final_assembly),
 ]
 
-QUICK_STEPS = {'S00', 'S20', 'S30', 'S60', 'S70', 'S80', 'S90'}
+QUICK_STEPS = {'S00', 'S20', 'S30', 'S60', 'S65', 'S70', 'S80', 'S85', 'S90'}
 
 
 def main():

@@ -1,0 +1,169 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 9 前端与移动端界面（产品化阶段）</name>
+  <version>2.0.0</version>
+  <track>COACH</track>
+  <phase>9</phase>
+  <phase_name>前端与移动端界面 — 后端引擎产品化</phase_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence 项目 Coach 轨 Phase 9 总控调度器。
+    你的目标是：将 Phase 0-8 + Phase 10 完成的 Python 智能引擎，转化为面向终端用户的交互式服务产品。
+    核心交付：RESTful API 服务层 + React+TS Web 前端 + 治理仪表盘 + 自适应降级 + 无障碍加固。
+    这是 Coach 轨的产品化阶段——从"引擎"到"产品"的关键一跃。
+  </role>
+
+  <mission>
+    1) 将 Phase 9 拆分为 S9.1→S9.4 四个子阶段并严格串行推进。
+    2) 每子阶段必须产出可验证的代码变更 + 通过测试。
+    3) 全程维持禁改边界：src/inner/、src/middle/、src/outer/、src/coach/、contracts/ 一行不改。
+    4) 1219 已有测试全程保持 pass（含 Phase 10 LLM 全链路测试）。
+    5) S9.1 搭建 FastAPI 服务层——PulseService 自适应降级 + IAM 骨架 + 仪表盘聚合 + Phase 10 LLM 路由增强。
+    6) S9.2 构建 React + TypeScript Web 前端——色彩系统 + 聊天界面 + TTM 状态驱动 UI + 脉冲组件。
+    7) S9.3 实现治理仪表盘——GatePipeline 管理员视图 + RBAC 分级 + 用户健康盾牌。
+    8) S9.4 无障碍加固 + 自适应降级全链路联调 + WCAG AA 合规 + 色温适配。
+  </mission>
+
+  <design_reference>
+    <file>reports/phase9_design_thinking.md</file>
+    <description>Phase 9 深度思考文档——架构决策、数据流、风险矩阵全面分析</description>
+    <sections>
+      <section id="1" name="核心矛盾分析">
+        <topics>治理透明 vs 认知过载三层模型, 脉冲确认强度与频率自适应降级, TTM unknown 默认态, WS 生命周期, IAM 边界</topics>
+      </section>
+      <section id="2" name="ADR 架构决策记录">
+        <topics>React+Vite, Context+useReducer 状态管理, WS 5 种消息类型, CSS 变量策略, 手动 axios+hooks</topics>
+      </section>
+      <section id="3" name="子阶段细化与数据流">
+        <topics>S9.1-S9.4 任务分解, 正常对话流/脉冲流/LLM 流三图, 风险矩阵</topics>
+      </section>
+      <section id="4" name="测试策略">
+        <topics>110 新增测试金字塔, 关键场景列表</topics>
+      </section>
+    </sections>
+    <file>前端和移动端页面设计.txt</file>
+    <description>行为科学驱动的AI教练系统前端与移动端界面设计及项目审查深度报告</description>
+  </design_reference>
+
+  <phase10_integration>
+    <note>Phase 10 S1-S5 已全部完成，LLM 模式已启用 (DeepSeek V4 Flash, API 运行在 :8001)</note>
+    <notes>
+      <item>代码沙箱 S5: POST /api/v1/code/execute 已可用，集成到管理员视图</item>
+    </notes>
+  </phase10_integration>
+
+  <project_boundaries>
+    <read_write_allowed>
+      <path>api/ (增强已有文件 + 新增 PulseService/IAM/Dashboard 服务)</path>
+      <path>frontend/ (新建：React + TypeScript 前端)</path>
+      <path>frontend/tests/ (新建前端测试)</path>
+      <path>mobile/ (第二阶段占位，仅创建空目录)</path>
+      <path>contracts/api_contract.json (新建：API 接口合约)</path>
+      <path>config/api_defaults.yaml (新建：API 层配置)</path>
+      <path>reports/coach_global_state.json (更新 Phase 9 状态)</path>
+      <path>reports/phase9_completion.md (新建阶段完成报告)</path>
+      <path>tests/test_api_*.py (新增 API 测试)</path>
+    </read_write_allowed>
+    <forbidden_modification>
+      <path>contracts/ 已有 11 份冻结合约</path>
+      <path>src/inner/** src/middle/** src/outer/** src/coach/** src/mapek/** src/cohort/**</path>
+      <path>已有的 tests/ (只新增不修改)</path>
+      <path>config/parameters.yaml config/coach_defaults.yaml (已有配置段冻结)</path>
+    </forbidden_modification>
+  </project_boundaries>
+
+  <design_principles>
+    <principle>API 层是胶水代码——不修改已冻结的后端，只做参数映射 + 结果序列化</principle>
+    <principle>组件默认 OFF 策略延续——前端新建组件统一默认关闭/隐藏</principle>
+    <principle>自适应降级——单会话 10 分钟内最多 2 次阻断，超阈值降为旁路软提示</principle>
+    <principle>RBAC 信息隔离——8 道门禁不对 C 端裸暴露，抽象为"健康盾牌"三色</principle>
+    <principle>多租户准备——状态树挂载 token + session_id 下，第一天就建 IAM 骨架（但不出登录 UI）</principle>
+    <principle>色彩系统遵循设计文档心理学调色板——暖白/柔和蓝/鼠尾草绿/珊瑚糖等 Hex 码一字不差</principle>
+    <principle>先做 Web 前端，移动端 (Flutter) 作为第二阶段——API 合约冻结后移动端可独立并行</principle>
+    <principle>新用户 TTM unknown → UI 默认映射为 precontemplation 极简界面，5 轮后再渐进切换</principle>
+    <principle>治理透明三层模型: L1 盾牌(全员) → L2 雷达(主动用户) → L3 流水线(管理员)，逐层披露</principle>
+  </design_principles>
+
+  <sub_stage_model>
+    <stage id="S9.1" name="API 服务层 (Backend-for-Frontend)">
+      <description>FastAPI 服务层增强：PulseService 自适应降级 + IAM 匿名 token + 仪表盘聚合 + 路由增强</description>
+      <commands>/run_phase9_1</commands>
+      <meta_prompt>91_api_layer.xml</meta_prompt>
+      <files>api/services/pulse_service.py, api/services/dashboard_aggregator.py, api/middleware/auth.py, 增强 routers/</files>
+      <test_files>tests/test_api_pulse.py, tests/test_api_dashboard.py, tests/test_api_rate_limit.py</test_files>
+      <estimate>~3 天</estimate>
+    </stage>
+    <stage id="S9.2" name="Web 前端核心框架">
+      <description>React + TypeScript 完整前端：Vite 脚手架 + 色彩系统 + 聊天 UI + TTM 状态驱动组件 + 脉冲/远足交互</description>
+      <commands>/run_phase9_2</commands>
+      <meta_prompt>92_web_frontend.xml</meta_prompt>
+      <files>frontend/ 全部 ~45 源文件</files>
+      <test_files>frontend/tests/ ~30 组件测试</test_files>
+      <estimate>~4 天</estimate>
+    </stage>
+    <stage id="S9.3" name="治理仪表盘 + 管理后台">
+      <description>GatePipeline 管理员视图 + RBAC 分级 + 用户盾牌 + 审计日志 + 风险评估</description>
+      <commands>/run_phase9_3</commands>
+      <meta_prompt>93_admin_dashboard.xml</meta_prompt>
+      <files>frontend/src/components/admin/*, dashboard/GateShieldBadge.tsx, hooks/useAuth.ts</files>
+      <test_files>frontend/tests/ ~20 组件测试</test_files>
+      <estimate>~2 天</estimate>
+    </stage>
+    <stage id="S9.4" name="无障碍加固 + 自适应降级联调">
+      <description>WCAG AA 对比度验证 + 环境光色温适配 + 自适应降级全链路集成测试 + 最终回归</description>
+      <commands>/run_phase9_4</commands>
+      <meta_prompt>94_accessibility_and_degradation.xml</meta_prompt>
+      <files>frontend/src/utils/contrastCheck.ts, colorAdapt.ts, tests/test_api_pulse_degradation.py</files>
+      <estimate>~1 天</estimate>
+    </stage>
+  </sub_stage_model>
+
+  <routing>
+    <command>/run_phase9_1</command> → 91_api_layer.xml
+    <command>/run_phase9_2</command> → 92_web_frontend.xml
+    <command>/run_phase9_3</command> → 93_admin_dashboard.xml
+    <command>/run_phase9_4</command> → 94_accessibility_and_degradation.xml
+  </routing>
+
+  <state_management>
+    <state_file>reports/coach_global_state.json</state_file>
+    <status_flow>PENDING → IN_PROGRESS → GO | NO_GO</status_flow>
+    <rule>上一子阶段非 GO，不得进入下一子阶段</rule>
+  </state_management>
+
+  <!-- 深度思考已覆盖的结构化风险 -->
+  <risk_matrix>
+    <risk id="R1" severity="HIGH">
+      <description>现有 api/ 代码与 S9.1 新增代码产生冲突</description>
+      <mitigation>S9.1 只新增不动已有 api/ 文件；PulseService/IAM/dashboard_aggregator 为全新 service 文件</mitigation>
+    </risk>
+    <risk id="R2" severity="MEDIUM">
+      <description>TTM unknown 的 UI 空白态——新用户前 5 轮无阶段数据</description>
+      <mitigation>默认映射到 precontemplation 主题（极简界面 + suggest_only 输入模式）</mitigation>
+    </risk>
+    <risk id="R3" severity="LOW">
+      <description>PulseService 内存数据重启丢失</description>
+      <mitigation>单用户场景可接受。重启后脉冲计数重置为 0，用户重新获得 2 次 hard 脉冲配额</mitigation>
+    </risk>
+    <risk id="R4" severity="LOW">
+      <description>设计文档色彩矩阵 Hex 码偏离</description>
+      <mitigation>theme.ts 写死为 const 常量，不做运行时动态调色，验收时逐 Hex 码对照</mitigation>
+    </risk>
+  </risk_matrix>
+
+  <success_definition>
+    Phase 9 结束时：
+    1. api/ 包存在：PulseService + IAM 骨架 + dashboard_aggregator 全部实现
+    2. frontend/ 存在：Vite + React 18 + TypeScript 完整前端，npm run dev / build 正常
+    3. 设计文档色彩矩阵已实现（暖白/柔和蓝/鼠尾草绿/珊瑚糖等 11 色 Hex 码精确）
+    4. TTM 状态驱动 UI 映射表已实现（6 态 × 对应组件/主题/输入模式/脉冲模式）
+    5. PulsePanel 非阻断式 Slide-to-Confirm + 毛玻璃效果 + 自适应降级三态
+    6. ExcursionOverlay 全局暗调切换 + 边缘光晕 + 气泡曲率变化
+    7. GateShieldBadge 三色盾牌（无技术术语）+ GatePipeline 管理员 8 门禁流水线
+    8. WCAG AA 对比度自动验证通过 + 环境光色温适配
+    9. 自适应降级全链路：API PulseService → WS → 前端 useAdaptivePulse 一致
+    10. contracts/api_contract.json 已冻结
+    11. 1219 已有 + ~110 新增 = ~1329 tests 全部 pass
+    12. reports/coach_global_state.json Phase 9 → GO
+  </success_definition>
+</prompt>

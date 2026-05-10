@@ -1,0 +1,291 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 10 S5.1 CodeSandbox Executor</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>10</phase>
+  <sub_stage>S5.1</sub_stage>
+  <sub_stage_name>CodeSandbox — subprocess 沙箱执行器</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 10 S5.1 实现者。
+    你的任务是实现 CodeSandbox — LLM 生成代码的安全执行环境。
+    这是 S5 代码沙箱的第一层。
+  </role>
+
+  <context>
+    LLM 可以在 payload 中返回 code 字段。这段代码需要在安全的沙箱中执行。
+    沙箱必须限制资源（timeout、内存）、禁止网络、白名单文件系统访问。
+
+    设计前提:
+    - 单用户个人系统，不涉及多租户隔离
+    - 代码只来自 LLM 生成（经过 S2 安全过滤）
+    - 执行结果仅用于教学反馈
+    - subprocess 方案，零额外依赖
+  </context>
+
+  <instructions>
+
+    === 变更一: coach_defaults.yaml 新增 sandbox 配置节 ===
+
+    ```yaml
+    # ── Phase 10 S5: 代码沙箱 ──
+    sandbox:
+      enabled: false                    # 默认关闭
+      timeout_s: 10                     # 代码执行超时（秒）
+      max_output_chars: 2000            # 输出/错误最大截断长度
+      work_dir: "data/sandbox"          # 沙箱工作目录
+      allowed_languages:
+        - python                        # 只允许 Python
+      denied_modules:                   # 禁止导入的模块
+        - os
+        - subprocess
+        - sys
+        - shutil
+        - socket
+        - requests
+        - urllib
+        - http
+        - multiprocessing
+        - threading
+    ```
+
+    === 变更二: 新建 src/coach/sandbox.py ===
+
+    ```python
+    """Phase 10 S5 — 代码沙箱安全执行器.
+
+    在 subprocess 中执行 LLM 生成的代码，附加资源限制和路径隔离。
+    """
+
+    from __future__ import annotations
+
+    import logging
+    import os
+    import subprocess
+    import sys
+    import tempfile
+    import time
+    from pathlib import Path
+    from typing import Any
+
+    _logger = logging.getLogger(__name__)
+
+
+    class SandboxError(Exception):
+        """沙箱执行错误."""
+
+
+    class SandboxResult:
+        """沙箱执行结果."""
+        def __init__(
+            self,
+            success: bool,
+            output: str = "",
+            error: str = "",
+            duration_ms: int = 0,
+            timed_out: bool = False,
+        ):
+            self.success = success
+            self.output = output
+            self.error = error
+            self.duration_ms = duration_ms
+            self.timed_out = timed_out
+
+        def to_dict(self) -> dict[str, Any]:
+            return {
+                "success": self.success,
+                "output": self.output,
+                "error": self.error,
+                "duration_ms": self.duration_ms,
+                "timed_out": self.timed_out,
+            }
+
+
+    class CodeSandbox:
+        """代码沙箱执行器.
+
+        安全策略:
+        1. 超时硬限制（默认 10s）
+        2. 在临时目录中执行
+        3. 模块黑名单（禁止导入 os/sys/subprocess 等）
+        4. 输出截断（最多 2000 字符）
+        5. 只支持配置中 allowed_languages 的语言
+        """
+
+        def __init__(self, config: dict | None = None):
+            cfg = config or {}
+            self._timeout_s = cfg.get("timeout_s", 10)
+            self._max_output = cfg.get("max_output_chars", 2000)
+            self._work_dir = Path(cfg.get("work_dir", "data/sandbox"))
+            self._allowed = cfg.get("allowed_languages", ["python"])
+            self._denied_modules = cfg.get("denied_modules", [
+                "os", "subprocess", "sys", "shutil",
+                "socket", "requests", "urllib", "http",
+                "multiprocessing", "threading",
+            ])
+
+        def execute(self, code: str, language: str = "python") -> SandboxResult:
+            \"\""执行代码并返回结果.
+
+            Args:
+                code: 要执行的代码
+                language: 编程语言（必须 in allowed_languages）
+
+            Returns:
+                SandboxResult: 执行结果
+
+            Raises:
+                SandboxError: 语言不支持 或 配置错误
+            \"\"\"
+            if language not in self._allowed:
+                raise SandboxError(
+                    f"Language '{language}' not allowed. "
+                    f"Allowed: {self._allowed}")
+
+            if not code or not code.strip():
+                raise SandboxError("Empty code")
+
+            # 注入模块黑名单
+            safe_code = self._inject_denied_modules(code)
+
+            # 写入临时文件
+            self._work_dir.mkdir(parents=True, exist_ok=True)
+            suffix = ".py" if language == "python" else f".{language}"
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=suffix,
+                dir=str(self._work_dir), delete=False,
+                encoding="utf-8",
+            ) as f:
+                f.write(safe_code)
+                temp_path = f.name
+
+            try:
+                return self._run_subprocess(temp_path, language)
+            finally:
+                try:
+                    os.unlink(temp_path)
+                except OSError:
+                    pass
+
+        def _inject_denied_modules(self, code: str) -> str:
+            \"\"\"在代码头部注入模块禁止导入逻辑.\"\"\"
+            # 方法: 在代码执行前定义 __import__ 钩子
+            # 这只阻止 import 语句，不阻止 exec/eval/__import__()
+            # 对个人单用户系统已足够
+            guard_lines = []
+            for mod in self._denied_modules:
+                guard_lines.append(
+                    f"import builtins\n"
+                    f"_orig_import = builtins.__import__\n"
+                    f"def _safe_import(name, *args, **kwargs):\n"
+                    f'    if name in {self._denied_modules!r}:\n'
+                    f'        raise ImportError(f"module {{name}} is not allowed in sandbox")\n'
+                    f'    return _orig_import(name, *args, **kwargs)\n'
+                    f"builtins.__import__ = _safe_import\n"
+                )
+            guard = "\n".join(guard_lines)
+            return guard + "\n\n" + code
+
+        def _run_subprocess(self, file_path: str, language: str) -> SandboxResult:
+            \"\"\"在 subprocess 中执行代码文件.\"\"\"
+            if language == "python":
+                cmd = [sys.executable, file_path]
+            else:
+                cmd = [language, file_path]
+
+            start = time.time()
+            try:
+                proc = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=self._timeout_s,
+                    cwd=str(self._work_dir),
+                    env={},  # 清空环境变量
+                )
+                duration = int((time.time() - start) * 1000)
+                stdout = proc.stdout[-self._max_output:] if proc.stdout else ""
+                stderr = proc.stderr[-self._max_output:] if proc.stderr else ""
+                success = proc.returncode == 0
+                return SandboxResult(
+                    success=success,
+                    output=stdout,
+                    error=stderr,
+                    duration_ms=duration,
+                )
+            except subprocess.TimeoutExpired:
+                duration = int((time.time() - start) * 1000)
+                return SandboxResult(
+                    success=False,
+                    error=f"Execution timed out after {self._timeout_s}s",
+                    duration_ms=duration,
+                    timed_out=True,
+                )
+            except FileNotFoundError:
+                # 解释器不存在
+                raise SandboxError(
+                    f"Interpreter '{language}' not found on system")
+            except Exception as e:
+                duration = int((time.time() - start) * 1000)
+                return SandboxResult(
+                    success=False,
+                    error=str(e),
+                    duration_ms=duration,
+                )
+    ```
+  </instructions>
+
+  <behavior_examples>
+    例1: 简单代码正确执行
+      execute("print('hello')") → SandboxResult(success=True, output="hello\n")
+
+    例2: 代码报错
+      execute("print(1/0)") → SandboxResult(success=False, error="ZeroDivisionError: ...")
+
+    例3: 超时
+      execute("while True: pass") → SandboxResult(success=False, timed_out=True,
+              error="Execution timed out after 10s")
+
+    例4: 禁用模块
+      execute("import os; os.listdir('.')") → SandboxResult(success=False,
+              error="ImportError: module os is not allowed in sandbox")
+
+    例5: 不支持的语
+      execute("print(1)", language="ruby") → raises SandboxError("Language 'ruby' not allowed")
+
+    例6: 空代码
+      execute("") → raises SandboxError("Empty code")
+  </behavior_examples>
+
+  <testing>
+    在 tests/test_sandbox.py 中实现以下测试:
+
+    1. test_execute_simple_code — 简单 print 执行成功
+    2. test_execute_syntax_error — 语法错误返回 stderr
+    3. test_execute_timeout — 无限循环被 timeout 终止
+    4. test_execute_denied_module — 禁止模块返回 ImportError
+    5. test_execute_unsupported_language — 不支持的语言抛出 SandboxError
+    6. test_execute_empty_code — 空代码抛出 SandboxError
+    7. test_sandbox_result_to_dict — to_dict 格式正确
+    8. test_sandbox_result_attributes — 属性赋值正确
+    9. test_execute_output_truncation — 超长输出截断
+
+    测试策略:
+    - 测试用的代码应该简短且可预测
+    - timeout 测试用 while True: pass 验证（10s 内被终止）
+    - denied_modules 测试验证模块禁止逻辑生效
+  </testing>
+
+  <quality_gates>
+    <gate>python -c "
+from src.coach.sandbox import CodeSandbox, SandboxResult, SandboxError
+s = CodeSandbox()
+r = s.execute('print(42)')
+assert r.success and '42' in r.output
+print('OK')
+"</gate>
+    <gate>pytest tests/test_sandbox.py -v (全部通过)</gate>
+    <gate>pytest tests/ -q (1192 tests 全部 pass)</gate>
+  </quality_gates>
+</prompt>

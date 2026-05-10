@@ -1,0 +1,27 @@
+<orchestrator phase="17" name="知情同意启用 TTM+SDT + A/B 验证">
+  <description>
+    Phase 17 在 Phase 16 能力唤醒基础上，实现推荐分级展示、知情同意交互、
+    批量启用、选择持久化，以及 llm_only vs full_stack 的 A/B 统计验证。
+  </description>
+  <sub_phases>
+    <s17.1 file="153_s17_recommended_markers.xml">推荐标记与分级展示</s17.1>
+    <s17.2 file="154_s17_consent_flow.xml">知情同意交互与批量启用</s17.2>
+    <s17.3 file="155_s17_choice_persistence.xml">选择持久化</s17.3>
+    <s17.4 file="156_s17_ab_verification.xml">A/B 对照组验证</s17.4>
+    <s17.5 file="157_s17_final_verification.xml">最终集成验证</s17.5>
+  </sub_phases>
+  <constraints>
+    <constraint>无新 API 路由——同意/拒绝通过 chat 消息流处理</constraint>
+    <constraint>无新 LLM 调用——能力描述来自 YAML capabilities 段</constraint>
+    <constraint>现有单个模块启用 ("打开 X") 保持兼容</constraint>
+    <constraint>contracts/** 禁改</constraint>
+    <constraint>config/coach_defaults.yaml 仅追加新字段，不删除已有字段</constraint>
+    <constraint>全量回归 1274+ tests pass</constraint>
+  </constraints>
+  <verification>
+    <step>python -m pytest tests/test_s17_consent.py -v (8 tests)</step>
+    <step>python -m pytest tests/test_s16_awakening.py -v (回归)</step>
+    <step>python tests/test_s17_ab_evaluation.py (A/B 报告)</step>
+    <step>python -m pytest tests/ -q (全量回归)</step>
+  </verification>
+</orchestrator>

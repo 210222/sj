@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S16.5 Settings Completeness</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>16</phase>
+  <sub_stage>S16.5</sub_stage>
+  <sub_stage_name>设置面板完整性 — 补齐所有缺失模块的 toggle 和 EXPOSED_KEYS 白名单</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 16 S16.5 实现者。
+    你的任务是：把 SettingsPanel 的 toggle 列表和 config_router 的 EXPOSED_KEYS 白名单全部补齐，
+    让用户可以在设置页面看到所有 9 个模块并直接开关。
+  </role>
+
+  <context>
+    === 现状 ===
+    frontend SettingsPanel 只有 7 个 config items，其中包含 3 个模块 toggle
+    （sovereignty_pulse、excursion、relational_safety）。
+    api/routers/config_router.py 中 EXPOSED_KEYS 白名单只包含 7 个 key。
+    有 6 个模块既不在 SettingsPanel 也不在白名单中。
+
+    === 目标 ===
+    全部 9 个模块在 SettingsPanel 有 toggle，全部 enabled key 在白名单中。
+  </context>
+
+  <task>
+    1) 修改 frontend/src/components/settings/SettingsPanel.tsx：
+       - 在现有 CONFIG_ITEMS 基础上，新增 6 个缺失模块的 toggle
+       - 分组合理：诊断组 / 安全组 / 实验组 / 自适应组
+    2) 修改 api/routers/config_router.py：
+       - EXPOSED_KEYS 补全全部模块的 enabled key
+  </task>
+
+  <output_files>
+    <file>frontend/src/components/settings/SettingsPanel.tsx — 新增 toggle</file>
+    <file>api/routers/config_router.py — EXPOSED_KEYS 补全</file>
+  </output_files>
+
+  <settings_completeness_spec>
+
+    === 待新增 toggle（6 个） ===
+    - counterfactual.enabled
+    - diagnostic_engine.enabled
+    - diagnostics.enabled
+    - mapek.enabled
+    - mrt.enabled
+    - precedent_intercept.enabled
+
+    === 分组建议 ===
+    - 现有的 LLM 组不变
+    - 现有的行为科学组不变
+    - 安全组：sovereignty_pulse / relational_safety / excursion（已有）+ precedent_intercept（新增）
+    - 诊断组：diagnostic_engine（新增）+ diagnostics（新增）+ counterfactual（新增）
+    - 自适应组：mapek（新增）+ mrt（新增）
+
+    === EXPOSED_KEYS 补全 ===
+    现有白名单 + 新增：
+    - counterfactual.enabled
+    - diagnostic_engine.enabled
+    - diagnostics.enabled
+    - mapek.enabled
+    - mrt.enabled
+    - precedent_intercept.enabled
+
+  </settings_completeness_spec>
+
+  <implementation_principles>
+    <principle>不与现有 toggle 重复。</principle>
+    <principle>所有 toggle 使用相同的 UI 风格和交互模式。</principle>
+    <principle>新增 toggle 需要在前端也展示加载状态和错误反馈。</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. SettingsPanel 中每个模块有 toggle
+    2. EXPOSED_KEYS 白名单完整
+    3. 每个 toggle 读写后端成功
+    4. 全量回归无退化
+  </success_criteria>
+
+</prompt>

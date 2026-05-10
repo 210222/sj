@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 20 — S20.1b 历史趋势表</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>20</phase>
+  <sub_stage>S20.1b</sub_stage>
+  <sub_stage_name>新增 profile_history 表 — 支持长期技能趋势查询</sub_stage_name>
+
+  <role>
+    你是 Coherence Phase 20 S20.1b 实现者。
+    S20.1a 让每轮数据写入了 profiles 表（覆盖式）。现在需要追加一个 append-only 的 profile_history 表，
+    让系统能回答"用户一周前的 mastery 是多少"、"TTM 阶段什么时候变的"。
+  </role>
+
+  <context>
+    === 当前状态 ===
+    persistence.py 的 profiles 表每一轮覆盖写入——get_profile() 返回当前值，不保存历史。
+    无法查询"用户上周的 skill_masteries"、"TTM 阶段变化趋势"。
+
+    === 约束 ===
+    - 不修改 contracts/ 任何文件
+    - 不修改 profiles 表已有字段（不删不改，只新增 history 表）
+    - 只修改：src/coach/persistence.py
+    - 全量回归 1275+ 必须通过
+    - 历史表写入失败不阻塞主流程
+    - 历史表无数据时返回空列表（不是 None）
+  </context>
+
+  <task>
+
+    ── 改动 1: persistence.py 新增 profile_history DDL（在已有 ENTITY_TABLE_SQL/FACTS_TABLE_SQL 之后）──
+
+    在文件顶部 DDL 区域（大约第 45 行后）新增：
+
+    ```python
+    PROFILE_HISTORY_SQL = """
+    CREATE TABLE IF NOT EXISTS profile_history (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id  TEXT NOT NULL,
+        field_name  TEXT NOT NULL,
+        old_value   TEXT,
+        new_value   TEXT,
+        timestamp   REAL NOT NULL,
+        created_at  TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_profile_history_sid ON profile_history(session_id);
+    CREATE INDEX IF NOT EXISTS idx_profile_history_field ON profile_history(session_id, field_name);
+    """
+    ```
+
+    注意：
+    - `timestamp = REAL` = time.time() epoch 值，方便做时间范围查询
+    - `created_at` = ISO 格式人类可读
+    - 两个索引覆盖常用查询模式（按会话查、按会话+字段查）
+
+    ── 改动 2: SessionPersistence.__init__() 中建 profile_history 表（在第 52 行的 _ensure_row() 之后）──
+
+    在 `_ensure_row()` 调用之后（约第 60 行）新增建表：
+
+    ```python
+    # Phase 20: 建 profile_history 表（幂等）
+    try:
+        self.db.executescript(PROFILE_HISTORY_SQL)
+    except Exception:
+        _logger.warning("Failed to create profile_history table", exc_info=True)
+    ```
+
+    ── 改动 3: 新增 save_history_snapshot() 方法──
+
+    在 `adjust_difficulty()` 方法之后（约第 160 行），新增：
+
+    ```python
+    # ── Phase 20: 历史快照 ──
+
+    def save_history_snapshot(self, field_name: str, old_value: str, new_value: str) -> None:
+        """记录一条字段变更历史到 profile_history 表。
+
+        session_id, field_name, old_value, new_value, timestamp, created_at
+        """
+        import time
+        from datetime import datetime, timezone
+        self.db.execute(
+            """INSERT INTO profile_history
+               (session_id, field_name, old_value, new_value, timestamp, created_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (
+                self.session_id,
+                field_name,
+                str(old_value) if old_value is not None else None,
+                str(new_value) if new_value is not None else None,
+                time.time(),
+                datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+            ),
+        )
+        self.db.commit()
+    ```
+
+    ── 改动 4: 新增 get_mastery_trend() 方法──
+
+    在 `save_history_snapshot()` 之后，新增：
+
+    ```python
+    def get_mastery_trend(self, field_name: str, days: int = 30) -> list[dict]:
+        """查询指定字段的历史趋势。
+
+        Args:
+            field_name: 字段名，如 'ttm_stage', 'autonomy', 'difficulty_level', 'skill_masteries'
+            days: 回溯天数，默认 30 天
+
+        Returns:
+            [{"timestamp": 1715000000.0, "value": "contemplation"}, ...]
+            没有数据时返回 []
+        """
+        import time
+        cutoff = time.time() - days * 86400
+        rows = self.db.execute(
+            """SELECT timestamp, new_value, created_at FROM profile_history
+               WHERE session_id = ? AND field_name = ? AND timestamp >= ?
+               ORDER BY timestamp ASC""",
+            (self.session_id, field_name, cutoff),
+        ).fetchall()
+        return [
+            {
+                "timestamp": r[0],
+                "value": r[1],
+                "created_at": r[2],
+            }
+            for r in rows
+        ]
+    ```
+
+    ── 改动 5: 在 save_ttm_stage/save_sdt_scores/save_difficulty 中追加历史记录──
+
+    在每个 save 方法中追加一行 save_history_snapshot 调用：
+
+    ```python
+    def save_ttm_stage(self, stage: str):
+        old = self.load_ttm_stage()
+        self.db.execute(...)  # 已有代码不变
+        self.db.commit()      # 已有代码不变
+        # Phase 20: 记录历史
+        if old != stage:
+            self.save_history_snapshot("ttm_stage", old, stage)
+
+    def save_sdt_scores(self, autonomy, competence, relatedness):
+        old = self.load_sdt_scores()
+        self.db.execute(...)  # 已有代码不变
+        self.db.commit()      # 已有代码不变
+        # Phase 20: 记录历史
+        if old["autonomy"] != autonomy:
+            self.save_history_snapshot("autonomy", old["autonomy"], autonomy)
+        if old["competence"] != competence:
+            self.save_history_snapshot("competence", old["competence"], competence)
+
+    def save_difficulty(self, level: str):
+        old = self.load_difficulty()
+        self.db.execute(...)  # 已有代码不变
+        self.db.commit()      # 已有代码不变
+        # Phase 20: 记录历史
+        if old != level:
+            self.save_history_snapshot("difficulty_level", old, level)
+    ```
+
+  </task>
+
+  <verification_method>
+    ```bash
+    cd D:/Claudedaoy/coherence
+    python -c "
+    from src.coach.agent import CoachAgent
+    from src.coach.persistence import SessionPersistence
+
+    # 运行 3 轮对话
+    a = CoachAgent(session_id='test_trend_20')
+    for msg in ['hello', 'list', 'loop']:
+        a.act(msg, {})
+
+    # 查历史趋势
+    p = SessionPersistence('test_trend_20')
+    trend = p.get_mastery_trend('ttm_stage', days=30)
+    print(f'ttm_stage trend entries: {len(trend)}')
+    for t in trend:
+        print(f'  {t[\"created_at\"]}: {t[\"value\"]}')
+    assert len(trend) >= 1, 'should have at least 1 history entry'
+    print('PASS: history tracking works')
+    "
+    ```
+  </verification_method>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>3 轮对话后 get_mastery_trend('ttm_stage') 返回 >= 1 条记录</item>
+    <item>各 save 方法在值未变化时不重复写历史（if old != new 保护）</item>
+    <item>profile_history 表无数据时返回空列表（不是 Exception）</item>
+  </success_criteria>
+</prompt>

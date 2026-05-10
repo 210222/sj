@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S16.6 Verification</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>16</phase>
+  <sub_stage>S16.6</sub_stage>
+  <sub_stage_name>Phase 16 验证 — 唤醒流程端到端测试 + 全量回归</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 16 S16.6 实现者。
+    你的任务是：验证整个能力唤醒流程端到端工作正常。
+  </role>
+
+  <context>
+    === 验证范围 ===
+    - 新用户首轮带 awakening 标记
+    - 回访用户不重复触发
+    - 对话启用操作正确执行
+    - SettingsPanel 完整
+    - 全量回归无退化
+  </context>
+
+  <task>
+    1) 编写 tests/test_s16_awakening.py。
+    2) 运行全量回归。
+    3) 产出验证报告。
+  </task>
+
+  <output_files>
+    <file>tests/test_s16_awakening.py — 新建测试文件</file>
+    <file>reports/phase16_verification.md — 验证报告</file>
+  </output_files>
+
+  <verification_spec>
+
+    === 测试用例 ===
+    1. 新用户首轮 → _awakening 标记存在
+    2. 已有用户首轮 → _awakening 标记不存在
+    3. 用户输入"打开诊断引擎" → 配置被修改 + 返回影响说明
+    4. 用户输入"MAPE-K 是什么" → 返回模块说明
+    5. 用户输入"全部打开" → 检查冲突后启用
+    6. 回访用户首轮 → 不触发 awakening
+    7. SettingsPanel 请求返回所有模块 key
+    8. YAML 写入失败 → 不崩溃
+
+    === 验证方法 ===
+    - 单元测试验证 act() 返回值含 _awakening
+    - 集成测试验证 API 透传
+    - 手动测试 SettingsPanel toggle 操作
+
+  </verification_spec>
+
+  <implementation_principles>
+    <principle>测试不依赖 LLM。</principle>
+    <principle>测试不修改持久化配置文件（使用临时目录或 mock）。</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. 8 个测试用例全部 pass
+    2. 全量回归 1261+ pass
+    3. 验证报告完整
+  </success_criteria>
+
+</prompt>

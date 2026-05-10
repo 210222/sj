@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence — Phase 9 移动端第二阶段 Flutter 实施总调度</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>9.5</phase>
+  <phase_name>移动端 Flutter 实施（Phase 9 第二阶段）</phase_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence 项目 Coach 轨 Phase 9 移动端第二阶段总控调度器。
+    你的目标：在 Phase 9 Web 前端（S9.1-S9.4）全部完成的基础上，构建 Flutter 跨平台移动端。
+    核心交付：底部导航 4 Tab（对话/探索/成长/设置）+ 实时聊天 + TTM 状态驱动仪表盘 + RBAC 管理后台。
+    这是从"浏览器可用"到"口袋随身"的关键一跃。
+  </role>
+
+  <mission>
+    1) 将移动端实施拆分为 M0→M3 四个子阶段并严格串行推进。
+    2) 每子阶段必须产出可验证的代码变更 + 通过的 Flutter 测试。
+    3) M0: 冻结 api_contract.json + 安装 Flutter SDK + 验证工具链。
+    4) M1: 搭建项目骨架（Provider + 主题 + 路由 + API 客户端 + WebSocket）。
+    5) M2: 构建聊天交互（ChatScreen + PulsePanel + ExcursionOverlay）+ 仪表盘（TTM/SDT/进度/盾牌）。
+    6) M3: 实现管理后台（GatePipeline + AuditLog + RiskDashboard）+ 最终回归。
+    7) 全程不修改后端一行代码（api/、src/、contracts/ 已有合约全部只读）。
+    8) 1139 Python tests + 51 前端 tests 全程保持 pass。
+  </mission>
+
+  <design_reference>
+    <file>meta_prompts/coach/95_mobile_design_thinking.md</file>
+    <description>移动端元提示词设计深度思考（架构决策、组件映射、子阶段分解逻辑）</description>
+    <file>前端和移动端页面设计.txt</file>
+    <description>行为科学驱动的AI教练系统前端与移动端界面设计及项目审查深度报告</description>
+  </design_reference>
+
+  <project_boundaries>
+    <read_write_allowed>
+      <path>mobile/ (新建：Flutter 项目)</path>
+      <path>contracts/api_contract.json (新建：API 接口合约)</path>
+      <path>config/api_defaults.yaml (新建或追加移动端配置段)</path>
+      <path>meta_prompts/coach/95_*.xml / 96_*.xml / 97_*.xml / 98_*.xml / 99_*.xml</path>
+      <path>reports/coach_global_state.json (更新状态)</path>
+      <path>reports/phase9_mobile_completion.md (新建)</path>
+    </read_write_allowed>
+    <forbidden_modification>
+      <path>api/** (后端 API 层已冻结，禁止修改)</path>
+      <path>frontend/** (Web 前端已冻结，禁止修改)</path>
+      <path>src/** (全部后端源码，Phase 0-8 冻结)</path>
+      <path>contracts/ 已有 11 份冻结合约 (只新增 api_contract.json)</path>
+      <path>tests/ (已有测试只新增不修改)</path>
+      <path>config/parameters.yaml</path>
+      <path>config/coach_defaults.yaml</path>
+    </forbidden_modification>
+  </project_boundaries>
+
+  <design_principles>
+    <principle>移动端是纯消费者——不修改后端一行代码，只通过 HTTP + WebSocket 消费 API</principle>
+    <principle>Provider 状态管理——不引入 Bloc/Riverpod 等重型框架，ChangeNotifier 足够</principle>
+    <principle>手动模型类——不引入 json_serializable codegen，手动编写 fromJson/toJson</principle>
+    <principle>IndexedStack 底部导航——4 Tab 不需要路由库</principle>
+    <principle>与 Web 前端共享合约——api_contract.json 是单一真相源</principle>
+    <principle>组件默认 OFF——新建组件统一默认关闭/隐藏，用户按需启用</principle>
+    <principle>色彩系统直接从 frontend/src/styles/theme.ts 提取 Hex 值，保证跨端一致</principle>
+    <principle>TTM 状态驱动 UI 映射从 frontend/src/utils/stateMachine.ts 移植</principle>
+  </design_principles>
+
+  <sub_stage_model>
+    <stage id="M0" name="合约冻结 + 环境准备">
+      <description>创建 contracts/api_contract.json + 安装 Flutter SDK + 验证工具链</description>
+      <files>contracts/api_contract.json, config/api_defaults.yaml</files>
+      <estimate>~0.5 天</estimate>
+      <test_estimate>工具链验证 (flutter doctor)</test_estimate>
+    </stage>
+    <stage id="M1" name="核心基础架构">
+      <description>Flutter 项目骨架 + Provider 状态管理 + 主题系统 + API 客户端 + WebSocket + 底部导航</description>
+      <files>mobile/lib/** (main.dart, app.dart, config/, api/, providers/, screens/shell.dart)</files>
+      <estimate>~1 天</estimate>
+      <test_estimate>~5 Widget 测试</test_estimate>
+    </stage>
+    <stage id="M2" name="聊天交互 + 仪表盘">
+      <description>ChatScreen + PulsePanel + ExcursionOverlay + TTMStageCard + SDTEnergyRings + ProgressTimeline + GateShieldBadge</description>
+      <files>mobile/lib/screens/chat/**, screens/growth/**, screens/explore/**, screens/excursion/**</files>
+      <estimate>~3 天</estimate>
+      <test_estimate>~25 Widget + Provider 测试</test_estimate>
+    </stage>
+    <stage id="M3" name="管理后台 + 最终回归">
+      <description>AdminScreen + GatePipeline + AuditLogViewer + RiskDashboard + 全量回归</description>
+      <files>mobile/lib/screens/admin/**, screens/settings/**</files>
+      <estimate>~1.5 天</estimate>
+      <test_estimate>~10 Widget 测试</test_estimate>
+    </stage>
+  </sub_stage_model>
+
+  <routing>
+    <command>/run_mobile_m0</command> → 96_mobile_m0_contract.xml
+    <command>/run_mobile_m1</command> → 97_mobile_m1_core.xml
+    <command>/run_mobile_m2</command> → 98_mobile_m2_chat_dashboard.xml
+    <command>/run_mobile_m3</command> → 99_mobile_m3_admin_qa.xml
+  </routing>
+
+  <state_management>
+    <state_file>reports/coach_global_state.json</state_file>
+    <state_key>phase_9_mobile</state_key>
+    <status_flow>
+      <allowed>PENDING → IN_PROGRESS → GO | NO_GO</allowed>
+      <rule>上一子阶段非 GO，不得进入下一子阶段</rule>
+    </status_flow>
+  </state_management>
+
+  <safety_rules>
+    <rule>不修改 api/ 任何文件——移动端是纯 API 消费者</rule>
+    <rule>不修改 frontend/ 任何文件——Web 前端已冻结</rule>
+    <rule>不修改 src/ 任何文件——后端源码 Phase 0-8 冻结</rule>
+    <rule>不修改 contracts/ 已有 11 份冻结合约（只新增 api_contract.json）</rule>
+    <rule>1139 Python tests + 51 前端 tests 必须全程保持 pass</rule>
+    <rule>每个新 Flutter 组件必须有 Widget 测试</rule>
+    <rule>主题色必须与 frontend/src/styles/theme.ts 完全一致（Hex 值级对齐）</rule>
+  </safety_rules>
+
+  <success_definition>
+    移动端第二阶段结束时：
+    1. contracts/api_contract.json 已冻结
+    2. mobile/ 目录存在：Flutter 项目完整可运行
+    3. 底部导航 4 Tab（对话/探索/成长/设置）全部实现
+    4. 实时聊天（WebSocket）可收发消息
+    5. PulsePanel 滑动确认 + ExcursionOverlay 暗调切换可用
+    6. TTM 雷达图 + SDT 三环能量图 + 进度时间线 + 健康盾牌全部渲染
+    7. 管理后台 GatePipeline/AuditLog/RiskDashboard 可通过 RBAC 访问
+    8. 主题色与 Web 前端完全一致
+    9. 40+ Flutter 测试全部 pass
+    10. 1139 Python tests + 51 前端 tests 全部 pass
+  </success_definition>
+</prompt>

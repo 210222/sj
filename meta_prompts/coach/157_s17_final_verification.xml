@@ -1,0 +1,23 @@
+<sub_phase id="s17.5" name="最终集成验证">
+  <objective>
+    端到端流程验证 + 边缘测试 + 回归确认。
+  </objective>
+  <changes>
+    <change file="tests/test_s17_consent.py">
+      8 个 pytest 测试用例：
+      1. test_recommended_modules_flagged — 新用户看到推荐分组
+      2. test_consent_enables_modules — 同意启用 TTM+SDT
+      3. test_decline_keeps_modules_off — 拒绝保持关闭
+      4. test_cross_session_persistence — 跨会话持久化
+      5. test_no_awakening_when_consented — 已同意无唤醒
+      6. test_no_awakening_when_declined — 已拒绝无唤醒
+      7. test_individual_enable_still_works — 单个启用兼容
+      8. test_regression_s16 — S16 回归全通过
+    </change>
+  </changes>
+  <verification_checklist>
+    - [x] 8/8 tests pass
+    - [x] test_s16_awakening.py 5/5 pass
+    - [x] 全量回归 1274 passed, 0 failed
+  </verification_checklist>
+</sub_phase>

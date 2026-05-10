@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S13.4 跨会话持久化 + 难度自适应</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>13</phase>
+  <sub_stage>S13.4</sub_stage>
+  <sub_stage_name>跨会话持久化 + 难度自适应 — BKT 掌握度跨会话保留 + 教学难度根据掌握度动态调整</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 13 S13.4 实现者。
+    你的任务是：让 BKT 掌握度跨会话持久化，使第三次对话的诊断准确率大幅提升；
+    同时让 composer 根据掌握度调整教学难度。
+  </role>
+
+  <context>
+    === 问题 ===
+    1. SkillMasteryStore.to_dict() 已实现但从未被调用。
+       每次重启会话，BKT 掌握度归零。
+       一个用户昨天学到了 list 技能 mastery=0.8，今天重启 mastery 又回到 0.3。
+
+    2. _get_difficulty() 返回 easy/medium/hard 但无下游消费。
+       即使 DiagnosticEngine 判断用户需要"easy"难度，实际教学动作
+       并没有调整难度——composer 仍然用默认参数生成内容。
+
+    === 数据 ===
+    如果不做跨会话持久化：
+    - 第 1 次会话: 诊断 2-3 次 → 只能测试 2-3 个技能
+    - 第 2 次会话: 全部归零 → 重复测试相同技能
+    - 交叉会话准确率: 永远低
+
+    如果做跨会话：
+    - 第 1 次: 2-3 技能达到 mastery=0.7
+    - 第 2 次: 测试另外 2-3 技能，累积
+    - 第 5 次: 10+ 技能有稳定掌握度
+    - 技能画像开始有实用价值
+
+    === 持久化方案 ===
+    使用 JSON 文件保存到 reports/ 目录（单用户系统，无需数据库）：
+    - reports/diagnostic_mastery.json
+    - 每次诊断更新后写文件
+    - agent 初始化时读文件恢复
+
+    === 难度自适应方案 ===
+    composer 的 support_level 目前由 SDT（如果启用）或默认值决定。
+    新增: DiagnosticEngine 的难度信号作为 support_level 的输入之一。
+    低掌握度 → support_level="high"（更多 scaffold, 更详细的步骤）
+    高掌握度 → support_level="low"（更多 challenge, 更少的 scaffold）
+  </context>
+
+  <task>
+    1) 在 `src/coach/diagnostic_engine.py` 中新增持久化方法：
+
+    ```python
+    import os
+
+    _DEFAULT_MASTERY_PATH = os.path.join(
+        os.path.dirname(__file__), "..", "..", "reports", "diagnostic_mastery.json"
+    )
+
+    class DiagnosticEngine:
+        def save_state(self, filepath: str = _DEFAULT_MASTERY_PATH) -> None:
+            \"\"\"保存当前技能掌握度到 JSON 文件.\"\"\"
+            import json, os
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            state = {
+                "store": self._store.to_dict(),
+                "probe_count": self._probe_count,
+                "history_summary": [
+                    {
+                        "skill": r.probe.skill,
+                        "correct": r.correct,
+                        "timestamp": r.timestamp,
+                    }
+                    for r in self._history[-20:]  # 只保留最近 20 条
+                ],
+            }
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(state, f, ensure_ascii=False, indent=2)
+
+        def restore_state(self, filepath: str = _DEFAULT_MASTERY_PATH) -> bool:
+            \"\"\"从 JSON 文件恢复技能掌握度.\"\"\"
+            import json
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    state = json.load(f)
+                store_data = state.get("store")
+                if store_data:
+                    from src.coach.diagnostic_engine import SkillMasteryStore
+                    self._store = SkillMasteryStore.from_dict(store_data)
+                self._probe_count = state.get("probe_count", 0)
+                return True
+            except (FileNotFoundError, json.JSONDecodeError, Exception):
+                return False
+    ```
+
+    2) 在 `src/coach/agent.py` 中集成持久化：
+
+    ```python
+    # CoachAgent.__init__ 中恢复（约第 118 行后）
+    if self._diagnostic_engine:
+        self._diagnostic_engine.restore_state()
+        _logger.info("DiagnosticEngine state restored from disk")
+
+    # agent.py act() 中每次诊断更新后保存（约第 335 行后）
+    if diagnostic_result and diagnostic_result.get("evaluated"):
+        try:
+            self.diagnostic_engine.save_state()
+        except Exception:
+            pass
+    ```
+
+    3) 在 `src/coach/composer.py` 中增加难度自适应。
+       修改 compose() 使其接受 mastery_signal 参数：
+
+    ```python
+    def compose(self, intent, action_type, user_state, ttm_strategy=None,
+                sdt_recommendation=None, mastery_signal=None):
+        \"\"\"
+        mastery_signal: dict | None
+            {"mastery": 0.0-1.0, "skill": "python_list", "difficulty": "easy/medium/hard"}
+        \"\"\"
+        # 确定 support_level
+        support_level = self._default_support  # "medium"
+
+        if mastery_signal:
+            difficulty = mastery_signal.get("difficulty", "medium")
+            # 难度映射
+            diff_to_support = {
+                "easy": "high",    # 掌握度低 → 更多支持
+                "medium": "medium",
+                "hard": "low",     # 掌握度高 → 更少支持
+            }
+            support_level = diff_to_support.get(difficulty, support_level)
+
+        # ... 现有逻辑 ...
+    ```
+
+    4) 在 `src/coach/agent.py` 中传递 mastery_signal 到 composer：
+
+    ```python
+    # act() 中 composer 调用前（约第 475 行）
+    mastery_signal = None
+    if self.diagnostic_engine:
+        # 获取最近测试技能的掌握度
+        store = self.diagnostic_engine.store
+        all_masteries = store.get_all_masteries()
+        if all_masteries:
+            # 取掌握度最低的技能作为调整依据
+            lowest_skill = min(all_masteries, key=all_masteries.get)
+            lowest_mastery = all_masteries[lowest_skill]
+            diff = "easy" if lowest_mastery < 0.3 else "medium" if lowest_mastery < 0.6 else "hard"
+            mastery_signal = {
+                "mastery": lowest_mastery,
+                "skill": lowest_skill,
+                "difficulty": diff,
+            }
+
+    # 传入 composer
+    result = self.composer.compose(
+        intent=intent,
+        action_type=action_type,
+        user_state=user_state,
+        ttm_strategy=ttm_strategy,
+        sdt_recommendation=sdt_rec,
+        mastery_signal=mastery_signal,  # 新增
+    )
+    ```
+  </task>
+
+  <testing>
+    <test name="test_save_and_restore_mastery">
+      <code>
+def test_save_and_restore_mastery(tmp_path):
+    from src.coach.diagnostic_engine import DiagnosticEngine
+    # 原始引擎
+    e1 = DiagnosticEngine({"enabled": True})
+    e1._store.update("python", True)
+    e1._store.update("python", True)
+    e1._store.update("java", False)
+    orig_mastery = e1._store.get_mastery("python")
+
+    # 保存到临时文件
+    fp = str(tmp_path / "test_mastery.json")
+    e1.save_state(fp)
+
+    # 新引擎恢复
+    e2 = DiagnosticEngine({"enabled": True})
+    e2.restore_state(fp)
+    restored = e2._store.get_mastery("python")
+
+    assert abs(restored - orig_mastery) < 0.01
+    assert e2._store.get_mastery("java") < 0.3
+      </code>
+    </test>
+    <test name="test_restore_nonexistent_file_returns_false">
+      <code>
+def test_restore_nonexistent_file_returns_false():
+    from src.coach.diagnostic_engine import DiagnosticEngine
+    engine = DiagnosticEngine({"enabled": True})
+    result = engine.restore_state("/nonexistent/path.json")
+    assert result is False
+      </code>
+    </test>
+    <test name="test_mastery_signal_difficulty_mapping">
+      <code>
+def test_mastery_signal_difficulty_mapping():
+    from src.coach.composer import PolicyComposer
+    composer = PolicyComposer({})
+
+    # 低掌握度 → easy → high support
+    result = composer.compose(
+        intent="python",
+        action_type="scaffold",
+        user_state={},
+        mastery_signal={"mastery": 0.2, "skill": "python", "difficulty": "easy"},
+    )
+    assert "support_level" in result
+    assert result["support_level"] in ("high", "medium", "low")
+      </code>
+    </test>
+  </testing>
+
+  <success_criteria>
+    1. save_state() / restore_state() 正确序列化/反序列化 BKT 掌握度
+    2. 不存在的文件 restore 返回 False 不崩溃
+    3. mastery_signal 的 difficulty 正确映射到 support_level
+    4. 全量回归: python -m pytest tests/ -q → 1250+ pass
+    5. 重启 agent 后 restored 的掌握度与保存前一致
+  </success_criteria>
+
+</prompt>

@@ -1,0 +1,152 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 10 S3.1 Streaming LLM Client</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>10</phase>
+  <sub_stage>S3.1</sub_stage>
+  <sub_stage_name>Streaming LLM Client — AsyncGenerator + SSE 解析</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 10 S3.1 实现者。
+    你的任务是给 LLMClient 新增 generate_stream() 方法 — 流式 AsyncGenerator。
+    这是 S3 流式推送的第一层。
+  </role>
+
+  <context>
+    LLMClient 现有 generate() 方法是同步的，接收完整响应后返回 LLMResponse。
+    流式推送场景需要边生成边推送，所以需要 generate_stream() — 异步生成器。
+
+    设计前提:
+    - 不修改现有 generate() 方法（S1 的同步路径不受影响）
+    - streaming: false 时不会调用 generate_stream()
+    - 使用 OpenAI 兼容的 SSE 流式 API（DeepSeek 使用相同格式）
+    - 流式 API 地址与同步相同：POST /chat/completions，加 stream: true 参数
+    - 调用方负责在 exception 时做 fallback（S3 不做回退决策）
+  </context>
+
+  <instructions>
+    在 src/coach/llm/client.py 中新增方法 generate_stream。
+
+    方法签名:
+    ```python
+    async def generate_stream(self, coach_context: dict) -> AsyncGenerator[str, None]:
+        """流式生成教学内容，逐 chunk 产出文本片段.
+
+        Args:
+            coach_context: prompts.build_coach_context() 的输出
+
+        Yields:
+            str: 每个 SSE delta 的 content 文本片段
+
+        Raises:
+            LLMError: API 调用失败时（调用方负责 fallback）
+
+        Example:
+            async for chunk in client.generate_stream(ctx):
+                ws.send(chunk)  # 调用方控制推送时机
+        """
+    ```
+
+    实现细节:
+
+    1. 使用 urllib.request + stream=True 参数发送流式请求
+       - body 中加入 "stream": true
+       - urlopen() 的 response 按行读取
+
+    2. SSE 解析:
+       - 格式: data: {"choices":[{"delta":{"content":"你好"},"index":0}]}\n\n
+       - 每行以 "data: " 开头
+       - 解析 JSON 提取 choices[0].delta.content
+       - content 为空（role 字段行）跳过
+       - data: [DONE] 标记流结束
+       - 非 JSON 行跳过不抛异常
+
+    3. 逐行 yield:
+       - 每个非空的 delta content 通过 yield 返回
+       - yield 的是原始文本片段（不做缓存或拼接）
+
+    4. 错误处理:
+       - HTTP 错误: 同现有 generate()，抛出 LLMError
+       - SSE 解析错误: 跳过该行，继续下一行（不中断流）
+       - 连接中断: 抛出 LLMError("stream disconnected")
+
+    5. 异步适配说明:
+       - 由于 urllib.request 是同步库，需要在 executor 中运行
+       - 使用 loop.run_in_executor() 或 asyncio.to_thread()
+       - 逐行读取后用 await asyncio.sleep(0) 让出控制权，避免阻塞事件循环
+       - 或者使用 httpx / aiohttp 的异步流式支持（如果项目中已有）
+
+    6. 实现方式选择:
+       - 优先使用 asyncio 标准库 + run_in_executor（零依赖新增）
+       - 如果项目已有 httpx/aiohttp，优先使用已有异步客户端
+  </instructions>
+
+  <sse_detail>
+    DeepSeek/OpenAI 流式 SSE 格式:
+
+    ```
+    data: {"choices":[{"delta":{"role":"assistant"},"index":0}],"created":1234567890}\n\n
+    data: {"choices":[{"delta":{"content":"你好"},"index":0}],"created":1234567890}\n\n
+    data: {"choices":[{"delta":{"content":"，我们"},"index":0}],"created":1234567890}\n\n
+    data: {"choices":[{"delta":{"content":"开始吧"},"index":0}],"created":1234567890}\n\n
+    data: [DONE]\n\n
+    ```
+
+    解析逻辑:
+    - 行是否以 "data: " 开头 → 否：跳过
+    - 内容是 "[DONE]" → 结束
+    - 解析 JSON → choices[0].delta.get("content", "") → 非空则 yield
+
+    注意:
+    - role 字段的 delta 没有 content，跳过
+    - finish_reason 出现在最后一个 choice delta 中，不产出 content
+    - 多个 choice 只取 index=0
+  </sse_detail>
+
+  <behavior_examples>
+    例1: 正常流
+      输入: coach_context = {"system": "...", "user_message": "教我 Python"}
+      输出逐次 yield: "Python" → " 是" → " 一门" → " 编程语言" → "..."
+      最终拼接: "Python 是一门编程语言..."
+
+    例2: API 错误
+      HTTP 401 → 抛出 LLMError("invalid API key (401): ...")
+
+    例3: 空响应
+      API 返回空 body → 不 yield 任何内容（空 generator）
+
+    例4: SSE parse 错误
+      某行 data: {invalid json}
+      → 跳过该行，继续解析下一行
+  </behavior_examples>
+
+  <testing>
+    在 tests/test_llm_stream.py 中实现以下测试:
+
+    1. test_generate_stream_yields_chunks — mock SSE 响应，验证逐 chunk yield
+    2. test_generate_stream_concatenated_equals_sync — 流式拼接结果与 generate() 一致
+    3. test_generate_stream_done_signal — [DONE] 标记后停止
+    4. test_generate_stream_skip_invalid_json — 非 JSON 行跳过
+    5. test_generate_stream_skip_role_delta — role 字段行跳过
+    6. test_generate_stream_http_error — HTTP 错误抛出 LLMError
+    7. test_generate_stream_empty_response — 空响应不 yield
+
+    测试策略:
+    - 使用 unittest.mock.patch 模拟 urlopen
+    - mock 返回 BytesIO 模拟 SSE 流
+    - 不需要真实 API Key
+  </testing>
+
+  <quality_gates>
+    <gate>python -c "
+from src.coach.llm.client import LLMClient
+import inspect
+assert hasattr(LLMClient, 'generate_stream'), 'generate_stream missing'
+assert inspect.iscoroutinefunction(LLMClient.generate_stream), 'must be async'
+print('OK')
+"</gate>
+    <gate>pytest tests/test_llm_stream.py -v (全部通过)</gate>
+    <gate>pytest tests/ -q (1162 tests 全部 pass)</gate>
+  </quality_gates>
+</prompt>

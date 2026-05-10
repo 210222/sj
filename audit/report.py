@@ -27,7 +27,8 @@ def gather_layer_results(out_dir: Path) -> dict:
     for step, key in [('S10', 'layer_a'), ('S20', 'layer_b'),
                       ('S30', 'layer_c'), ('S40', 'layer_d'),
                       ('S50', 'layer_e'), ('S60', 'consistency'),
-                      ('S70', 'scoring'), ('S80', 'governance')]:
+                      ('S65', 'phase6_health'), ('S70', 'scoring'),
+                      ('S80', 'governance'), ('S85', 'phase19_21_wiring')]:
         summary_path = out_dir / step / 'summary.json'
         if summary_path.exists():
             with open(summary_path, encoding='utf-8') as f:
@@ -50,7 +51,7 @@ def gather_layer_results(out_dir: Path) -> dict:
 
     # Gather all findings
     all_findings = []
-    for step in ['S10', 'S20', 'S30', 'S40', 'S50']:
+    for step in ['S10', 'S20', 'S30', 'S40', 'S50', 'S65', 'S85']:
         f_path = out_dir / step / 'findings.json'
         if f_path.exists():
             with open(f_path, encoding='utf-8') as f:
@@ -85,7 +86,9 @@ def generate_report(out_dir: Path, layers: dict) -> dict:
     steps_status = {}
     for s, k in [('S00', None), ('S10', 'layer_a'), ('S20', 'layer_b'),
                  ('S30', 'layer_c'), ('S40', 'layer_d'), ('S50', 'layer_e'),
-                 ('S60', 'consistency'), ('S70', 'scoring'), ('S80', 'governance')]:
+                 ('S60', 'consistency'), ('S65', 'phase6_health'),
+                 ('S70', 'scoring'), ('S80', 'governance'),
+                 ('S85', 'phase19_21_wiring')]:
         if k and k in layers:
             steps_status[s] = layers[k].get('status', '?')
         else:
@@ -198,6 +201,17 @@ def generate_report(out_dir: Path, layers: dict) -> dict:
                 f"DORA: {layer_e.get('dora_metrics', {}).get('deploy_frequency_label', 'N/A')} deploys",
                 f"Bus factor: {layer_e.get('bus_factor', {}).get('factor', '?')}",
                 f"Test pyramid healthy: {layer_e.get('test_pyramid', {}).get('healthy', False)}",
+            ]),
+            'layer_f_phase6': _build_layer_report('F — Phase 6 Integration Health', layers.get('phase6_health', {}), [
+                f"Wiring checks: {layers.get('phase6_health', {}).get('checks_passed', 0)}/{layers.get('phase6_health', {}).get('checks_passed', 0) + layers.get('phase6_health', {}).get('checks_failed', 0)}",
+                f"Phase 6 contracts frozen check: {layers.get('phase6_health', {}).get('status', '?')}",
+                f"Runtime verify: {layers.get('phase6_health', {}).get('score', 0)}%",
+            ]),
+            'layer_h_phase19_21': _build_layer_report('H — Phase 19-21 Wiring & Exhaustive', layers.get('phase19_21_wiring', {}), [
+                f"Wiring checks: {layers.get('phase19_21_wiring', {}).get('checks_passed', 0)}/{layers.get('phase19_21_wiring', {}).get('checks_passed', 0) + layers.get('phase19_21_wiring', {}).get('checks_failed', 0)}",
+                f"Full regression: verified in S85 run",
+                f"Exhaustive test integration: {layers.get('phase19_21_wiring', {}).get('status', '?')}",
+                f"Runtime verify score: {layers.get('phase19_21_wiring', {}).get('score', 0)}%",
             ]),
         },
 

@@ -1,0 +1,198 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 10 S2.4 Integration Close</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>10</phase>
+  <sub_stage>S2.4</sub_stage>
+  <sub_stage_name>Integration Close — agent.py 接入三层校验 + 全量回归</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 10 S2.4 实现者。
+    你的任务是将 S2.1/S2.2/S2.3 集成到 agent.py，完成全量回归测试。
+    这是 S2 安全护栏的最终闭合。
+  </role>
+
+  <context>
+    S2.1 (LLMDSLAligner)、S2.2 (LLMSafetyFilter)、S2.3 (LLMGateAuditor) 均已实现并通过单元测试。
+    当前 agent.py 中 §4.5 只有基础的 LLMOutputValidator.validate() 校验，缺少三层安全护栏。
+
+    集成目标:
+    - §4.5 之后插入 §4.6: LLM 输出校验（对齐→过滤→强制→校验）
+    - §6 之后插入 §6.1: LLM 门禁后审计
+    - §10 响应中新增 llm_alignment / llm_safety 字段
+
+    设计前提:
+    - 不改动现有 §4.5 已有 LLM 生成代码
+    - 不改动 §5/§6/§7/§8/§9 任何逻辑
+    - llm.enabled: false 时新增代码完全跳过
+    - 1162 已有 tests 全部保持 pass
+  </context>
+
+  <instructions>
+    修改 src/coach/agent.py，在 CoachAgent.act() 方法中插入三处变更:
+
+    === 变更一: §4.6 LLM 输出校验（在 §4.5 之后、§5 之前插入）===
+
+    在现有 §4.5 的 except 块闭合之后（action["llm_error"] 赋值之后），插入:
+
+    1. 初始化报告变量:
+       - llm_alignment_report = None
+       - llm_safety_report = None
+
+    2. 在 if llm_cfg.get("enabled", False): 块内部，LLMResponse.to_payload() 之后、LLMOutputValidator.validate() 之前:
+       a) LLMDSLAligner.align(raw_payload, action_type) → aligned_payload, llm_alignment_report
+       b) LLMSafetyFilter.filter_payload(aligned_payload, forbidden_phrases) → filtered_payload, triggered
+       c) LLMSafetyFilter.enforce_action_type(llm_attempted_atype, rule_atype) → enforced_atype
+       d) 用 filtered_payload 替换原来的 llm_payload 进入 LLMOutputValidator.validate()
+
+    3. llm_safety_report = {"triggered_phrases": triggered}
+
+    4. 当 LLM 试图覆盖 action_type 时记录 warning 日志:
+       "LLM attempted to override action_type: {attempted} → {enforced}"
+
+    关键代码模式:
+    ```python
+        # ★ S2.1: DSL Schema 对齐
+        from src.coach.llm.schemas import LLMDSLAligner
+        aligned_payload, llm_alignment_report = LLMDSLAligner.align(
+            llm_payload, action.get("action_type", "suggest"),
+        )
+
+        # ★ S2.2: 内容安全过滤
+        from src.coach.llm.safety_filter import LLMSafetyFilter
+        forbidden = self._cfg().get("relational_safety", {}).get("forbidden_phrases", [])
+        filtered_payload, triggered = LLMSafetyFilter.filter_payload(
+            aligned_payload, forbidden,
+        )
+        llm_safety_report = {"triggered_phrases": triggered}
+
+        # ★ S2.2: ActionType 强制
+        llm_attempted_atype = llm_payload.get("action_type")
+        enforced_atype = LLMSafetyFilter.enforce_action_type(
+            llm_attempted_atype, action.get("action_type", "suggest"),
+        )
+        if llm_attempted_atype and llm_attempted_atype != enforced_atype:
+            _logger.warning(
+                "LLM attempted to override action_type: %s → %s",
+                llm_attempted_atype, enforced_atype,
+            )
+
+        # ★ 原有 LLMOutputValidator 校验（用 filtered_payload 替换 raw payload）
+        from src.coach.llm.schemas import LLMOutputValidator
+        valid, errors = LLMOutputValidator.validate(filtered_payload)
+        if valid and llm_alignment_report.get("valid", True):
+            action["payload"] = {**action.get("payload", {}), **filtered_payload}
+            action["llm_generated"] = True
+            action["llm_model"] = llm_response.model
+        else:
+            _logger.warning("LLM output validation failed: %s",
+                            errors + llm_alignment_report.get("errors", []))
+            action["llm_generated"] = False
+            action["llm_error"] = f"validation_failed: {errors}"
+    ```
+
+    重要: 保留原有的 except 和 fallback 逻辑不变。
+
+    === 变更二: §6.1 LLM 门禁后审计（在 §6 之后、§7 之前插入）===
+
+    在 pipeline 异常处理之后、§7 状态更新之前插入:
+
+    ```python
+        # ★ 6.1 Phase 10 S2.3: LLM 门禁后审计
+        if use_llm and action.get("llm_generated", False):
+            gate_decision = ct.get("gate_decision", "GO")
+            if gate_decision != "GO":
+                from src.coach.llm.audit import LLMGateAuditor
+                LLMGateAuditor.record_gate_block(
+                    session_id=ctx.get("session_id", "unknown"),
+                    trace_id=packet.get("trace_id", ""),
+                    action_type=packet.get("action_type", ""),
+                    llm_payload=action.get("payload", {}),
+                    gate_result={
+                        "decision": gate_decision,
+                        "allowed": sr.get("allowed", False),
+                        "audit_level": pipeline_result.get("audit_level", "pass"),
+                    },
+                    alignment_report=llm_alignment_report,
+                    safety_report=llm_safety_report,
+                )
+    ```
+
+    注意: use_llm 变量已经在 §4.5 开头定义，直接复用。ct 是 §7 中从 pipeline_result 提取的变量，§6.1 需要在提取 ct 之前使用 gate_decision，所以从 pipeline_result 直接读取。
+
+    === 变更三: §10 响应中新增字段 ==-
+
+    在 §10 的 result dict 中新增:
+
+    ```python
+            "llm_alignment": llm_alignment_report,
+            "llm_safety": llm_safety_report,
+    ```
+
+    llm_generated=true 时填充上述字段，false 时上述字段为 None。
+    llm_generated 为 true 且被门禁阻断时，额外填充:
+
+    ```python
+            "llm_gate_blocked": gate_decision != "GO",
+            "llm_gate_detail": {
+                "gate": ct.get("gate_decision", ""),
+                "decision": gate_decision,
+            } if gate_decision != "GO" else None,
+    ```
+  </instructions>
+
+  <testing>
+    在 tests/test_llm_s2_integration.py 中实现以下集成测试:
+    1. test_agent_llm_disabled_skips_all — llm.enabled: false 时 response 中不含 llm_alignment/llm_safety
+    2. test_agent_llm_alignment_in_response — llm.enabled: true 时 response 包含 llm_alignment 字段
+    3. test_agent_llm_safety_in_response — llm.enabled: true 时 response 包含 llm_safety 字段
+    4. test_agent_llm_action_type_forced — LLM 试图覆盖 action_type 被强制回正
+    5. test_agent_llm_gate_blocked_audit — LLM 输出被 gate 阻断后 LLMGateAuditor 有记录
+    6. test_agent_llm_chain_order — 验证调用顺序: align → filter → validate
+
+    测试策略:
+    - 不需要真实 LLM 调用（mock LLMClient.generate）
+    - 不需要真实 GateEngine（使用测试 fixture 模拟 pipeline_result）
+    - 使用 temp_yaml 临时配置控制 llm.enabled
+  </testing>
+
+  <smoke_checklist>
+    修改 agent.py 后逐项验证:
+    □ 新增 import 都在函数内部（无顶层 import 污染）
+    □ §4.5 原有代码无任何改动（except 和 fallback 路径不变）
+    □ §5/§6 代码行无任何改动
+    □ §6.1 在所有异常路径之后（不会在 pipeline 异常时执行）
+    □ use_llm 变量在 §4.5 已定义，§6.1 直接引用
+    □ llm_alignment_report / llm_safety_report 在 §4.5 前初始化
+    □ §10 新增字段在 llm_generated=false 时为 None
+    □ 不修改 contracts/ 下任何文件
+    □ 不修改 src/inner/ src/middle/ src/outer/ 下任何文件
+  </smoke_checklist>
+
+  <quality_gates>
+    <gate>python -c "import ast; ast.parse(open('src/coach/agent.py').read()); print('Syntax OK')"</gate>
+    <gate>pytest tests/test_llm_s2_integration.py -v (全部通过)</gate>
+    <gate>pytest tests/test_llm_s2_schema.py test_llm_s2_safety.py test_llm_s2_audit.py test_llm_s2_integration.py -q (全部通过)</gate>
+    <gate>pytest tests/ -q (1162 tests 全部 pass，新增集成测试不破坏现有)</gate>
+    <gate>python -c "
+import json
+# 验证合约未被修改
+with open('contracts/coach_dsl.json') as f:
+    c = json.load(f)
+print(f'coach_dsl v{c.get(\"version\",\"unknown\")} — frozen OK')
+with open('contracts/llm_contract.json') as f:
+    c = json.load(f)
+print(f'llm_contract v{c.get(\"version\",\"unknown\")} — frozen OK')
+"</gate>
+  </quality_gates>
+
+  <rollback_instructions>
+    如果回归测试失败:
+    1. 检查 §4.6 是否影响了 §4.5 的 exception 路径
+    2. 检查 §6.1 是否在 pipeline 异常时误执行
+    3. 检查 llm.enabled: false 路径是否完全跳过
+    4. 如有模块级 import 从函数内泄露到顶层，立即修复
+    5. 1162 已有 tests 缺失不达标的，撤回到最近 commit 重新集成
+  </rollback_instructions>
+</prompt>

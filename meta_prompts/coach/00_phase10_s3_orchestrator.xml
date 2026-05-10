@@ -1,0 +1,80 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 10 S3 WebSocket 流式推送</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>10</phase>
+  <phase_name>LLM 内容生成引擎集成</phase_name>
+  <sub_stage>S3</sub_stage>
+  <sub_stage_name>WebSocket 流式推送 — LLM 内容实时推送</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence 系统 Phase 10 S3 总控调度器。
+    你的目标是：在 Phase 10 S1+S2（LLM 客户端 + 安全护栏）之上，实现 WebSocket 流式推送。
+    LLM 内容通过 WS 流式逐 chunk 推送到前端，终点经过 S2 安全校验。
+  </role>
+
+  <mission>
+    1) 将 S3 拆分为 S3.1→S3.2 两个子阶段并严格串行推进。
+    2) 每子阶段必须产出可验证的代码变更 + 通过测试。
+    3) S3.1 实现 LLMClient.generate_stream() — 流式 AsyncGenerator。
+    4) S3.2 实现 WS 路由流式分支 + CoachBridge.chat_stream() + 终点校验。
+    5) 全程维持禁改边界：src/inner/、src/middle/、src/outer/、contracts/ 一行不改。
+    6) 1162 已有测试全程保持 pass。
+    7) 设计前提：llm.enabled: false 或 streaming: false 时流式路径完全跳过。
+  </mission>
+
+  <design_reference>
+    <file>meta_prompts/coach/200_phase10_s3_design_thinking.md</file>
+    <description>Phase 10 S3 架构决策 — 双阶段安全策略、AsyncGenerator、WS 分支路径</description>
+    <sections>
+      <section id="1" name="流式安全校验策略">
+        <topics>双阶段策略（流式无校验 → 终点必校验）, safety_override 回滚</topics>
+      </section>
+      <section id="2" name="流式客户端设计">
+        <topics>AsyncGenerator[yield str], SSE 解析, provider 差异隔离</topics>
+      </section>
+      <section id="3" name="WS 路由改造">
+        <topics>流式分支 vs 非流式分支, CoachBridge.chat_stream(), 终点 S2 校验</topics>
+      </section>
+    </sections>
+  </design_reference>
+
+  <project_boundaries>
+    <read_write_allowed>
+      src/coach/llm/client.py        # ◀ 修改：新增 generate_stream()
+      api/routers/chat.py            # ◀ 修改：WS 路由新增流式分支
+      api/services/coach_bridge.py   # ◀ 修改：新增 chat_stream()
+      api/models/websocket.py        # ◀ 修改：新增 coach_chunk / coach_stream_end / safety_override
+      config/coach_defaults.yaml     # ◀ 确认（streaming 配置项已有）
+      tests/test_llm_stream.py       # ★ 新增
+      tests/test_ws_stream.py        # ★ 新增
+    </read_write_allowed>
+    <frozen_no_touch>
+      src/inner/**       # 绝对禁止修改
+      src/middle/**      # 绝对禁止修改
+      src/outer/**       # 绝对禁止修改
+      src/mapek/**       # 绝对禁止修改
+      src/cohort/**      # 绝对禁止修改
+      src/coach/agent.py # 绝对禁止修改（S3 不改 agent）
+      contracts/**       # 绝对禁止修改
+    </frozen_no_touch>
+  </project_boundaries>
+
+  <pipeline>
+    <step id="S3.1" name="Streaming LLM Client" prompt="meta_prompts/coach/201_s31_stream_client.xml">
+      LLMClient.generate_stream() — AsyncGenerator + SSE 解析
+    </step>
+    <step id="S3.2" name="WS Route + ChatStream + EOS Validate" prompt="meta_prompts/coach/202_s32_ws_route.xml">
+      WS 路由流式分支 + CoachBridge.chat_stream() + 终点 S2 校验
+    </step>
+  </pipeline>
+
+  <quality_gates>
+    <gate id="compile">所有新增代码必须通过 Python 语法检查</gate>
+    <gate id="unit">新增测试全部通过 (pytest tests/test_llm_stream.py tests/test_ws_stream.py -q)</gate>
+    <gate id="regression">1162 已有测试全部 pass (pytest tests/ -q)</gate>
+    <gate id="non_streaming_unchanged">streaming: false 时 WS 行为完全不变</gate>
+    <gate id="llm_disabled_unchanged">llm.enabled: false 时 WS 行为完全不变</gate>
+  </quality_gates>
+</prompt>

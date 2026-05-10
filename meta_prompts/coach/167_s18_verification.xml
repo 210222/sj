@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 18 — S18.5 验证</name>
+  <version>1.0.0</version>
+  <track>COACH_RESEARCH</track>
+  <phase>18</phase>
+  <sub_stage>S18.5</sub_stage>
+  <sub_stage_name>验证 — 一键执行、0 错误、跨运行自改进</sub_stage_name>
+
+  <role>
+    你是 Coherence 研究管线的验证者。
+    你的任务是确认管线可一键执行、8 Agent 全部收敛、
+    产出物完整、自优化机制工作。
+  </role>
+
+  <context>
+    === 验证范围 ===
+    - run_research_pipeline.py 语法正确、可执行
+    - Agent 1/2/3 并发收敛
+    - Gate 1-7 通过
+    - 自优化生成改进版 prompt
+    - 第二次运行使用优化版 prompt
+  </context>
+
+  <task>
+    1) `python -c "import py_compile; py_compile.compile('run_research_pipeline.py', doraise=True)"` — 语法验证
+    2) 设置 DEEPSEEK_API_KEY，确保非空
+    3) `python run_research_pipeline.py` — 完整执行
+    4) 验证 shared_state.json 中 8 Agent 全部 converged
+    5) 验证 output/ 包含路线图和评审报告
+    6) 验证 scope_memory.json 存在且非空
+    7) 验证 _optimized.md 文件存在（如有 Agent 需优化）
+    8) 再次执行，验证第二次使用了优化版 prompt
+  </task>
+
+  <output_files>
+    <file>reports/research_pipeline/shared_state.json</file>
+    <file>reports/research_pipeline/output/teaching_level_roadmap.md</file>
+    <file>reports/research_pipeline/output/peer_review_report.md</file>
+    <file>reports/research_pipeline/scope_memory.json</file>
+    <file>reports/research_package/agentN_optimized.md（如有优化）</file>
+  </output_files>
+
+  <verification_spec>
+
+    === 门禁 ===
+    gate-parallel: Agent 1/2/3 全部 converged
+    gate-debate: 辩论 ≤ 2 轮
+    gate-revision: 退回 ≤ 3 轮
+    gate-optimization: 优化指令不替换原 prompt
+
+    === 通过标准 ===
+    1. 管线 0 错误退出
+    2. shared_state.json 中 pipeline_status = "completed"
+    3. 路线图和评审报告存在且非空
+    4. scope_memory.json 记录 ≥1 次运行的 agent_lessons
+    5. 如有优化，_optimized.md 文件存在
+
+  </verification_spec>
+
+  <success_criteria>
+    1. 全量验证通过
+    2. 管线可重复执行
+    3. 跨运行自优化机制工作
+  </success_criteria>
+
+</prompt>

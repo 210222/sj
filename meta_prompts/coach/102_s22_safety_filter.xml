@@ -1,0 +1,80 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 10 S2.2 Content Safety Filter</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>10</phase>
+  <sub_stage>S2.2</sub_stage>
+  <sub_stage_name>Content Safety Filter — forbidden 短语过滤 + action_type 强制</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 10 S2.2 实现者。
+    你的任务是实现 LLMSafetyFilter — LLM 内容安全过滤 + action_type 强制覆盖。
+    这是 S2 安全护栏的第二层。
+  </role>
+
+  <context>
+    即使 LLM prompt 中已经写明了约束，LLM 仍然可能输出不安全的表述或试图篡改教练策略。
+    所以需要代码级的强制过滤和覆盖，而不是依赖 prompt 约束。
+
+    设计前提:
+    - forbidden_phrases 来源: config/coach_defaults.yaml → relational_safety.forbidden_phrases
+    - action_type 强制: 规则引擎永远是最终决定，LLM 不可覆盖
+    - 过滤是对齐后的 payload 进行操作（S2.1 已完成丢弃非法字段）
+    - llm.enabled: false 时全部代码不执行
+  </context>
+
+  <instructions>
+    1. 新建 src/coach/llm/safety_filter.py。
+    2. 实现 LLMSafetyFilter 类，包含两个静态方法。
+
+    方法一: filter_payload(payload, forbidden_phrases) → (filtered_payload, triggered_phrases)
+    - 递归扫描 payload 中所有字符串值
+    - 匹配到 forbidden_phrase 时替换为 "[已过滤]"
+    - triggered_phrases 记录所有被触发的短语（用于审计）
+    - 非字符串字段（int, float, list, dict）跳过不扫描
+    - 字典值递归扫描
+    - 列表值如果是字符串列表也扫描
+
+    方法二: enforce_action_type(llm_attempted, rule_action_type) → str
+    - 始终返回 rule_action_type（规则引擎的决定）
+    - 当 llm_attempted != rule_action_type 时，记录 warning 日志
+    - 当 llm_attempted 为 None 时，直接返回 rule_action_type（正常情况）
+
+    3. 过滤逻辑与 agent.py 现有 _filter_forbidden 方法功能一致，但作用于 LLM payload 而非最终 output。
+    4. 不修改现有 _filter_forbidden 方法。两者各自独立作用。
+  </instructions>
+
+  <behavior_examples>
+    例1: payload={"statement":"我比你更了解你，应该这样做"}, forbidden=["我比你更了解你"]
+      → filtered={"statement":"[已过滤]，应该这样做"}, triggered=["我比你更了解你"]
+
+    例2: payload={"step":"第一步","hint":"你应该听我的"}, forbidden=["你应该听我的","我知道你在想什么"]
+      → filtered={"step":"第一步","hint":"[已过滤]"}, triggered=["你应该听我的"]
+
+    例3: payload={"difficulty":0.8,"hints_allowed":2}
+      → 非字符串字段跳过，filtered=payload, triggered=[]
+
+    例4: LLM 输出 action_type="challenge"，规则引擎 action_type="scaffold"
+      → enforce_action_type("challenge", "scaffold") → "scaffold"，记录 warning
+  </behavior_examples>
+
+  <testing>
+    在 tests/test_llm_s2_safety.py 中实现以下测试:
+    1. test_filter_removes_forbidden_phrase — 单条短语匹配替换
+    2. test_filter_multiple_phrases — 多条短语匹配
+    3. test_filter_no_match_returns_empty_triggered — 无匹配短语时 triggered 为空
+    4. test_filter_skips_non_string_fields — int/float 字段跳过
+    5. test_filter_nested_dict — 嵌套 dict 递归扫描
+    6. test_filter_list_of_strings — 字符串列表扫描
+    7. test_enforce_action_type_overrides — LLM 试图篡改 action_type 被强制覆盖
+    8. test_enforce_action_type_none — LLM 未提供 action_type 时正常返回规则值
+    9. test_enforce_action_type_same — LLM 提供的与规则一致时正常返回
+  </testing>
+
+  <quality_gates>
+    <gate>python -c "from src.coach.llm.safety_filter import LLMSafetyFilter; print('OK')"</gate>
+    <gate>pytest tests/test_llm_s2_safety.py -v (全部通过)</gate>
+    <gate>pytest tests/ -q (1162 tests 全部 pass)</gate>
+  </quality_gates>
+</prompt>

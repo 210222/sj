@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S14.2 Agent 难度决策逻辑</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>14</phase>
+  <sub_stage>S14.2</sub_stage>
+  <sub_stage_name>Agent 层 — 根据 BKT mastery 自动决策 difficulty（easy/medium/hard）</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 14 S14.2 实现者。
+    你的任务是：让 Agent 在 act() 中读取 DiagnosticEngine 的 BKT mastery 数据，
+    自动决策当前轮次的 difficulty 等级，并传入 Composer。
+    这是诊断-适应闭环中"诊断→适应"的关键连接。
+  </role>
+
+  <context>
+    === 现状 ===
+    DiagnosticEngine 的 SkillMasteryStore 实时追踪每个技能的 BKT 掌握度：
+
+    ```python
+    engine.store.get_mastery("python_variable")  # → 0.85 (高掌握)
+    engine.store.get_mastery("python_loop")      # → 0.25 (低掌握)
+    ```
+
+    但 Agent 的 act() 完全不管这个数据。composer.generate() 被调用时不传难度信息（因为 S14.1 之前也不支持）。
+
+    === 目标 ===
+    Agent 在 act() 中：
+    1. 获取当前话题（或上一个 probe 的技能）
+    2. 查 DiagnosticEngine 的 mastery
+    3. 根据 mastery 阈值决策 difficulty
+    4. 传入 composer.generate(..., difficulty=difficulty)
+
+    === 难度阈值 ===
+    - mastery &lt; 0.3 → "easy" — 学生没掌握/未接触
+    - mastery 0.3-0.7 → "medium" — 学生在学习/部分掌握
+    - mastery &gt; 0.7 → "hard" — 学生已基本掌握
+    - 无 mastery 数据 → "medium" — 默认，安全降级
+  </context>
+
+  <spec>
+
+    <change name="Agent.act() 增加难度决策">
+      <problem>act() 不读 mastery 数据，每次调用 composer 不传 difficulty。</problem>
+      <file>src/coach/agent.py</file>
+      <changes>
+        - act() 中调用 composer.generate() 之前插入难度决策
+        - 从 diagnostic_engine 获取当前技能 mastery
+        - 根据阈值映射到 difficulty
+        - 传入 composer.generate() 的 kwargs
+      </changes>
+      <code>
+        # 在 composer.generate() 调用之前:
+        difficulty = self._resolve_difficulty(intent)
+        ...
+        payload = composer.generate(
+            intent=intent,
+            action_type=action_type,
+            user_input=user_input,
+            difficulty=difficulty,
+        )
+
+      def _resolve_difficulty(self, skill: str) -> str:
+        """根据 BKT mastery 决策难度."""
+        if not hasattr(self, '_diagnostic_engine') or self._diagnostic_engine is None:
+            return "medium"
+        mastery = self._diagnostic_engine.store.get_mastery(skill)
+        if mastery is None:
+            return "medium"
+        if mastery < 0.3:
+            return "easy"
+        elif mastery > 0.7:
+            return "hard"
+        return "medium"
+      </code>
+    </change>
+
+    <change name="无 diagnostic_engine 时的安全降级">
+      <problem>diagnostic_engine.enabled=false 时 _resolve_difficulty 不能报错。</problem>
+      <file>src/coach/agent.py</file>
+      <changes>
+        - diagnostic_engine 为 None 或 disabled 时返回 "medium"
+        - SkillMasteryStore 无数据时返回 "medium"
+      </changes>
+    </change>
+
+    <change name="TTM/SDT 与 difficulty 的叠加">
+      <problem>TTM 决定了 action_type（做什么），SDT 调整了风格（怎么做），
+      difficulty 现在再叠加一层（多难），三层可能冲突。</problem>
+      <file>src/coach/agent.py</file>
+      <changes>
+        - difficulty 是独立维度，不替代 TTM/SDT 的决策
+        - TTM=contemplation + difficulty=easy: 鼓励为主，简单介绍
+        - TTM=action + difficulty=hard: 挑战为主，深入讨论
+        - TTM=contemplation + difficulty=medium: 默认情况
+      </changes>
+    </change>
+
+  </spec>
+
+  <testing>
+    <test name="resolve_difficulty_low_mastery">
+      <command>Agent._resolve_difficulty("python_variable")  # mastery=0.25</command>
+      <expected>"easy"</expected>
+    </test>
+    <test name="resolve_difficulty_high_mastery">
+      <command>Agent._resolve_difficulty("python_list")  # mastery=0.85</command>
+      <expected>"hard"</expected>
+    </test>
+    <test name="resolve_difficulty_no_data">
+      <command>Agent._resolve_difficulty("unknown_skill")  # 无 mastery</command>
+      <expected>"medium"</expected>
+    </test>
+    <test name="resolve_difficulty_engine_disabled">
+      <command>Agent._resolve_difficulty("python_variable")  # engine disabled</command>
+      <expected>"medium"（不报错）</expected>
+    </test>
+    <test name="difficulty_passed_to_composer">
+      <command>Agent.act() → 检查 composer.generate 被调用时的 difficulty 参数</command>
+      <expected>kwargs 中包含 difficulty 且值正确</expected>
+    </test>
+  </testing>
+
+</prompt>

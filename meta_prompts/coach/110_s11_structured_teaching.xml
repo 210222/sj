@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S11.1 结构化教学协议</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>11</phase>
+  <sub_stage>S11.1</sub_stage>
+  <sub_stage_name>结构化教学协议 — 强制步骤拆解 + Scaffold 增强</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 11 S11.1 实现者。
+    你的任务是：修复教练回复缺乏步骤拆解的问题 — 强制 LLM 在 scaffold 和 suggest 动作中输出结构化 steps，
+    升级 composer 的 scaffold payload 为步骤数组。
+  </role>
+
+  <context>
+    === 数据证据（来自 120 轮质量测试）===
+    structure 维度均分 2.12/4 — 六维中最低。
+
+    典型失败模式:
+    USER: colors = ['red', 'blue'] — 我怎么取出第一个颜色
+    COACH: 要取出第一个颜色，可以使用索引0。在Python中，列表索引从0开始...
+    QUALITY: str=1/4 (结构性=1)
+
+    期望模式:
+    COACH:
+    第一步：用 colors[0] 访问第一个元素
+    第二步：print(colors[0]) 查看结果 → 'red'
+    第三步：试试 colors[1] 取第二个颜色
+
+    === 根因 ===
+    1. SYSTEM_PROMPT 没有强制步骤输出
+    2. composer._build_payload("scaffold") 只有 hint 字符串，没有 steps 数组
+    3. LLM 输出中 "step" 字段生成率接近 0%
+
+    === 修复范围 ===
+    | 文件 | 改动 |
+    |------|------|
+    | src/coach/llm/prompts.py | SYSTEM_PROMPT 新增结构化教学协议段落 |
+    | src/coach/composer.py | scaffold payload 改为结构化 steps 数组 |
+    | config/coach_defaults.yaml | 新增 structure 配置段 |
+    | src/coach/llm/memory_context.py | 新增 extract_turn_context() 工具 |
+  </context>
+
+  <task>
+    1) 修改 `src/coach/llm/prompts.py` 的 SYSTEM_PROMPT：
+       - 新增结构化教学协议段落（强制步骤拆解）
+       - action_type=scaffold 时必须输出 steps: [{order, description, example}]
+       - action_type=suggest 时推荐但非强制输出 steps
+       - 新增 {structure_level} 上下文变量
+
+    2) 修改 `src/coach/composer.py`：
+       - _build_payload("scaffold") 返回 steps 数组结构
+       - _build_payload("suggest") 可选返回 steps
+
+    3) 修改 `config/coach_defaults.yaml`：
+       - 新增 structure: {} 配置段
+
+    4) 修改 `src/coach/llm/memory_context.py`：
+       - 新增 extract_turn_context() — 返回当前轮次的上下文字段
+
+    5) 编写测试 `tests/test_s11_structured_teaching.py`：
+       - 测试 SYSTEM_PROMPT 包含结构化段落
+       - 测试 composer 返回 steps 数组
+       - 测试 scaffold payload 结构
+  </task>
+
+  <output_files>
+    <file>src/coach/llm/prompts.py</file>
+  </output_files>
+
+  <structured_teaching_spec>
+
+    === SYSTEM_PROMPT 新增段落 ===
+    在现有输出要求之后插入：
+
+    ```
+    结构化教学协议（当 action_type = scaffold 或 suggest 时适用）:
+    - 将复杂概念拆解为 2-4 个清晰的步骤
+    - 每个步骤必须包含: step_number, 具体操作, 预期结果
+    - 步骤之间用"第一步→第二步→第三步"递进
+    - 如果需要同时提供代码示例，放在对应步骤的 example 字段
+    - 当用户问"怎么/如何"时，默认启用结构化拆解
+    - 保持每一步的粒度一致 — 不要第一步很细、第二步很粗
+    ```
+
+    === 新增上下文变量 ===
+    `structure_level`: "single_step" | "multi_step" | "guided_discovery"
+    - single_step: 简单概念，一步解释
+    - multi_step: 复杂概念（默认），2-4 步拆解
+    - guided_discovery: 探索模式，只给第一步，让用户自己尝试
+
+    === context 字段注入 ===
+    `structure_level` 字段从 composer 传入 build_coach_context()。
+    默认值: "multi_step"
+    flow_channel 为 "boredom" 时切换为 "single_step"
+    flow_channel 为 "anxiety" 时切换为 "guided_discovery"
+
+    === composer scaffold payload 改造 ===
+    当前:
+    ```python
+    "scaffold": {"hint": "逐步拆解思路"}
+    ```
+    改为:
+    ```python
+    "scaffold": {
+        "steps": [
+            {"order": 1, "description": "", "example": ""},
+            {"order": 2, "description": "", "example": ""},
+        ],
+        "summary": "",
+    }
+    ```
+    composer 负责决定 steps 数量（2-4），LLM 负责填充具体内容。
+
+    === function 增强: build_coach_context() ===
+    新增参数:
+    - structure_level: str = "multi_step"
+    新增替换:
+    - SYSTEM_PROMPT 中 {structure_level} 替换为对应级别描述
+
+  </structured_teaching_spec>
+
+  <implementation_principles>
+    <principle>不改变现有 8 种 action_type 的定义——只增强 scaffold 和 suggest 的 payload 结构</principle>
+    <principle>非结构化动作（pulse/excursion/defer）不受影响</principle>
+    <principle>steps 数组由 LLM 填充具体内容，composer 只决定步数和结构</principle>
+    <principle>向下兼容：旧 payload 格式（只有 hint）在新代码中不应报错</principle>
+    <principle>全量回归：pytest tests/ -q → 1261+ pass</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. SYSTEM_PROMPT 包含结构化教学协议段落
+    2. scaffold 动作的 LLM 输出 steps 数组
+    3. composer 返回的 scaffold payload 包含 steps 字段
+    4. structure_level 上下文正确传递
+    5. 旧格式 payload 不报错
+    6. ~5 新增测试 pass
+    7. 全量回归 1261+ pass
+  </success_criteria>
+
+</prompt>

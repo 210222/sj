@@ -1,0 +1,240 @@
+<prompt>
+  <name>Coherence Coach Track — S9.3 治理仪表盘 + 管理后台</name>
+  <version>2.0.0</version>
+  <track>COACH</track>
+  <phase>9</phase>
+  <sub_stage>S9.3</sub_stage>
+  <sub_stage_name>治理仪表盘 — GatePipeline + RBAC 分级 + GateShieldBadge + 审计日志</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 9 S9.3 实现者。
+    你的任务是：构建治理仪表盘，实现 RBAC 分级视图——管理员看到完整的 8 门禁流水线，
+    终端用户只看到抽象的健康盾牌徽章 + TTM 雷达 + SDT 能量环。
+    S9.2 已提供：前端脚手架 + 色彩系统 + 聊天组件 + 仪表盘基础组件。
+  </role>
+
+  <context>
+    设计对齐源：`前端和移动端页面设计.txt` + `reports/phase9_design_thinking.md`
+
+    === 三层信息模型（深度思考 1.1）===
+    L1 - 宏观健康（全员）: GateShieldBadge 三色盾牌, 零技术术语
+    L2 - 趋势洞察（主动用户）: TTMStageCard + SDTEnergyRings
+    L3 - 完整流水线（管理员）: GatePipeline 8 门禁 + 下钻 + AuditLogViewer
+
+    === 管理员视图布局（深度思考 3.3）===
+    ┌─────────────────────────────────────────────────┐
+    │ [全局概览] [实时监控] [阻断违规] [风险评估]      │
+    ├─────────────────────────────────────────────────┤
+    │ 左上: GatePipeline (8 门禁流水线)                │
+    │   Gate 1~8 每行: 状态指示器 | 名称 | 指标值      │
+    │   展开: 历史趋势 | 裁决依据 | 最近事件           │
+    │ 右上: RiskDashboard                             │
+    │ 下方: AuditLogViewer (分页表格)                  │
+    └─────────────────────────────────────────────────┘
+
+    === C 端阻断话术（第 5.2 节）===
+    被安全门阻断时，不暴露底层技术性拦截代码。
+    转换为 AI 教练拟人化话术:
+    → "这个问题有点复杂，让我们换一个更轻松的角度探讨"
+    前端不应出现 gate / pipeline / audit / P0 / P1 / block 等技术术语。
+
+    === RBAC 三视图（深度思考 1.1 + 第 5.2 节）===
+    | 角色 | 可见内容 | 验证方式 |
+    |------|---------|---------|
+    | 终端用户 | GateShieldBadge + TTM + SDT + Progress | 默认（无需 token）|
+    | 管理员 | GatePipeline + AuditLog + RiskDashboard | token in ADMIN_TOKENS |
+    | 开发调试 | Ledger 原始事件 + Gate 裁决详情 | 调试模式开关 |
+
+    === 数据流隔离（深度思考 3.3）===
+    后端保证: admin 路由检查 token 是否为管理员，否则 403
+    前端保证: 非管理员看不到 GatePipeline 导航项
+  </context>
+
+  <task>
+    1) 实现 GatePipeline 管理员全展开视图（8 门禁流水线 + 点击下钻展开）
+    2) 实现 GateShieldBadge 用户侧抽象（三色盾牌 SVG + 拟人话术）
+    3) 实现 TTMStageCard 增强版（五维雷达图 + 阶段标注）
+    4) 实现 SDTEnergyRings 增强版（三环动态填充 + 流体发光动画）
+    5) 实现 AuditLogViewer（分页 + 严重程度筛选 + 空/加载/错误态）
+    6) 实现 RiskDashboard（F 型排序: high→medium→low）
+    7) 实现 ProgressTimeline（学习进度时间线 + 里程碑）
+    8) 实现 useAuth RBAC 路由（user/admin/debug 三层）
+    9) 新增 ~20 组件测试（每组件覆盖 4 态）
+  </task>
+
+  <output_files>
+    <file>frontend/src/components/admin/GatePipeline.tsx       — 8 门禁流水线可视化 + 展开/折叠下钻</file>
+    <file>frontend/src/components/admin/AuditLogViewer.tsx     — 审计日志分页查询 + 严重程度筛选</file>
+    <file>frontend/src/components/admin/RiskDashboard.tsx      — 风险评估面板（F 型排序）</file>
+    <file>frontend/src/components/dashboard/GateShieldBadge.tsx — 三色健康盾牌 + 拟人话术文案</file>
+    <file>frontend/src/components/dashboard/ProgressTimeline.tsx — 学习进度时间线 + TTM 里程碑</file>
+    <file>frontend/src/hooks/useAuth.ts                        — RBAC 三层角色路由</file>
+    <file>frontend/tests/components/test_GatePipeline.tsx      — GatePipeline 4 态测试</file>
+    <file>frontend/tests/components/test_GateShieldBadge.tsx   — 三色盾牌测试</file>
+    <file>frontend/tests/components/test_AuditLogViewer.tsx    — 审计日志筛选/分页测试</file>
+    <file>frontend/tests/components/test_RiskDashboard.tsx     — 风险排序测试</file>
+    <file>frontend/tests/components/test_ProgressTimeline.tsx  — 里程碑渲染测试</file>
+    <file>frontend/tests/hooks/test_useAuth.ts                 — RBAC 权限测试</file>
+  </output_files>
+
+  <gate_pipeline_spec>
+    ```typescript
+    // GatePipeline.tsx 组件结构
+
+    const GATES = [
+      { id: 1, name: 'Agency Gate',     metric: 'premise_rewrite_rate' },
+      { id: 2, name: 'Excursion Gate',  metric: 'effective_exploration_evidence' },
+      { id: 3, name: 'Learning Gate',   metric: 'no_assist_trajectory' },
+      { id: 4, name: 'Relational Gate', metric: 'compliance_signal_score' },
+      { id: 5, name: 'Causal Gate',     metric: 'causal_diagnostics_triple' },
+      { id: 6, name: 'Audit Gate',      metric: 'audit_health' },
+      { id: 7, name: 'Framing Gate',    metric: 'independent_framing_audit_pass' },
+      { id: 8, name: 'Window Gate',     metric: 'window_schema_version_consistency' },
+    ];
+
+    type GateStatus = 'pass' | 'warn' | 'block';
+
+    // 每行: ●PASS(鼠尾草绿) / ⚠WARN(珊瑚糖) / ●BLOCK(柔和红) | 名称 | 指标值
+    // 展开: 历史趋势迷你图 | 裁决依据 | 最近事件
+    // 左上角固定: 整体状态(● ALL PASS | ⚠ WARN | ● BLOCKED)
+
+    interface GateState {
+      id: number;
+      name: string;
+      status: GateStatus;
+      metric: string;
+      value: number;
+      detail?: {
+        trend: 'up' | 'down' | 'stable';
+        last_event: string;
+        threshold: number;
+      };
+    }
+    ```
+
+    | 状态 | 颜色 | 含义 |
+    |------|------|------|
+    | PASS | #9CB59B | 门禁通过 |
+    | WARN | #FEDDD8 | 指标接近阈值 |
+    | BLOCK | #FF8A80 | 指标超阈值 |
+  </gate_pipeline_spec>
+
+  <shield_spec>
+    ```typescript
+    // GateShieldBadge.tsx — 三色盾牌
+
+    type ShieldLevel = 'green' | 'yellow' | 'red';
+
+    const SHIELD_CONFIG = {
+      green: {
+        color: '#9CB59B',
+        label: '系统一切正常',
+        description: '你的学习体验正在顺畅运行',
+        icon: '✓',  // SVG shield + checkmark
+      },
+      yellow: {
+        color: '#FEDDD8',
+        label: '系统正在调整',
+        description: '有些内容需要额外关注，已为你做了适当安排',
+        icon: '!',   // SVG shield + exclamation
+      },
+      red: {
+        color: '#FF8A80',
+        label: '需要切换话题',
+        description: '这个问题有点复杂，让我们换一个更轻松的角度探讨',
+        icon: '✗',   // SVG shield + X
+      },
+    };
+
+    // 不出现任何技术术语
+    // 不使用: gate / pipeline / audit / block / P0 / P1 / 门禁 / 阻断
+    ```
+  </shield_spec>
+
+  <use_auth_spec>
+    ```typescript
+    // useAuth.ts — RBAC 权限管理
+
+    type Role = 'user' | 'admin' | 'debug';
+
+    interface AuthState {
+      role: Role;
+      token: string | null;
+    }
+
+    function useAuth() {
+      const [auth, setAuth] = useState<AuthState>(() => {
+        const stored = sessionStorage.getItem('coach_auth');
+        return stored ? JSON.parse(stored) : { role: 'user', token: null };
+      });
+
+      const canView = (requiredRole: Role): boolean => {
+        const roleHierarchy = { user: 0, admin: 1, debug: 2 };
+        return roleHierarchy[auth.role] >= roleHierarchy[requiredRole];
+      };
+
+      const setRole = (role: Role, token: string) => {
+        const newAuth = { role, token };
+        sessionStorage.setItem('coach_auth', JSON.stringify(newAuth));
+        setAuth(newAuth);
+      };
+
+      return { auth, canView, setRole };
+    }
+    ```
+  </use_auth_spec>
+
+  <component_states>
+    <component name="GatePipeline">
+      <normal>8 门禁行列表，每行可展开/折叠下钻详情</normal>
+      <empty>GET /admin/gates/status 未返回数据 → "门禁数据暂未加载"</empty>
+      <loading>8 行骨架屏</loading>
+      <error>API 错误 → "门禁数据暂不可用，请确认管理员权限" + 重试按钮</error>
+    </component>
+    <component name="AuditLogViewer">
+      <normal>分页表格 + 严重程度筛选栏 (all/P0/P1/pass) + 上一页/下一页</normal>
+      <empty>"暂无审计日志"</empty>
+      <loading>"加载中..."</loading>
+      <error>"审计日志加载失败" + 重试</error>
+    </component>
+    <component name="RiskDashboard">
+      <normal>F 型排序: high → medium → low, 3 条默认风险</normal>
+      <empty>"当前无风险评估数据"</empty>
+      <loading>"正在分析风险..."</loading>
+      <error>"风险评估暂不可用"</error>
+    </component>
+    <component name="ProgressTimeline">
+      <normal>核心指标 (total_sessions/total_turns/no_assist_avg) + TTM 里程碑</normal>
+      <empty>ttmStage 为空 → "旅程开始" ✨</empty>
+      <loading>骨架屏</loading>
+      <error>"学习进度数据暂不可用"</error>
+    </component>
+  </component_states>
+
+  <implementation_principles>
+    <principle>管理员视图真实呈现 8 门禁——每个 Gate 行支持点击下钻展开裁决详情</principle>
+    <principle>用户视图只展示三层抽象——盾牌颜色 + TTM 雷达 + SDT 能量环</principle>
+    <principle>不对 C 端暴露任何技术性术语——gate/pipeline/audit/P0/P1 全部不出现在用户界面</principle>
+    <principle>被阻断时话术 = AI 拟人化，不是系统错误码</principle>
+    <principle>渐进式披露——首屏宏观摘要，详细日志通过钻取路径访问</principle>
+    <principle>F 型布局——核心指标锚定界面左上角</principle>
+    <principle>阻断事件用珊瑚糖色而非纯红——保持心理安全感</principle>
+    <principle>Motion Cues: 状态变更事件用 500ms 脉动淡入动画</principle>
+    <principle>每个组件覆盖 4 态: 正常/空数据/加载中/错误</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. GatePipeline 展示全部 8 门禁实时状态(PASS/WARN/BLOCK)
+    2. 每个 Gate 行支持点击下钻展开裁决详情
+    3. GateShieldBadge 三色状态(绿/黄/红)对应门禁整体摘要
+    4. GateShieldBadge 不暴露任何技术性术语
+    5. TTMStageCard 五维雷达图展示倾向性评分
+    6. SDTEnergyRings 三环动态填充 + 流体发光动画
+    7. RBAC 路由正确分离管理员/用户视图
+    8. 阻断话术为 AI 拟人化而非技术代码
+    9. 左侧导航栏包含: 全局概览/实时监控/阻断违规/风险评估
+    10. 每个组件覆盖 4 种渲染状态
+    11. ~20 组件测试全部 pass
+  </success_criteria>
+</prompt>

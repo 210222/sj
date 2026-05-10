@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S12.2 上下文感知 Fallback</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>12</phase>
+  <sub_stage>S12.2</sub_stage>
+  <sub_stage_name>上下文感知 Fallback — 跨轮连贯 + 对话历史引用</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 12 S12.2 实现者。
+    你的任务是：增强 FallbackEngine，使其感知对话历史，跨轮连贯。
+    当前 S12.1 的模板每轮独立——第二轮不知道第一轮说了什么。
+  </role>
+
+  <context>
+    S12.1 创建了静态模板库，但每轮 fallback 回复独立、无上下文。
+    例如：用户第一轮问"变量是什么"，第二轮说"所以变量就像盒子"，
+    当前 fallback 回复第二轮时无法引用第一轮的"盒子比喻"。
+
+    穷举测试显示 LLM OFF 的 personalization = 0.05/4 ——几乎为零，
+    因为纯规则回复无法引用用户之前说过的话。
+
+    你需要让 FallbackEngine 维护跨轮状态，在模板渲染时注入上下文。
+  </context>
+
+  <task>
+    1) 增强 `src/coach/fallback.py`：
+       - FallbackEngine 新增对话上下文管理
+       - context 包含: prev_user_input, prev_statement, prev_action_type, turn_count, covered_topics
+       - 模板渲染时支持 {user_prev_metaphor}, {prev_topic} 等变量替换
+
+    2) 对话状态维护：
+       ```python
+       class DialogueContext:
+           turn_count: int = 0
+           prev_user_input: str = ""
+           prev_statement: str = ""
+           prev_action_type: str = ""
+           covered_topics: list[str] = field(default_factory=list)
+           user_metaphors: list[str] = field(default_factory=list)  # 用户用过的比喻
+           user_confirmations: list[str] = field(default_factory=list)  # 用户确认的表述
+       ```
+
+    3) 模板变量替换：
+       - 模板 statement 支持 {user_said} 引用用户上一轮的话
+       - 例如模板: "是的，{user_said} 这个理解很准确。让我补充一点..."
+       - 例如模板: "你刚才提到了 {prev_topic}，现在我们来看相关的 {current_topic}"
+
+    4) 跨轮连贯逻辑：
+       - 连续两轮同一话题：第二轮在 statement 开头加"承接上文，"
+       - 话题切换：加"你已经了解了 {prev_topic}，现在我们来看 {current_topic}"
+       - 用户确认/重复自己的话：加"你说得对，正是这样。"
+       - 用户提出新问题：正常匹配新模板
+
+    5) 测试验证：
+       ```python
+       def test_fallback_context_continuity():
+           """连续两轮同一话题，第二轮引用第一轮"""
+           engine = FallbackEngine(test_config)
+           r1 = engine.generate("scaffold", "变量是什么", {"turn": 0})
+           r2 = engine.generate("scaffold", "所以变量就像盒子", {
+               "turn": 1, "prev_user": "变量是什么", "prev_statement": r1["statement"]
+           })
+           assert "你说得对" in r2["statement"] or "是的" in r2["statement"]
+       ```
+
+    === FallbackEngine 增强接口 ===
+
+    ```python
+    class FallbackEngine:
+        def __init__(self, config: dict):
+            self._templates = config.get("fallback_templates", {})
+            self._dialog_context = DialogueContext()
+
+        def generate(self, action_type: str, intent: str,
+                     context: dict | None = None) -> dict:
+            \"\"\"增强：注入 dialogue context.\"\"\"
+            # 更新对话上下文
+            if context:
+                self._dialog_context.turn_count = context.get("turn", 0)
+                self._dialog_context.prev_user_input = context.get("prev_user", "")
+                self._dialog_context.prev_statement = context.get("prev_statement", "")
+                self._dialog_context.prev_action_type = context.get("prev_action_type", "")
+
+            # 获取基础模板
+            payload = self._match_and_render(action_type, intent)
+
+            # 注入上下文引用
+            payload = self._inject_context(payload, self._dialog_context)
+
+            return payload
+
+        def _inject_context(self, payload: dict, ctx: DialogueContext) -> dict:
+            \"\"\"根据对话上下文调整回复内容.\"\"\"
+            stmt = payload.get("statement", "")
+
+            # 1. 用户确认/重复自己的话 → 添加肯定
+            if ctx.prev_user_input and self._is_confirmation(ctx.prev_user_input, ctx.turn_count):
+                stmt = "你说得对！" + stmt if not stmt.startswith("你说") else stmt
+
+            # 2. 话题延续 → 添加承接
+            if ctx.turn_count > 1 and ctx.prev_action_type == ctx.last_action_type:
+                stmt = "接上一步，" + stmt
+
+            # 3. 模板变量替换
+            stmt = stmt.replace("{user_said}", ctx.prev_user_input or "这个")
+            stmt = stmt.replace("{prev_topic}", self._extract_topic(ctx.prev_user_input))
+
+            payload["statement"] = stmt
+            return payload
+
+        @staticmethod
+        def _is_confirmation(user_input: str, turn: int) -> bool:
+            \"\"\"检测用户是否在确认/重复/延伸自己的理解.\"\"\"
+            confirm_keywords = ["所以", "也就是说", "明白了", "懂了", "对，",
+                              "没错", "是的", "就像", "对吧", "意思就是"]
+            return any(kw in user_input for kw in confirm_keywords)
+
+        @staticmethod
+        def _extract_topic(text: str) -> str:
+            \"\"\"从用户输入提取话题关键词.\"\"\"
+            topics = ["变量", "循环", "函数", "列表", "字典", "类",
+                     "字符串", "条件", "异常", "文件", "模块", "调试"]
+            for t in topics:
+                if t in text:
+                    return t
+            return ""
+    ```
+
+  </task>
+
+  <output_files>
+    <file>src/coach/fallback.py (增强, ~200 行终版)</file>
+    <file>config/coach_defaults.yaml (扩充模板变量)</file>
+  </output_files>
+
+  <success_criteria>
+    1. FallbackEngine 维护对话上下文，跨轮引用
+    2. 用户确认自己理解时，回复以"你说得对/是的"开头
+    3. 同一话题延续时，回复以"接上一步/承接上文"过渡
+    4. 模板支持 {user_said} 和 {prev_topic} 变量替换
+    5. LLM OFF personalization 从 0.05/4 → 1.5+/4 (穷举验证)
+    6. 全量回归: pytest tests/ -q → 1300+ pass
+  </success_criteria>
+
+</prompt>

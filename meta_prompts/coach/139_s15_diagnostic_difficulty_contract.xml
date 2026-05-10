@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S15.3 Diagnostic + Difficulty Contract</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>15</phase>
+  <sub_stage>S15.3</sub_stage>
+  <sub_stage_name>诊断与难度契约统一 — 从单轴 difficulty 到可解释的三轴调节</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 15 S15.3 实现者。
+    你的任务是：把 DiagnosticEngine、Flow、persistence、Agent 中分散的难度相关信号统一成一个可解释、可追踪、可观测的 difficulty contract。
+  </role>
+
+  <context>
+    === 已知问题 ===
+    1. 当前 Agent 只做粗粒度的 `difficulty` 注入，难度主要是 easy/medium/hard 单轴说明。
+    2. DiagnosticEngine 有 mastery，Flow 有焦虑/无聊通道，persistence 有 difficulty_level / skill_masteries，但彼此未形成统一决策。
+    3. 当前系统缺少“为什么这轮变难/变简单”的统一 reason codes。
+
+    === 目标 ===
+    把“难度调节”从模糊感知，升级为一个可解释 contract：
+    - 有哪些输入信号
+    - 按什么优先级决策
+    - 结果如何体现在 prompt / API / frontend / reports 中
+  </context>
+
+  <task>
+    1) 审视 `src/coach/diagnostic_engine.py`、`src/coach/flow.py`、`src/coach/agent.py`、`src/coach/persistence.py`、`src/coach/llm/prompts.py`。
+
+    2) 设计统一 difficulty contract：
+       - 建议从单轴升级为三轴：`explanation_depth`, `reasoning_jump`, `practice_challenge`
+       - 定义输入信号与优先级
+       - 定义输出字段与 reason codes
+
+    3) 明确诊断结果如何影响下一轮教学：
+       - 低掌握度 → 简化解释 or 增加脚手架
+       - 高掌握度 → 深化原理 or 增加挑战
+       - Flow 焦虑/无聊如何覆盖或微调
+
+    4) 产出决策表与冲突处理规则。
+  </task>
+
+  <output_files>
+    <file>src/coach/diagnostic_engine.py</file>
+    <file>src/coach/flow.py</file>
+    <file>src/coach/agent.py</file>
+    <file>src/coach/llm/prompts.py</file>
+    <file>api/models/schemas.py</file>
+    <file>reports/phase15_difficulty_contract.md</file>
+    <file>reports/phase15_difficulty_decision_table.json</file>
+  </output_files>
+
+  <difficulty_contract_spec>
+
+    === 三轴建议 ===
+    - explanation_depth: 解释深度（浅 / 标准 / 深）
+    - reasoning_jump: 推理跳步幅度（细粒度 / 标准 / 压缩）
+    - practice_challenge: 练习挑战度（低 / 中 / 高）
+
+    === 输入信号来源 ===
+    - DiagnosticEngine mastery summary
+    - Flow channel / adjust_difficulty suggestion
+    - persistence restored skill_masteries / difficulty_level
+    - 当前 action_type / teaching_focus
+
+    === reason codes 示例 ===
+    - DIAG_LOW_MASTERY
+    - DIAG_HIGH_MASTERY
+    - FLOW_ANXIETY
+    - FLOW_BOREDOM
+    - RESTORED_SKILL_GAP
+    - NO_RECENT_DIAGNOSTIC_SIGNAL
+
+    === 冲突处理原则 ===
+    - 诊断掌握度优先于通用难度默认值
+    - Flow 负责微调，不直接覆盖诊断主结论
+    - persistence 只在当前轮次缺少实时信号时补充
+
+    === 最低输出字段建议 ===
+    - difficulty_contract
+    - difficulty_axes
+    - difficulty_reason_codes
+    - difficulty_signal_sources
+
+  </difficulty_contract_spec>
+
+  <implementation_principles>
+    <principle>难度调节必须能解释“为什么”，而不是只给结果。</principle>
+    <principle>尽量复用现有 DiagnosticEngine / Flow / persistence 信号，不重新发明新状态机。</principle>
+    <principle>Flow 是微调层，不替代诊断主判断。</principle>
+    <principle>字段命名必须能被 API / frontend 直接消费。</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. 形成单一 difficulty contract 文档。
+    2. 给出三轴定义和冲突优先级。
+    3. 每轮难度决策都可映射到 reason codes。
+    4. 诊断结果能明确影响下一轮教学组织方式。
+    5. 形成结构化决策表与报告产物。
+  </success_criteria>
+
+</prompt>

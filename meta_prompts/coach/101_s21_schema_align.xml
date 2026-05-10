@@ -1,0 +1,67 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 10 S2.1 DSL Schema Aligner</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>10</phase>
+  <sub_stage>S2.1</sub_stage>
+  <sub_stage_name>DSL Schema Aligner — LLM payload 到 DSL 合约对齐</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 10 S2.1 实现者。
+    你的任务是实现 LLMDSLAligner — 将 LLM 原始输出对齐到合法的 DSL payload。
+    这是 S2 安全护栏的第一层。
+  </role>
+
+  <context>
+    S1 已经实现了 LLM 调用和基础输出校验（LLMOutputValidator 检查 statement 字段）。
+    但 LLM 可能输出 DSL 合约不认识的字段、缺少必要的 slot、或包含与 action_type 不匹配的内容。
+    LLMDSLAligner 负责：保留合法字段、丢弃非法字段、填充必要 slot、生成对齐报告。
+
+    设计前提：
+    - llm.enabled: false 时全部代码不执行（调用方控制）
+    - contract/coach_dsl.json 已冻结，8 种 action_type 的 slot 定义不可修改
+    - 输出校验仍保留（S1 的 LLMOutputValidator 作为 S2.1 之后的最终校验）
+  </context>
+
+  <instructions>
+    1. 在 src/coach/llm/schemas.py 中新增 LLMDSLAligner 类（保留现有 LLMResponse 和 LLMOutputValidator 不变）。
+    2. 从 contracts/coach_dsl.json 加载 8 种 action_type 的 payload slot 定义。
+    3. 实现 align(raw_payload, action_type) → (aligned_payload, alignment_report)。
+    4. alignment_report 包含: dropped_fields（被丢弃的非法字段）、filled_slots（自动填充的缺省 slot）、valid（是否有效）。
+    5. 通用字段 strategy: "statement", "question", "hint", "difficulty" 是所有 action_type 的通用字段，不会被丢弃。
+    6. 缺省 slot 填充策略: 文本字段用空字符串、数字字段用 0、列表字段用 []。
+    7. 当 raw_payload 全为空时 valid=False。
+  </instructions>
+
+  <contract_alignment>
+    从 contracts/coach_dsl.json 加载的 action_type 定义:
+    - suggest:    option, alternatives, evidence_id, source_tag
+    - challenge:  objective, difficulty, hints_allowed, scoring_criteria
+    - probe:      prompt, expected_skill, max_duration_s, adaptive_difficulty
+    - reflect:    question, sub_questions, focus_area
+    - scaffold:   step, question, hint, concept
+    - defer:      reason, alternative_topics, resume_condition
+    - pulse:      statement, accept_label, rewrite_label
+    - excursion:  domain, options, bias_disabled
+    通用字段: statement, question, hint, difficulty（所有 action_type 共享）
+  </contract_alignment>
+
+  <testing>
+    在 tests/test_llm_s2_schema.py 中实现以下测试:
+    1. test_align_removes_unknown_fields — LLM 输出含 DSL 非法字段被丢弃
+    2. test_align_preserves_known_slots — 合法字段保留
+    3. test_align_preserves_universal_fields — 通用字段不被 action_type 过滤
+    4. test_align_empty_payload_returns_invalid — 空 payload → valid=False
+    5. test_align_removes_wrong_action_type_fields — 不匹配当前 action_type 的专属字段被丢弃
+    6. test_align_report_contains_dropped_fields — alignment_report 包含被丢弃字段列表
+    7. test_align_fills_missing_slots — 缺省 slot 自动填充
+    8. test_align_all_8_action_types — 所有 8 种 action_type 都能正确对齐
+  </testing>
+
+  <quality_gates>
+    <gate>python -c "from src.coach.llm.schemas import LLMDSLAligner; print('OK')"</gate>
+    <gate>pytest tests/test_llm_s2_schema.py -v (全部通过)</gate>
+    <gate>pytest tests/ -q (1162 tests 全部 pass，新增测试不破坏现有)</gate>
+  </quality_gates>
+</prompt>

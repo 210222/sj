@@ -1,0 +1,76 @@
+/* ── 心流动效 + 状态转场 ── */
+
+/* 流体饱和度提升 */
+@keyframes fluidFill {
+  0% { transform: scale(0.92); opacity: 0.6; }
+  60% { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.92; }
+}
+
+/* 发光呼吸 */
+@keyframes glowBreathe {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(156, 181, 155, 0.4)); }
+  50% { filter: drop-shadow(0 0 12px rgba(156, 181, 155, 0.7)); }
+}
+
+/* 脉动淡入 */
+@keyframes pulseFadeIn {
+  0% { opacity: 0; transform: scale(0.97); }
+  70% { opacity: 0.7; transform: scale(1.01); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* 滑入-上 */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 毛玻璃升起 */
+@keyframes backdropRise {
+  from { backdrop-filter: blur(0px); background: rgba(245, 241, 234, 0); }
+  to { backdrop-filter: blur(12px); background: rgba(245, 241, 234, 0.85); }
+}
+
+/* 全屏撒花 */
+@keyframes confetti {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(-200px) rotate(720deg); opacity: 0; }
+}
+
+/* 光环扩散 */
+@keyframes ringExpand {
+  from { box-shadow: 0 0 0 0 rgba(156, 181, 155, 0.4); }
+  to { box-shadow: 0 0 0 12px rgba(156, 181, 155, 0); }
+}
+
+/* 暗调过渡 */
+@keyframes themeToDark {
+  from { background-color: var(--color-warm-white); }
+  to { background-color: var(--color-charcoal); }
+}
+
+@keyframes themeToLight {
+  from { background-color: var(--color-charcoal); }
+  to { background-color: var(--color-warm-white); }
+}
+
+.animate-fluid-fill {
+  animation: fluidFill 0.6s ease-out;
+}
+
+.animate-glow {
+  animation: glowBreathe 2s ease-in-out infinite;
+}
+
+.animate-pulse-in {
+  animation: pulseFadeIn 0.5s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+.animate-ring {
+  animation: ringExpand 0.8s ease-out;
+}

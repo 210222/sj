@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 18 — S18.4 自优化机制</name>
+  <version>1.0.0</version>
+  <track>COACH_RESEARCH</track>
+  <phase>18</phase>
+  <sub_stage>S18.4</sub_stage>
+  <sub_stage_name>自优化机制 — GEPA 反思 + SCOPE 跨运行记忆 + MASPO 联合优化</sub_stage_name>
+
+  <role>
+    你是 Coherence 研究管线的自优化设计者。
+    你的任务是让管线每次执行后自动审查 Agent 输出质量，
+    生成改进指令，下次执行时自动使用优化后的 prompt。
+  </role>
+
+  <context>
+    === 当前状态 ===
+    管线执行完就结束了。下次再跑，Agent 还是用同样的 prompt。
+    没有从错误中学习的机制。
+
+    === 目标 ===
+    执行后自动审查 → 生成改进指令 → 下次使用优化版 prompt。
+    跨运行累积经验（SCOPE），联合优化多 Agent（MASPO）。
+  </context>
+
+  <spec>
+
+    <change name="回顾数据收集">
+      <problem>没有 Agent 输出质量的量化数据</problem>
+      <file>run_research_pipeline.py — generate_retrospective()</file>
+      <metrics>
+        - total_findings: 产出总数
+        - revised_count: 被退回次数
+        - debated_count: 辩论参与次数
+        - in_roadmap_count: 纳入最终路线图数
+        - low_confidence_count: 低置信度发现数
+      </metrics>
+    </change>
+
+    <change name="GEPA 反思与改进指令生成">
+      <problem>没有自动的 prompt 优化</problem>
+      <file>run_research_pipeline.py — _optimize_agent_prompt()</file>
+      <algorithm>
+        对每表现不佳的 Agent:
+          1. 收集 weaknesses（被退回/低置信度/被辩论反驳）
+          2. 送 LLM + Agent meta-prompt + weaknesses 统计数据
+          3. LLM 分析根因（a.框架不清 b.自检不严 c.格式约束不精确）
+          4. 生成改进指令
+          5. 追加到 prompt 末尾，保存为 _optimized.md
+      </algorithm>
+    </change>
+
+    <change name="SCOPE 跨运行记忆">
+      <problem>前次执行的教训下次就丢了</problem>
+      <file>run_research_pipeline.py — scope_memory.json</file>
+      <schema>
+        {
+          "runs": [{"run_time": "...", "agent_stats": {...}}],
+          "cross_task_guidelines": [],
+          "agent_lessons": {
+            "agent1": [
+              {"run": 1, "improvement": "行号精度需提升"}
+            ]
+          }
+        }
+      </schema>
+    </change>
+
+    <change name="MASPO 联合优化">
+      <problem>优化 Agent 1 时不知道它和 Agent 2 的关系</problem>
+      <file>run_research_pipeline.py — phase_5_optimize()</file>
+      <interactions>
+        agent1 ↔ agent2: 辩论对手
+        agent4 → agent1/2/3: 综述依赖
+        agent5 → agent4: 可行性参考综述
+        agent6 → agent5: 路线图依赖可行性
+        agent7 → agent6: 评审路线图
+      </interactions>
+      <approach>
+        优化 Agent 1 时注入其与 Agent 2 的辩论关系信息。
+        优化 Agent 6 时注入其依赖 Agent 5 的信息。
+      </approach>
+    </change>
+
+  </spec>
+
+  <success_criteria>
+    1. 回顾数据包含 5 项指标
+    2. GEPA 为表现不佳的 Agent 生成改进指令
+    3. SCOPE 跨运行记忆可累积 ≥2 次运行经验
+    4. MASPO 联合优化考虑 Agent 交互关系
+  </success_criteria>
+
+</prompt>

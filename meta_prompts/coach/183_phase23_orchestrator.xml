@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 23 Orchestrator — 间隔重复</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>23</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>让学生学过的东西不会忘记</sub_stage_name>
+
+  <role>
+    Phase 20 建立了 profile_history 表，记录了每轮 BKT mastery 变更。
+    Phase 22 让每种教学模式的输出可区分。
+    但系统仍然没有"遗忘曲线"的概念——30 天没练过的技能和刚练过的技能，mastery 值一样。
+    Phase 23 让系统能在合适的时间主动安排复习。
+  </role>
+
+  <context>
+    === 当前状态 ===
+    flow.py BKTEngine: predict() 计算 P(learned)，但不考虑时间衰减。
+    30 天前 mastery=0.85 → 现在仍然报告 mastery=0.85。
+    用户可能已经忘记了，但系统不知道。
+
+    === 数据证据 ===
+    profile_history 表已有 timestamp 和 new_value→可以算出"上次练习距今几天"
+    SRC-010: Duolingo HLR 半衰期回归验证间隔重复有效
+    Agent 7: Standard 7 (Spaced Repetition) 被评为 critical 缺口
+
+    === 约束 ===
+    - 不修改 contracts/ 内圈/中圈/外圈
+    - 不修改 BKTEngine 现有方法（只在类上新增方法）
+    - 全量回归 1284+ 必须通过
+    - retention 计算不修改数据库中的 mastery 值
+  </context>
+
+  <execution_order>
+    <step>S23.1 (flow.py retention) → S23.2 (persistence+composer 复习队列) → S23.3 (测试)</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s23_1" name="遗忘曲线估计" priority="P0">
+      <description>BKTEngine 新增 estimate_retention()，基于 mastery+时间衰减计算保留率</description>
+      <meta_prompt>183_s23_1_retention.xml</meta_prompt>
+      <files>src/coach/flow.py +30 行</files>
+    </stage>
+    <stage id="s23_2" name="复习队列+注入" priority="P1">
+      <description>persistence 读 skill_masteries + agent.py 触发复习覆盖 action_type</description>
+      <meta_prompt>184_s23_2_review_queue.xml</meta_prompt>
+      <files>src/coach/persistence.py +25, src/coach/agent.py +30</files>
+    </stage>
+    <stage id="s23_3" name="验证" priority="P1">
+      <description>测试 retention 计算和复习队列逻辑</description>
+      <meta_prompt>185_s23_3_verification.xml</meta_prompt>
+      <files>tests/test_phase23.py +20</files>
+    </stage>
+  </sub_stages>
+</prompt>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S16.1 Capability Inventory</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>16</phase>
+  <sub_stage>S16.1</sub_stage>
+  <sub_stage_name>能力目录标准化 — 9 个 disabled 模块的结构化描述与影响说明</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 16 S16.1 实现者。
+    你的任务是：把 9 个默认关闭的模块标准化为结构化能力目录，包含名称、作用、影响、推荐场景、风险。
+  </role>
+
+  <context>
+    === 现状 ===
+    9 个模块在 config/coach_defaults.yaml 中 enabled:false。
+    目前没有统一的模块描述数据，无法在前端或对话中向用户展示。
+    即使通过 SettingsPanel 打开，用户也无法提前知道打开后会发生什么。
+
+    === 目标 ===
+    在 config/coach_defaults.yaml 中新增 capabilities 配置段，
+    每个模块有标准化的描述字段。
+  </context>
+
+  <task>
+    1) 在 config/coach_defaults.yaml 中新增 capabilities 段。
+    2) 为以下 9 个模块各自提供结构化数据：
+       - counterfactual
+       - diagnostic_engine
+       - diagnostics
+       - excursion
+       - mapek
+       - mrt
+       - precedent_intercept
+       - relational_safety
+       - sovereignty_pulse
+    3) 每个模块的字段：name, purpose, impact, recommended_for, risk, auto_affects, current_state。
+    4) 产出一个报告文件。
+  </task>
+
+  <output_files>
+    <file>config/coach_defaults.yaml — 新增 capabilities 段</file>
+    <file>reports/phase16_capability_inventory.md</file>
+  </output_files>
+
+  <capability_data_model>
+    === 核心字段 ===
+    name: 中文显示名
+    purpose: 一句话说明这个模块做什么（用于列表展示）
+    impact: 启用/禁用的正反面影响
+    recommended_for: 推荐启用场景
+    risk: 风险等级和说明，如 "低" / "中" / "高（影响对话速度）"
+    auto_affects: 启用此模块时自动一起启用的关联模块列表
+    current_state: 由系统自动填充 enabled/disabled 状态
+
+    === 示例 ===
+    diagnostic_engine:
+      name: "自适应诊断探测"
+      purpose: "自动出诊断题评估掌握度，动态调节教学难度"
+      impact: "+ 教学内容与水平匹配度提升，- 每5轮会增加一次诊断题"
+      recommended_for: "已完成入门、需要个性化学习路径的用户"
+      risk: "低——诊断题以 probe 形式附加，不影响主回复内容"
+      auto_affects: []
+  </capability_data_model>
+
+  <implementation_principles>
+    <principle>所有描述从用户视角出发，不是开发者视角。</principle>
+    <principle>impact 必须同时写正面和潜在负面影响，不隐瞒。</principle>
+    <principle>cross_module 关联关系要准确——打开 diagnostic_engine 可能自动激活 BKT。</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. coach_defaults.yaml 中新增 capabilities 段
+    2. 9 个模块各有完整的描述字段
+    3. 每个模块都有正反两方面的影响说明
+    4. 形成可阅读的能力目录报告
+  </success_criteria>
+
+</prompt>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S15.6 Final Audit</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>15</phase>
+  <sub_stage>S15.6</sub_stage>
+  <sub_stage_name>最终审计收口 — 证据汇总、签收结论、交接文档</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 15 S15.6 实现者。
+    你的任务是：把 S15 前五个阶段产出的所有契约、报告、差异分析、A/B 验收结果收口成一份最终审计。
+    这份审计必须能直接作为 handover / sign-off / release decision 的依据。
+  </role>
+
+  <context>
+    === 本阶段的特殊性 ===
+    Final audit 不是再做新设计，而是验证前面五个阶段是否真的把 S15 的问题闭环掉了。
+    它必须严格区分：
+    - 已验证提升
+    - 尚未验证假设
+    - 仍然存在的结构性缺口
+
+    === 输入来源 ===
+    - personalization contract
+    - memory reliability audit
+    - difficulty contract / decision table
+    - WS/HTTP parity diff
+    - frontend observability contract
+    - A/B acceptance matrix
+    - failure case index
+  </context>
+
+  <task>
+    1) 汇总前五个阶段的全部核心产物。
+    2) 给出逐条证据引用的结论。
+    3) 明确哪些改进已在字段、UI、报告中闭环，哪些仍只有设计未完成。
+    4) 输出最终状态：GO / CONDITIONAL-GO / NO-GO。
+    5) 生成 handover 文档，为下一个 Claude 保留上下文。
+  </task>
+
+  <output_files>
+    <file>reports/phase15_final_audit.md</file>
+    <file>reports/phase15_handover.md</file>
+    <file>reports/coach_phase15_state.json</file>
+  </output_files>
+
+  <final_audit_spec>
+
+    === 最终审计必须回答的问题 ===
+    1. 个性化是否已经从“表面引用”升级为“证据化教学适配”？
+    2. 记忆是否稳定可审计，是否仍有 silent failure？
+    3. 难度调节是否具备统一 contract 与 reason codes？
+    4. HTTP / WS / frontend / dashboard 是否看到同一套证据？
+    5. S14 vs S15 的验收是否具备固定工件、失败索引和明确结论？
+
+    === 必备章节 ===
+    - Executive summary
+    - Evidence map
+    - Closed gaps
+    - Remaining risks
+    - Acceptance decision
+    - Handover notes
+
+    === Acceptance decision 规则 ===
+    - GO: 五条链路均已闭环，A/B 工件齐全，关键风险可控
+    - CONDITIONAL-GO: 主链闭环，但仍有非阻断缺口（需在 handover 中明确）
+    - NO-GO: memory / parity / evaluation 任一关键链路未形成可信证据
+
+  </final_audit_spec>
+
+  <implementation_principles>
+    <principle>每条结论必须引用具体证据文件，而不是凭主观判断。</principle>
+    <principle>必须同时写出“做成了什么”和“还没做成什么”。</principle>
+    <principle>handover 文档要让下一位执行者不必重新翻整个仓库。</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. 形成一份可交接的 final audit。
+    2. 明确写出 GO / CONDITIONAL-GO / NO-GO。
+    3. 每条结论有证据引用。
+    4. handover 能帮助下一位 Claude 快速继续工作。
+  </success_criteria>
+
+</prompt>

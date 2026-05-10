@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S12.1 基础教学模板库</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>12</phase>
+  <sub_stage>S12.1</sub_stage>
+  <sub_stage_name>基础教学模板库 — 为 6 种 action_type × 20+ 意图预写结构化教学内容</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 12 S12.1 实现者。
+    你的任务是：为教练系统的 fallback 引擎创建完整的教学模板库。
+    当前 _build_payload() 只返回用户输入的复制品——你要把它替换为真正的教学内容。
+  </role>
+
+  <data_evidence>
+    穷举测试 256 组合显示 LLM OFF 平均质量 2.8/24。纯规则回复无教学内容。
+    对比 LLM 高质量回复（评分 18+/24），其特点是：
+    - statement 60-150 字：包含定义 + 举例 + 比喻
+    - steps 2-4 步：拆解操作步骤
+    - question：自然追问，鼓励练习
+  </data_evidence>
+
+  <task>
+    1) 新建 `src/coach/fallback.py`：
+       - FallbackEngine 类
+       - 从 config 加载 fallback_templates
+       - match_template(action_type, intent) → 最匹配的模板
+       - render(template, context) → 填充变量后的 payload dict
+       - 接口: generate(action_type, intent, context) -> dict
+
+    2) 修改 `config/coach_defaults.yaml`：
+       - 新增 fallback_templates 配置段
+       - 覆盖以下意图（至少 20 个）：
+
+       scaffold 模板 (8+):
+         - python_variable: 变量定义 + 盒子比喻 + 赋值操作
+         - python_type: type() 用途 + int/str/float 区别
+         - python_list: 列表定义 + 索引访问 + 常用操作
+         - python_loop: for 循环 + 遍历列表 + range
+         - python_if: 条件判断 + 缩进规则 + 比较运算符
+         - python_function: def 定义 + 参数 + return
+         - python_string: 字符串方法 + 拼接 + 切片
+         - python_dict: 字典键值对 + 访问 + 修改
+
+       suggest 模板 (5+):
+         - python_beginner: 学习路径建议 + 资源推荐
+         - python_practice: 练习方法 + 小项目建议
+         - debugging: 调试思路 + print 技巧
+         - git_intro: Git 基本概念
+         - general_learning: 通用学习建议
+
+       reflect 模板 (4+):
+         - confirm_understanding: 确认理解 + 追问
+         - explore_deeper: 深入探讨 + 对比问题
+         - connect_knowledge: 新旧知识连接
+         - check_confusion: 检查困惑点
+
+       challenge 模板 (3+):
+         - fix_bug: 找 bug 挑战
+         - predict_output: 预测代码输出
+         - write_code: 补全代码
+
+       probe 模板 (3+):
+         - python_quiz: Python 基础测验
+         - concept_check: 概念理解检查
+         - application: 应用场景题
+
+    3) 修改 `src/coach/composer.py`：
+       - _build_payload 改为优先从 FallbackEngine 获取
+       - 保留当前简单逻辑作为最终兜底
+
+    4) 修改 `src/coach/agent.py`：
+       - act() 中注入 FallbackEngine 实例
+       - LLM 失败或禁用时生成 fallback payload
+
+    每个模板必须包含的结构：
+    ```yaml
+    python_variable:
+      statement: "变量就像一个带标签的盒子。你把数据放进去，标签就是变量名。比如 `age = 18` 就把数字18存进了名为age的变量里。之后你用 age 就能拿到 18。"
+      steps:
+        - "给变量起一个名字，比如 age、name、score"
+        - "用等号 = 把值赋给变量: age = 18"
+        - "用变量名来使用里面的值: print(age)"
+      question: "你想试试创建一个存有你名字的变量吗？可以试下 name = '你的名字'"
+    ```
+  </task>
+
+  <template_quality_standards>
+    <standard name="statement">
+      - 必须包含比喻（"像"、"就像"、"好比"）：至少 1 个
+      - 必须包含具体代码示例：至少 1 个
+      - 长度 60-150 字（太短无内容，太长不聚焦）
+    </standard>
+    <standard name="steps">
+      - 2-4 步，每步一个动作
+      - 按时间顺序排列（第一步→第二步→第三步）
+      - 每步 10-30 字
+    </standard>
+    <standard name="question">
+      - 必须是开放式追问（不能回答"是/否"）
+      - 鼓励用户动手尝试
+      - 长度 10-40 字
+    </standard>
+  </template_quality_standards>
+
+  <implementation_details>
+
+    === fallback.py 接口设计 ===
+
+    ```python
+    class FallbackEngine:
+        def __init__(self, config: dict):
+            self._templates = config.get("fallback_templates", {})
+            self._default = config.get("fallback_templates", {}) \
+                .get("_default", {})
+
+        def generate(self, action_type: str, intent: str,
+                     context: dict | None = None) -> dict:
+            \"\"\"生成 fallback 回复 payload.\"\"\"
+            # 1. 精确匹配: intent 在模板中
+            at_templates = self._templates.get(action_type, {})
+            if intent in at_templates:
+                return self._render(at_templates[intent], context)
+            # 2. 关键词匹配: intent 包含模板 key
+            for key, tmpl in at_templates.items():
+                if key != "_default" and key in intent:
+                    return self._render(tmpl, context)
+            # 3. 兜底: action_type 的 default
+            if "_default" in at_templates:
+                return self._render(at_templates["_default"], context)
+            # 4. 最终兜底: 通用教学语句
+            return self._render({
+                "statement": "这个问题很好。让我一步步帮你理解。",
+                "steps": ["先了解基本概念", "再看具体例子", "最后动手练习"],
+                "question": "你想从哪个部分开始？",
+            }, context)
+
+        @staticmethod
+        def _render(template: dict, context: dict | None = None) -> dict:
+            \"\"\"渲染模板，返回标准 payload.\"\"\"
+            return {
+                "statement": template.get("statement", ""),
+                "steps": template.get("steps", []),
+                "question": template.get("question", ""),
+                "option": template.get("option", ""),
+                "hint": template.get("hint", ""),
+            }
+    ```
+
+    === composer.py 修改 ===
+
+    ```python
+    from src.coach.fallback import FallbackEngine
+
+    class PolicyComposer:
+        def __init__(self, rules=None):
+            self._rules = rules if rules is not None else _RULES
+            self._fallback = FallbackEngine(_DEFAULTS)
+            ...
+
+        @staticmethod
+        def _build_payload(action_type, intent) -> dict:
+            # 改为调用 FallbackEngine
+            fallback = FallbackEngine(_DEFAULTS)
+            return fallback.generate(action_type, intent)
+    ```
+
+    注意：_build_payload 是 static method，需要改为实例方法或内部创建 FallbackEngine。
+    推荐：在 compose() 中调用 self._fallback.generate() 替代 _build_payload()。
+
+    === agent.py 修改 ===
+
+    在 act() 的 LLM 生成部分（line 544-625），当 LLM 失败或禁用时：
+
+    ```python
+    if llm_generated:
+        # ... 现有 LLM 流程 ...
+    else:
+        # 使用 FallbackEngine 生成教学内容
+        action["payload"] = self.composer._fallback.generate(
+            action_type=action.get("action_type", "suggest"),
+            intent=intent,
+            context={"prev_statement": ctx.get("prev_statement")},
+        )
+    ```
+
+  </implementation_details>
+
+  <output_files>
+    <file>src/coach/fallback.py (新建, ~120 行)</file>
+    <file>config/coach_defaults.yaml (新增 fallback_templates: 段, ~200 行)</file>
+    <file>src/coach/composer.py (修改 _build_payload, ~10 行)</file>
+    <file>src/coach/agent.py (注入 fallback payload, ~8 行)</file>
+  </output_files>
+
+  <success_criteria>
+    1. fallback_templates 覆盖 20+ 教学意图
+    2. 每个模板包含 statement(60-150字) + steps(2-4步) + question(开放式)
+    3. composer 不再返回空白 payload（只有 intent 复制品）
+    4. 全量回归: pytest tests/ -q → 1300+ pass
+    5. (验证) python tests/test_exhaustive_all_configs.py → LLM OFF avg 从 2.8 → 8+
+  </success_criteria>
+
+</prompt>

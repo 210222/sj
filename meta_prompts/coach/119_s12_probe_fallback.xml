@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S12.4 诊断题 Fallback 修复</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>12</phase>
+  <sub_stage>S12.4</sub_stage>
+  <sub_stage_name>诊断题 Fallback 修复 — 不再问"认知主权"</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 12 S12.4 实现者。
+    你的任务是：修复 diagnostic_engine 的 fallback probe 始终问"认知主权"的问题。
+    当 LLM 不可用时，probe 必须考察对话中实际教过的内容。
+  </role>
+
+  <context>
+    === 数据证据 ===
+    终极测试 12 组合中，第 10 轮（用户说"考考我"）的 probe 全部跑题：
+    ```
+    baseline_rules: "认知主权保护系统的主要目标是什么？"
+    llm_only: "在中文中，'怎么'通常用来询问什么？"
+    full_stack: "什么是认知主权？"
+    ```
+
+    用户学了一整轮 Python 变量/循环/列表，probe 却问完全不相关的问题。
+    这导致 12 组合中 relevance 得分骤降（turn 9 → turn 10 从 4→1-2）。
+
+    === 根因 ===
+    1. `_select_candidate_skill(intent="general")` 返回 None
+    2. `_fallback_probe("general", "medium")` 生成"请简要说明「general」是什么"
+    3. 如果 LLM 不可用，用 fallback template 的 skill="general"
+    4. "general" 在模板中被填充为"认知主权"等无关内容
+
+    === S12.1 中已修复的前置条件 ===
+    S12.1 在 config 中添加了 fallback_templates.probe 段，
+    包含 3+ 话题的诊断题模板。S12.4 需要把这些模板连接到 diagnostic_engine。
+  </context>
+
+  <task>
+    1) 修改 `src/coach/diagnostic_engine.py`：
+
+    a) `_select_candidate_skill()` 增强（已部分修复但需要强化）：
+    ```python
+    def _select_candidate_skill(self, intent, covered_topics=None):
+        if intent and intent != "general":
+            return intent
+        if covered_topics:
+            return covered_topics[0]  # 使用最近覆盖的话题
+        # 新增：从对话历史推断
+        if self._dialog_history:
+            last_topic = self._extract_topic_from_history()
+            if last_topic:
+                return last_topic
+        return None  # 仍无法确定时不生成 probe
+    ```
+
+    b) `_fallback_probe()` 改为从 FallbackEngine 获取模板：
+    ```python
+    def _fallback_probe(self, skill: str, difficulty: str) -> dict | None:
+        \"\"\"从 FallbackEngine 获取诊断题模板.\"\"\"
+        # 优先使用 FallbackEngine 的 probe 模板
+        try:
+            from src.coach.fallback import FallbackEngine
+            engine = FallbackEngine(self._cfg)
+            # probe 模板包含 question + expected_answer
+            fallback_payload = engine.generate("probe", skill, {
+                "difficulty": difficulty,
+                "use_quiz_template": True,
+            })
+            question = fallback_payload.get("question", "")
+            expected = fallback_payload.get("expected_answer", "")
+            if question:
+                return {
+                    "question": question,
+                    "expected_answer": expected or f"{skill}的核心概念",
+                    "skill": skill,
+                }
+        except Exception:
+            pass
+
+        # 旧有兜底（保留但不应再触发）
+        templates = {
+            "easy": {
+                "question": f"请用一句话说明「{skill}」是什么。",
+                "expected_answer": f"{skill}的基本概念",
+            },
+            ...
+        }
+        return templates.get(difficulty, templates["medium"])
+    ```
+
+    2) 在 `config/coach_defaults.yaml` 的 fallback_templates.probe 中新增诊断题：
+
+    ```yaml
+    fallback_templates:
+      probe:
+        python_variable:
+          question: "在 Python 中，变量 age = 18 把什么存进了变量？"
+          expected_answer: "数字 18"
+          options: ["字符串'18'", "数字 18", "变量名 age"]
+          correct_index: 1
+        python_type:
+          question: "type('hello') 返回什么？"
+          expected_answer: "str (字符串类型)"
+          options: ["int", "str", "list"]
+          correct_index: 1
+        python_list:
+          question: "colors[0] 从列表 ['red','blue','green'] 中取出什么？"
+          expected_answer: "red"
+          options: ["red", "blue", "green"]
+          correct_index: 0
+        python_loop:
+          question: "for c in colors: print(c) 会打印什么？"
+          expected_answer: "依次打印 colors 中的每个元素"
+        python_if:
+          question: "Python 中 if 语句后面的代码块靠什么来识别属于 if？"
+          expected_answer: "缩进 (indentation)"
+        python_function:
+          question: "函数定义 def add(a, b): return a + b 中，a 和 b 是什么？"
+          expected_answer: "参数 (parameters)"
+        python_dict:
+          question: "dict['key'] = 'value' 在字典中做了什么？"
+          expected_answer: "向字典添加或修改键值对"
+        python_string:
+          question: "'Hello' + ' World' 在 Python 中返回什么？"
+          expected_answer: "'Hello World'（字符串拼接）"
+        # 默认兜底
+        _default:
+          question: "刚才我们讨论的内容中，你认为最重要的概念是什么？"
+          expected_answer: "用户自己的总结"
+    ```
+
+    3) 增强 `src/coach/diagnostic_engine.py` 的 `should_and_generate()`：
+
+    ```python
+    def should_and_generate(self, turn_count, covered_topics=None,
+                            llm_client=None, intent=None):
+        # ... 现有判断逻辑 ...
+
+        # 选择候选 skill
+        skill = self._select_candidate_skill(intent, covered_topics)
+        if not skill:
+            return None  # 无法确定话题时不生成 probe
+
+        # 用 LLM 生成高质量题（如果可用）
+        if llm_client:
+            return self._generate_probe(skill, "medium", llm_client, conversation_summary)
+
+        # LLM 不可用 → 用 fallback 模板
+        return self._fallback_probe(skill, "medium")
+    ```
+
+  </task>
+
+  <output_files>
+    <file>src/coach/diagnostic_engine.py (修改 _select_candidate_skill / _fallback_probe, ~30 行)</file>
+    <file>src/coach/fallback.py (新增 probe 模板加载, ~10 行)</file>
+    <file>config/coach_defaults.yaml (新增 probe 模板 ~40 行)</file>
+  </output_files>
+
+  <success_criteria>
+    1. probe 不再问"认知主权"等系统概念
+    2. probe 问题与对话中实际教过的话题一致
+    3. fallback_templates.probe 覆盖 8+ 编程教学话题
+    4. 每个 probe 包含 question + expected_answer + 选项
+    5. _select_candidate_skill("general", covered_topics) 返回 covered_topics[0]
+    6. 全量回归: pytest tests/ -q → 1300+ pass
+  </success_criteria>
+
+</prompt>

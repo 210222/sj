@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase12_orchestrator description="Phase 12 规则引擎重建 — Fallback 教学模板全量重写">
+
+  <metadata>
+    <stage>S12.1 + S12.2 + S12.3 + S12.4</stage>
+    <origin>256 组合穷举测试证实 LLM OFF 平均质量 2.8/24，纯规则不可用。鼓励性 0.00/4，个性化 0.05/4，相关性 0.05/4。</origin>
+    <expected_improvement>规则引擎 avg quality 从 2.8/24 → 12+/24</expected_improvement>
+    <baseline>256 tests pass (穷举: 256/256 完成)</baseline>
+  </metadata>
+
+  <root_cause>
+    <code>src/coach/composer.py:120-132 — _build_payload()</code>
+    <description>
+      scaffold/suggest/reflect/probe 的 payload 模板仅将用户原始输入复制到字段值中，
+      没有任何实际教学语句。当 LLM 不可用时，教练系统无话可说。
+    </description>
+    <evidence>
+      LLM OFF 维度得分: relevance 0.05/4, clarity 1.00/4, interactive 0.95/4,
+      personalization 0.05/4, structure 0.73/4, encouragement 0.00/4
+    </evidence>
+  </root_cause>
+
+  <sub_stages>
+
+    <!-- ==================== S12.1 ==================== -->
+    <stage id="s12_1" name="基础教学模板库" priority="P0">
+      <description>为 6 种 action_type × 20+ 常见编程教学意图预写结构化教学模板</description>
+      <files>
+        <file>src/coach/fallback.py (新建)</file>
+        <file>config/coach_defaults.yaml (新增 fallback_templates 段)</file>
+        <file>src/coach/composer.py (修改 _build_payload 调用路径)</file>
+        <file>src/coach/agent.py (注入 FallbackEngine)</file>
+      </files>
+      <changes>
+        <change>新建 src/coach/fallback.py: FallbackEngine 类</change>
+        <change>config/coach_defaults.yaml 新增 ~80 行 fallback_templates</change>
+        <change>composer.py _build_payload 改为从 FallbackEngine 读取</change>
+        <change>agent.py act() 中 llm 失败后调用 FallbackEngine</change>
+      </changes>
+    </stage>
+
+    <!-- ==================== S12.2 ==================== -->
+    <stage id="s12_2" name="上下文感知 Fallback" priority="P0">
+      <description>让 fallback 引擎感知对话历史，跨轮连贯</description>
+      <files>
+        <file>src/coach/fallback.py (增强)</file>
+        <file>src/coach/agent.py (传递对话历史)</file>
+      </files>
+      <changes>
+        <change>FallbackEngine 维护最近 3 轮对话状态</change>
+        <change>模板选择考虑上一轮 action_type 和话题</change>
+        <change>回退时引用前一轮内容</change>
+      </changes>
+    </stage>
+
+    <!-- ==================== S12.3 ==================== -->
+    <stage id="s12_3" name="鼓励性与个性化模板" priority="P1">
+      <description>在 fallback 回复中加入鼓励性语言和个性化引用</description>
+      <files>
+        <file>src/coach/fallback.py (增强)</file>
+        <file>config/coach_defaults.yaml (新增 encouragement_templates)</file>
+      </files>
+      <changes>
+        <change>新增鼓励语分级库（30+ 句）</change>
+        <change>从历史提取用户比喻/关键词注入模板</change>
+        <change>按对话轮次决定鼓励频率</change>
+      </changes>
+    </stage>
+
+    <!-- ==================== S12.4 ==================== -->
+    <stage id="s12_4" name="诊断题 Fallback 修复" priority="P1">
+      <description>修复 probe fallback 始终问"认知主权"的问题</description>
+      <files>
+        <file>src/coach/diagnostic_engine.py (修改 _select_candidate_skill / _fallback_probe)</file>
+        <file>src/coach/fallback.py (新增 probe 模板)</file>
+      </files>
+      <changes>
+        <change>为 10+ 话题预写 3 级难度诊断题</change>
+        <change>_select_candidate_skill 优先使用 covered_topics</change>
+        <change>对话历史推断失败时使用话题轮询</change>
+      </changes>
+    </stage>
+
+  </sub_stages>
+
+  <execution_order>
+    <step priority="P0">S12.1 → S12.2 → S12.3 → S12.4</step>
+    <reason>模板库是基础，上下文是连贯性保障，鼓励/个性化是加分，诊断题最后修复</reason>
+  </execution_order>
+
+  <regression_gates>
+    <gate id="gate-fallback-avg" critical="true">python tests/test_exhaustive_all_configs.py → LLM OFF avg 从 2.8 → 12+</gate>
+    <gate id="gate-templates" critical="true">fallback_templates 至少覆盖 20 个教学意图</gate>
+    <gate id="gate-encouragement" critical="true">LLM OFF 的 encouragement 从 0.00 升至 2.0+</gate>
+    <gate id="gate-personalization" critical="true">LLM OFF 的 personalization 从 0.05 升至 1.5+</gate>
+    <gate id="gate-probe" critical="true">probe fallback 不再问"认知主权"</gate>
+    <gate id="gate-regression" critical="true">全量回归: pytest tests/ -q → 1300+ pass</gate>
+  </regression_gates>
+
+</phase12_orchestrator>

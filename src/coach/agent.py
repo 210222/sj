@@ -16,6 +16,13 @@ from src.coach.state import UserStateTracker
 from src.coach.memory import SessionMemory
 from src.outer.orchestration.pipeline import run_pipeline
 
+# Phase 19 S19.1: LLM 主链接入
+from src.coach.llm.config import LLMConfig
+from src.coach.llm.client import LLMClient, LLMError
+from src.coach.llm.prompts import build_coach_context
+from src.coach.llm.schemas import LLMDSLAligner, LLMOutputValidator
+from src.coach.llm.safety_filter import LLMSafetyFilter
+
 _logger = logging.getLogger(__name__)
 
 # ── 从 coach_defaults.yaml 读取全局配置 ──
@@ -89,6 +96,12 @@ class CoachAgent:
             "self_judgment_decline": 0.0,
         }
 
+        # Phase 17: 知情同意
+        self._consent_pending: bool = False
+        self._consent_status: str = "never_asked"
+        self._persistence = None
+        self._init_consent_persistence()
+
         # Phase 4: 行为科学模型（延迟加载）
         self._ttm = None
         self._sdt = None
@@ -100,6 +113,10 @@ class CoachAgent:
         self._cross_track = None
         self._precedent = None
         self._data_source = None
+
+        # Phase 19 S19.2: 诊断引擎（延迟加载，与 ttm/sdt/flow 同模式）
+        self._diagnostic_engine = None
+        self._diagnostic_turn_count: int = 0
 
         # Phase 6: MAPE-K + 向量记忆（延迟加载）
         self._monitor = None
@@ -124,6 +141,26 @@ class CoachAgent:
     def _pulse_cfg() -> dict:
         return _coach_cfg.get("sovereignty_pulse", {})
 
+    def _compute_difficulty_contract(self, current_difficulty: str = "medium") -> dict:
+        """Phase 19 S19.2: 基于 BKT mastery 计算 difficulty_contract。
+
+        对 None 和空数据做前置保护，不依赖 hasattr 断路。
+        """
+        de = self.diagnostic_engine
+        if de is None:
+            return {"level": current_difficulty, "reason": "default"}
+        try:
+            masteries = de.store.get_all_masteries()
+        except Exception:
+            return {"level": current_difficulty, "reason": "default"}
+        if not masteries:
+            return {"level": current_difficulty, "reason": "bkt_mastery"}
+        if any(m < 0.3 for m in masteries.values()):
+            return {"level": "easy", "reason": "bkt_mastery"}
+        if all(m > 0.7 for m in masteries.values()):
+            return {"level": "hard", "reason": "bkt_mastery"}
+        return {"level": "medium", "reason": "bkt_mastery"}
+
     # ── Phase 4 延迟加载 ────────────────────────────────────────
 
     @property
@@ -147,12 +184,20 @@ class CoachAgent:
     @property
     def flow(self):
         if self._flow is None:
+            from src.coach.flow import FlowOptimizer
             cfg = _coach_cfg.get("flow", {})
-            if cfg and cfg.get("enabled", False):
-                from src.coach.flow import FlowOptimizer
-                bkt_params = cfg.get("bkt", {})
-                self._flow = FlowOptimizer(bkt_params, cfg)
+            bkt_params = cfg.get("bkt", {}) if cfg else {}
+            self._flow = FlowOptimizer(bkt_params, cfg or {})
         return self._flow
+
+    @property
+    def diagnostic_engine(self):
+        if self._diagnostic_engine is None:
+            cfg = _coach_cfg.get("diagnostic_engine") or _coach_cfg.get("diagnostics", {})
+            if isinstance(cfg, dict) and cfg.get("enabled", False):
+                from src.coach.diagnostic_engine import DiagnosticEngine
+                self._diagnostic_engine = DiagnosticEngine(config=cfg)
+        return self._diagnostic_engine
 
     # ── Phase 5 延迟加载：语义安全三件套 ────────────────────────
 
@@ -308,6 +353,16 @@ class CoachAgent:
         # 0.5 S3.2: V18.8 远足命令检测
         self._detect_excursion_command(user_input)
 
+        # 0.7 Phase 17: 知情同意响应 (优先于单个启用)
+        consent_result = self._handle_consent_response(user_input)
+        if consent_result:
+            return consent_result
+
+        # 0.75 Phase 16: 对话式能力启用/查询
+        activation_result = self._handle_activation_intent(user_input)
+        if activation_result:
+            return activation_result
+
         # 1. 解析意图
         intent = self._parse_intent(user_input)
 
@@ -337,6 +392,15 @@ class CoachAgent:
                 plan_result = self._plan.generate(analysis)
                 self._mapek_knowledge.record_strategy(plan_result)
 
+        # S19.3: 提取 diagnostic engine mastery 数据供三模型消费
+        mastery_values: list[float] = []
+        try:
+            if self.diagnostic_engine:
+                mastery_summary = self.diagnostic_engine.get_mastery_summary()
+                mastery_values = list(mastery_summary.get("skills", {}).values())
+        except Exception:
+            pass
+
         # 4a. Phase 4: TTM 阶段检测（延迟加载，默认关闭）
         ttm_strategy = None
         ttm_stage = None
@@ -347,8 +411,9 @@ class CoachAgent:
                     "state": user_state.get("state", ""),
                     "confidence": user_state.get("confidence", 0.5),
                 })
+                cognitive_indicators = [user_state.get("confidence", 0.5)] + mastery_values
                 ttm_result = self.ttm.assess({
-                    "cognitive_indicators": [user_state.get("confidence", 0.5)],
+                    "cognitive_indicators": cognitive_indicators,
                     "behavioral_indicators": [1.0 if user_state.get("feasible", True) else 0.0],
                     "session_count": len(self._interaction_history),
                 }, history=self._interaction_history[-10:])
@@ -361,13 +426,22 @@ class CoachAgent:
         sdt_profile = None
         try:
             if self.sdt:
-                sdt_result = self.sdt.assess({
+                sdt_data = {
                     "rewrite_rate": self._get_premise_rewrite_rate(),
                     "excursion_use_count": len(self._excursion_evidence),
                     "initiation_rate": 0.5,
                     "no_assist_scores": self._no_assist_scores,
                     "session_count": len(self._interaction_history),
-                })
+                }
+                # S19.3: 注入 diagnostic engine competence signal
+                try:
+                    if self.diagnostic_engine:
+                        comp_signal = self.diagnostic_engine.get_competence_signal()
+                        if comp_signal is not None:
+                            sdt_data["task_completion_rate"] = comp_signal
+                except Exception:
+                    pass
+                sdt_result = self.sdt.assess(sdt_data)
                 sdt_profile = sdt_result.to_dict()
         except Exception:
             _logger.warning("SDT assess failed", exc_info=True)
@@ -377,13 +451,41 @@ class CoachAgent:
         flow_channel = None
         try:
             if self.flow:
+                # S19.3: 用 BKT mastery 替代 confidence 作为技能概率
+                skill_probs = mastery_values if mastery_values else [user_state.get("confidence", 0.5)]
                 flow_result = self.flow.compute_flow(
-                    skill_probs=[user_state.get("confidence", 0.5)],
+                    skill_probs=skill_probs,
                     task_difficulty=0.5,
                 )
                 flow_channel = flow_result.get("flow_channel")
         except Exception:
             _logger.warning("Flow compute failed", exc_info=True)
+
+        # 4c.5 Phase 23: 间隔重复 — 检查复习队列，低保留率覆盖 action_type
+        review_override = None
+        try:
+            if self._persistence:
+                from src.coach.flow import BKTEngine
+                bkt = BKTEngine()
+                skills = self._persistence.get_skills_with_recency()
+                review_queue = []
+                for skill, data in skills.items():
+                    ret = bkt.estimate_retention(data["mastery"], data["days_elapsed"])
+                    if ret < 0.6:
+                        review_queue.append({"skill": skill, "retention": round(ret, 4)})
+                if review_queue:
+                    review_queue.sort(key=lambda x: x["retention"])
+                    worst = review_queue[0]
+                    review_override = {
+                        "action_type": "probe",
+                        "payload_override": {
+                            "prompt": "review: " + worst["skill"],
+                            "expected_skill": worst["skill"],
+                            "max_duration_s": 300,
+                        },
+                    }
+        except Exception:
+            pass
 
         # 4d. 选择 action_type（三模型融合 + Phase 6 CEO/Manager 分层）
         if mapek_active:
@@ -407,6 +509,11 @@ class CoachAgent:
                 sdt_profile=sdt_profile,
                 flow_result=flow_result,
             )
+
+        # Phase 23: 复习覆盖 — 低保留率技能优先
+        if review_override:
+            action["action_type"] = review_override["action_type"]
+            action["payload"] = review_override["payload_override"]
 
         # 4f. Phase 5: 反事实仿真（默认关闭，高风险→降级 reflect）
         counterfactual_result = None
@@ -467,6 +574,112 @@ class CoachAgent:
             self._turns_since_last_pulse = 0
 
         self._prev_user_response = user_input
+
+        # 4.8 Phase 19 S19.2: Diagnostic Engine — 评估待处理诊断题 + 按需生成新题
+        diagnostic_result = None
+        diagnostic_probe = None
+        try:
+            if self.diagnostic_engine:
+                self._diagnostic_turn_count += 1
+                diag_result = self.diagnostic_engine.process_turn(
+                    user_input=user_input,
+                    turn_count=self._diagnostic_turn_count,
+                )
+                if diag_result:
+                    diagnostic_result = diag_result
+                probe = self.diagnostic_engine.should_and_generate(
+                    turn_count=self._diagnostic_turn_count,
+                    intent=intent,
+                )
+                if probe:
+                    diagnostic_probe = probe
+                    if action.get("action_type") not in ("probe",):
+                        action["action_type"] = "probe"
+                        action["payload"] = {
+                            "prompt": probe.get("question", ""),
+                            "expected_skill": probe.get("skill", ""),
+                            "max_duration_s": 600,
+                        }
+        except Exception:
+            _logger.warning("Diagnostic engine step failed", exc_info=True)
+            diagnostic_result = None
+            diagnostic_probe = None
+
+        # 4.9 Phase 19 S19.1: LLM 内容生成（llm.enabled=true 时替代规则 payload）
+        llm_generated = False
+        llm_model = ""
+        llm_tokens_used = 0
+        llm_cfg = self._cfg()
+        if llm_cfg.get("llm", {}).get("enabled", False):
+            try:
+                llm_config = LLMConfig.from_yaml(llm_cfg)
+                client = LLMClient(llm_config)
+                # S19.2: 用 BKT mastery 动态计算 difficulty
+                _llm_difficulty = "medium"
+                try:
+                    if self.diagnostic_engine:
+                        masteries = self.diagnostic_engine.store.get_all_masteries()
+                        if masteries:
+                            if any(m < 0.3 for m in masteries.values()):
+                                _llm_difficulty = "easy"
+                            elif all(m > 0.7 for m in masteries.values()):
+                                _llm_difficulty = "hard"
+                            else:
+                                _llm_difficulty = "medium"
+                except Exception:
+                    pass
+                # Phase 21 S21.1: 填充记忆和掌握度数据
+                _memory_snippets = None
+                _covered_topics = None
+                try:
+                    if self.diagnostic_engine:
+                        mastery = self.diagnostic_engine.get_mastery_summary()
+                        skills = mastery.get("skills", {})
+                        if skills:
+                            _covered_topics = [
+                                f"{k}(掌握度:{v:.0%})" for k, v in skills.items()
+                            ][:10]
+                    from src.coach.llm.memory_context import extract_memory_snippets
+                    _mem_list, _mem_status = extract_memory_snippets(self.memory, self.session_id)
+                    if _mem_list:
+                        _memory_snippets = _mem_list[:3]
+                except Exception:
+                    pass
+                ctx = build_coach_context(
+                    intent=intent,
+                    action_type=action.get("action_type", "suggest"),
+                    ttm_stage=ttm_stage,
+                    sdt_profile=sdt_profile,
+                    user_message=user_input,
+                    history=[
+                        h for h in self.memory.recall(intent, user_state)
+                        if h.get("data", {}).get("session_id") == self.session_id
+                    ][:5],
+                    memory_snippets=_memory_snippets,
+                    covered_topics=_covered_topics,
+                    difficulty=_llm_difficulty,
+                )
+                llm_response = client.generate(ctx)
+                payload = llm_response.to_payload()
+                aligned_payload, align_report = LLMDSLAligner.align(
+                    payload, action.get("action_type", "suggest"))
+                forbidden = _coach_cfg.get("relational_safety", {}).get("forbidden_phrases", [])
+                filtered_payload, triggered = LLMSafetyFilter.filter_payload(
+                    aligned_payload, forbidden)
+                filtered_payload = LLMSafetyFilter.enforce_action_type(
+                    filtered_payload, action.get("action_type", "suggest"))
+                valid, errors = LLMOutputValidator.validate(filtered_payload)
+                if valid and align_report.get("valid", False):
+                    action["payload"] = filtered_payload
+                    llm_generated = True
+                    llm_model = llm_config.model
+                    llm_tokens_used = llm_response.tokens_used
+                else:
+                    _logger.warning("LLM output validation failed: %s; using rule fallback", errors)
+            except LLMError as e:
+                _logger.warning("LLM generation failed: %s; using rule fallback", e)
+            except Exception as e:
+                _logger.warning("LLM step unexpected error: %s; using rule fallback", e)
 
         # 5. 构建 DSL packet
         packet = DSLBuilder.build(action)
@@ -551,6 +764,21 @@ class CoachAgent:
         self._turn_count += 1
         self._monitor_compliance_signals(packet)
 
+        # Phase 19 S19.2: 填充学习历史和记忆（供 personalization_evidence 和 LLM prompt 使用）
+        s4_history_raw = self.memory.recall(intent=intent, user_state=user_state, limit=5)
+        # Filter to current session only (recall is cross-session)
+        s4_history = [
+            h for h in (s4_history_raw or [])
+            if h.get("data", {}).get("session_id") == self.session_id
+        ][:5]
+        try:
+            from src.coach.llm.memory_context import extract_memory_snippets
+            s4_memory_list, memory_status = extract_memory_snippets(self.memory, self.session_id)
+        except Exception:
+            s4_memory_list = []
+            memory_status = {"status": "error", "hits": 0, "errors": 1}
+        current_difficulty = "medium"
+
         # 10. 返回增强的 DSL 包
         result = {
             **packet,
@@ -571,6 +799,28 @@ class CoachAgent:
             "phase6_integrated": mapek_active,
             "mrt_enabled": self._cfg().get("mrt", {}).get("enabled", False),
             "phase7_integrated": self._cfg().get("mrt", {}).get("enabled", False),
+            # Phase 10: LLM 元数据 (LLM OFF 时为 None/空)
+            "llm_generated": llm_generated,
+            "llm_model": llm_model,
+            "llm_tokens": llm_tokens_used,
+            # Phase 13: 诊断引擎可见结果
+            "diagnostic_result": diagnostic_result,
+            "diagnostic_probe": diagnostic_probe,
+            # Phase 15/19: 个性化闭环固化
+            "personalization_evidence": {
+                "sources": [
+                    "history" if s4_history else None,
+                    "memory" if s4_memory_list else None,
+                    "diagnostic" if diagnostic_result else None,
+                ],
+                "sources_count": sum(1 for x in [s4_history, s4_memory_list, diagnostic_result] if x),
+                "recent_history": [
+                    {"intent": h.get("intent"), "action_type": h.get("data", {}).get("action_type")}
+                    for h in (s4_history or [])[:3]
+                ] if s4_history else None,
+            } if (len(s4_history) > 1) or s4_memory_list or diagnostic_result else None,
+            "memory_status": memory_status,
+            "difficulty_contract": self._compute_difficulty_contract(current_difficulty),
         }
 
         # Phase 6: Execute + Memory 归档（仅在 MAPE-K 激活时）
@@ -593,10 +843,31 @@ class CoachAgent:
                 self._rmm.run()
             except Exception:
                 _logger.warning("RMM run failed", exc_info=True)
+        # Phase 20 S20.1a: 每轮持久化（写失败不阻塞主流程）
+        try:
+            if self._persistence:
+                self._persistence.increment_turns()
+                if ttm_stage:
+                    self._persistence.save_ttm_stage(ttm_stage)
+                if sdt_profile:
+                    self._persistence.save_sdt_scores(
+                        sdt_profile.get("autonomy", 0.5),
+                        sdt_profile.get("competence", 0.5),
+                        sdt_profile.get("relatedness", 0.5),
+                    )
+                dc = result.get("difficulty_contract", {})
+                if dc.get("level"):
+                    self._persistence.save_difficulty(dc["level"])
+        except Exception:
+            _logger.warning("Phase 20 persistence save failed", exc_info=True)
         # 禁语过滤
         result = self._filter_forbidden(result)
         # 主权声明附加
         result = self._attach_sovereignty_statement(result)
+        # Phase 17: 能力唤醒 — 首轮新用户触发 (已同意/拒绝用户跳过)
+        awakening = self._build_awakening()
+        if awakening and self._turn_count == 1:
+            result["awakening"] = awakening
         return result
 
     # ── V18.8 脉冲 ──────────────────────────────────────────────
@@ -850,3 +1121,301 @@ class CoachAgent:
             if kw in user_input_lower:
                 return _KEYWORD_TO_INTENT[kw]
         return "general"
+
+    # ── Phase 17: 能力唤醒 + 知情同意 ───────────────────────────
+
+    def _build_awakening(self) -> dict | None:
+        """Phase 17: 构建能力唤醒信息 — 推荐/高级分组，仅在首轮新用户且未同意/拒绝时调用."""
+        cfg = self._cfg()
+        caps = cfg.get("capabilities", {})
+        if not caps:
+            return None
+        # Phase 17: 已同意/拒绝的用户不再展示唤醒
+        if self._consent_status in ("consented", "declined"):
+            return None
+        recommended = []
+        advanced = []
+        for key, info in caps.items():
+            module_cfg = cfg.get(key, {})
+            if isinstance(module_cfg, dict) and not module_cfg.get("enabled", False):
+                entry = {
+                    "key": key,
+                    "name": info.get("name", key),
+                    "purpose": info.get("purpose", ""),
+                    "impact": info.get("impact", ""),
+                    "risk": info.get("risk", "low"),
+                    "recommended": info.get("recommended", False),
+                }
+                if info.get("recommended", False):
+                    recommended.append(entry)
+                else:
+                    advanced.append(entry)
+        if not recommended and not advanced:
+            return None
+        self._consent_pending = True
+        return {
+            "triggered": True,
+            "total_modules": len(caps),
+            "recommended": recommended,
+            "advanced": advanced[:5],
+            "hint": "你可以说'启用推荐能力'来一键启用推荐模块，或说'不用'跳过",
+        }
+
+    def _handle_consent_response(self, user_input: str) -> dict | None:
+        """Phase 17: 处理用户对批量启用推荐的同意/拒绝（含反悔路径）."""
+        # consented 用户已有 TTM+SDT，无需再处理
+        if self._consent_status == "consented":
+            return None
+
+        import re
+        lowered = user_input.lower().strip()
+
+        consent_patterns = [
+            r"启用推荐", r"启用推荐能力",  # 显式关键词（子串匹配）
+            r"^好$", r"^好的$", r"^好啊$", r"^好呀$",
+            r"^是$", r"^是的$", r"^是啊$", r"^是呀$",
+            r"^可以$", r"^可以的$", r"^行$", r"^行啊$", r"^行吧$",
+            r"^同意$", r"^我同意$",
+            r"^yes$", r"^yeah$", r"^yep$", r"^ok$", r"^okay$", r"^sure$",
+        ]
+        decline_patterns = [
+            r"不用",  # 子串：覆盖"不用了""不用啦"等
+            r"^不$", r"^不了$", r"^不要$", r"^不要了$",
+            r"^不需要$", r"^不必$",
+            r"^拒绝$", r"^我拒绝$",
+            r"^算了$", r"^算了吧$", r"^下次$", r"^下次吧$", r"^下次再说$",
+            r"^skip$", r"^later$", r"^no$", r"^nope$",
+        ]
+
+        is_consent = any(re.search(p, lowered) for p in consent_patterns)
+        is_decline = any(re.search(p, lowered) for p in decline_patterns)
+
+        # never_asked: 仅在唤醒刚展示后 (pending) 响应
+        if self._consent_status == "never_asked" and not self._consent_pending:
+            return None
+        # declined: 允许反悔——仅匹配同意关键词时重新激活
+        if self._consent_status == "declined":
+            if not is_consent:
+                return None
+        else:
+            if not is_consent and not is_decline:
+                return None
+
+        if is_consent:
+            was_declined = self._consent_status == "declined"
+            self._enable_module("ttm")
+            self._enable_module("sdt")
+            self._consent_status = "consented"
+            self._persist_consent("consented")
+            self._consent_pending = False
+            msg = ("好的！已重新为你启用推荐能力：学习阶段检测(TTM)和动机评估(SDT)。"
+                   if was_declined else
+                   "好的！已为你启用推荐能力：学习阶段检测(TTM)和动机评估(SDT)。"
+                   "你可以随时在设置面板中调整。")
+            return {
+                "action_type": "suggest",
+                "payload": {"statement": msg, "format": "text"},
+                "trace_id": self._generate_trace_id(),
+                "intent": "consent_enable_recommended",
+                "domain_passport": {"domain": "system", "source_tag": "rule"},
+                "sanitized_dsl": None,
+                "safety_allowed": True,
+                "gate_decision": "GO",
+                "audit_level": "pass",
+                "premise_rewrite_rate": 0.0,
+                "ttm_stage": None,
+                "sdt_profile": None,
+                "flow_channel": None,
+                "llm_generated": False, "llm_model": "", "llm_tokens": 0,
+            }
+        else:
+            self._consent_status = "declined"
+            self._persist_consent("declined")
+            self._consent_pending = False
+            return {
+                "action_type": "suggest",
+                "payload": {
+                    "statement": "好的，推荐能力保持关闭。你可以随时在设置面板中启用任何能力，"
+                                "或直接告诉我要启用哪个能力。",
+                    "format": "text",
+                },
+                "trace_id": self._generate_trace_id(),
+                "intent": "consent_decline",
+                "domain_passport": {"domain": "system", "source_tag": "rule"},
+                "sanitized_dsl": None,
+                "safety_allowed": True,
+                "gate_decision": "GO",
+                "audit_level": "pass",
+                "premise_rewrite_rate": 0.0,
+                "ttm_stage": None,
+                "sdt_profile": None,
+                "flow_channel": None,
+                "llm_generated": False, "llm_model": "", "llm_tokens": 0,
+            }
+
+    def _handle_activation_intent(self, user_input: str) -> dict | None:
+        """Phase 16: 检测用户的能力启用/关闭/查询意图."""
+        import re, json
+        cfg = self._cfg()
+        caps = cfg.get("capabilities", {})
+        if not caps:
+            return None
+
+        # 构建模块名→key 映射（全称 + 别名）
+        name_to_key: dict[str, str] = {}
+        for key, info in caps.items():
+            name_to_key[info.get("name", key)] = key
+            name_to_key[key] = key
+            # 简称：如 diagnostic_engine → 诊断、诊断引擎
+            if "_" in key:
+                parts = key.split("_")
+                for p in parts:
+                    name_to_key[p] = key
+
+        # 匹配启用/打开指令
+        enable_match = re.search(r"(打开|启用|开启|激活)\s*(.+)", user_input)
+        if enable_match:
+            raw = enable_match.group(2).strip()
+            # 找到匹配的模块
+            matched_key = None
+            matched_name = None
+            for name, key in name_to_key.items():
+                if name == raw or name in raw or raw in name:
+                    matched_key = key
+                    matched_name = name
+                    break
+            if matched_key and matched_key in caps:
+                # 修改 YAML
+                self._enable_module(matched_key)
+                # Phase 17: 任何单个启用视为隐性同意, 不再展示唤醒
+                if self._consent_status == "never_asked":
+                    self._consent_status = "consented"
+                    self._persist_consent("consented")
+                info = caps.get(matched_key, {})
+                impact = info.get("impact", "影响取决于具体配置")
+                return {
+                    "action_type": "suggest",
+                    "payload": {
+                        "statement": f"好的，已启用{info.get('name', matched_key)}能力。{impact}",
+                        "format": "text",
+                    },
+                    "trace_id": self._generate_trace_id(),
+                    "intent": "enable_capability",
+                    "domain_passport": {"domain": "system", "source_tag": "rule"},
+                    "sanitized_dsl": None,
+                    "safety_allowed": True,
+                    "gate_decision": "GO",
+                    "audit_level": "pass",
+                    "premise_rewrite_rate": 0.0,
+                }
+
+        # 匹配关闭指令
+        disable_match = re.search(r"(关闭|关掉|停用|不用)\s*(.+)", user_input)
+        if disable_match:
+            raw = disable_match.group(2).strip()
+            matched_key = None
+            for name, key in name_to_key.items():
+                if name == raw or name in raw or raw in name:
+                    matched_key = key
+                    break
+            if matched_key and matched_key in caps:
+                self._disable_module(matched_key)
+                return {
+                    "action_type": "suggest",
+                    "payload": {"statement": f"好的，已关闭{matched_key}。", "format": "text"},
+                    "trace_id": self._generate_trace_id(),
+                    "intent": "disable_capability",
+                    "domain_passport": {"domain": "system", "source_tag": "rule"},
+                    "sanitized_dsl": None,
+                    "safety_allowed": True,
+                    "gate_decision": "GO",
+                    "audit_level": "pass",
+                    "premise_rewrite_rate": 0.0,
+                }
+
+        # 匹配查询指令
+        query_match = re.search(r"(什么|做什么|干什么|介绍|是啥)\s*(.+)|(.+)\s*(是啥|是什么|做什么)", user_input)
+        if query_match:
+            raw = (query_match.group(2) or query_match.group(3) or "").strip()
+            matched_key = None
+            for name, key in name_to_key.items():
+                if name == raw or name in raw or raw in name or key == raw:
+                    matched_key = key
+                    break
+            if matched_key and matched_key in caps:
+                info = caps[matched_key]
+                return {
+                    "action_type": "suggest",
+                    "payload": {
+                        "statement": f"{info.get('name',matched_key)}：{info.get('purpose','')}。"
+                                    f"启用影响：{info.get('impact','')}。"
+                                    f"推荐场景：{info.get('recommended_for','不限')}。",
+                        "format": "text",
+                    },
+                    "trace_id": self._generate_trace_id(),
+                    "intent": "query_capability",
+                    "domain_passport": {"domain": "system", "source_tag": "rule"},
+                    "sanitized_dsl": None,
+                    "safety_allowed": True,
+                    "gate_decision": "GO",
+                    "audit_level": "pass",
+                    "premise_rewrite_rate": 0.0,
+                }
+
+        return None
+
+    @staticmethod
+    def _update_config(key: str, enabled: bool) -> None:
+        """修改 coach_defaults.yaml 中模块的 enabled 状态."""
+        from pathlib import Path
+        import yaml
+        cfg_path = Path(__file__).resolve().parent.parent.parent / "config" / "coach_defaults.yaml"
+        try:
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                cfg = yaml.safe_load(f) or {}
+            if key not in cfg:
+                cfg[key] = {}
+            cfg[key]["enabled"] = enabled
+            # 处理 auto_affects
+            caps = cfg.get("capabilities", {})
+            if key in caps and enabled:
+                for affect in caps[key].get("auto_affects", []):
+                    if affect not in cfg:
+                        cfg[affect] = {}
+                    cfg[affect]["enabled"] = True
+            with open(cfg_path, "w", encoding="utf-8") as f:
+                yaml.dump(cfg, f, allow_unicode=True, default_flow_style=False)
+        except Exception as e:
+            _logger.warning("Config update failed: %s", e)
+
+    @classmethod
+    def _enable_module(cls, key: str) -> None:
+        cls._update_config(key, True)
+
+    @classmethod
+    def _disable_module(cls, key: str) -> None:
+        cls._update_config(key, False)
+
+    # ── Phase 17: 同意持久化 ─────────────────────────────────────
+
+    def _init_consent_persistence(self) -> None:
+        """延迟加载 SessionPersistence 并恢复同意状态."""
+        try:
+            from src.coach.persistence import SessionPersistence
+            self._persistence = SessionPersistence(self.session_id)
+            self._consent_status = self._persistence.load_consent_status()
+        except Exception:
+            self._consent_status = "never_asked"
+
+    def _persist_consent(self, status: str) -> None:
+        """持久化用户同意/拒绝选择."""
+        if self._persistence:
+            try:
+                self._persistence.save_consent_status(status)
+            except Exception:
+                _logger.warning("Failed to persist consent status", exc_info=True)
+
+    @staticmethod
+    def _generate_trace_id() -> str:
+        import uuid
+        return uuid.uuid4().hex[:16]

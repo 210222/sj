@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 21 — 教学策略闭环</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>21</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>Phase 21 — 让 LLM 真正看见用户的掌握度、动机状态和心流</sub_stage_name>
+
+  <role>
+    Phase 19 接通了 LLM/诊断/行为模型的主路径。
+    Phase 20 让数据可回溯、可展示。
+    Phase 21 让这些数据**真正改变 LLM 的生成内容**——当前 LLM prompt 收不到 mastery 数据、SDT 信号只生成泛化提示、WS 路径还没同步 Phase 19 的改动。
+  </role>
+
+  <context>
+    === 当前断点 ===
+    agent.py:600-613 (REST LLM 调用):
+      memory_snippets=None    ← 永远不传记忆
+      covered_topics=None     ← 永远不传掌握度
+      但 diagnostic_engine.get_mastery_summary() 已有 mastery 数据
+
+    CoachBridge.chat_stream():200-206 (WS LLM 调用):
+      只传 intent, action_type, ttm_stage, sdt_profile, user_message
+      缺 difficulty, history, memory_snippets, covered_topics
+
+    prompts.py _build_behavior_signals():
+      TTM stage 决定宽泛的"节奏宜缓/宜快"
+      SDT 三轴评分不产生具体指令（只有泛化信号）
+
+    === 约束 ===
+    - 不修改 contracts/ 任何文件
+    - 不修改 src/inner/** src/middle/** src/outer/**
+    - 不修改 src/coach/ttm.py sdt.py flow.py
+    - 全量回归 1275+ 必须通过
+    - prompts.py 可以修改 build_coach_context() 和 _build_behavior_signals()，不改 SYSTEM_PROMPT 常量字符串
+  </context>
+
+  <execution_order>
+    <step>
+      S21.1 (agent.py + prompts.py) 补全 memory/covered_topics 数据注入
+      → S21.2 (prompts.py) SDT 语气指令增强
+      → S21.3 (coach_bridge.py) WS 路径同步 REST 参数
+    </step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s21_1" name="数据注入补全" priority="P0">
+      <description>build_coach_context() 补全 memory_snippets 和 covered_topics 参数</description>
+      <meta_prompt>177_s21_1_data_injection.xml</meta_prompt>
+      <files>src/coach/agent.py +15 行, src/coach/llm/prompts.py +5 行</files>
+    </stage>
+    <stage id="s21_2" name="SDT 语气指令" priority="P0">
+      <description>_build_behavior_signals() 根据 SDT 三轴评分产生具体教学指令</description>
+      <meta_prompt>178_s21_2_sdt_tone.xml</meta_prompt>
+      <files>src/coach/llm/prompts.py +25 行</files>
+    </stage>
+    <stage id="s21_3" name="WS 路径同步" priority="P1">
+      <description>CoachBridge.chat_stream() 补全 Phase 19/21 的全部参数</description>
+      <meta_prompt>179_s21_3_ws_sync.xml</meta_prompt>
+      <files>api/services/coach_bridge.py +20 行</files>
+    </stage>
+  </sub_stages>
+</prompt>

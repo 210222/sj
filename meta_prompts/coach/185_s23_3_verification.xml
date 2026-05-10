@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 23 — S23.3 间隔重复验证</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>23</phase>
+  <sub_stage>S23.3</sub_stage>
+  <sub_stage_name>新增 test_phase23.py 验证 retention 和复习队列</sub_stage_name>
+
+  <role>
+    编写测试验证 retention 计算、复习队列检测、persistence 查询正确。
+  </role>
+
+  <context>
+    === 当前状态 ===
+    无 Phase 23 测试。
+
+    === 约束 ===
+    - 新建 tests/test_phase23.py
+    - pytest 风格
+    - 不需要 DEEPSEEK_API_KEY
+  </context>
+
+  <task>
+
+    ── 新建 tests/test_phase23.py ──
+
+    ```python
+    """Phase 23: 间隔重复验证。"""
+    import time
+    from src.coach.flow import BKTEngine
+    from src.coach.persistence import SessionPersistence
+
+
+    class TestRetention:
+        def setup_method(self):
+            self.bkt = BKTEngine()
+
+        def test_day0_equals_mastery(self):
+            r = self.bkt.estimate_retention(0.8, 0)
+            assert r == 0.8
+
+        def test_retention_decays(self):
+            r0 = self.bkt.estimate_retention(0.8, 0)
+            r7 = self.bkt.estimate_retention(0.8, 7)
+            r14 = self.bkt.estimate_retention(0.8, 14)
+            assert r0 > r7 > r14, f"retention should decay: {r0} > {r7} > {r14}"
+
+        def test_low_mastery_decays_fast(self):
+            low = self.bkt.estimate_retention(0.3, 3)
+            high = self.bkt.estimate_retention(0.9, 3)
+            assert low < high
+
+        def test_boundary_zero_mastery(self):
+            r = self.bkt.estimate_retention(0.0, 7)
+            assert r == 0.0
+
+        def test_boundary_negative_days(self):
+            r = self.bkt.estimate_retention(0.8, -1)
+            assert r == 0.8
+
+        def test_half_life_parameter(self):
+            r7 = self.bkt.estimate_retention(0.8, 7, half_life=14)
+            assert r7 > 0.5  # longer half-life = slower decay
+
+        def test_near_threshold(self):
+            r = self.bkt.estimate_retention(0.85, 5)
+            # 5 days at half_life=7: 0.85*0.5^(5/7) ≈ 0.52
+            assert r < 0.6, f"should be below review threshold, got {r}"
+    ```
+  </task>
+
+  <verification_method>
+    ```bash
+    cd D:/Claudedaoy/coherence
+    python -m pytest tests/test_phase23.py -v
+    python -m pytest tests/ -q
+    ```
+  </verification_method>
+
+  <success_criteria>
+    <item>test_phase23.py 7 个测试全部通过</item>
+    <item>全量回归 1284+ 通过</item>
+  </success_criteria>
+</prompt>

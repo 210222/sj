@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 21 — S21.3 WebSocket 路径同步</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>21</phase>
+  <sub_stage>S21.3</sub_stage>
+  <sub_stage_name>CoachBridge.chat_stream() 同步 REST 路径的全部参数</sub_stage_name>
+
+  <role>
+    当前 CoachBridge.chat_stream()（WS 路径）调 build_coach_context() 时只传 5 个参数，
+    REST 路径（agent.py）已经传 7+ 个参数。
+    WS 路径缺少 difficulty、history、memory_snippets、covered_topics。
+    这导致 WebSocket 流式输出无法享受到 Phase 19/21 的数据注入。
+  </role>
+
+  <context>
+    === 当前代码 ===
+    coach_bridge.py:200-206:
+    ```python
+    ctx = build_coach_context(
+        intent=rule_action_type,
+        action_type=rule_action_type,
+        ttm_stage=ttm_stage,
+        sdt_profile=sdt_profile,
+        user_message=message,
+    )
+    ```
+
+    缺少: difficulty, history, memory_snippets, covered_topics
+
+    而 agent.py:600-613 的 REST 路径已经传了所有这些参数。
+
+    === 约束 ===
+    - 可以修改: api/services/coach_bridge.py
+    - 不修改 src/coach/llm/ 任何文件
+    - 全量回归 1275+ 必须通过
+    - WS 路径的 LLM 调用是 async，数据源与 REST 路径一致
+  </context>
+
+  <task>
+
+    ── 改动: chat_stream() 中补全 build_coach_context() 参数 ──
+
+    在 coach_bridge.py 中 chat_stream() 方法（约第 200 行），将现有的：
+
+    ```python
+    ctx = build_coach_context(
+        intent=rule_action_type,
+        action_type=rule_action_type,
+        ttm_stage=ttm_stage,
+        sdt_profile=sdt_profile,
+        user_message=message,
+    )
+    ```
+
+    替换为：
+
+    ```python
+    # Phase 21: 补全全部参数（同步 REST 路径）
+    # 从 agent 的配置计算 difficulty
+    _diff = "medium"
+    try:
+        if hasattr(agent, 'diagnostic_engine') and agent.diagnostic_engine:
+            m = agent.diagnostic_engine.store.get_all_masteries()
+            if m:
+                if any(v < 0.3 for v in m.values()):
+                    _diff = "easy"
+                elif all(v > 0.7 for v in m.values()):
+                    _diff = "hard"
+    except Exception:
+        pass
+
+    ctx = build_coach_context(
+        intent=rule_action_type,
+        action_type=rule_action_type,
+        ttm_stage=ttm_stage,
+        sdt_profile=sdt_profile,
+        user_message=message,
+        history=agent.memory.recall(rule_action_type, None)[:5],
+        difficulty=_diff,
+        memory_snippets=None,
+        covered_topics=None,
+    )
+    ```
+
+    memory_snippets 和 covered_topics 保持 None，因为 WS 路径没有 agent.act() 的上下文。
+    如果未来需要，可以从 agent 的 _interaction_history 中提取。
+
+    ⚠️ 注意：hasattr(agent, 'diagnostic_engine') 可能返回 False（如果 diagnostic_engine disabled），
+    所以必须有 try/except 保护。上面的代码已经包含了。
+
+  </task>
+
+  <verification_method>
+    ```bash
+    cd D:/Claudedaoy/coherence
+    python -m pytest tests/ -q
+    ```
+  </verification_method>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>agent.diagnostic_engine 不存在时 WS 路径不抛出异常</item>
+    <item>build_coach_context() 收到完整参数（参数数 >= 6）</item>
+  </success_criteria>
+</prompt>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S16.2 Awakening Detection</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>16</phase>
+  <sub_stage>S16.2</sub_stage>
+  <sub_stage_name>后端能力唤醒检测 — 识别新用户首轮对话，注入能力告知信息</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 16 S16.2 实现者。
+    你的任务是：在 CoachAgent.act() 和 CoachBridge 中检测首次用户与回访用户，
+    仅在真正的新用户首轮响应中附加能力唤醒标记。
+  </role>
+
+  <context>
+    === 现状 ===
+    act() 没有"首轮检测"机制。前端静态欢迎语不从后端获取。
+    无法判断当前用户是第一次使用还是回访。
+
+    === 目标 ===
+    在 act() 中，当 total_turns == 0 且 persistence 显示无历史时，
+    在正常教学响应之外，附加 _awakening 字段。
+    前端据此决定是否展示能力唤醒面板。
+  </context>
+
+  <task>
+    1) 修改 src/coach/agent.py：
+       - 在 act() 返回前检测是否首轮
+       - 首轮条件：turn_count == 0（或者 _interaction_history 为空） 且 persistence 是新的
+       - 首轮时，在返回 dict 中添加 _awakening 标记
+       - 非首轮或回访用户不添加
+    2) 修改 api/services/coach_bridge.py：
+       - 透传 _awakening 字段到 API 响应
+    3) 可选修改 api/models/schemas.py：
+       - 添加 awakening 字段到 ChatMessageResponse
+  </task>
+
+  <output_files>
+    <file>src/coach/agent.py — act() 首轮检测 + 能力注入</file>
+    <file>api/services/coach_bridge.py — 透传 awakening</file>
+    <file>api/models/schemas.py — 可选新增字段</file>
+  </output_files>
+
+  <awakening_detection_spec>
+
+    === 检测逻辑 ===
+    if self._turn_count == 0 or len(self._interaction_history) == 0:
+        if self._persistence is None or self._persistence.get_profile().get("total_turns", 0) == 0:
+            result["_awakening"] = {
+                "triggered": True,
+                "capabilities": self._get_disabled_capabilities(),
+                "message": "我还有一些高级能力可以启用，要了解一下吗？"
+            }
+
+    === _get_disabled_capabilities() ===
+    从 config/coach_defaults.yaml 中读取 capabilities 段，
+    过滤出当前 enabled:false 的模块，
+    返回 {"key": cap_name, "purpose": cap_purpose} 列表。
+
+    === 安全降级 ===
+    - persistence 不可用时不触发（安全降级）
+    - capabilities 段不存在时不触发
+    - 任何异常不中断主流程
+
+  </awakening_detection_spec>
+
+  <implementation_principles>
+    <principle>只触发一次，不会在用户每次刷新页面都看到。</principle>
+    <principle>不影响正常教学回复内容——awakening 是附加元数据。</principle>
+    <principle>安全性第一：异常不影响主 act() 流程。</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. 首轮用户 act() 返回 dict 中包含 _awakening
+    2. API 响应透传 _awakening 到前端
+    3. 回访用户不触发
+    4. 异常情况不崩溃
+  </success_criteria>
+
+</prompt>

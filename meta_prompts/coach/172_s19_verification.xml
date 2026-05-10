@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 19 — S19.V Final Verification</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>19</phase>
+  <sub_stage>S19.V</sub_stage>
+  <sub_stage_name>Phase 19 终验 — 全量回归 + 接线验证 + 字段非空确认</sub_stage_name>
+
+  <role>
+    你是 Coherence Phase 19 终验执行者。
+    你的任务是：验证 S19.1→S19.2→S19.3 三条接线是否正确、无退化、可观测。
+    你有两条路径可以验收——全量回归自动化验证，以及执行 6 项字段非空断言确认主链连通。
+  </role>
+
+  <context>
+    === 基线 ===
+    Phase 0-18 全部 GO，1275 tests pass。
+    Phase 19 修改了 4 个文件：src/coach/agent.py、src/coach/composer.py、config/coach_defaults.yaml、api/services/coach_bridge.py（可能）。
+    禁止修改 contracts/、src/inner/、src/middle/、src/outer/、src/coach/llm/（已冻结）。
+
+    === 验收项目 ===
+    6 项断言 + 全量回归 = Phase 19 的 GO/NO-GO 门禁。
+    注意：断言不依赖硬编码行号——只检查输出字段的值，不检查代码行号。
+  </context>
+
+  <task>
+    执行以下验收流程——
+
+    ── 步骤 1: 全量回归（门禁 #1）──
+    ```bash
+    cd D:/Claudedaoy/coherence
+    python -m pytest tests/ -q 2>&1
+    ```
+    通过条件：1275+ passed，0 failed，0 errors。
+    不通过则：NO-GO，退回对应 S19 子阶段。
+
+    ── 步骤 2: 默认配置下线接验证（门禁 #2：llm.enabled=false 时零变化）──
+    ```bash
+    cd D:/Claudedaoy/coherence
+    python -c "
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    r = a.act('test', {})
+    assert r['llm_generated'] == False, 'llm must be False when disabled'
+    assert r['personalization_evidence'] is None, 'personalization must be None when no history'
+    assert r['diagnostic_result'] is None, 'diagnostic_result must be None when disabled'
+    assert r['difficulty_contract']['level'] == 'medium', 'difficulty must default to medium'
+    assert r['difficulty_contract']['reason'] == 'default', 'reason must be default'
+    print('ALL PASS: default config behavior preserved')
+    "
+    ```
+    通过条件：5 个断言全部通过。
+
+    ── 步骤 3: llm.enabled=true 验证（门禁 #3：LLM 主链接通）──
+    设置 DEEPSEEK_API_KEY，编辑 coach_defaults.yaml 临时添加 llm: enabled: true（只读不写，测试后恢复）。
+    ```bash
+    cd D:/Claudedaoy/coherence
+    python -c "
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    r = a.act('教我 Python 列表', {})
+    print('llm_generated:', r.get('llm_generated'))
+    print('llm_model:', r.get('llm_model'))
+    print('llm_tokens:', r.get('llm_tokens'))
+    print('payload:', str(r.get('payload', {}))[:200])
+    assert r.get('llm_generated') == True, 'llm_generated must be True when enabled'
+    assert len(r.get('llm_model', '')) > 0, 'llm_model must not be empty'
+    assert int(r.get('llm_tokens', 0)) > 0, 'llm_tokens must be > 0'
+    print('ALL PASS: LLM main chain connected')
+    "
+    ```
+    通过条件：3 个断言全部通过。
+
+    ── 步骤 4: 多轮后 personalization_evidence 非空（门禁 #4）──
+    ```bash
+    cd D:/Claudedaoy/coherence
+    python -c "
+    from src.coach.agent import CoachAgent
+    a = CoachAgent(session_id='test_pers_19')
+    a.act('我要学 Python', {})
+    a.act('列表怎么用', {})
+    r = a.act('append 和 extend 有什么区别', {})
+    pe = r.get('personalization_evidence')
+    print('personalization_evidence:', pe)
+    assert pe is not None, 'personalization_evidence must not be None after 3 turns'
+    assert pe.get('sources_count', 0) >= 1, 'at least 1 source expected'
+    print('ALL PASS: personalization evidence populated')
+    "
+    ```
+    通过条件：personalization_evidence 非 None，sources_count >= 1。
+
+    ── 步骤 5: diagnostic_result 非空验证（门禁 #5：diagnostic engine 接线）──
+    ```bash
+    cd D:/Claudedaoy/coherence
+    python -c "
+    # 快速验证 diagnostic_engine property 是否存在（不要求 enabled）
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    has_de = hasattr(a, 'diagnostic_engine')
+    print('has diagnostic_engine property:', has_de)
+    assert has_de == True, 'diagnostic_engine property must exist on CoachAgent'
+    print('ALL PASS: diagnostic engine wired')
+    "
+    ```
+    通过条件：hasattr(a, 'diagnostic_engine') == True。
+
+    ── 步骤 6: REST API 响应字段完整性（门禁 #6）──
+    启动后端后（需要 DEEPSEEK_API_KEY + 新增的 llm: 配置段 enabled）：
+    ```bash
+    curl -s -X POST http://localhost:8001/api/v1/chat \
+      -H "Content-Type: application/json" \
+      -d '{"session_id":"test_19","message":"hello"}' | python -c "
+    import json, sys
+    r = json.load(sys.stdin)
+    required_keys = ['llm_generated','llm_model','llm_tokens',
+                     'personalization_evidence','memory_status',
+                     'difficulty_contract','diagnostic_result']
+    for k in required_keys:
+        assert k in r, f'missing key: {k}'
+        print(f'  {k}: {r.get(k)}')
+    print('ALL PASS: REST API response complete')
+    "
+    ```
+    通过条件：6 个 Phase 19 相关键全部存在。
+    注意：此门禁需要启动 FastAPI 服务（python -m uvicorn api.main:app）。若环境不支持启动服务，
+    可用步骤 2-5 的 agent.act() 直接调用替代验证。
+
+    ── 最终决策 ──
+    6 道门禁全部 PASS + 全量回归 1275+ PASS = GO。
+    任意门禁 FAIL = NO-GO，记录失败原因和对应阶段，退回修复。
+  </task>
+
+  <output_files>
+    <file>reports/phase19_verification_log.txt — 验收日志</file>
+    <file>reports/phase19_verification_result.json — {status, gates: {...}, timestamp}</file>
+  </output_files>
+
+  <success_criteria>
+    <item>Gate 1: 全量回归 1275+ passed</item>
+    <item>Gate 2: 默认配置零变化（5 断言）</item>
+    <item>Gate 3: LLM 主链接通（3 断言）</item>
+    <item>Gate 4: 多轮后 personalization_evidence 非空</item>
+    <item>Gate 5: diagnostic_engine property 存在于 CoachAgent</item>
+    <item>Gate 6: REST API 6 个 Phase 19 字段完整</item>
+    <item>GO 条件：6/6 门禁 PASS</item>
+  </success_criteria>
+</prompt>

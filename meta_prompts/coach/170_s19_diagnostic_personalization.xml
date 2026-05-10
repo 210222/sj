@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 19 — S19.2 Diagnostic Engine + Personalization Pipeline</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>19</phase>
+  <sub_stage>S19.2</sub_stage>
+  <sub_stage_name>诊断引擎接线 + 个性化证据激活 — 修复 hasattr 断路和空历史</sub_stage_name>
+
+  <role>
+    你是 Coherence Phase 19 S19.2 实现者。
+    你的任务是：修复两条已知断路——(1) diagnostic_engine 从未在 agent 上实例化，导致 difficulty_contract 永远 "medium/default"；
+    (2) s4_history/s4_memory 永远为空，导致 personalization_evidence 永远 None。
+    这两个问题都是"代码已完备但主路径未调用"的接线问题，不是重写。
+  </role>
+
+  <context>
+    === 断点 1: diagnostic_engine 断路 ===
+    agent.py:609:
+    ```python
+    "reason": "bkt_mastery" if hasattr(self, 'diagnostic_engine') and self.diagnostic_engine else "default",
+    ```
+    self.diagnostic_engine 属性在 CoachAgent.__init__() 中从未定义。hasattr 永远返回 False。
+    difficulty_contract.reason 永远 "default"，level 永远 "medium"。
+
+    同时 src/coach/diagnostic_engine.py 已完整实现（572 行）并通过测试（test_diagnostic_engine.py 约 15 个测试）：
+    - SkillMasteryStore: 逐技能 BKT 掌握度追踪
+    - DiagnosticEngine.process_turn(): 评估用户回答
+    - DiagnosticEngine.should_and_generate(): 按间隔自动出诊断题
+    - DiagnosticEngine.get_competence_signal(): 供 SDT 消费
+    - DiagnosticEngine.get_mastery_summary(): 返回全部技能掌握度
+
+    === 断点 2: personalization_evidence 断路 ===
+    agent.py:570-571:
+    ```python
+    s4_history: list = []
+    s4_memory: list = []
+    ```
+    这两个变量在 act() 中被初始化为空列表，在整个方法体中从未被赋值。
+    第 602-605 行的 personalization_evidence 块检查 `if s4_history or s4_memory else None` → 永远 None。
+
+    同时 src/coach/llm/memory_context.py 已完整实现：
+    - extract_recent_history(): 从交互历史提取最近 N 轮
+    - extract_memory_snippets(): 从 SessionMemory 提取记忆片段
+
+    === 约束 ===
+    - 禁止修改 contracts/ 任何文件
+    - 禁止修改 src/inner/** src/middle/** src/outer/**
+    - agents.py 的 __init__() 可以新增变量，但不能删除已有变量
+    - diagnostic_engine.enabled 仍由 coach_defaults.yaml 控制（无需修改 config 文件结构）
+    - 全量回归 1275+ 必须通过
+  </context>
+
+  <task>
+    你在 agent.act() 和 CoachAgent 类中需要修改 4 个区域：
+
+    ── 区域 A: CoachAgent.__init__() 新增 diagnostic_engine 延迟加载属性（参照 ttm/sdt/flow 模式）──
+    在 __init__() 中新增：
+    ```python
+    # Phase 19: 诊断引擎（延迟加载，与 ttm/sdt/flow 同模式）
+    self._diagnostic_engine = None
+    self._diagnostic_turn_count: int = 0
+    ```
+
+    新增 @property:
+    ```python
+    @property
+    def diagnostic_engine(self):
+        if self._diagnostic_engine is None:
+            cfg = _coach_cfg.get("diagnostic_engine", {}) or _coach_cfg.get("diagnostics", {})
+            if cfg.get("enabled", False):
+                from src.coach.diagnostic_engine import DiagnosticEngine
+                self._diagnostic_engine = DiagnosticEngine(config=cfg)
+        return self._diagnostic_engine
+    ```
+    注意：当前 config 中 diagnostic_engine 键可能不存在（它被误放为 "diagnostics"），在读取时应兼容两种 key 名。
+
+    ── 区域 B: act() 中 compose() 之后插入 diagnostic_engine 调用 ──
+    在 compose() 调用之后（约第 425 行）、LLM 调用之前，插入：
+    ```python
+    # Phase 19: Diagnostic Engine — 评估待处理诊断题 + 按需生成新题
+    diagnostic_result = None
+    diagnostic_probe = None
+    try:
+        if self.diagnostic_engine:
+            self._diagnostic_turn_count += 1
+            # 检查上一轮是否有待评估的诊断题（用户刚回答了 probe）
+            diag_result = self.diagnostic_engine.process_turn(
+                user_input=user_input,
+                turn_count=self._diagnostic_turn_count,
+            )
+            if diag_result:
+                diagnostic_result = diag_result
+            # 判断是否该生成新的诊断题
+            probe = self.diagnostic_engine.should_and_generate(
+                turn_count=self._diagnostic_turn_count,
+                intent=intent,
+            )
+            if probe:
+                diagnostic_probe = probe
+                # 将诊断题注入 action payload
+                if action.get("action_type") not in ("probe",):
+                    action["action_type"] = "probe"
+                    action["payload"] = {
+                        "prompt": probe.get("question", ""),
+                        "expected_skill": probe.get("skill", ""),
+                        "max_duration_s": 600,
+                    }
+    except Exception:
+        _logger.warning("Diagnostic engine step failed", exc_info=True)
+        diagnostic_result = None
+        diagnostic_probe = None
+    ```
+
+    ── 区域 C: act() 中填充 s4_history/s4_memory ──
+    在 compose() 调用之后（约第 425 行）、构建返回字典之前，插入历史填充：
+    ```python
+    # Phase 19: 填充学习历史和记忆（供 personalization_evidence 和 LLM prompt 使用）
+    s4_history = self.memory.recall(intent=intent, user_state=user_state, limit=5)
+    try:
+        from src.coach.llm.memory_context import extract_memory_snippets
+        s4_memory_list, memory_status = extract_memory_snippets(self.memory, self.session_id)
+    except Exception:
+        s4_memory_list = []
+        memory_status = {"status": "error", "hits": 0, "errors": 1}
+    ```
+
+    ── 区域 D: 修复返回字典中的 personalization_evidence ──
+    替换第 602-611 行的 personalization_evidence 和 difficulty_contract。
+    注意：difficulty_contract 必须安全处理 self.diagnostic_engine 为 None 的情况：
+    ```python
+    "personalization_evidence": {
+        "sources": [
+            "history" if s4_history else None,
+            "memory" if s4_memory_list else None,
+            "diagnostic" if diagnostic_result else None,
+        ],
+        "sources_count": sum(1 for x in [s4_history, s4_memory_list, diagnostic_result] if x),
+        "recent_history": [
+            {"intent": h.get("intent"), "action_type": h.get("data", {}).get("action_type")}
+            for h in (s4_history or [])[:3]
+        ] if s4_history else None,
+    } if s4_history or s4_memory_list or diagnostic_result else None,
+    "memory_status": memory_status,
+    "difficulty_contract": (
+        {
+            "level": "easy" if any(m < 0.3 for m in self.diagnostic_engine.store.get_all_masteries().values())
+                     else "hard" if all(m > 0.7 for m in self.diagnostic_engine.store.get_all_masteries().values())
+                     else "medium",
+            "reason": "bkt_mastery",
+        }
+        if self.diagnostic_engine
+        else {"level": current_difficulty, "reason": "default"}
+    ),
+    ```
+
+    ── 区域 E: 将 diagnostic_engine 的 mastery 注入 LLM prompt 的 difficulty ──
+    在区域 B（S19.1）的 build_coach_context() 调用中，将 difficulty 参数改为动态值：
+    ```python
+    difficulty = (
+        "easy" if self.diagnostic_engine and any(m < 0.3 for m in self.diagnostic_engine.store.get_all_masteries().values())
+        else "hard" if self.diagnostic_engine and all(m > 0.7 for m in self.diagnostic_engine.store.get_all_masteries().values())
+        else "medium"
+    ) if self.diagnostic_engine else "medium"
+    ```
+  </task>
+
+  <output_files>
+    <file>src/coach/agent.py — 区域 A/B/C/D/E 五处修改</file>
+  </output_files>
+
+  <implementation_principles>
+    <principle>延迟加载：diagnostic_engine 与 ttm/sdt/flow 使用相同的 @property 懒加载模式</principle>
+    <principle>不额外存储：s4_history 直接复用 SessionMemory.recall()，不新增持久化</principle>
+    <principle>兼容双 config 键：diagnostic_engine 可能在 coach_defaults.yaml 中名为 diagnostics 或 diagnostic_engine</principle>
+    <principle>diagnostic_engine disabled 时：act() 行为零变化，hasattr 返回 None，reason="default"</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>diagnostic_engine enabled 时 act() 输出 diagnostic_result 非 None（用户回答 probe 后）</item>
+    <item>多轮对话后 act() 输出 personalization_evidence 非 None</item>
+    <item>difficulty_contract.reason = "bkt_mastery"（当 diagnostic_engine enabled 且有 mastery 数据）</item>
+    <item>diagnostic_engine disabled 时所有新增字段保持 None/默认值</item>
+  </success_criteria>
+</prompt>

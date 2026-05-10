@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase18_orchestrator description="Phase 18 研究管线 — 多实例并行 Agent 自优化调研系统">
+
+  <metadata>
+    <stage>S18.1 + S18.2 + S18.3 + S18.4 + S18.5</stage>
+    <origin>
+      Phase 15-17 完成了教学闭环固化。下一阶段需要的是系统性调研，
+      而非零散补丁。手工调研一个 8 Agent 管线不现实，
+      需要可重复执行、自动收敛、自我优化的多实例并行调研系统。
+    </origin>
+    <baseline>
+      run_research_pipeline.py 实现，36 个函数。
+      asyncio 并行调度 + shared_state.json + GEPA/SCOPE/MASPO 自优化。
+    </baseline>
+    <expected_improvement>
+      一键启动后 8 Agent 并行/串行执行完毕，产出路线图和评审报告。
+      每次运行后自动审查并优化自己的 Agent prompt。
+    </expected_improvement>
+  </metadata>
+
+  <system_anatomy>
+    <description>研究管线的架构分层</description>
+    <layers>
+      <layer id="l1" name="调度层">
+        <path>run_research_pipeline.py 主入口</path>
+        <fix>asyncio 管理 Agent 生命周期、Gate 通过条件、退回路由</fix>
+      </layer>
+      <layer id="l2" name="状态层">
+        <path>SharedState 类 + shared_state.json</path>
+        <fix>JSON 格式读写，Python/LLM 双端可读</fix>
+      </layer>
+      <layer id="l3" name="Agent 层">
+        <path>Agent 1-7 各自独立的 LLM API 调用</path>
+        <fix>1 次调用内完成自省+迭代+收敛</fix>
+      </layer>
+      <layer id="l4" name="优化层">
+        <path>GEPA 反思 + SCOPE 跨运行记忆 + MASPO 联合优化</path>
+        <fix>执行后自动生成改进版 prompt，下次使用</fix>
+      </layer>
+    </layers>
+  </system_anatomy>
+
+  <execution_order>
+    <step>S18.1 (共享状态) → S18.2 (并行执行) → S18.3 (质量门禁) → S18.4 (自优化) → S18.5 (验证)</step>
+    <reason>
+      先定义状态协议，再建执行框架，再加质量控制，最后加自优化和验证。
+    </reason>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s18_1" name="共享状态协议" priority="P0">
+      <description>shared_state.json 格式规范：findings 带 source_agent + related 关联关系、检查点机制。</description>
+      <files>
+        <file>meta_prompts/coach/163_s18_shared_state.xml</file>
+        <file>run_research_pipeline.py — SharedState 类</file>
+      </files>
+    </stage>
+    <stage id="s18_2" name="并行执行框架" priority="P0">
+      <description>asycio.gather 并发 Agent 1/2/3，每个 Agent = 单次 LLM API 调用。</description>
+      <files>
+        <file>meta_prompts/coach/164_s18_parallel_execution.xml</file>
+        <file>run_research_pipeline.py — run_agent() / phase_1_parallel()</file>
+      </files>
+    </stage>
+    <stage id="s18_3" name="质量门禁与退回" priority="P0">
+      <description>7 道质量门禁、Conditional Edge 退回、根因追溯。</description>
+      <files>
+        <file>meta_prompts/coach/165_s18_quality_gates.xml</file>
+        <file>run_research_pipeline.py — check_gate() / trace_root_cause()</file>
+      </files>
+    </stage>
+    <stage id="s18_4" name="自优化机制" priority="P1">
+      <description>GEPA 反思 + SCOPE 跨运行记忆 + MASPO 联合优化 + 经验注入。</description>
+      <files>
+        <file>meta_prompts/coach/166_s18_self_optimization.xml</file>
+        <file>run_research_pipeline.py — _optimize_agent_prompt() / phase_5_optimize()</file>
+      </files>
+    </stage>
+    <stage id="s18_5" name="验证" priority="必须">
+      <description>一键执行、0 错误退出、跨运行自我改进验证。</description>
+      <files>
+        <file>meta_prompts/coach/167_s18_verification.xml</file>
+      </files>
+    </stage>
+  </sub_stages>
+
+  <regression_gates>
+    <gate id="gate-parallel" critical="true">Agent 1/2/3 全部 converged 后再进入辩论</gate>
+    <gate id="gate-debate" critical="true">辩论最多 2 轮</gate>
+    <gate id="gate-revision" critical="true">退回最多 3 轮</gate>
+    <gate id="gate-optimization" critical="true">优化指令不替换原 prompt，只追加</gate>
+  </regression_gates>
+
+</phase18_orchestrator>

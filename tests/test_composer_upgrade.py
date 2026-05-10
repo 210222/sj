@@ -66,8 +66,9 @@ class TestCoachAgentPhase4:
             assert key in result, f"Missing Phase 4 key: {key}"
 
     def test_models_disabled_by_default(self):
-        """默认配置下三模型均为 None。"""
+        """Phase 16: TTM/SDT 默认关闭; flow/diagnostic_engine 经 Phase 13-15 验证后默认开启。"""
         agent = CoachAgent(session_id="test_s4_5_disabled")
         assert agent.ttm is None
         assert agent.sdt is None
-        assert agent.flow is None
+        # flow 在 Phase 13 激活，Phase 14-15 全链路验证通过，不再是"新特性"
+        assert agent.flow is not None

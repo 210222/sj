@@ -1,0 +1,170 @@
+<prompt>
+  <name>Coherence Coach Track — Phase 10 S5.2 LLM Code Integration</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>10</phase>
+  <sub_stage>S5.2</sub_stage>
+  <sub_stage_name>LLM Code Integration — agent.py 接入 + code 执行 + 结果回存</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 10 S5.2 实现者。
+    你的任务是将 CodeSandbox 集成到 agent.py，实现 LLM 代码生成 → 执行 → 结果反馈链路。
+    这是 S5 代码沙箱的集成闭合。
+  </role>
+
+  <context>
+    S5.1 已实现 CodeSandbox 执行器。
+    LLM 可以在 payload 中返回 code/language 字段。
+    现在需要:
+    1. 在 agent.py 中检测 code 字段并传到 action payload
+    2. 将来（前端集成）通过主权脉冲让用户确认执行
+    3. 执行结果存入 ArchivalMemory，供后续 LLM prompt 使用
+
+    设计前提:
+    - sandbox.enabled: false 时 code 字段被忽略
+    - 不含 code 字段时不影响正常教学流程
+    - 代码执行不是自动的——payload 中的 code 只是"待执行"标记
+    - 实际执行需要外部触发（前端/API 层通过脉冲确认后调用沙箱）
+  </context>
+
+  <instructions>
+
+    === 变更一: agent.py §4.5 检测 code 字段并传递 ===
+
+    在 LLM 校验通过、设置 action payload 之后:
+
+    ```python
+    # ★ S5: 代码沙箱字段传递
+    code_content = llm_payload.get("code", "")
+    code_language = llm_payload.get("language", "python")
+    if code_content and sandbox_cfg.get("enabled", False):
+        action["llm_code"] = {
+            "code": code_content,
+            "language": code_language,
+            "executed": False,  # 待用户确认执行
+        }
+    ```
+
+    在 act() 开头初始化 sandbox_cfg:
+    ```python
+    sandbox_cfg = self._cfg().get("sandbox", {})
+    ```
+
+    注意: 代码执行不是 agent.py 的职责。agent.py 只负责:
+    1. 检测 code 字段 → 存入 action["llm_code"]
+    2. action["llm_code"] 经过 DSL 构建器会被序列化到响应中
+    3. 前端/API 层收到后决定是否触发执行
+
+    === 变更二: 新增代码执行端点思路（非实现）===
+
+    agent.py 不需要新增方法。代码执行通过 API 层触发:
+
+    前端调用 POST /api/v1/sandbox/execute
+    → 接收 session_id + trace_id
+    → 从最近一次 action 中提取 llm_code
+    → 调用 CodeSandbox.execute(code, language)
+    → 结果存入 ArchivalMemory
+    → 返回执行结果给前端
+
+    这不在 agent.py 修改范围内。agent.py 只做"携带 code 到响应中"。
+
+    === 变更三: 代码执行结果注入后续 LLM prompt ===
+
+    当代码执行结果被存入 ArchivalMemory 后，S4.1 的记忆注入会自动将其带入下一轮 prompt。
+
+    存储格式:
+    ```python
+    memory_content = (
+        f"代码执行结果 ({language}):\n"
+        f"代码:\n{code[:300]}\n"
+        f"输出:\n{output[:500]}"
+    )
+    ```
+
+    这依赖 S4 的记忆注入路径，S5 不需新增代码。
+
+    === 变更四: sandbox 配置的 coach_defaults.yaml 已由 S5.1 新增 ===
+
+    ```yaml
+    sandbox:
+      enabled: false
+      timeout_s: 10
+      max_output_chars: 2000
+      work_dir: "data/sandbox"
+      allowed_languages:
+        - python
+      denied_modules:
+        - os
+        - subprocess
+        - sys
+        - shutil
+        - socket
+        - requests
+        - urllib
+        - http
+        - multiprocessing
+        - threading
+    ```
+  </instructions>
+
+  <response_extensions>
+    LLM 含 code 字段时，响应中新增:
+
+    ```json
+    {
+      "statement": "试试这段代码...",
+      "code": "print('hello')",
+      "language": "python",
+      "llm_code_available": true,
+      "llm_code_executed": false
+    }
+    ```
+
+    不含 code 字段时，响应与 S1-S4 完全一致。
+  </response_extensions>
+
+  <testing>
+    在 tests/test_s5_integration.py 中实现以下测试:
+
+    1. test_agent_passes_code_field — LLM 含 code 时 action 含 llm_code
+    2. test_agent_ignores_code_when_sandbox_disabled — sandbox.enabled=false 忽略 code
+    3. test_agent_no_code_no_effect — 不含 code 时正常教学流程不变
+    4. test_agent_code_plus_safety_filter — code 字段中的 forbidden 短语被 S2 过滤
+    5. test_llm_code_response_field — 响应中含有 llm_code_available 字段
+    6. test_sandbox_disabled_skips_all — sandbox.enabled:false 零影响
+
+    测试策略:
+    - mock LLMClient.generate 返回含 code 的 payload
+    - 使用 temp_yaml 控制 sandbox.enabled
+    - 验证 action 字典包含/不包含 llm_code 字段
+  </testing>
+
+  <full_chain_example>
+    Round N:
+      LLM 响应: {"statement": "试试 for 循环", "code": "for i in range(3): print(i)", "language": "python"}
+      → S2 校验通过
+      → action["llm_code"] = {"code": "...", "language": "python", "executed": False}
+      → 响应中: {"payload": {...}, "llm_code_available": True, "llm_code_executed": False}
+
+    用户确认执行（前端/API 层）:
+      → CodeSandbox.execute(code)
+      → 结果: success=True, output="0\n1\n2\n"
+      → 存入 ArchivalMemory
+
+    Round N+1 (S4 记忆注入):
+      prompt 中: ## 长期记忆片段\n- 代码执行结果 (python):\n  代码:\n  for i in range(3): print(i)\n  输出:\n  0\n1\n2\n
+      → LLM 感知到代码已执行成功
+      → 下轮可继续推进教学
+  </full_chain_example>
+
+  <quality_gates>
+    <gate>python -c "
+# 验证 agent.py 中的 sandbox 配置读取
+from src.coach.agent import CoachAgent
+print('OK (agent.py import check)')
+"</gate>
+    <gate>pytest tests/test_sandbox.py tests/test_s5_integration.py -v (全部通过)</gate>
+    <gate>pytest tests/ -q (1192 tests 全部 pass)</gate>
+  </quality_gates>
+</prompt>

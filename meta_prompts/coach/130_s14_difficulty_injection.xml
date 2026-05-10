@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S14.1 Composer prompt 注入 difficulty 参数</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>14</phase>
+  <sub_stage>S14.1</sub_stage>
+  <sub_stage_name>Composer prompt 注入 — LLM prompt 和 FallbackEngine 模板支持 easy/medium/hard 三级难度</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 14 S14.1 实现者。
+    你的任务是：让 Composer 的 LLM prompt 接收并消费 difficulty 参数（easy/medium/hard），
+    同时让 FallbackEngine 的模板按难度分级。这是诊断-适应闭环的"适应"端基础。
+  </role>
+
+  <context>
+    === 现状 ===
+    DiagnosticEngine 追踪了 6+ 技能的 BKT 掌握度（0-1），但 Composer 完全不看这个数据。
+    Composer.generate() 的签名：
+
+    ```python
+    def generate(self, intent: str, action_type: str, user_input: str, **kwargs) -> Any:
+    ```
+
+    没有 difficulty 参数。LLM prompt 中没有难度指令，所有学生按同一难度教。
+
+    FallbackEngine 的 _TEMPLATES 也没有按难度分级——所有模板用同一套解释深度。
+
+    === 目标 ===
+    让 Composer 能接收 difficulty 参数，并转化为：
+    1. LLM ON: prompt 中注入难度指令 → LLM 自动调整语言复杂度和例子深度
+    2. LLM OFF: FallbackEngine 选择对应难度的模板
+
+    === 难度定义 ===
+    - easy: 用简单语言 + 生活比喻 + 基本概念，目标让零基础学生听懂
+    - medium: 标准教学深度 + 示例 + 对比，目标让有基础的学生加深理解
+    - hard: 深入原理 + 高级用例 + 边界情况，目标让已掌握的学生挑战自己
+  </context>
+
+  <spec>
+
+    <change name="composer.generate() 增加 difficulty 参数">
+      <problem>generate() 签名没有 difficulty 参数，无法接收来自 Agent 的难度信号。</problem>
+      <file>src/coach/composer.py</file>
+      <changes>
+        - generate() 增加可选参数 difficulty: str = "medium"
+        - LLM prompt 构建时注入难度指令段
+        - Fallback 调用时传入 difficulty
+        - 不影响现有调用方（缺省值 "medium"）
+      </changes>
+      <code>
+        def generate(
+            self,
+            intent: str,
+            action_type: str,
+            user_input: str,
+            difficulty: str = "medium",
+            **kwargs,
+        ) -> Any:
+      </code>
+    </change>
+
+    <change name="LLM prompt 难度指令注入">
+      <problem>当前 LLM system prompt 不含难度指引，回复深度不可控。</problem>
+      <file>src/coach/composer.py（_build_prompt 或等效方法）</file>
+      <changes>
+        - 在 system prompt 中增加难度指令段
+        - easy: "用最简单的语言解释，多用生活比喻。假设学生刚接触这个概念。"
+        - medium: "用标准教学深度解释，给出具体示例和常见用法。"
+        - hard: "深入原理层面，讨论高级用法、边界情况、性能影响。假设学生已掌握基础。"
+      </changes>
+      <code>
+        difficulty_instructions = {
+            "easy": "用最简单的语言解释，多用生活比喻。不要引入未解释的术语。",
+            "medium": "用标准教学深度解释，给出具体示例和常见用法。",
+            "hard": "深入原理层面，讨论高级用法、边界情况、性能影响和关联概念。",
+        }
+      </code>
+    </change>
+
+    <change name="FallbackEngine 模板按难度分级">
+      <problem>_TEMPLATES 中 teaching 模板没有难度分级，所有学生拿到同一解释深度。</problem>
+      <file>src/coach/fallback.py</file>
+      <changes>
+        - 每个 _TEMPLATES 条目增加 difficulty 字段（easy/medium/hard）
+        - FallbackEngine.generate() 根据传入的 difficulty 选择对应模板
+        - 当前所有已有模板归为 medium
+        - 只对新模板或已有模板增加 easy/hard 变体
+        - 实现 fallback: 请求的 difficulty 无对应模板时降级到 medium
+      </changes>
+      <code>
+        # 在 _TEMPLATES 条目中增加 difficulty:
+        "python_variable": {
+            "difficulty": "easy",  # 新增
+            "statement": "...",
+            ...
+        }
+        # generate() 中:
+        if difficulty != "medium":
+            candidate = _TEMPLATES.get(f"{template_name}_{difficulty}")
+            if candidate:
+                template = candidate
+      </code>
+    </change>
+
+    <change name="已有调用方兼容">
+      <problem>generate() 签名变化可能影响现有调用。</problem>
+      <file>所有调用 generate() 的地方</file>
+      <changes>
+        - difficulty 参数默认为 "medium"
+        - 不修改任何现有调用方
+        - 只加新参数，不改旧行为
+      </changes>
+    </change>
+
+  </spec>
+
+  <testing>
+    <test name="composer_generate_with_difficulty">
+      <command>Composer.generate("python", "scaffold", "什么是变量", difficulty="easy")</command>
+      <expected>返回 payload 中的 statement 的复杂度比 "hard" 版本低</expected>
+    </test>
+    <test name="composer_generate_default_medium">
+      <command>Composer.generate("python", "scaffold", "什么是变量")  # 不传 difficulty</command>
+      <expected>默认 medium 行为，兼容现有调用</expected>
+    </test>
+    <test name="fallback_difficulty_fallback">
+      <command>FallbackEngine.generate("scaffold", "变量", difficulty="hard")</command>
+      <expected>无 hard 模板时降级到 medium，不报错</expected>
+    </test>
+  </testing>
+
+</prompt>

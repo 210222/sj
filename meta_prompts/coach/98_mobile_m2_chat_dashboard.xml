@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>M2 — 聊天交互 + 仪表盘</name>
+  <version>1.0.0</version>
+  <phase>9.5</phase>
+  <stage>M2</stage>
+  <stage_name>聊天交互 + 探索 + 成长仪表盘</stage_name>
+  <scope>D:/Claudedaoy/coherence/mobile</scope>
+
+  <prerequisites>
+    <item>M1 → GO (项目骨架 + Provider + API 客户端 + 底部导航全部就绪)</item>
+    <item>1139 Python tests + 51 前端 tests 全部 pass</item>
+  </prerequisites>
+
+  <mission>
+    本子阶段实现移动端最核心的用户界面：实时聊天 + 脉冲确认 + 远足模式 + 仪表盘。
+    这些是用户每天打开 App 都会使用的界面。
+
+    核心交付：
+    1) ChatScreen — 聊天消息列表 + 输入框 + WebSocket 实时收发
+    2) ChatBubble — AI/用户对话气泡（支持 DSL action_type 不同渲染样式）
+    3) ChatInput — 消息输入框 + 发送按钮 + /excursion 命令识别
+    4) PulsePanel — 非阻断式滑动确认面板（Slide-to-Confirm）
+    5) ExcursionOverlay — 远足模式全局暗调切换（AnimatedTheme）
+    6) ExploreScreen — TTM 状态驱动的内容推荐
+    7) GrowthScreen — TTM 雷达图 + SDT 三环能量图 + 进度时间线 + 健康盾牌
+    8) TTMStageCard — 五维雷达图（fl_chart RadarChart）
+    9) SDTEnergyRings — 三环能量图（CustomPainter）
+    10) ProgressTimeline — 学习进度时间线
+    11) GateShieldBadge — 三色盾牌（绿/黄/红，无技术术语）
+  </mission>
+
+  <tasks>
+
+    <task id="M2.1" name="ChatScreen + ChatBubble + ChatInput">
+      <description>
+        实现完整聊天界面。
+
+        ChatScreen:
+        - 顶部 AppBar: 显示"对话" + 连接状态指示器（绿点/红点）
+        - 消息列表: ListView.builder + 反向滚动（最新消息在底部）
+        - 底部固定 ChatInput
+        - 接收 WebSocket 消息时自动滚动到底部
+        - 空态: 居中显示"开始你的第一次对话" + 温和图标
+        - 加载态: 消息底部显示 TypingIndicator（三个跳动圆点）
+
+        ChatBubble:
+        - AI 气泡: 左对齐, softBlue 背景, deepMocha 文本
+        - 用户气泡: 右对齐, lavenderGray 背景, deepMocha 文本
+        - 根据 ChatResponse.action_type 渲染不同样式:
+          - probe/challenge → 任务卡片样式（边框+图标）
+          - reflect → 引号样式（左侧竖线引用标记）
+          - suggest → 建议框样式（珊瑚糖背景高亮）
+          - pulse → PulsePanel 内嵌（见 M2.2）
+          - defer → 灰色降级样式
+        - 显示 DSL 中 source_tag 对应的来源标记（小标签: "规则" "模型" "假设"）
+        - 显示 trace_id（可选, 调试模式可见）
+
+        ChatInput:
+        - TextField + 发送按钮（IconButton）
+        - 输入框 hint: "输入你的想法..."
+        - 发送时: 调用 ChatProvider.sendMessage() → POST /api/v1/chat
+        - 支持 /excursion 命令识别（输入以 / 开头时切换为命令模式）
+        - 空输入或纯空白时禁用发送按钮
+      </description>
+      <files_to_create>
+        screens/chat/chat_screen.dart
+        screens/chat/chat_bubble.dart
+        screens/chat/chat_input.dart
+      </files_to_create>
+      <test_files>
+        test/screens/chat/chat_bubble_test.dart (渲染不同 action_type)
+        test/screens/chat/chat_input_test.dart (发送/空输入/命令识别)
+        test/screens/chat/chat_screen_test.dart (消息列表/连接状态/空态)
+      </test_files>
+      <verification>
+        Widget 测试覆盖: 空态/加载态/消息渲染/不同 action_type 样式
+      </verification>
+    </task>
+
+    <task id="M2.2" name="PulsePanel + 自适应降级">
+      <description>
+        实现主权确认脉冲面板。
+
+        PulsePanel:
+        - 位置: ChatBubble 中内嵌（当 action_type == 'pulse' 时显示）
+        - 显示 pulse.statement 文本
+        - 两个按钮: "接受" (accept_label) / "改写" (rewrite_label)
+        - "接受"按钮 → POST /api/v1/pulse/respond { decision: 'accept' }
+        - "改写"按钮 → 展开 TextField 输入改写内容 → POST rewrite
+        - blocking_mode 控制渲染:
+          - 'hard' → 阻断式: 全宽卡片, 珊瑚糖红色调, 按钮醒目
+          - 'soft' → 旁路提示: 紧凑行内, 柔和高亮, 不阻断流程
+          - 'none' → 不显示
+
+        自适应降级（对应 design_thinking.md 第 5 节）:
+        - 从 PulseProvider 读取当前 blocking_mode
+        - blocking_mode 由后端 PulseService 控制（前端只消费不计算）
+        - 不同 blocking_mode 切换时有平滑动画（AnimatedCrossFade）
+
+        后端自适应降级逻辑（已实现，移动端仅消费）:
+        ```
+        10 分钟内最多 2 次阻断 → 第 3 次起降级为 'soft'
+        10 分钟无脉冲后 → 自动恢复 'hard'
+        ```
+      </description>
+      <files_to_create>
+        screens/chat/pulse_panel.dart
+      </files_to_create>
+      <test_files>
+        test/screens/chat/pulse_panel_test.dart (hard/soft/none 三种模式)
+      </test_files>
+      <verification>
+        Widget 测试覆盖三种 blocking_mode 渲染
+      </verification>
+    </task>
+
+    <task id="M2.3" name="ExcursionOverlay">
+      <description>
+        实现远足模式视觉隔离覆盖层。
+
+        触发方式:
+        - 用户输入 /excursion → 调用 POST /api/v1/excursion/enter
+        - API 返回 theme: "dark"
+        - ChatProvider 切换 excursionMode = true
+
+        ExcursionOverlay:
+        - 全局主题切换: lightTheme → darkTheme（AnimatedTheme, 300ms 过渡）
+        - 深色背景: charcoal (#2F2C2A)
+        - 边缘光晕: 渐变边框效果（BoxDecoration + gradient）
+        - 气泡曲率微微改变（略微增大 border radius）
+        - 顶部显示 "探索模式" 指示器 + 退出按钮
+        - 退出: 调用 POST /api/v1/excursion/exit → 恢复 lightTheme
+
+        实现注意:
+        - 使用 Top-level AnimatedTheme 包裹 MaterialApp
+        - excursionMode 变化时触发 AnimatedTheme 切换
+        - 不丢失聊天记录（IndexedStack 保持状态）
+      </description>
+      <files_to_create>
+        screens/excursion/excursion_overlay.dart
+      </files_to_create>
+      <test_files>
+        test/screens/excursion/excursion_overlay_test.dart (进入/退出)
+      </test_files>
+      <verification>
+        Widget 测试验证深色主题切换 + 退出恢复
+      </verification>
+    </task>
+
+    <task id="M2.4" name="GrowthScreen — 仪表盘聚合页">
+      <description>
+        实现成长仪表盘页面，聚合 TTM 雷达 + SDT 能量环 + 进度时间线 + 健康盾牌。
+
+        GrowthScreen:
+        - ScrollView 垂直滚动（非 Tab 切换，所有内容在一页）
+        - F 型布局（最重要指标在左上角）:
+          1. 顶部: GateShieldBadge（系统健康状态）
+          2. 中部左侧: TTMStageCard（五维雷达图）
+          3. 中部右侧: SDTEnergyRings（三环能量图）
+          4. 底部: ProgressTimeline（总会话数/总轮次/独立完成率）
+        - 下拉刷新: RefreshIndicator → DashboardProvider.refresh()
+        - 空态: API 未返回数据时显示"数据加载中..."
+        - 加载态: Shimmer 骨架屏效果
+
+        数据来源: GET /api/v1/dashboard/user → UserDashboardResponse
+        - ttm_radar → TTMStageCard
+        - sdt_rings → SDTEnergyRings
+        - progress → ProgressTimeline
+        - ttm_radar.current_stage → GateShieldBadge 状态
+      </description>
+      <files_to_create>
+        screens/growth/growth_screen.dart
+      </files_to_create>
+      <test_files>
+        test/screens/growth/growth_screen_test.dart (渲染/下拉刷新/空态)
+      </test_files>
+      <verification>
+        Widget 测试验证所有子组件渲染 + RefreshIndicator 交互
+      </verification>
+    </task>
+
+    <task id="M2.5" name="TTMStageCard (雷达图)">
+      <description>
+        使用 fl_chart 包绘制五维雷达图。
+
+        TTMStageCard:
+        - 5 个维度: precontemplation, contemplation, preparation, action, maintenance
+        - 每个维度显示倾向性评分 (0.0-1.0)
+        - 当前阶段高亮（current_stage 对应的维度顶点更粗/更亮）
+        - 配色: 五阶段对应五种渐进色（从暖白逐步过渡到深摩卡）
+        - 底部显示当前阶段名称 + 简短文字描述
+        - 标题: "你的改变阶段"
+        - 空态: 五分位全部显示灰色基线（0.5 占位线）
+      </description>
+      <files_to_create>
+        screens/growth/ttm_stage_card.dart
+      </files_to_create>
+      <test_files>
+        test/screens/growth/ttm_stage_card_test.dart
+      </test_files>
+      <verification>
+        fl_chart RadarChart 渲染通过 Widget 测试
+      </verification>
+    </task>
+
+    <task id="M2.6" name="SDTEnergyRings (三环能量图)">
+      <description>
+        使用 CustomPainter 绘制 SDT 三环能量图。
+
+        SDTEnergyRings:
+        - 三个同心/并排环形（非重叠）
+        - 环 1: autonomy (自主性) — softBlue 色
+        - 环 2: competence (胜任感) — sageGreen 色
+        - 环 3: relatedness (关联性) — coralCandy 色
+        - 每个环的填充角度 = 评分比例 (0.0-1.0) × 360°
+        - 环中心显示评分百分比 + 维度中文名
+        - 流体饱和度动画: 评分变化时填充色平滑过渡（AnimatedOpacity 300ms）
+        - 环底部发光效果（CustomPainter 的外发光 shadow）
+        - 空态: 三个环 0% 填充，灰色占位
+        - 标题: "心理需求满足度"
+      </description>
+      <files_to_create>
+        screens/growth/sdt_energy_rings.dart
+      </files_to_create>
+      <test_files>
+        test/screens/growth/sdt_energy_rings_test.dart
+      </test_files>
+      <verification>
+        CustomPainter 渲染通过 Widget 测试（Golden 测试验证环形状）
+      </verification>
+    </task>
+
+    <task id="M2.7" name="ProgressTimeline + GateShieldBadge">
+      <description>
+        实现进度时间线和健康盾牌。
+
+        ProgressTimeline:
+        - 三个核心指标横排: 总会话数 / 总交互轮次 / 独立完成率
+        - 指标下方显示当前 TTM 阶段里程碑（emoji + 文字）
+        - 最近活跃时间
+        - 使用 progress.last_active_utc 格式化显示
+        - 空态: 显示 "--" 占位 + "开始对话后这里会显示你的学习进度"
+
+        GateShieldBadge:
+        - 三色盾牌 SVG（与 Web 前端一致的 SVG path）
+          - pass (#9CB59B 绿色): 盾牌 + 勾号 → "系统守护中 · 一切运行顺畅"
+          - warn (#FEDDD8 橙色): 盾牌 + 感叹号 → "正在留意 · 有些地方需要关注"
+          - block (#6E5B4E 深色): 盾牌 + X → "已保护 · 这个问题有点复杂..."
+        - **禁止出现技术术语**：不显示 "gate"、"pipeline"、"audit"、"P0/P1"
+        - 使用 CustomPainter 绘制 SVG path（与 Web 前端 HealthShield.tsx 一致）
+        - AI 教练拟人化话术（blockedMessage 或默认文案）
+      </description>
+      <files_to_create>
+        screens/growth/progress_timeline.dart
+        screens/growth/gate_shield_badge.dart
+      </files_to_create>
+      <test_files>
+        test/screens/growth/progress_timeline_test.dart
+        test/screens/growth/gate_shield_badge_test.dart
+      </test_files>
+      <verification>
+        Widget 测试验证三种盾牌状态 + 进度指标渲染 + 空态
+      </verification>
+    </task>
+
+    <task id="M2.8" name="ExploreScreen">
+      <description>
+        实现探索页面（TTM 状态驱动内容推荐）。
+
+        ExploreScreen:
+        - 从 DashboardProvider 读取当前 ttm_stage
+        - 根据 ttm_stage 显示不同内容推荐卡片列表：
+          - precontemplation: "发现新领域" — 信息图卡片, 低频展示
+          - contemplation: "权衡探索" — Pros/Cons 对比卡片
+          - preparation: "目标规划" — 微习惯建议卡片
+          - action: "行动强化" — 挑战任务卡片
+          - maintenance: "深度拓展" — 高阶主题卡片
+        - 每张卡片: 标题 + 简短描述 + 图标 + "探索"按钮
+        - 空态: ttm_stage 为 null 时显示通用推荐
+        - 使用 ListView 垂直滚动
+      </description>
+      <files_to_create>
+        screens/explore/explore_screen.dart
+      </files_to_create>
+      <test_files>
+        test/screens/explore/explore_screen_test.dart
+      </test_files>
+      <verification>
+        Widget 测试验证不同 TTM 阶段显示不同内容
+      </verification>
+    </task>
+
+  </tasks>
+
+  <dependencies>
+    <dependency>M1 的 Provider/API/Theme 基础设施</dependency>
+    <dependency>pubspec.yaml 追加 fl_chart 依赖</dependency>
+    <dependency>contracts/api_contract.json 的端点定义</dependency>
+  </dependencies>
+
+  <external_packages>
+    <package name="fl_chart" version="^0.70.0" purpose="TTM 雷达图" />
+    <package name="shimmer" version="^3.0.0" purpose="骨架屏加载效果" />
+  </external_packages>
+
+  <design_refs>
+    <ref section="2.1" note="移动端优先的沉浸式辅导架构 — ChatScreen 全屏聊天无干扰" />
+    <ref section="2.2" note="非阻断式脉搏确认机制 — PulsePanel 滑动确认" />
+    <ref section="2.3" note="远足模式视觉重构 — ExcursionOverlay 深色域切换" />
+    <ref section="3.2" note="用户行为数字可视化 — TTM 雷达 + SDT 环" />
+    <ref section="3.3" note="安全门透明度 — GateShieldBadge 三色盾牌无技术术语" />
+  </design_refs>
+
+  <artifacts>
+    ~10 个新源文件（screens/chat/*, screens/growth/*, screens/explore/*, screens/excursion/*）
+    ~25 Widget + Provider 测试 pass
+    聊天 + 仪表盘 + 探索 完整可用
+  </artifacts>
+
+  <exit_criteria>
+    所有 Widget 测试通过（25+）
+    flutter analyze 0 errors
+    聊天界面可渲染（消息列表 + 输入框）
+    PulsePanel 三种 blocking_mode 渲染正确
+    ExcursionOverlay 深色主题切换正确
+    TTM 雷达图 + SDT 环 + 进度 + 盾牌全部渲染
+    global_state M2 → GO
+  </exit_criteria>
+</prompt>

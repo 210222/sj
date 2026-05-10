@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Coach Track — S16.4 Conversational Activation</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>16</phase>
+  <sub_stage>S16.4</sub_stage>
+  <sub_stage_name>对话式激活 — 用户通过自然语言启用/关闭/查询模块</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 16 S16.4 实现者。
+    你的任务是：让 CoachAgent 能够识别用户的"启用/关闭/查询能力"意图，
+    自动修改 coach_defaults.yaml 并告知影响。
+  </role>
+
+  <context>
+    === 现状 ===
+    用户说"打开诊断引擎"，agent 不识别这个意图——因为它不是现有的 8 种 action_type。
+    用户要启用模块必须去 SettingsPanel 手动 toggle（且 SettingsPanel 也不完整）。
+
+    === 目标 ===
+    agent 在 act() 中能识别"启用 X"、"X 是干什么的"、"关闭 Y"等自然语言，
+    自动执行配置修改并返回影响说明。
+  </context>
+
+  <task>
+    1) 修改 src/coach/agent.py：
+       - 在 intent 解析之前或之后，增加能力操作意图检测
+       - 如果匹配到"启用/打开/开启 X"或 module 关键词 → 尝试修改 YAML
+       - 修改成功后告知"已启用，影响是..."
+       - 支持 "全部打开"、"推荐配置"等批量操作
+       - 若打开模块有关联依赖（如 diagnostic_engine 有内部 BKT），一并开启
+    2) 修改 api/services/coach_bridge.py：
+       - 透传启用结果
+  </task>
+
+  <output_files>
+    <file>src/coach/agent.py — 启用意图识别 + 配置修改</file>
+    <file>api/services/coach_bridge.py — 透传启用结果</file>
+  </output_files>
+
+  <conversational_activation_spec>
+
+    === 匹配模式 ===
+    用户输入包含以下关键词时触发能力操作意图：
+    - "启用|打开|开启|激活|开" + module_name/alias → enable
+    - "关闭|关掉|停用|不用" + module_name/alias → disable
+    - "什么|做什么|干什么|介绍" + module_name/alias → explain
+    - "全部打开|全开|所有功能" → 检查冲突后全部开启
+
+    === keyboard:alias 对照 ===
+    模块名支持全称和别名：
+    - diagnostic_engine / 诊断 / 诊断引擎
+    - mapek / 外循环 / 自适应循环
+    - mrt / 实验 / 微随机实验
+    - counterfactual / 反事实 / 仿真
+    - etc.
+
+    === 启用流程 ===
+    1. 解析模块名
+    2. 从 capabilities 段读取模块描述
+    3. 修改 YAML 中的 enabled 值
+    4. 返回包含"已启用 + 影响说明"的响应
+    5. 若有关联模块，自动同时启用
+
+    === 安全性 ===
+    - 写入 YAML 前备份原始内容
+    - 写入失败时回滚并返回错误消息
+    - 不允许修改 capabilities 段本身
+    - 不允许启用不存在的模块
+
+    === 影响说明格式 ===
+    "好的，已启用[能力名称]。启用后：[impact 正面]。注意：[impact 负面/风险]。"
+    例如：
+    "好的，已启用自适应诊断探测。启用后我会根据你的掌握度自动调节教学难度和出诊断题。
+     注意：每5轮左右我会插入一道诊断题来评估你的理解程度。"
+
+  </conversational_activation_spec>
+
+  <implementation_principles>
+    <principle>启用操作必须有明确的反馈——用户要知道什么被改变了、影响是什么。</principle>
+    <principle>禁止用户在对话中关闭核心基础设施（llm、基础记忆等）。</principle>
+    <principle>YAML 写入操作必须是安全的——失败时不影响系统继续运行。</principle>
+  </implementation_principles>
+
+  <success_criteria>
+    1. "打开诊断引擎" → 自动启用 + 返回影响说明
+    2. "MAPE-K 是什么" → 返回模块说明
+    3. "全部打开" → 检查后全部启用
+    4. "关闭主权脉冲" → 禁用模块
+    5. YAML 写入异常时优雅降级不崩溃
+  </success_criteria>
+
+</prompt>

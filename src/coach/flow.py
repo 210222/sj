@@ -55,6 +55,20 @@ class BKTEngine:
 
         return result
 
+    # Phase 23: 间隔重复 — 遗忘曲线估计
+    def estimate_retention(self, mastery: float, days_since_last_practiced: float,
+                           half_life: float = 7.0) -> float:
+        """估计技能保留率（基于 Ebbinghaus 遗忘曲线）。
+
+        R = mastery * 0.5^(days / half_life)
+        第 0 天: R = mastery
+        第 half_life 天: R = mastery * 0.5
+        """
+        mastery = max(0.01, min(1.0, mastery))
+        days = max(0.0, days_since_last_practiced)
+        retention = mastery * (0.5 ** (days / max(half_life, 0.5)))
+        return round(max(0.0, min(1.0, retention)), 4)
+
 
 class FlowOptimizer:
     """心流优化器：互信息 + BKT + 难度调节。

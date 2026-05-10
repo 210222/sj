@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 24 -- S24.2 纵向测试</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>24</phase>
+  <sub_stage>S24.2</sub_stage>
+  <sub_stage_name>模拟多轮教学 -> 验证字段完整性和持久化</sub_stage_name>
+
+  <role>
+    需要一个新的测试文件验证多轮教学后系统状态正确。
+    当前 1284+ 个测试全部是单轮模式。
+    这是系统第一个纵向测试。
+  </role>
+
+  <context>
+    约束:
+    - 新建 tests/test_phase24_longitudinal.py
+    - 不需要 DEEPSEEK_API_KEY
+    - pytest 风格, 自动收集
+  </context>
+
+  <task>
+
+    新建 tests/test_phase24_longitudinal.py:
+
+    from src.coach.agent import CoachAgent
+    from src.coach.persistence import SessionPersistence
+
+
+    class TestLongitudinal:
+        """多轮教学后验证系统状态。"""
+
+        def test_agent_output_has_all_phase_fields(self):
+            """单次 act() 输出应包含 Phase 19-24 全部字段。"""
+            agent = CoachAgent()
+            r = agent.act("test longitudinal")
+            expected_keys = [
+                "action_type", "payload", "llm_generated", "llm_model",
+                "llm_tokens", "personalization_evidence", "memory_status",
+                "difficulty_contract", "diagnostic_result", "diagnostic_probe",
+                "ttm_stage", "sdt_profile", "flow_channel",
+            ]
+            for k in expected_keys:
+                assert k in r, f"missing key: {k}"
+
+        def test_session_persistence_increments(self):
+            """每轮对话后 total_turns 应递增。"""
+            agent = CoachAgent(session_id="test_long_turns_24")
+            agent.act("turn 1")
+            p1 = SessionPersistence("test_long_turns_24")
+            t1 = p1.get_profile().get("total_turns", 0)
+            agent.act("turn 2")
+            p2 = SessionPersistence("test_long_turns_24")
+            t2 = p2.get_profile().get("total_turns", 0)
+            assert t2 >= t1, f"turns should not decrease: {t1} -> {t2}"
+
+        def test_multiple_turns_no_crash(self):
+            """多轮对话不应崩溃。"""
+            agent = CoachAgent(session_id="test_long_stress_24")
+            for i in range(10):
+                r = agent.act(f"message {i}")
+                assert "action_type" in r, f"crash at turn {i}"
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/test_phase24_longitudinal.py -v 全绿</item>
+    <item>python -m pytest tests/ -q 全绿</item>
+  </success_criteria>
+</prompt>

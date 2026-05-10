@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 18 — S18.1 共享状态协议</name>
+  <version>1.0.0</version>
+  <track>COACH_RESEARCH</track>
+  <phase>18</phase>
+  <sub_stage>S18.1</sub_stage>
+  <sub_stage_name>共享状态协议 — JSON 格式、关联关系、检查点恢复</sub_stage_name>
+
+  <role>
+    你是 Coherence 研究管线的状态协议设计者。
+    你的任务是定义 shared_state.json 的 schema，确保所有 Agent
+    （无论是 Python 逻辑还是 LLM 调用）能读写同一份状态。
+  </role>
+
+  <context>
+    === 当前状态 ===
+    没有统一的共享状态协议。Agent 之间通过 markdown 文件非正式地"传纸条"。
+    Python 调度器需要读文件来判断收敛，LLM 需要读文件来了解其他 Agent 的发现。
+
+    === 目标 ===
+    一份 JSON schema，Python 可读、LLM 也可读，findings 带关联关系。
+  </context>
+
+  <spec>
+
+    <change name="shared_state.json 顶层结构">
+      <problem>没有统一的状态结构</problem>
+      <file>run_research_pipeline.py — SharedState 类</file>
+      <schema>
+        {
+          "pipeline_status": "running/completed/failed",
+          "current_phase": "string",
+          "agents": {
+            "agent1": { "status": "pending/running/converged/error",
+                        "findings": [], "iterations": 0,
+                        "iteration_log": "", "self_check_passed": false }
+          },
+          "findings_pool": [],
+          "revision_log": [],
+          "debate_log": [],
+          "gates": {},
+          "agent_retrospective": {},
+          "errors": []
+        }
+      </schema>
+    </change>
+
+    <change name="findings 关联关系">
+      <problem>findings 孤立存放，Agent 4 需要手动关联</problem>
+      <file>run_research_pipeline.py — _build_llm_payload</file>
+      <schema>
+        {
+          "id": "GAP-001",
+          "title": "简短标题",
+          "source_agent": "agent1",
+          "related": ["DATA-003: CONFIRMS", "SRC-005: PREREQUISITE"],
+          "evidence": "agent.py:467-484",
+          "severity": "critical/major/minor",
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true
+        }
+      </schema>
+      <relations>
+        CONFIRMS — 另一条发现支持本发现
+        CONTRADICTS — 另一条发现与本发现矛盾
+        PREREQUISITE — 本发现需要另一条发现前置解决
+        EXTENDS — 另一条发现补充/扩展了本发现
+      </relations>
+    </change>
+
+    <change name="检查点恢复">
+      <problem>管线中断需从头执行</problem>
+      <file>run_research_pipeline.py — 状态持久化</file>
+      <changes>
+        每次 phase 完成后保存一份检查点。
+        中断后用最近的检查点恢复，不重跑已完成 phase。
+      </changes>
+    </change>
+
+  </spec>
+
+  <success_criteria>
+    1. JSON schema 定义完整，Python 可 parse
+    2. findings 关联关系实现在 _build_llm_payload
+    3. 检查点可恢复
+  </success_criteria>
+
+</prompt>

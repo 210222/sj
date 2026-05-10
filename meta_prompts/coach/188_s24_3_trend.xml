@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 24 -- S24.3 Dashboard 趋势数据</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>24</phase>
+  <sub_stage>S24.3</sub_stage>
+  <sub_stage_name>dashboard_aggregator.py 新增技能概览查询</sub_stage_name>
+
+  <role>
+    需要新增一个方法返回当前技能掌握度概览。
+    注意: profile_history 中没有独立的 skill 级 field_name (只有 autonomy/competence/ttm_stage/learning_goal)。
+    不能对每个 skill 查 get_mastery_trend() (永远返回空列表)。
+    只能返回当前 skill_masteries 快照 + 最后活动时间。
+  </role>
+
+  <context>
+    profile_history 实际字段: autonomy, competence, ttm_stage, learning_goal
+    没有 skill_% 字段。skill_masteries 存在 profiles 表的 JSON 列中。
+
+    所以: get_mastery_trend("python_list", 30) 返回空列表 (没有 field_name="python_list" 的记录)。
+
+    正确做法: 返回 skill_masteries 当前快照 + 最后活动时间戳。
+
+    约束:
+    - 只修改 api/services/dashboard_aggregator.py
+    - 不修改现有方法签名
+    - 新增方法返回 None 不影响前端
+  </context>
+
+  <task>
+
+    在 DashboardAggregator 类末尾新增:
+
+    @staticmethod
+    def get_mastery_snapshot(session_id: str) -> dict | None:
+        """返回当前技能掌握度快照 + 最后活动时间.
+
+        Returns:
+            {"skills": {"python_list": 0.73, "python_loop": 0.45},
+             "total_skills": 2,
+             "last_active_utc": "2026-05-10T12:00:00.000Z"}
+            或 None (无数据时)
+        """
+        try:
+            from src.coach.persistence import SessionPersistence
+            p = SessionPersistence(session_id)
+            profile = p.get_profile()
+            masteries = profile.get("skill_masteries", {})
+            if not masteries:
+                return None
+            return {
+                "skills": {k: round(float(v), 4) for k, v in masteries.items()},
+                "total_skills": len(masteries),
+                "last_active_utc": profile.get("last_active", None),
+            }
+        except Exception:
+            return None
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>有 skill_masteries 时返回带 skills dict 的 snapshot</item>
+    <item>无数据时返回 None</item>
+  </success_criteria>
+</prompt>

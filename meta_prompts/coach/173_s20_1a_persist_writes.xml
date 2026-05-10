@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 20 — S20.1a 每轮持久化写入</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>20</phase>
+  <sub_stage>S20.1a</sub_stage>
+  <sub_stage_name>每轮持久化写入 — agent.act() 结束后保存 TTM/SDT/Flow 到 persistence</sub_stage_name>
+
+  <role>
+    你是 Coherence Phase 20 S20.1a 实现者。
+    Phase 19 让 LLM、诊断引擎、行为模型的数据在 act() 中流动，但这些数据从未保存到 persistence。
+    没有持久化，就没有历史趋势、没有 Dashboard 真实数据、无法证明学习效果。
+  </role>
+
+  <context>
+    === 当前状态 ===
+    agent.py 的 __init__() 中初始化了 self._persistence = SessionPersistence(self.session_id)，
+    但 _init_consent_persistence() 只在 Phase 17 用来保存 consent_status。
+    act() 方法结束后，ttm_stage、sdt_scores、difficulty_level 只在返回字典中，从不写入数据库。
+
+    grep 'save_ttm\|save_sdt\|save_difficulty\|increment_turns' src/coach/agent.py
+    → 0 matches（全文无调用）
+
+    而 persistence.py 已经完整实现了：
+    - save_ttm_stage(stage) / load_ttm_stage()
+    - save_sdt_scores(auto, comp, rel) / load_sdt_scores()
+    - save_difficulty(level) / load_difficulty()
+    - save_topics(topics) / load_topics()
+    - increment_turns() / get_profile()
+    - adjust_difficulty(recent_correct_rate)
+
+    === 约束 ===
+    - 不修改 contracts/ 任何文件
+    - 不修改 persistence.py（save/load 方法已存在且通过测试）
+    - 只修改：src/coach/agent.py
+    - 全量回归 1275+ 必须通过
+    - 每轮持久化写操作不能阻塞 act() 主流程（try/except 包裹）
+    - 异常时静默失败，不抛到 act() 外部
+  </context>
+
+  <task>
+
+    ── 改动 1: act() 返回字典之前插入持久化调用（约第 630-640 行，在 return 之前）──
+
+    在 act() 方法的 return result 之前（约第 640 行附近），插入持久化块：
+
+    ```python
+    # Phase 20: 每轮持久化（写失败不阻塞主流程）
+    try:
+        if self._persistence:
+            self._persistence.increment_turns()
+            if ttm_stage:
+                self._persistence.save_ttm_stage(ttm_stage)
+            if sdt_profile:
+                self._persistence.save_sdt_scores(
+                    sdt_profile.get("autonomy", 0.5),
+                    sdt_profile.get("competence", 0.5),
+                    sdt_profile.get("relatedness", 0.5),
+                )
+            # 持久化难度（取 difficulty_contract 中的 level）
+            dc = result.get("difficulty_contract", {})
+            if dc.get("level"):
+                self._persistence.save_difficulty(dc["level"])
+    except Exception:
+        _logger.warning("Phase 20 persistence save failed", exc_info=True)
+    ```
+
+    注意：这段代码放在 `mapek_active` 块之后、`_filter_forbidden` 之前（约第 635 行）。
+    所有写操作都包裹在 `try/except` 中，异常时只日志不阻断。
+
+    ── 改动 2: 确认 __init__() 中已有 persistence 初始化（仅确认不改）──
+
+    确认以下代码已存在于 `__init__()` 中（Phase 17 已实现，无需修改）：
+    ```python
+    self._consent_pending: bool = False
+    self._consent_status: str = "never_asked"
+    self._persistence = None
+    self._init_consent_persistence()
+    ```
+
+    ── 改动 3: 确保 _init_consent_persistence 不在每轮重复初始化（确认不改）──
+
+    `_init_consent_persistence()` 只在 `__init__()` 中调用一次，不在 act() 中调用。
+    这是正确的——不要试图"优化"为每轮重新初始化。
+
+  </task>
+
+  <verification_method>
+    完成修改后运行：
+    1. `python -m pytest tests/ -q` — 全量回归
+    2. `python -c "
+    from src.coach.agent import CoachAgent
+    from src.coach.persistence import SessionPersistence
+    a = CoachAgent(session_id='test_persist_20')
+    a.act('test', {})
+    p = SessionPersistence('test_persist_20')
+    prof = p.get_profile()
+    assert prof['total_turns'] >= 1, 'total_turns should be >= 1 after 1 act()'
+    print('PASS: persistence writes work')
+    "`
+  </verification_method>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>1 次 act() 调用后 profiles 表中 total_turns >= 1</item>
+    <item>ttm_stage 和 difficulty_level 在 profiles 表中有值</item>
+    <item>persistence 写异常时不抛出（try/except 保底）</item>
+  </success_criteria>
+</prompt>

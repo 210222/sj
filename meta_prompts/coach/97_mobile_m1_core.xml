@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>M1 — 核心基础架构</name>
+  <version>1.0.0</version>
+  <phase>9.5</phase>
+  <stage>M1</stage>
+  <stage_name>Flutter 项目骨架 + 主题 + 路由 + API 客户端 + 底部导航</stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <prerequisites>
+    <item>M0 → GO (contracts/api_contract.json 已冻结)</item>
+    <item>Flutter SDK 已验证 (flutter doctor)</item>
+    <item>1139 Python tests + 51 前端 tests 全部 pass</item>
+  </prerequisites>
+
+  <mission>
+    本子阶段搭建 Flutter 项目的全部基础骨架。后续 M2/M3 的所有代码都依赖 M1 输出的基础设施。
+
+    核心交付：
+    1) `flutter create` 初始化 mobile/ 项目
+    2) pubspec.yaml 依赖声明（provider, http, web_socket_channel, fl_chart, mockito）
+    3) 色彩主题 system（从 frontend/src/styles/theme.ts 精确迁移 Hex 值）
+    4) API 客户端封装（HTTP + WebSocket）
+    5) Dart 模型类（对应 api_contract.json 的全部 schema）
+    6) Provider 状态管理层
+    7) 底部导航外壳（4 Tab: 对话/探索/成长/设置）
+  </mission>
+
+  <tasks>
+
+    <task id="M1.1" name="Flutter 项目初始化">
+      <description>
+        在 mobile/ 目录下运行 flutter create。
+        项目名: coherence_mobile
+        org: com.coherence
+
+        创建后验证:
+        - flutter pub get 成功
+        - flutter test 默认测试 pass
+        - flutter analyze 无 error
+      </description>
+      <files_to_create>
+        mobile/pubspec.yaml
+        mobile/analysis_options.yaml
+        mobile/lib/main.dart
+      </files_to_create>
+      <verification>
+        flutter analyze 0 errors, flutter test 默认测试 pass
+      </verification>
+    </task>
+
+    <task id="M1.2" name="主题系统">
+      <description>
+        创建 mobile/lib/config/theme.dart。
+        从 frontend/src/styles/theme.ts 精确提取 11 个颜色常量（Hex 值完全一致）：
+
+        warmWhite: '#F5F1EA'       → 主背景
+        softBlue: '#AFC7E2'        → AI 气泡/Chat 导航
+        sageGreen: '#9CB59B'       → 探索模式/成功高亮
+        lavenderGray: '#C6C1D2'    → 次级填充/卡片投影
+        deepMocha: '#6E5B4E'       → 主文本色（替代纯黑）
+        coralCandy: '#FEDDD8'      → 柔性警告（替代纯红）
+        sandalwoodMist: '#D8CBB8'  → 檀香薄雾
+        creamPaper: '#F4EFE7'
+        warmSand: '#B39A7C'
+        clayBrown: '#8A7C70'
+        charcoal: '#2F2C2A'
+
+        构建 CoherenceTheme 类：
+        - static ThemeData get lightTheme → 使用上述颜色的 MaterialTheme
+        - static ThemeData get darkTheme → 远足模式深色主题
+        - 定义 TextTheme 使用 deepMocha/charcoal
+        - 定义 CardTheme, AppBarTheme, BottomNavigationBarTheme
+      </description>
+      <files_to_create>
+        mobile/lib/config/theme.dart
+        mobile/lib/config/constants.dart (API base URL, 脉冲阈值常量)
+      </files_to_create>
+      <verification>
+        Hex 值与 frontend/src/styles/theme.ts 逐项比对一致
+      </verification>
+    </task>
+
+    <task id="M1.3" name="Dart 模型类">
+      <description>
+        根据 contracts/api_contract.json 的 request/response schema 定义，创建全部 Dart 模型类。
+        每个模型类包含: 命名构造函数 + fromJson factory + toJson 方法。
+        不引入 json_serializable codegen（手动编写）。
+
+        模型清单（对应 frontend/src/types/api.ts）：
+        - SessionResponse         (session_id, token, ttm_stage, sdt_scores, created_at_utc)
+        - ChatResponse            (action_type, payload, trace_id, intent, domain_passport, safety_allowed, gate_decision, audit_level, premise_rewrite_rate, ttm_stage, sdt_profile, flow_channel, pulse)
+        - PulseEvent              (pulse_id, statement, accept_label, rewrite_label, blocking_mode)
+        - PulseRespondResponse    (status, next_action, blocking_mode)
+        - ExcursionEnterResponse  (status, excursion_id, theme)
+        - ExcursionExitResponse   (status)
+        - TTMRadarData            (precontemplation, contemplation, preparation, action, maintenance, current_stage)
+        - SDTRingsData            (autonomy, competence, relatedness)
+        - ProgressData            (total_sessions, total_turns, no_assist_avg, last_active_utc)
+        - UserDashboardResponse   (session_id, ttm_radar, sdt_rings, progress)
+        - GateStatusItem          (id, name, status, metric, detail)
+        - AdminGatesResponse      (gates, overall)
+        - AuditLogItem            (event_id, timestamp_utc, severity, summary, trace_id)
+        - AdminAuditResponse      (logs, total, page, page_size)
+        - HealthResponse          (status, version, timestamp_utc)
+      </description>
+      <files_to_create>
+        mobile/lib/models/session.dart
+        mobile/lib/models/chat_response.dart
+        mobile/lib/models/pulse_event.dart
+        mobile/lib/models/excursion.dart
+        mobile/lib/models/dashboard.dart
+        mobile/lib/models/admin_gates.dart
+        mobile/lib/models/audit_log.dart
+      </files_to_create>
+      <verification>
+        每个模型类的字段名、类型与 contracts/api_contract.json 完全一致
+      </verification>
+    </task>
+
+    <task id="M1.4" name="API 客户端">
+      <description>
+        创建 HTTP 客户端 + WebSocket 客户端封装。
+
+        HTTP 客户端 (mobile/lib/api/client.dart):
+        - baseUrl = '/api/v1' (通过代理或直连)
+        - 统一 request<T> 方法: get/post + JSON 序列化/反序列化
+        - Authorization header 注入（从 sessionStorage 等价物读取 token）
+        - 错误处理: HTTP 4xx/5xx → 抛出 ApiException(statusCode, message, detail)
+        - 超时设置: 10s connect timeout, 30s response timeout
+
+        各 API 模块:
+        - mobile/lib/api/session_api.dart
+        - mobile/lib/api/chat_api.dart
+        - mobile/lib/api/dashboard_api.dart
+        - mobile/lib/api/admin_api.dart
+
+        WebSocket 客户端 (mobile/lib/api/websocket_client.dart):
+        - 连接到 ws://host/api/v1/chat/ws
+        - 自动重连（指数退避: 1s→2s→4s→8s→16s→30s cap）
+        - 消息类型: user_message → send, coach_response/pulse_event ← receive
+        - onMessage 流式回调
+        - ping 保活（每 30s 发送 { type: 'ping' }）
+        - 连接状态暴露: ConnectionStatus.connected / disconnected / reconnecting
+      </description>
+      <files_to_create>
+        mobile/lib/api/client.dart
+        mobile/lib/api/session_api.dart
+        mobile/lib/api/chat_api.dart
+        mobile/lib/api/dashboard_api.dart
+        mobile/lib/api/admin_api.dart
+        mobile/lib/api/websocket_client.dart
+      </files_to_create>
+      <test_files>
+        mobile/test/api/client_test.dart (Mock HTTP 响应)
+        mobile/test/api/websocket_client_test.dart (Mock WS 消息)
+      </test_files>
+      <verification>
+        API 方法签名与 api_contract.json 完全对齐
+        WebSocket 连接测试通过（使用 MockWebServer）
+      </verification>
+    </task>
+
+    <task id="M1.5" name="Provider 状态管理层">
+      <description>
+        创建 Provider 状态管理。
+
+        使用 Provider 包 (pub.dev/packages/provider)：
+        - ChangeNotifier 模式，与 React hooks 心智模型一致
+
+        Provider 清单:
+        - SessionProvider: 会话创建/恢复, token 管理, session_id 保存
+        - ChatProvider: 消息列表, 发送消息, 接收响应, WebSocket 集成
+        - PulseProvider: 脉冲状态, blocking_mode, 自适应降级计数
+        - DashboardProvider: TTM 雷达, SDT 环, 进度数据
+        - AuthProvider: RBAC 角色 (user/admin/debug), token, isAuthenticated, canView
+
+        在 main.dart 中注册全部 Provider：
+        ```dart
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => SessionProvider()),
+            ChangeNotifierProvider(create: (_) => ChatProvider()),
+            ChangeNotifierProvider(create: (_) => PulseProvider()),
+            ChangeNotifierProvider(create: (_) => DashboardProvider()),
+            ChangeNotifierProvider(create: (_) => AuthProvider()),
+          ],
+          child: CoherenceApp(),
+        )
+        ```
+      </description>
+      <files_to_create>
+        mobile/lib/providers/session_provider.dart
+        mobile/lib/providers/chat_provider.dart
+        mobile/lib/providers/pulse_provider.dart
+        mobile/lib/providers/dashboard_provider.dart
+        mobile/lib/providers/auth_provider.dart
+      </files_to_create>
+      <test_files>
+        mobile/test/providers/session_provider_test.dart
+        mobile/test/providers/pulse_provider_test.dart
+        mobile/test/providers/auth_provider_test.dart
+      </test_files>
+      <verification>
+        各 Provider 单元测试通过（使用 Mock API）
+        Provider 可以正确注入并跨 Widget 访问
+      </verification>
+    </task>
+
+    <task id="M1.6" name="底部导航外壳">
+      <description>
+        创建底部导航外壳（mobile/lib/screens/shell.dart）。
+
+        4 个 Tab:
+        1. 对话 (icon: chat_bubble) → ChatScreen (M2 实现, 占位)
+        2. 探索 (icon: explore) → ExploreScreen (M2 实现, 占位)
+        3. 成长 (icon: trending_up) → GrowthScreen (M2 实现, 占位)
+        4. 设置 (icon: settings) → SettingsScreen (M3 实现, 占位)
+
+        使用 IndexedStack 保持各 Tab 状态：
+        ```dart
+        IndexedStack(
+          index: _currentIndex,
+          children: [
+            ChatScreen(),
+            ExploreScreen(),
+            GrowthScreen(),
+            SettingsScreen(),
+          ],
+        )
+        ```
+
+        在 app.dart 中：
+        - MaterialApp 使用 CoherenceTheme.lightTheme
+        - 路由表: / → ShellScreen, /admin → AdminScreen
+        - title: "Coherence"
+        - debugShowCheckedModeBanner: false
+
+        占位 Screen 显示模块名称和"coming soon"文本。
+      </description>
+      <files_to_create>
+        mobile/lib/app.dart
+        mobile/lib/screens/shell.dart
+        mobile/lib/screens/chat/chat_screen.dart (占位)
+        mobile/lib/screens/explore/explore_screen.dart (占位)
+        mobile/lib/screens/growth/growth_screen.dart (占位)
+        mobile/lib/screens/settings/settings_screen.dart (占位)
+      </files_to_create>
+      <test_files>
+        mobile/test/screens/shell_test.dart
+      </test_files>
+      <verification>
+        flutter analyze 0 errors
+        flutter test 全部 pass
+        底部导航 4 Tab 可切换（通过 Widget 测试验证）
+      </verification>
+    </task>
+
+  </tasks>
+
+  <dependencies>
+    本子阶段无外部依赖（Flutter SDK 已安装）
+  </dependencies>
+
+  <artifacts>
+    mobile/ 完整 Flutter 项目（~20 个源文件）
+    ~5 Widget 测试 pass
+    flutter analyze 0 errors
+  </artifacts>
+
+  <risk_mitigation>
+    <risk>Provider 包版本兼容性问题</risk>
+    <mitigation>pubspec.yaml 锁定 provider: ^6.0.0</mitigation>
+    <risk>WebSocket 在 Windows 模拟器中的连接问题</risk>
+    <mitigation>M1 阶段仅做占位和单元测试，M2 在真机上验证</mitigation>
+  </risk_mitigation>
+
+  <exit_criteria>
+    flutter analyze 0 errors
+    flutter test 全部 pass（含 5+ Widget 测试）
+    底部导航 4 Tab 可切换
+    API 客户端所有方法签名与 api_contract.json 一致
+    global_state M1 → GO
+  </exit_criteria>
+</prompt>

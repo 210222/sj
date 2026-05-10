@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 21 — S21.2 SDT 语气指令增强</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>21</phase>
+  <sub_stage>S21.2</sub_stage>
+  <sub_stage_name>_build_behavior_signals() 根据 SDT 三轴评分产生具体教学指令</sub_stage_name>
+
+  <role>
+    当前 _build_behavior_signals() 只根据 TTM 阶段生成泛化提示（"节奏宜缓"、"多给鼓励"），
+    不根据 SDT 三轴评分（自主性、胜任感、关联性）生成具体的教学语气指令。
+    你需要增强这个函数，让 LLM prompt 中包含基于 SDT 的具体教学指令。
+  </role>
+
+  <context>
+    === 当前代码 ===
+    prompts.py:138-156:
+    ```python
+    def _build_behavior_signals(ttm_stage, autonomy, competence, action_type):
+        signals = []
+        if ttm_stage in ("action", "maintenance"):
+            signals.append("- 用户处于活跃学习阶段，可以适度加快节奏")
+        elif ttm_stage in ("precontemplation", "contemplation"):
+            signals.append("- 用户处于早期犹豫阶段，节奏宜缓，多给鼓励")
+        ...
+        if autonomy > 0.6:
+            signals.append("- 用户自主性强，多给开放式选择，少给直接指令")
+        if competence < 0.4:
+            signals.append("- 用户胜任感偏低，降低复杂度，多给正向反馈")
+        ...
+    ```
+
+    输出示例:
+    ```
+    - 用户处于早期犹豫阶段，节奏宜缓，多给鼓励
+    - 用户自主性强，多给开放式选择，少给直接指令
+    ```
+
+    问题：这些信号太泛化。LLM 收到"多给鼓励"但不知道具体怎么做。
+
+    === 约束 ===
+    - 可以修改: src/coach/llm/prompts.py 的 _build_behavior_signals() 函数
+    - 不改 SYSTEM_PROMPT 常量字符串
+    - 不改 build_coach_context() 的函数签名
+    - 返回格式不变（str），确保 downstream 不受影响
+    - 全量回归 1275+ 必须通过
+  </context>
+
+  <task>
+
+    ── 改动: 增强 _build_behavior_signals() 函数（约第 138-156 行）──
+
+    当前函数已经接收 autonomy 和 competence 参数。你不需要改签名，只需在现有逻辑后追加 SDT 具体指令：
+
+    ```python
+    def _build_behavior_signals(
+        ttm_stage: str, autonomy: float, competence: float, action_type: str
+    ) -> str:
+        """构建行为差异化信号."""
+        signals = []
+        # === 现有 TTM 信号（保留不变）===
+        if ttm_stage in ("action", "maintenance"):
+            signals.append("- 用户处于活跃学习阶段，可以适度加快节奏")
+        elif ttm_stage in ("precontemplation", "contemplation"):
+            signals.append("- 用户处于早期犹豫阶段，节奏宜缓，多给鼓励")
+        elif ttm_stage == "relapse":
+            signals.append("- 用户遭遇挫折，需要共情和无评判的接纳")
+
+        # === 现有通用 SDT 信号（保留不变）===
+        if autonomy > 0.6:
+            signals.append("- 用户自主性强，多给开放式选择，少给直接指令")
+        if competence < 0.4:
+            signals.append("- 用户胜任感偏低，降低复杂度，多给正向反馈")
+
+        # === Phase 21: SDT 具体教学指令 ===
+        # 低自主性（<0.4）: 用户需要明确方向，给出清晰步骤而非开放式选择
+        if autonomy < 0.4:
+            signals.append("- 用户自主性偏低，优先使用 scaffold 模式拆解步骤，给出明确路径而非开放选项")
+
+        # 高胜任感（>0.7）: 用户能力较强，可以加入挑战
+        if competence > 0.7:
+            signals.append("- 用户胜任感充足，可以适当增加 challenge 类型的任务")
+
+        # 低关联性（<0.4）: 需要建立关系，多使用"我们一起"、"你之前提到"等语句
+        # 注意：relatedness 不在当前函数参数中。通过 build_coach_context 传入 relatedness
+
+        if action_type == "scaffold":
+            signals.append("- 启用结构化教学：必须输出 steps 数组，每步包含 action 和 expected 字段")
+
+        # 通用：启用用户引用
+        signals.append("- 引用用户之前的学习内容：使用'你刚才学的...'、'之前你提到...'等句式")
+
+        return "\n".join(signals)
+    ```
+
+    ⚠️ 注意：relatedness 不在 _build_behavior_signals() 的参数中。它在 build_coach_context() 中的 sdt 字典里。
+    不改函数签名的话，relatedness 信号可以放在 build_coach_context() 中调用时追加。
+    _build_behavior_signals 的调用者（build_coach_context 中第 108 行）可以传参。
+
+    如果你觉得 relatedness 信号很重要，可以同步修改 build_coach_context() 中调用 _build_behavior_signals 的行：
+
+    ```python
+    # 当前（第 108 行）:
+    behavior_signals = _build_behavior_signals(stage, autonomy, competence, action_type)
+
+    # 改为（relatedness 注入追加）:
+    base_signals = _build_behavior_signals(stage, autonomy, competence, action_type)
+    if relatedness < 0.4:
+        base_signals += "\n- 用户关联性偏低，多使用'我们一起'等表述，以鼓励性语气为主，建立信任关系"
+    behavior_signals = base_signals
+    ```
+
+  </task>
+
+  <verification_method>
+    ```bash
+    cd D:/Claudedaoy/coherence
+    python -c "
+    from src.coach.llm.prompts import _build_behavior_signals
+    # 测试高自主性+低胜任感场景
+    r1 = _build_behavior_signals('contemplation', 0.8, 0.3, 'suggest')
+    print('高自主+低胜任:', r1[:150])
+    assert '自主性' in r1 or '开放式' in r1
+    # 测试低自主性场景
+    r2 = _build_behavior_signals('precontemplation', 0.2, 0.5, 'scaffold')
+    print('低自主:', r2[:150])
+    assert 'scaffold' in r2 or '步骤' in r2
+    print('PASS')
+    "
+    python -m pytest tests/ -q
+    ```
+  </verification_method>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>高自主性时信号中不出现"步骤拆解"指令</item>
+    <item>低自主性时信号中包含 scaffold 或步骤拆解指令</item>
+    <item>返回格式不变（以 "- " 开头的多行字符串）</item>
+  </success_criteria>
+</prompt>

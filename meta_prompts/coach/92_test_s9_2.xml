@@ -1,0 +1,156 @@
+<prompt>
+  <name>Coherence — S9.2 全量验证测试</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>9</phase>
+  <sub_stage>S9.2</sub_stage>
+  <sub_stage_name>S9.2 Web 前端 — 编译 + 组件测试 + 设计合规 + 代码审查</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence/frontend</scope>
+
+  <role>
+    你是 Coherence Phase 9 S9.2 验证者。
+    你的任务是：对已实现的 React + TypeScript Web 前端执行全量验证，
+    确认所有 8 条成功标准达标，并检测设计偏差和隐藏 bug。
+  </role>
+
+  <context>
+    S9.2 实现已就位，共 24 个源文件 + 4 个测试文件(17 tests)：
+
+    API 层 (4 文件):
+    - src/api/client.ts — fetch 封装 + WebSocket
+    - src/api/session.ts / chat.ts / dashboard.ts — re-export
+
+    组件 (7 文件):
+    - src/components/chat/ChatBubble.tsx — source_tag 标签渲染
+    - src/components/chat/ChatInput.tsx — inputMode 驱动占位符
+    - src/components/chat/PulsePanel.tsx — 非阻断滑动确认
+    - src/components/chat/ExcursionOverlay.tsx — 全局暗调切换
+    - src/components/dashboard/TTMStageCard.tsx — 五维柱状图
+    - src/components/dashboard/SDTEnergyRings.tsx — 三环 SVG
+    - src/components/shared/SlideToConfirm.tsx — 滑块组件
+    - src/components/shared/HealthShield.tsx — 盾牌徽章
+
+    Hooks (3 文件):
+    - src/hooks/useCoachState.ts — 全局状态(useState)
+    - src/hooks/useWebSocket.ts — WS 重连 + 消息分发
+    - src/hooks/useAdaptivePulse.ts — 脉冲计数(sessionStorage)
+
+    样式 (3 文件):
+    - src/styles/theme.ts — 11 色 Hex 矩阵
+    - src/styles/global.css — CSS 变量 + reset
+    - src/styles/animations.css — 7 组关键帧动画
+
+    工具 (2 文件):
+    - src/utils/stateMachine.ts — TTM 6 态 → UI 映射
+    - src/utils/colorAdapt.ts — 环境光色温适配
+
+    类型 (2 文件):
+    - src/types/api.ts — 10 个 API 响应接口
+    - src/types/coach.ts — 6 种教练领域类型
+
+    入口 (2 文件):
+    - src/main.tsx — ReactDOM.createRoot
+    - src/App.tsx — 主应用组合
+
+    测试 (4 文件, 17 tests):
+    - tests/components/PulsePanel.test.tsx — 5 tests
+    - tests/components/ExcursionOverlay.test.tsx — 4 tests
+    - tests/components/TTMStageCard.test.tsx — 3 tests
+    - tests/hooks/useAdaptivePulse.test.ts — 5 tests
+  </context>
+
+  <test_coverage_checklist>
+    <!-- 编译 & 构建 -->
+    <item id="B1">TypeScript 编译零错误 (tsc --noEmit)</item>
+    <item id="B2">Vite 生产构建成功 (vite build)</item>
+
+    <!-- 色彩系统 — 设计文档第 4.1 节 -->
+    <item id="C1">6 主色 Hex 码精确匹配设计文档: #F5F1EA / #AFC7E2 / #9CB59B / #C6C1D2 / #6E5B4E / #FEDDD8</item>
+    <item id="C2">5 檀香辅助色存在: #D8CBB8 / #F4EFE7 / #B39A7C / #8A7C70 / #2F2C2A</item>
+    <item id="C3">CSS 变量与 theme.ts 色彩同步</item>
+    <item id="C4">语义色映射正确 (pass/warn/block/info/muted)</item>
+
+    <!-- TTM 6 态 UI 映射 — 设计文档第 1.1 节 -->
+    <item id="T1">6 态映射完整 (precontemplation→relapse)</item>
+    <item id="T2">每态含 theme/inputMode/pulseMode/components/description</item>
+    <item id="T3">getTTMUI(null) 回退为 precontemplation</item>
+
+    <!-- 组件测试 -->
+    <item id="P1">PulsePanel 渲染陈述文本</item>
+    <item id="P2">PulsePanel hard 模式显示滑动轨道</item>
+    <item id="P3">PulsePanel soft 模式不显示滑动轨道</item>
+    <item id="P4">PulsePanel 幽灵按钮展开重写输入框</item>
+    <item id="P5">PulsePanel soft 模式显示旁路提示文字</item>
+
+    <item id="E1">ExcursionOverlay inactive 时渲染空</item>
+    <item id="E2">ExcursionOverlay active 时显示探索模式指示</item>
+    <item id="E3">ExcursionOverlay 退出按钮触发的回调</item>
+    <item id="E4">ExcursionOverlay 无 onExit 时不显示退出按钮</item>
+
+    <item id="S1">TTMStageCard 渲染 5 阶段中文标签</item>
+    <item id="S2">TTMStageCard 显示当前阶段</item>
+    <item id="S3">TTMStageCard 空数据显示占位符</item>
+
+    <item id="H1">useAdaptivePulse 初始为 hard</item>
+    <item id="H2">useAdaptivePulse pulseCount 初始 0</item>
+    <item id="H3">useAdaptivePulse recordPulse 递增计数</item>
+    <item id="H4">useAdaptivePulse 2 次脉冲后转为 soft</item>
+    <item id="H5">useAdaptivePulse 不同 session 独立计数</item>
+
+    <!-- 自动化测试运行 -->
+    <item id="R1">全部 17 个组件/hooks 测试通过 (vitest run)</item>
+    <item id="R2">无意外跳过或超时测试</item>
+  </test_coverage_checklist>
+
+  <design_deviation_checks>
+    <!-- 设计文档偏差检测 -->
+    <item id="D1">ChatBubble 是否引用 CSS 变量 --color-bubble-user/--color-bubble-coach (而非硬编码)</item>
+    <item id="D2">ExcursionOverlay 设置的 CSS 变量是否被其他组件消费</item>
+    <item id="D3">PulsePanel 内联 animation 能否正确引用 animations.css 中的 keyframe</item>
+    <item id="D4">WebSocket 连接时是否发送冗余 __connect__ 消息</item>
+    <item id="D5">HealthShield 三个状态是否共享相同 SVG path (死代码)</item>
+    <item id="D6">SlideToConfirm touchAction:none 是否影响页面滚动</item>
+    <item id="D7">useAdaptivePulse sessionId 为空时的 key 冲突</item>
+  </design_deviation_checks>
+
+  <hidden_bug_checks>
+    <item id="X1">phantom coach message: WS __connect__ 触发后端 CoachAgent.act("__connect__")</item>
+    <item id="X2">Excursion CSS 变量未消费: ChatBubble/ChatInput 未引用 --color-bubble-*</item>
+    <item id="X3">Animation 引用断裂: PulsePanel 内联 animation 名不链接 animations.css</item>
+    <item id="X4">Stale closure: useAdaptivePulse 回调依赖 pulseData 但闭包可能过期</item>
+    <item id="X5">Unsafe cast: App.tsx line 101/103 domain_passport/payload 强制类型断言</item>
+    <item id="X6">TTMStageCard casts: data[stage as keyof TTMRadarData] as number 无校验</item>
+    <item id="X7">SDTEnergyRings casts: 同上</item>
+    <item id="X8">ChatBubble sourceTag 未从 WS 消息中提取 (handleWSMessage 未传 sourceTag)</item>
+  </hidden_bug_checks>
+
+  <test_gap_analysis>
+    <missing>ChatBubble — 0 测试 (渲染 source_tag, user vs coach 角色样式, 空内容)</missing>
+    <missing>ChatInput — 0 测试 (6 种 inputMode placeholder, 发送行为, disabled 状态)</missing>
+    <missing>SlideToConfirm — 0 测试 (滑动交互, 确认回调, 重置行为)</missing>
+    <missing>HealthShield — 0 测试 (3 状态渲染, SVG 路径, 颜色映射)</missing>
+    <missing>SDTEnergyRings — 0 测试 (3 环渲染, 空数据, 极端值)</missing>
+    <missing>useCoachState — 0 测试 (setSession, addMessage, setTTMStage 等)</missing>
+    <missing>useWebSocket — 0 测试 (连接, 重连, 消息分发)</missing>
+    <missing>stateMachine.ts — 0 测试 (6 态映射, null 回退)</missing>
+    <missing>colorAdapt.ts — 0 测试 (昼夜切换, applyColorAdaptation)</missing>
+    <missing>theme.ts — 0 测试 (Hex 码验证, 语义色映射)</missing>
+    <missing>client.ts — 0 测试 (request 函数, error 处理, token 注入)</missing>
+    <missing>App.tsx — 0 测试 (完整渲染, 会话创建, WebSocket 集成)</missing>
+  </test_gap_analysis>
+
+  <execution_plan>
+    1) tsc --noEmit 类型检查
+    2) npm run build 生产构建
+    3) npx vitest run 全量测试
+    4) 手动 code review 设计偏差 + 隐藏 bug
+    5) 输出 S9.2 审计报告
+  </execution_plan>
+
+  <success_criteria>
+    全部现有 17 测试通过。
+    编译零错误。
+    设计偏差和隐藏 bug 全部记录并分类。
+    测试缺口全部记录并分类。
+  </success_criteria>
+</prompt>
