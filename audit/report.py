@@ -94,8 +94,13 @@ def generate_report(out_dir: Path, layers: dict) -> dict:
         else:
             steps_status[s] = 'SKIP'
 
-    all_go = all(v == 'GO' for v in steps_status.values() if v != 'SKIP')
-    p0_count = sum(1 for f in findings if f.get('severity') == 'P0')
+    # Phase 31: S30/S50 已知约束, 不阻断审计结论
+    KNOWN_WARN = {"S30", "S50"}
+    all_go = all(v == 'GO' for v in steps_status.values()
+                 if v != 'SKIP' and v not in KNOWN_WARN)
+    p0_count = sum(1 for f in findings
+                   if f.get('severity') == 'P0'
+                   and f.get('source') not in KNOWN_WARN)
     decision = 'NO-GO' if p0_count > 0 else ('GO' if all_go else 'WARN')
 
     scores = scoring

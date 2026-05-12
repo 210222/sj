@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>修复"AI 一直问确认不开始教学"循环 (审查修复版)</name>
+  <version>1.1.0</version>
+  <track>COACH</track>
+  <phase>29</phase>
+  <sub_stage>A+B</sub_stage>
+  <sub_stage_name>方案 A: scaffold question 改为仅在拆完后追问 + 方案 B: 短输入强制 suggest 带上下文</sub_stage_name>
+
+  <context>
+    梳理循环:
+      你说"好"→LLM 回"准备好了吗"(又问确认)→你说"可以"→LLM 继续问确认
+
+    根因 1: scaffold 指令要求每轮输出 question→LLM 每轮必加"准备好了吗"
+    根因 2: 单字确认无新素材→LLM 只能重复废话
+
+    审查发现的问题:
+    1.  Fix B 中 short_input 分支调了 compose() 但立即覆盖全部字段——无用调用
+    2.  Fix B 不分"有上下文的教学继续"vs"无上下文的新话题"
+    3.  硬编码 options ["继续当前教学",...] 不引用当前 topic
+  </context>
+
+  <side_effects>
+    - Fix A 移除每轮 question 后, scaffold 模式互动感下降
+      -> 缓解: 步骤拆完后仍有 question, 非完全移除
+    - Fix B 说"好"后走 suggest 给选项, 如果用户本意是"请继续"则是干扰
+      -> 缓解: 检测前一回合是否有 active_topic, 有则继续而非切 suggest
+    - Fix B 跳过了 compose/LM 的 TTM/SDT 策略
+      -> 缓解: 仅当用户输入 <=3 字且无问号时才触发
+  </side_effects>
+
+  <task>
+
+    === 方案 A: 改 _ACTION_TYPE_INSTRUCTIONS (prompts.py:96) ===
+
+    第 96 行, _ACTION_TYPE_INSTRUCTIONS["scaffold"] 中:
+
+    将:
+    -- "question": 引导性问题
+
+    改为:
+    -- "question": 仅在全部 steps 拆解完后输出一次总结性追问 (不要每轮末尾重复确认)
+
+    === 方案 B: 改 act() 中 compose 调用前 (agent.py, 约第 416 行) ===
+
+    在 compose() 调用前插入短输入检测.
+    不调 compose() (避免无用调用), 直接构建 action dict.
+
+    # Phase 29: 短输入检测 -> 强制 suggest (跳过 compose)
+    def _is_short_confirm(text: str) -> bool:
+        return len(text.strip()) <= 3 and "?" not in text and "?" not in text
+
+    if self._is_short_confirm(user_input):
+        # 查上轮 topic, 用于选项
+        last_topic = ""
+        try:
+            if self._persistence:
+                profile = self._persistence.get_profile()
+                last_topic = profile.get("current_topic", "") or ""
+        except Exception:
+            pass
+
+        action = {
+            "action_type": "suggest",
+            "payload": {
+                "statement": "你想继续学哪方面?",
+                "options": [
+                    {
+                        "label": f"继续上一节课 ({last_topic})" if last_topic else "继续当前教学",
+                        "description": "继续当前学习进度",
+                    },
+                    {"label": "换个知识点", "description": "切换到一个新话题"},
+                    {"label": "我自己指定", "description": "我来告诉你想学什么"},
+                ],
+                "question": "选一个方向, 或者直接告诉我想学什么",
+            },
+            "intent": "suggest_options",
+            "domain_passport": {"domain": "general", "evidence_level": "low",
+                                 "source_tag": "rule", "epistemic_warning": None},
+        }
+    else:
+        action = self.composer.compose(
+            user_state=user_state,
+            intent=intent,
+            relevant=relevant,
+            excursion_mode=self._excursion_active,
+            ttm_strategy=ttm_strategy,
+            sdt_profile=sdt_profile,
+            flow_result=flow_result,
+            self_eval=getattr(self, '_self_eval', None),
+        )
+
+    另: 类中新增 _is_short_confirm 静态方法
+
+    @staticmethod
+    def _is_short_confirm(text: str) -> bool:
+        return len(text.strip()) <= 3 and "?" not in text and "?" not in text
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>scaffold prompt 不再要求"每轮输出 question" (仅在拆完后追加)</item>
+    <item>输入"好" -> action_type=suggest, options 含上一节课 topic</item>
+    <item>输入"教我 Python" -> 正常 compose 流程 (不受影响)</item>
+    <item>short_input 分支不调 compose() (无无用调用)</item>
+  </success_criteria>
+</prompt>

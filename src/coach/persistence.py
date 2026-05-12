@@ -175,9 +175,9 @@ class SessionPersistence:
             "skill_masteries": json.loads(row[7]) if row[7] else {},
             "difficulty_level": row[8],
             # Phase 20 S20.3: 学习目标字段（防御性读取，兼容旧行）
-            "learning_goal": row[12] if len(row) > 12 and row[12] else "",
-            "current_topic": row[13] if len(row) > 13 and row[13] else "",
-            "goal_progress": row[14] if len(row) > 14 and row[14] else 0.0,
+            "learning_goal": row[11] if len(row) > 11 and row[11] else "",
+            "current_topic": row[12] if len(row) > 12 and row[12] else "",
+            "goal_progress": row[13] if len(row) > 13 and row[13] else 0.0,
         }
 
     # ── Phase 17: 知情同意持久化 ──

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S30.1 -- 技能图谱数据</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>30</phase>
+  <sub_stage>S30.1</sub_stage>
+  <sub_stage_name>config/skill_graph.json + SkillGraph 类</sub_stage_name>
+
+  <role>
+    定义技能依赖关系 DAG, 加载到 SkillGraph 类供 BKT 传播和 composer 使用。
+  </role>
+
+  <context>
+    新建 config/skill_graph.json (前置依赖 + 关联技能)
+    新建 SkillGraph 类 (加载查询依赖链)
+  </context>
+
+  <task>
+
+    -- 1: config/skill_graph.json (30 行) --
+
+    {
+      "python_variable":    {"prerequisites": [],           "related": ["python_type", "python_condition"]},
+      "python_condition":   {"prerequisites": ["python_variable"], "related": ["python_loop"]},
+      "python_loop":        {"prerequisites": ["python_variable","python_condition"], "related": ["python_list","python_comprehension"]},
+      "python_list":        {"prerequisites": ["python_variable","python_loop"], "related": ["python_dict","python_tuple"]},
+      "python_dict":        {"prerequisites": ["python_list","python_variable"], "related": ["python_json"]},
+      "python_function":    {"prerequisites": ["python_variable","python_condition","python_loop"], "related": ["python_class","python_module"]},
+      "python_comprehension": {"prerequisites": ["python_list","python_loop","python_function"], "related": ["python_generator"]},
+      "python_class":       {"prerequisites": ["python_function","python_variable"], "related": ["python_module"]}
+    }
+
+    -- 2: diagnostic_engine.py 新增 SkillGraph 类 (30 行) --
+
+    在文件末尾新增:
+
+    class SkillGraph:
+        """技能依赖关系图谱."""
+
+        def __init__(self, graph_path: str | None = None):
+            path = graph_path or Path(__file__).resolve().parent.parent.parent / "config" / "skill_graph.json"
+            self._graph: dict[str, dict] = {}
+            if path.exists():
+                with open(path, encoding="utf-8") as f:
+                    self._graph = json.load(f)
+
+        def get_prerequisites(self, skill: str) -> list[str]:
+            return self._graph.get(skill, {}).get("prerequisites", [])
+
+        def get_related(self, skill: str) -> list[str]:
+            return self._graph.get(skill, {}).get("related", [])
+
+        def get_dependents(self, skill: str) -> list[str]:
+            """返回依赖此技能的其他技能。"""
+            return [s for s, info in self._graph.items() if skill in info.get("prerequisites", [])]
+
+        def has_unmastered_prerequisites(self, skill: str, mastery: dict[str, float], threshold: float = 0.6) -> list[str]:
+            """返回 skill 中掌握度低于 threshold 的前置。"""
+            prereqs = self.get_prerequisites(skill)
+            return [p for p in prereqs if mastery.get(p, 0) < threshold]
+
+        def propagate(self, skill: str, gain: float, mastery: dict[str, float], rate: float = 0.3) -> dict[str, float]:
+            """技能 mastery 提升后, 按 rate 传播到依赖它的子技能。"""
+            result = {}
+            for dep in self.get_dependents(skill):
+                old = mastery.get(dep, 0.3)
+                boost = gain * rate
+                new = min(1.0, old + boost)
+                if new != old:
+                    result[dep] = new
+            return result
+  </task>
+
+  <success_criteria>
+    <item>SkillGraph 从 JSON 加载</item>
+    <item>get_prerequisites("python_list") -> ["python_variable","python_loop"]</item>
+    <item>get_dependents("python_variable") 返回依赖 variable 的技能列表</item>
+    <item>JSON 不存在时不崩溃 (回退空图谱)</item>
+  </success_criteria>
+</prompt>

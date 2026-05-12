@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S30.3 -- composer 优先前置技能</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>30</phase>
+  <sub_stage>S30.3</sub_stage>
+  <sub_stage_name>_select_topic_by_mastery() 增强: 跳过未掌握前置的技能</sub_stage_name>
+
+  <role>
+    当前 _select_topic_by_mastery() 只选 mastery 最低的技能。
+    改: 选 mastery 最低且前置技能已掌握 (>0.6) 的技能。
+    如果没有满足条件的技能, 选前置 skill 作为教学 topic。
+  </role>
+
+  <context>
+    改动: composer.py _select_topic_by_mastery() 静态方法。
+    新增 SkillGraph 参数用于查前置依赖。
+
+    已有 composer rules 和 TTM 逻辑不变。
+    新增逻辑只在 _select_topic_by_mastery 中被调用时生效。
+  </context>
+
+  <task>
+
+    改动: composer.py _select_topic_by_mastery() (约第 245 行)
+
+    当前:
+    @staticmethod
+    def _select_topic_by_mastery(mastery_summary: dict | None) -> str | None:
+        if not mastery_summary:
+            return None
+        skills = mastery_summary.get("skills", {})
+        if not skills:
+            return None
+        return min(skills, key=skills.get)
+
+    改后:
+    @staticmethod
+    def _select_topic_by_mastery(mastery_summary: dict | None,
+                                  skill_graph: "SkillGraph | None" = None) -> str | None:
+        if not mastery_summary:
+            return None
+        skills = mastery_summary.get("skills", {})
+        if not skills:
+            return None
+
+        # 按 mastery 升序排列
+        sorted_skills = sorted(skills.items(), key=lambda x: x[1])
+
+        if skill_graph is None:
+            return sorted_skills[0][0]
+
+        # 选 mastery 最低且前置已掌握的
+        for skill, _ in sorted_skills:
+            missing = skill_graph.has_unmastered_prerequisites(skill, skills)
+            if not missing:
+                return skill
+
+        # 所有低 mastery 技能都有未掌握的前置 → 选最薄弱的前置
+        for skill, _ in sorted_skills:
+            missing = skill_graph.has_unmastered_prerequisites(skill, skills)
+            if missing:
+                return min(missing, key=lambda s: skills.get(s, 0))
+
+        return sorted_skills[0][0]
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>无 skill_graph 时行为不变 (回退旧逻辑)</item>
+    <item>有前置依赖时返回前置技能而非目标技能</item>
+    <item>所有前置已掌握时返回目标技能</item>
+  </success_criteria>
+</prompt>

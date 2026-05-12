@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>删除短输入特殊功能</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>29</phase>
+  <sub_stage>FIX_D</sub_stage>
+  <sub_stage_name>Phase 27 的上下文摘要已解决短输入问题, 特殊逻辑不再需要</sub_stage_name>
+
+  <context>
+    Phase 27 的 5 块上下文摘要已经给了 LLM 足够的历史信息。
+    短输入时 LLM 自己会根据上下文决定怎么做, 不需要代码特殊处理。
+
+    删除:
+    1. _is_short_confirm() 方法 (整段)
+    2. short_input 分支 (if short_input: action = ... 整段)
+    3. CONFIRM_WORDS 常量 (不需要引入)
+  </context>
+
+  <task>
+
+    改动 1 处: src/coach/agent.py
+
+    -- 删除 _is_short_confirm() 静态方法 --
+    -- 删除 act() 中的 short_input 检测分支 (if self._is_short_confirm: ... else:) --
+    -- 保留正常的 compose() 调用不变 --
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>不再有 _is_short_confirm 引用</item>
+    <item>输入"好"走正常 compose 流程 (而非特殊 suggest 分支)</item>
+  </success_criteria>
+</prompt>

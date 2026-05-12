@@ -20,6 +20,8 @@ export function useWebSocket({ sessionId, onMessage, onPulseEvent }: UseWebSocke
 
   const connect = useCallback(() => {
     try {
+      // WebSocket 暂时关闭 — 全部走 HTTP (更稳定)
+      return;
       const ws = createChatWebSocket(sessionId);
       wsRef.current = ws;
 
@@ -37,11 +39,11 @@ export function useWebSocket({ sessionId, onMessage, onPulseEvent }: UseWebSocke
       };
 
       ws.onclose = () => {
-        // 5 秒后重连
-        reconnectTimer.current = setTimeout(connect, 5000);
+        // 一次性失败即走 HTTP fallback, 不无限重连
+        wsRef.current = null;
       };
     } catch {
-      reconnectTimer.current = setTimeout(connect, 5000);
+      // WebSocket 不可用, App.tsx 自动走 HTTP fallback
     }
   }, [sessionId, onMessage, onPulseEvent]);
 

@@ -6,13 +6,21 @@ import type { CoachState, ChatMessage, TTMStage, BlockingMode } from '../types/c
 function loadInitialState(): CoachState {
   const token = sessionStorage.getItem('coherence_token') || '';
   const sessionId = sessionStorage.getItem('coherence_session_id') || '';
+  // 从 localStorage 恢复对话历史
+  let messages: any[] = [];
+  if (sessionId) {
+    try {
+      const saved = localStorage.getItem(`coherence_messages_${sessionId}`);
+      if (saved) messages = JSON.parse(saved);
+    } catch { messages = []; }
+  }
   return {
     sessionId,
     token,
     ttmStage: null,
     sdtProfile: null,
     flowChannel: null,
-    messages: [],
+    messages,
     pulseCount: 0,
     blockingMode: 'hard',
     excursionActive: false,
@@ -29,7 +37,21 @@ export function useCoachState() {
   }, []);
 
   const addMessage = useCallback((msg: ChatMessage) => {
-    setState((s) => ({ ...s, messages: [...s.messages, msg] }));
+    setState((s) => {
+      const newMessages = [...s.messages, msg];
+      // 持久化到 localStorage（按 session_id 隔离）
+      if (s.sessionId) {
+        try { localStorage.setItem(`coherence_messages_${s.sessionId}`, JSON.stringify(newMessages)); } catch {}
+      }
+      return { ...s, messages: newMessages };
+    });
+  }, []);
+
+  const dismissAwakening = useCallback(() => {
+    setState((s) => ({
+      ...s,
+      messages: s.messages.filter((m) => m.actionType !== 'awakening'),
+    }));
   }, []);
 
   const setTTMStage = useCallback((stage: TTMStage | null) => {
@@ -60,6 +82,7 @@ export function useCoachState() {
     state,
     setSession,
     addMessage,
+    dismissAwakening,
     setTTMStage,
     setSDTProfile,
     setBlockingMode,

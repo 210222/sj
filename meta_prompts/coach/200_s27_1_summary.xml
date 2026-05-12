@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 27 -- 上下文引擎 v3 (审查修复)</name>
+  <version>3.1.0</version>
+  <track>COACH</track>
+  <phase>27</phase>
+  <sub_stage>S27.1</sub_stage>
+  <sub_stage_name>5 块 + 修正 self._eval_reason bug</sub_stage_name>
+
+  <role>
+    基于三个参考源:
+    1. Adaptive Focus Memory + Mem0: FULL/COMPRESS/PLACEHOLDER 三级
+    2. Claude Code 记忆分层: 按类型注入+新鲜度标注
+    3. DeepSeek MLA/MoE: 信息密度优先 + 策略连续性 + 切换解释
+  </role>
+
+  <context>
+    当前问题:
+    - history="第3轮: general" 标签稀疏
+    - 策略切换不说明原因
+    - 技能数据无时间戳
+    - 各类数据混在一起
+
+    审查发现:
+    self._eval_reason 变量不存在 (Phase 25 用的是 self._self_eval["reason"])
+
+    约束:
+    - 只修改 src/coach/agent.py
+    - 不修改 prompts.py contracts 内圈/中圈/外圈
+    - 全量回归 1302+ 必须通过
+  </context>
+
+  <task>
+
+    -- 改动 1: __init__() 新增变量 (约第 135 行) --
+
+    # Phase 27: 上下文引擎
+    self._prev_ctx: dict | None = None
+    self._current_atype: str = "suggest"
+
+    -- 改动 2: 新增 _build_context_summary() 方法 (在 act 方法前) --
+
+    def _build_context_summary(self) -> str:
+        lines = []
+        recent = self.memory.recall("general", None, limit=10)
+
+        # Block 1: 对话历史 (FULL/COMPRESS/PLACEHOLDER)
+        if recent:
+            lines.append("=== 对话历史 ===")
+            r0 = recent[0]
+            msg = r0.get("data", {}).get("user_input", "")
+            atype = r0.get("data", {}).get("action_type", "")
+            if msg:
+                tag = f" | 教练: {atype}" if atype else ""
+                lines.append(f"[最近] 用户: {msg[:150]}{tag}")
+            mid = recent[1:4]
+            if mid:
+                items = []
+                for h in mid:
+                    d = h.get("data", {})
+                    m = d.get("user_input", "")[:40]
+                    t = d.get("action_type", "")
+                    items.append(f"[{t or 'general'}] {m}" if m else f"[{t or 'general'}]")
+                lines.append("[近轮] " + " | ".join(items))
+            early = recent[4:]
+            if early:
+                kws = set()
+                for h in early:
+                    m = str(h.get("data", {}).get("user_input", ""))[:25]
+                    if m:
+                        kws.add(m)
+                if kws:
+                    lines.append("[早期] " + "; ".join(list(kws)[:4]))
+
+        # Block 2: 技能快照 (带新鲜度标签)
+        try:
+            if self._persistence:
+                skills = self._persistence.get_skills_with_recency()
+                if skills:
+                    lines.append("=== 技能快照 ===")
+                    for skill, data in list(skills.items())[:5]:
+                        days = data.get("days_elapsed", 0)
+                        if days < 1:
+                            tag = "今天"
+                        elif days < 3:
+                            tag = f"{int(days)}天前"
+                        elif days < 7:
+                            tag = f"{int(days)}天前(略陈旧)"
+                        else:
+                            tag = f"{int(days)}天前(可能已忘)"
+                        lines.append(f"  {skill}: {data.get('mastery', 0):.0%} ({tag})")
+        except Exception:
+            pass
+
+        # Block 3: 学习目标
+        try:
+            if self._persistence:
+                p = self._persistence.get_profile()
+                g = p.get("learning_goal", "")
+                t = p.get("current_topic", "")
+                pr = p.get("goal_progress", 0)
+                if g or t:
+                    lines.append("=== 学习目标 ===")
+                    if g:
+                        lines.append(f"  目标: {g}")
+                    if t:
+                        lines.append(f"  当前: {t}")
+                    if pr:
+                        lines.append(f"  进度: {int(float(pr)*100)}%")
+        except Exception:
+            pass
+
+        # Block 4: 策略连续性
+        ctx = getattr(self, "_prev_ctx", None)
+        cur = getattr(self, "_current_atype", "suggest")
+        if ctx:
+            prev_a = ctx.get("action_type", "?")
+            prev_r = ctx.get("reaction", "?")
+            lines.append("=== 策略连续性 ===")
+            lines.append(f"  上一轮策略: {prev_a}")
+            lines.append(f"  用户反应: {prev_r}")
+            if cur != prev_a:
+                reason = "策略切换"
+                try:
+                    if self._self_eval and self._self_eval.get("reason"):
+                        reason = self._self_eval["reason"]
+                except Exception:
+                    pass
+                lines.append(f"  本轮策略: {cur}")
+                lines.append(f"  切换原因: {reason}")
+
+        # Block 5: 待复习
+        try:
+            if self._persistence:
+                from src.coach.flow import BKTEngine
+                bkt = BKTEngine()
+                skills = self._persistence.get_skills_with_recency()
+                items = []
+                for skill, data in skills.items():
+                    ret = bkt.estimate_retention(data["mastery"], data["days_elapsed"])
+                    if ret < 0.6:
+                        items.append(f"{skill}(保留率{ret:.0%})")
+                if items:
+                    lines.append("=== 待复习 ===")
+                    lines.append("  " + ", ".join(items[:3]))
+        except Exception:
+            pass
+
+        return "\n".join(lines)
+
+    -- 改动 3: build_coach_context() 调用后注入 (约第 672 行) --
+
+    ctx = build_coach_context(
+        intent=intent,
+        action_type=action.get("action_type", "suggest"),
+        ttm_stage=ttm_stage,
+        sdt_profile=sdt_profile,
+        user_message=user_input,
+        history=[],  # Phase 27: 不传原始历史, 改传上下文摘要
+        memory_snippets=_memory_snippets,
+        covered_topics=_covered_topics,
+        difficulty=_llm_difficulty,
+    )
+    # Phase 27: 注入结构化上下文摘要
+    ctx_summary = self._build_context_summary()
+    if ctx_summary:
+        ctx["system"] += "\n\n" + ctx_summary
+
+    -- 改动 4: return 之前更新 prev_ctx (约第 880 行) --
+
+    self._current_atype = packet.get("action_type", "suggest")
+    try:
+        sd = sdt_profile or {}
+        comp = sd.get("competence", 0.5)
+        if comp < 0.3:
+            r = "困难(competence偏低)"
+        elif comp > 0.7:
+            r = "顺利(competence充足)"
+        else:
+            r = "正常跟进"
+        self._prev_ctx = {"action_type": self._current_atype, "reaction": r}
+    except Exception:
+        self._prev_ctx = {"action_type": self._current_atype, "reaction": "正常跟进"}
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>1 轮后: 对话历史块出现, _prev_ctx 为 None (尚无历史)</item>
+    <item>2 轮后: 策略连续性块出现 (有上一轮数据)</item>
+    <item>无 _eval_reason 引用 (此变量不存在, 已改 self._self_eval)</item>
+    <item>不修改 prompts.py contracts 内圈/中圈/外圈</item>
+  </success_criteria>
+</prompt>

@@ -131,6 +131,20 @@ class CoachAgent:
         # Phase 7: MRT 微随机实验（延迟加载）
         self._mrt = None
 
+        # Phase 25: 教学自评（跨轮传递）
+        self._self_eval: dict | None = None
+
+        # Phase 26: 主动进步反馈
+        self._last_progress_ts: float = 0.0
+        self._last_mastery: dict[str, float] = {}
+        self._progress_summary: str | None = None
+
+        # Phase 27: 上下文引擎
+        self._prev_ctx: dict | None = None
+        self._current_atype: str = "suggest"
+        self._prev_teaching: str = ""  # Phase 31: 上一轮教学内容
+        self._current_atype: str = "suggest"
+
     # ── 配置访问 ────────────────────────────────────────────────
 
     @staticmethod
@@ -337,6 +351,121 @@ class CoachAgent:
 
     # ── 主入口 ──────────────────────────────────────────────────
 
+    # ── Phase 27: 上下文引擎 ──────────────────────────────────
+
+    def _build_context_summary(self) -> str:
+        """构建结构化上下文摘要 (5块).
+
+        DeepSeek 1M 上下文窗口, 2000 tokens 无压力。
+        基于 Adaptive Focus Memory: FULL/COMPRESS/PLACEHOLDER 三级。
+        """
+        lines: list[str] = []
+        raw = self.memory.recall("general", None, limit=10)
+        recent = [
+            h for h in (raw or [])
+            if h.get("data", {}).get("session_id") == self.session_id
+        ][-10:]
+
+        # Block 1: 对话历史 (recall 返回 DESC = 最新在前)
+        if recent:
+            lines.append("=== 对话历史 ===")
+            r0 = recent[0]  # P0 fix: 最新消息 (DESC第一个)
+            d0 = r0.get("data", {})
+            msg0 = d0.get("user_input", "")
+            at0 = d0.get("action_type", "")
+            if msg0:
+                lines.append(f"[最近] 用户: {msg0[:120]} | 教练: {at0}")
+            mid = recent[1:4]  # 第2-4新的
+            if mid:
+                items = []
+                for h in mid:
+                    d = h.get("data", {})
+                    m = d.get("user_input", "")[:40]
+                    t = d.get("action_type", "")
+                    items.append(f"[{t}] {m}" if m else f"[{t}]")
+                lines.append("[近轮] " + " | ".join(items))
+            early = recent[4:]
+            if early:
+                seen = set()
+                dedup = []
+                for h in early:
+                    m = str(h.get("data", {}).get("user_input", ""))[:15]
+                    if m and m not in seen:
+                        seen.add(m)
+                        dedup.append(m)
+                if dedup:
+                    lines.append("[早期] " + "; ".join(dedup[:4]))
+
+        # Block 2+5: 技能快照 + 待复习 (合并为一次 SQLite 查询)
+        try:
+            if self._persistence:
+                skills = self._persistence.get_skills_with_recency()
+                if skills:
+                    lines.append("=== 技能快照 ===")
+                    from src.coach.flow import BKTEngine
+                    bkt = BKTEngine()
+                    review_items = []
+                    for skill, data in list(skills.items())[:5]:
+                        days = data.get("days_elapsed", 0)
+                        if days < 1: tag = "今天"
+                        elif days < 3: tag = f"{int(days)}天前"
+                        elif days < 7: tag = f"{int(days)}天前(略陈旧)"
+                        else: tag = f"{int(days)}天前(可能已忘)"
+                        lines.append(f"  {skill}: {data.get('mastery', 0):.0%} ({tag})")
+                        ret = bkt.estimate_retention(data["mastery"], days)
+                        if ret < 0.6:
+                            review_items.append(f"{skill}(保留率{ret:.0%})")
+                    if review_items:
+                        lines.append("---")
+                        lines.append("待复习: " + ", ".join(review_items[:3]))
+        except Exception:
+            pass
+
+        # Block 3: 学习目标
+        try:
+            if self._persistence:
+                p = self._persistence.get_profile()
+                g = p.get("learning_goal", "")
+                t = p.get("current_topic", "")
+                pr = p.get("goal_progress", 0)
+                if g or t:
+                    lines.append("=== 学习目标 ===")
+                    if g: lines.append(f"  目标: {g}")
+                    if t: lines.append(f"  当前: {t}")
+                    if pr: lines.append(f"  进度: {int(float(pr) * 100)}%")
+        except Exception:
+            pass
+
+        # Block 4: 策略连续性 (recent[0]=最新, recent[1]=上一轮)
+        cur = getattr(self, "_current_atype", "suggest")
+        if len(recent) >= 2:
+            prev_data = recent[1].get("data", {})
+            prev_a = prev_data.get("action_type", "?")
+            lines.append("=== 策略连续性 ===")
+            lines.append(f"  上一轮策略: {prev_a}")
+            if cur != prev_a and cur != "?":
+                reason = "策略切换"
+                try:
+                    se = getattr(self, "_self_eval", None)
+                    if se and se.get("reason"): reason = se["reason"]
+                except Exception: pass
+                lines.append(f"  本轮策略: {cur}")
+                lines.append(f"  切换原因: {reason}")
+
+        # Phase 31: 上一轮教学内容
+        prev_teach = getattr(self, "_prev_teaching", "")
+        # 跨实例时从 persistence 读取
+        if not prev_teach and self._persistence:
+            try:
+                trend = self._persistence.get_mastery_trend("_prev_teaching", 7)
+                if trend:
+                    prev_teach = trend[-1].get("value", "")
+            except Exception:
+                pass
+        if prev_teach and len(prev_teach) > 3:
+            lines.append(prev_teach)
+        return "\n".join(lines)
+
     def act(self, user_input: str, context: dict | None = None) -> dict:
         """处理一次用户对话。
 
@@ -487,6 +616,30 @@ class CoachAgent:
         except Exception:
             pass
 
+        # Phase 29 P1-4: 根据掌握度最低技能自动选话题
+        try:
+            if self.diagnostic_engine and intent == "general":
+                summary = self.diagnostic_engine.get_mastery_summary()
+                skills = summary.get("skills", {})
+                if skills:
+                    from src.coach.composer import PolicyComposer
+                    weakest = PolicyComposer._select_topic_by_mastery({"skills": skills})
+                    if weakest:
+                        intent = weakest
+        except Exception:
+            pass
+
+        # Phase 30: 知识图谱关联技能日志
+        try:
+            from src.coach.diagnostic_engine import SkillGraph
+            sg = SkillGraph()
+            if intent not in ("general", "suggest"):
+                related = sg.get_related(intent)
+                if related:
+                    _logger.info("Phase 30: %s related skills: %s", intent, related)
+        except Exception:
+            pass
+
         # 4d. 选择 action_type（三模型融合 + Phase 6 CEO/Manager 分层）
         if mapek_active:
             # Phase 6: CEO → Manager → Specialist 三层决策
@@ -500,6 +653,7 @@ class CoachAgent:
                 "ttm_strategy": ttm_strategy,
                 "sdt_profile": sdt_profile,
                 "flow_result": flow_result,
+                "self_eval": getattr(self, '_self_eval', None),
             })
         else:
             action = self.composer.compose(
@@ -508,6 +662,7 @@ class CoachAgent:
                 ttm_strategy=ttm_strategy,
                 sdt_profile=sdt_profile,
                 flow_result=flow_result,
+                self_eval=getattr(self, '_self_eval', None),
             )
 
         # Phase 23: 复习覆盖 — 低保留率技能优先
@@ -540,6 +695,10 @@ class CoachAgent:
             )
         except Exception:
             _logger.warning("Cross-track check failed", exc_info=True)
+
+        # Phase 29: cross_track 修正建议注入 payload
+        if cross_track_result and cross_track_result.get("correction"):
+            action["payload"]["_cross_track_correction"] = cross_track_result["correction"]
 
         # 4h. Phase 5: 失败先例拦截（默认关闭，命中→降级 defer）
         precedent_result = None
@@ -593,7 +752,22 @@ class CoachAgent:
                 )
                 if probe:
                     diagnostic_probe = probe
-                    if action.get("action_type") not in ("probe",):
+                    # 最多连续1次probe; 低自主性时不覆盖 scaffold/suggest (先教再测)
+                    prev_atype = None
+                    try:
+                        raw = self.memory.recall("general", None, limit=2)
+                        for h in (raw or []):
+                            if h.get("data", {}).get("session_id") == self.session_id:
+                                prev_atype = h.get("data", {}).get("action_type")
+                                break
+                    except Exception:
+                        pass
+                    skip_reasons = [
+                        prev_atype == "probe",  # 连续probe
+                        action.get("action_type") == "probe",  # 已经是probe
+                        (sdt_profile or {}).get("autonomy", 0.5) < 0.4,  # 低自主性先教
+                    ]
+                    if not any(skip_reasons):
                         action["action_type"] = "probe"
                         action["payload"] = {
                             "prompt": probe.get("question", ""),
@@ -645,20 +819,33 @@ class CoachAgent:
                         _memory_snippets = _mem_list[:3]
                 except Exception:
                     pass
+                # Phase 29: learning_path 提取主题
+                try:
+                    from src.coach.llm.learning_path import LearningPathTracker
+                    lp = LearningPathTracker()
+                    topics_from_text = lp.extract_topics_from_text(user_input)[:5]
+                    if topics_from_text:
+                        _covered_topics = list(set(_covered_topics or []) | set(topics_from_text))
+                except Exception:
+                    pass
                 ctx = build_coach_context(
                     intent=intent,
                     action_type=action.get("action_type", "suggest"),
                     ttm_stage=ttm_stage,
                     sdt_profile=sdt_profile,
                     user_message=user_input,
-                    history=[
-                        h for h in self.memory.recall(intent, user_state)
-                        if h.get("data", {}).get("session_id") == self.session_id
-                    ][:5],
+                    history=[],  # Phase 27: 不传原始标签, 改用结构化上下文摘要
                     memory_snippets=_memory_snippets,
                     covered_topics=_covered_topics,
                     difficulty=_llm_difficulty,
                 )
+                # Phase 26: 追加进步报告
+                if self._progress_summary:
+                    ctx["system"] += "\n\n" + str(self._progress_summary)
+                # Phase 27: 注入结构化上下文摘要
+                ctx_summary = self._build_context_summary()
+                if ctx_summary:
+                    ctx["system"] += "\n\n## 对话上下文\n你必须引用用户上一条消息中提到的具体内容。\n从上一轮的 [教] 内容继续教学, 不要从零开始。\n" + ctx_summary
                 llm_response = client.generate(ctx)
                 payload = llm_response.to_payload()
                 aligned_payload, align_report = LLMDSLAligner.align(
@@ -680,6 +867,23 @@ class CoachAgent:
                 _logger.warning("LLM generation failed: %s; using rule fallback", e)
             except Exception as e:
                 _logger.warning("LLM step unexpected error: %s; using rule fallback", e)
+
+        # Phase 31: 记录本轮教学内容供下轮上下文引用
+        try:
+            payload = action.get("payload", dict())
+            stmt = payload.get("statement", "") or payload.get("option", "") or payload.get("prompt", "")
+            atype = action.get("action_type", "")
+            if stmt and len(stmt) > 3:
+                self._prev_teaching = f"[教] {atype}: {stmt[:120]}"
+                # 跨实例持久化
+                try:
+                    if self._persistence:
+                        self._persistence.save_history_snapshot(
+                            "_prev_teaching", "", self._prev_teaching)
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
         # 5. 构建 DSL packet
         packet = DSLBuilder.build(action)
@@ -746,7 +950,7 @@ class CoachAgent:
         sr = pipeline_result["safety_result"]
         self.memory.store(self.session_id, {
             "user_input": user_input,
-            "intent": intent,
+            "intent": packet.get("intent", intent),
             "action_type": packet["action_type"],
             "safety_allowed": sr["allowed"],
         })
@@ -843,6 +1047,137 @@ class CoachAgent:
                 self._rmm.run()
             except Exception:
                 _logger.warning("RMM run failed", exc_info=True)
+        # Phase 25: 本轮教学自评（供下轮 compose 使用）
+        try:
+            eval_reason = "effective"
+            eval_ineffective = False
+            if sdt_profile and sdt_profile.get("competence", 0.5) < 0.3:
+                eval_ineffective = True
+                eval_reason = "competence_low"
+            if flow_result:
+                channel = flow_result.get("flow_channel", "")
+                if channel == "anxiety":
+                    eval_ineffective = True
+                    eval_reason = "flow_anxiety"
+            self._self_eval = {
+                "strategy_ineffective": eval_ineffective,
+                "reason": eval_reason,
+                "action_type": packet.get("action_type", "suggest"),
+            }
+        except Exception:
+            self._self_eval = None
+
+        # Phase 27: 更新上下文引擎状态
+        self._current_atype = packet.get("action_type", "suggest")
+        try:
+            sd = sdt_profile or {}
+            comp = sd.get("competence", 0.5)
+            if comp < 0.3:
+                r = "困难(competence偏低)"
+            elif comp > 0.7:
+                r = "顺利(competence充足)"
+            else:
+                r = "正常跟进"
+            self._prev_ctx = {"action_type": self._current_atype, "reaction": r}
+        except Exception:
+            self._prev_ctx = {"action_type": self._current_atype, "reaction": "正常跟进"}
+
+        # Phase 29: 全线接线 — 5 处 save
+        # 用 user_input 原文 (parsed intent 常为 "general")
+        topic_text = (user_input or "").strip()
+        has_topic = topic_text and len(topic_text) > 3 and intent != "suggest_options"
+        if self._persistence and has_topic:
+            # P0-1: save_current_topic
+            try:
+                self._persistence.save_current_topic(topic_text[:80])
+            except Exception:
+                pass
+            # P0-2: save_learning_goal (仅当未设置且消息有意义时)
+            try:
+                old = self._persistence.load_learning_goal()
+                if not old and len(topic_text) > 10:
+                    self._persistence.save_learning_goal(topic_text[:80])
+            except Exception:
+                pass
+            # P2-6: save_topics
+            try:
+                old_topics = self._persistence.load_topics()
+                if topic_text not in old_topics:
+                    self._persistence.save_topics(old_topics + [topic_text])
+            except Exception:
+                pass
+        # P0-3: save_goal_progress
+        if self._persistence and self.diagnostic_engine:
+            try:
+                summary = self.diagnostic_engine.get_mastery_summary()
+                skills = summary.get("skills", {})
+                if skills:
+                    avg = sum(skills.values()) / max(len(skills), 1)
+                    self._persistence.save_goal_progress(avg)
+            except Exception:
+                pass
+            # P1-5: adjust_difficulty
+            try:
+                recent = summary.get("recent_history", [])
+                if recent:
+                    correct_count = sum(1 for r in recent if r.get("correct"))
+                    rate = correct_count / max(len(recent), 1)
+                    self._persistence.adjust_difficulty(rate)
+            except Exception:
+                pass
+
+        # Phase 31: 用户画像 — entity_profiles + facts 写入
+        try:
+            import time as _t
+            self.memory._facts.upsert_entity(
+                entity_id=self.session_id,
+                timeline=[{"turn": self._turn_count, "intent": intent, "ts": _t.time()}],
+                session_tags=["active"],
+            )
+            if self.diagnostic_engine:
+                for skill, mastery in self.diagnostic_engine.store.get_all_masteries().items():
+                    self.memory._facts.insert_fact(
+                        fact_id=f"skill_{skill}_{int(_t.time())}",
+                        claim=f"掌握度 {skill}={mastery:.2f}",
+                        confidence=mastery,
+                        source_tag="statistical_model",
+                    )
+        except Exception:
+            pass
+
+        # Phase 26: 进步反馈生成 (事件驱动)
+        self._progress_summary = None
+        try:
+            import time as _time
+            now = _time.time()
+            if now - self._last_progress_ts >= 3600:
+                reasons: list[str] = []
+                skills: dict[str, float] = {}
+                if self.diagnostic_engine:
+                    summary = self.diagnostic_engine.get_mastery_summary()
+                    skills = summary.get("skills", {})
+                    for skill, mastery in skills.items():
+                        old = self._last_mastery.get(skill, mastery)
+                        diff = mastery - old
+                        if diff > 0.1:
+                            reasons.append(f"{skill}: {old:.0%}->{mastery:.0%}")
+                        if skill in self._last_mastery and mastery >= 0.7 and self._last_mastery.get(skill, 0) < 0.7:
+                            reasons.append(f"{skill}: 已达到{mastery:.0%}")
+                if self._persistence:
+                    from src.coach.flow import BKTEngine
+                    bkt = BKTEngine()
+                    skills_data = self._persistence.get_skills_with_recency()
+                    for skill, data in skills_data.items():
+                        ret = bkt.estimate_retention(data["mastery"], data["days_elapsed"])
+                        if ret < 0.6:
+                            reasons.append(f"{skill}: 建议复习(保留率{ret:.0%})")
+                if reasons:
+                    self._progress_summary = "学习进展: " + "; ".join(reasons[:3])
+                    self._last_progress_ts = now
+                    self._last_mastery = dict(skills)
+        except Exception:
+            pass
+
         # Phase 20 S20.1a: 每轮持久化（写失败不阻塞主流程）
         try:
             if self._persistence:
@@ -960,6 +1295,7 @@ class CoachAgent:
         elif self._excursion_active:
             # 仅在非命令回合消耗
             self._excursion_remaining -= 1
+            self._excursion_evidence.append(user_input[:200])
             if self._excursion_remaining <= 0:
                 self._excursion_active = False
 
@@ -1113,6 +1449,7 @@ class CoachAgent:
     # ── 意图解析 ────────────────────────────────────────────────
 
     @staticmethod
+    @staticmethod
     def _parse_intent(user_input: str) -> str:
         if not user_input:
             return "general"
@@ -1130,8 +1467,8 @@ class CoachAgent:
         caps = cfg.get("capabilities", {})
         if not caps:
             return None
-        # Phase 17: 已同意/拒绝的用户不再展示唤醒
-        if self._consent_status in ("consented", "declined"):
+        # 已同意/拒绝/已展示过的用户不再展示唤醒
+        if self._consent_status in ("consented", "declined", "shown"):
             return None
         recommended = []
         advanced = []
@@ -1152,6 +1489,12 @@ class CoachAgent:
                     advanced.append(entry)
         if not recommended and not advanced:
             return None
+        # 持久化标记已展示——下次请求不再弹
+        try:
+            if self._persistence:
+                self._persistence.save_consent_status("shown")
+        except Exception:
+            pass
         self._consent_pending = True
         return {
             "triggered": True,
@@ -1190,16 +1533,16 @@ class CoachAgent:
         is_consent = any(re.search(p, lowered) for p in consent_patterns)
         is_decline = any(re.search(p, lowered) for p in decline_patterns)
 
-        # never_asked: 仅在唤醒刚展示后 (pending) 响应
-        if self._consent_status == "never_asked" and not self._consent_pending:
-            return None
+        # never_asked: 用户可以随时说"启用推荐"触发 consent（不依赖跨实例 _consent_pending）
+        if self._consent_status == "never_asked":
+            if not is_consent and not is_decline:
+                return None
         # declined: 允许反悔——仅匹配同意关键词时重新激活
-        if self._consent_status == "declined":
+        elif self._consent_status == "declined":
             if not is_consent:
                 return None
         else:
-            if not is_consent and not is_decline:
-                return None
+            return None
 
         if is_consent:
             was_declined = self._consent_status == "declined"

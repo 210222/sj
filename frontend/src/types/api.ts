@@ -24,6 +24,14 @@ export interface ChatResponse {
   pulse: PulseEvent | null;
   diagnostic_result: Record<string, unknown> | null;
   diagnostic_probe: Record<string, unknown> | null;
+  // Phase 19-26: 教学元数据
+  llm_generated?: boolean;
+  llm_model?: string;
+  llm_tokens?: number;
+  personalization_evidence?: Record<string, unknown> | null;
+  memory_status?: Record<string, unknown> | null;
+  difficulty_contract?: Record<string, unknown> | null;
+  awakening?: Record<string, unknown> | null;
 }
 
 export interface PulseEvent {

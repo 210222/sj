@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>接入剩余 4 个未接线方法</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>29</phase>
+  <sub_stage>WIRE_4</sub_stage>
+  <sub_stage_name>add_excursion_evidence / suggest_correction / extract_topics / get_related</sub_stage_name>
+
+  <context>
+    9 个未接线方法中, 核心链上需要接的 4 个:
+
+    1. add_excursion_evidence — 远足模式不记录探索证据, _excursion_evidence 永远空
+    2. suggest_correction — cross_track 检查运行了但修正建议没传给 composer
+    3. extract_topics_from_text + get_new_topics — learning_path 完整模块未接入
+    4. get_related — Phase 30 知识图谱关联技能未传入 context
+
+    其余 5 个 (is_pending, probe_count, get_experiments, get_related(不同位),
+    total_skills) 内部功能已通, 仅缺外部统计接口, 不入核心链。
+  </context>
+
+  <task>
+
+    === 1: add_excursion_evidence (agent.py, _detect_excursion_command 中) ===
+
+    在远足模式收集证据的位置追加:
+    try:
+        self._excursion_evidence.append(user_input[:200])
+    except Exception:
+        pass
+
+    === 2: suggest_correction (agent.py, cross_track_result 之后) ===
+
+    在 act() 中 cross_track_result 生成后 (约第 495 行):
+    if cross_track_result and cross_track_result.get("correction"):
+        action["payload"]["_cross_track_correction"] = cross_track_result["correction"]
+
+    === 3: extract_topics_from_text (agent.py, build_coach_context 之前) ===
+
+    在 _covered_topics 填充处追加:
+    try:
+        from src.coach.llm.learning_path import get_learning_path
+        lp = get_learning_path()
+        topics_from_text = lp.extract_topics_from_text(user_input)[:5]
+        if topics_from_text:
+            _covered_topics = list(set(_covered_topics or []) | set(topics_from_text))
+    except Exception:
+        pass
+
+    === 4: get_related (agent.py, compose 调用前) ===
+
+    在 P1-4 select_topic_by_mastery 旁追加:
+    try:
+        if self.diagnostic_engine and hasattr(self.diagnostic_engine, "_skill_graph"):
+            sg = self.diagnostic_engine._skill_graph
+            if sg and intent != "general":
+                related = sg.get_related(intent)
+                if related:
+                    _logger.info("Phase 30: %s related skills: %s", intent, related)
+    except Exception:
+        pass
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>远足模式时 _excursion_evidence 非空</item>
+    <item>cross_track_result 含 correction 时 payload 中携带</item>
+    <item>covered_topics 含 learning_path 提取的 topic</item>
+    <item>get_related 在日志中有输出</item>
+  </success_criteria>
+</prompt>

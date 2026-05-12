@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S30.2 -- BKT 传播</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>30</phase>
+  <sub_stage>S30.2</sub_stage>
+  <sub_stage_name>SkillMasteryStore.update() 后调用 SkillGraph.propagate()</sub_stage_name>
+
+  <role>
+    当 DiagnosticEngine 更新 BKT mastery 后, 调用 SkillGraph.propagate() 将增益传播到依赖该技能的技能。
+    传播率 30%: 父技能 mastery 提升 0.1, 子技能 prior 提升 0.03。
+  </role>
+
+  <context>
+    改动: diagnostic_engine.py SkillMasteryStore.update() 方法中追加传播。
+    不修改 BKTEngine (flow.py 冻结)。
+  </context>
+
+  <task>
+
+    改动: diagnostic_engine.py SkillMasteryStore.update() (约第 115 行)
+
+    当前:
+    def update(self, skill: str, correct: bool) -> float:
+        engine = self._get_engine(skill)
+        obs = 1 if correct else 0
+        probs = engine.predict([obs])
+        new_mastery = probs[-1]
+        self._mastery[skill] = new_mastery
+        self._observation_count[skill] = self._observation_count.get(skill, 0) + 1
+        return new_mastery
+
+    改后:
+    def update(self, skill: str, correct: bool, skill_graph: "SkillGraph | None" = None) -> float:
+        engine = self._get_engine(skill)
+        obs = 1 if correct else 0
+        probs = engine.predict([obs])
+        new_mastery = probs[-1]
+        old_mastery = self._mastery.get(skill, 0.3)
+        gain = new_mastery - old_mastery
+        self._mastery[skill] = new_mastery
+        self._observation_count[skill] = self._observation_count.get(skill, 0) + 1
+
+        # Phase 30: 知识图谱传播
+        if skill_graph and gain > 0:
+            boosts = skill_graph.propagate(skill, gain, self._mastery)
+            for dep_skill, new_val in boosts.items():
+                old = self._mastery.get(dep_skill, 0.3)
+                if new_val > old:
+                    self._mastery[dep_skill] = new_val
+
+        return new_mastery
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>update("python_list", True) 后, python_dict 的 mastery 提升</item>
+    <item>gain=0 时 (答错), 不传播</item>
+    <item>skill_graph=None 时, 行为不变 (兼容旧调用)</item>
+  </success_criteria>
+</prompt>

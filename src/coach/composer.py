@@ -43,6 +43,7 @@ class PolicyComposer:
         ttm_strategy: dict | None = None,
         sdt_profile: dict | None = None,
         flow_result: dict | None = None,
+        self_eval: dict | None = None,
     ) -> dict:
         """三模型融合：TTM→SDT→心流 → action dict。"""
         action_type = self._select_action_type(intent)
@@ -70,17 +71,22 @@ class PolicyComposer:
                 elif recommended and action_type not in recommended and not avoided:
                     action_type = recommended[0]
 
-            # 2. SDT 微调：低自主性→reflect，低胜任感→降难度
+            # 2. SDT 微调
             if sdt_profile:
                 advice = sdt_profile.get("advice", {})
-                if advice.get("adjust_autonomy_support"):
+                autonomy = sdt_profile.get("autonomy", 0.5)
+                competence = sdt_profile.get("competence", 0.5)
+
+                # 低自主性: 用户需要明确引导 → 强制 scaffold (优先级最高, 覆盖 TTM 推荐)
+                if autonomy < 0.4 and action_type in ("suggest", "probe", "reflect", "challenge"):
+                    action_type = "scaffold"
+                # 高自主性: adjust_autonomy_support → 给更多选择
+                elif advice.get("adjust_autonomy_support"):
                     if action_type in ("suggest", "scaffold"):
                         action_type = "reflect"
                 if advice.get("adjust_difficulty") == "lower":
                     self._adjust_difficulty_down(payload)
                 # S19.3: 高自主性 + 高胜任感 → 升级到 challenge
-                autonomy = sdt_profile.get("autonomy", 0.5)
-                competence = sdt_profile.get("competence", 0.5)
                 if autonomy > 0.7 and competence > 0.7 and action_type in ("suggest", "scaffold", "reflect"):
                     action_type = "challenge"
 
@@ -93,6 +99,20 @@ class PolicyComposer:
                     idx = levels.index(current) if current in levels else 1
                     new_idx = max(0, min(len(levels) - 1, idx + (1 if adjust > 0 else -1)))
                     payload["difficulty"] = levels[new_idx]
+
+        # Phase 25: 策略无效时切换教学模式
+        if self_eval and self_eval.get("strategy_ineffective"):
+            current = action_type
+            switch_map = {
+                "scaffold": "probe",
+                "challenge": "scaffold",
+                "probe": "reflect",
+                "suggest": "scaffold",
+            }
+            switched = switch_map.get(current)
+            if switched and switched != current:
+                action_type = switched
+                payload = self._build_payload(action_type, intent)
 
         # Phase 5: Domain Competence Passport（越权熔断 + 迁移税）
         if excursion_mode:
@@ -122,7 +142,7 @@ class PolicyComposer:
             for kw in keywords:
                 if kw in intent.lower() or kw in intent:
                     return action_type
-        return "suggest"
+        return "scaffold"  # Phase 31: 默认直接开始教学, 不空泛提问
 
     @staticmethod
     def _build_payload(action_type: str, intent: str) -> dict:
@@ -290,19 +310,33 @@ class PolicyComposer:
     # ── Phase 20 S20.3: 学习目标支持 ──
 
     @staticmethod
-    def _select_topic_by_mastery(mastery_summary: dict | None) -> str | None:
-        """从技能掌握度中选择掌握度最低的 topic。
+    def _select_topic_by_mastery(mastery_summary: dict | None,
+                                  skill_graph: "SkillGraph | None" = None) -> str | None:
+        """从技能掌握度中选择最佳教学 topic。
 
-        Args:
-            mastery_summary: diagnostic_engine.get_mastery_summary() 的输出
-                {"skills": {"python_list": 0.73, "python_loop": 0.45}, ...}
-
-        Returns:
-            掌握度最低的 skill 名称，无数据时返回 None
+        Phase 30: 优先选 mastery 最低且前置已掌握的技能。
+        无满足条件的技能时, 选最薄弱的前置技能作为教学起点。
         """
         if not mastery_summary:
             return None
         skills = mastery_summary.get("skills", {})
         if not skills:
             return None
-        return min(skills, key=skills.get)
+
+        sorted_skills = sorted(skills.items(), key=lambda x: x[1])
+        if skill_graph is None:
+            return sorted_skills[0][0]
+
+        # 选 mastery 最低且前置已掌握的
+        for skill, _ in sorted_skills:
+            missing = skill_graph.has_unmastered_prerequisites(skill, skills)
+            if not missing:
+                return skill
+
+        # 所有技能都有未掌握的前置 → 选最薄弱的前置
+        for skill, _ in sorted_skills:
+            missing = skill_graph.has_unmastered_prerequisites(skill, skills)
+            if missing:
+                return min(missing, key=lambda s: skills.get(s, 0))
+
+        return sorted_skills[0][0]

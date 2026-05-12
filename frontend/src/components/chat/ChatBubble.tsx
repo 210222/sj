@@ -65,6 +65,59 @@ export function ChatBubble({ message, onEnableRecommended, onSkipAwakening }: Ch
         {message.content}
       </div>
 
+      {/* Phase 29: 选项按钮 */}
+      {message.options && message.options.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6, maxWidth: '75%' }}>
+          {message.options.map((opt, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                const text = opt.label.replace(/\(.*\)/, '').trim();
+                // 触发发送消息 (通过自定义事件)
+                window.dispatchEvent(new CustomEvent('coach-option-click', { detail: text }));
+              }}
+              style={{
+                padding: '8px 14px', borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-sage-green)',
+                background: 'var(--color-warm-white)',
+                color: 'var(--color-deep-mocha)',
+                fontSize: 13, cursor: 'pointer', textAlign: 'left',
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Phase 28: 教学标签 (仅教练消息) */}
+      {!isUser && message.actionType !== 'awakening' && (
+        <div style={{
+          display: 'flex', gap: 4, flexWrap: 'wrap',
+          marginTop: 4, fontSize: 11, opacity: 0.7,
+        }}>
+          {message.llm_generated ? (
+            <span style={{ padding: '1px 6px', borderRadius: 8,
+              background: coachColors.sageGreen, color: '#fff' }}>AI</span>
+          ) : (
+            <span style={{ padding: '1px 6px', borderRadius: 8,
+              background: coachColors.lavenderGray, color: coachColors.deepMocha }}>规则</span>
+          )}
+          {message.difficulty_contract?.level != null && (
+            <span style={{ padding: '1px 6px', borderRadius: 8,
+              background: coachColors.coralCandy, color: coachColors.deepMocha }}>
+              难度: {({easy:'简单',medium:'中等',hard:'困难'} as Record<string,string>)[String(message.difficulty_contract.level)] || String(message.difficulty_contract.level)}
+            </span>
+          )}
+          {(message.personalization_evidence as any)?.sources_count > 0 && (
+            <span style={{ padding: '1px 6px', borderRadius: 8,
+              background: coachColors.softBlue, color: coachColors.deepMocha }}>
+              已引用
+            </span>
+          )}
+        </div>
+      )}
+
       {tagStyle && (
         <span
           style={{

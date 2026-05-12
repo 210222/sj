@@ -112,14 +112,28 @@ class SkillMasteryStore:
             self._observation_count[skill] = 0
         return self._engines[skill]
 
-    def update(self, skill: str, correct: bool) -> float:
-        """记录一次观测，返回更新后的 P(learned)."""
+    def update(self, skill: str, correct: bool, skill_graph: "SkillGraph | None" = None) -> float:
+        """记录一次观测，返回更新后的 P(learned).
+
+        Phase 30: 知识传播 —— 掌握度提升后按 30% 比例传播到依赖此技能的子技能。
+        """
         engine = self._get_engine(skill)
         obs = 1 if correct else 0
         probs = engine.predict([obs])
-        new_mastery = probs[-1]  # predict 返回 [prior, after_obs1, ...]
+        new_mastery = probs[-1]
+        old_mastery = self._mastery.get(skill, 0.3)
+        gain = new_mastery - old_mastery
         self._mastery[skill] = new_mastery
         self._observation_count[skill] = self._observation_count.get(skill, 0) + 1
+
+        # Phase 30: 知识图谱传播
+        if skill_graph and gain > 0:
+            boosts = skill_graph.propagate(skill, gain, self._mastery)
+            for dep_skill, new_val in boosts.items():
+                old = self._mastery.get(dep_skill, 0.3)
+                if new_val > old:
+                    self._mastery[dep_skill] = new_val
+
         return new_mastery
 
     def get_mastery(self, skill: str) -> float:
@@ -570,3 +584,53 @@ class DiagnosticEngine:
         if ratio >= 0.5:
             return True, min(0.5 + ratio * 0.3, 0.8)
         return False, max(0.3, ratio * 0.5)
+
+
+# ── Phase 30: 技能知识图谱 ──────────────────────────────────
+
+class SkillGraph:
+    """技能依赖关系图谱.
+
+    加载 JSON DAG, 提供前置查询和知识传播。
+    """
+
+    def __init__(self, graph_path: str | None = None):
+        import json as _json
+        from pathlib import Path as _Path
+        path = graph_path or str(_Path(__file__).resolve().parent.parent.parent / "config" / "skill_graph.json")
+        self._graph: dict[str, dict] = {}
+        try:
+            p = _Path(path)
+            if p.exists():
+                with open(p, encoding="utf-8") as f:
+                    self._graph = _json.load(f)
+        except Exception:
+            pass
+
+    def get_prerequisites(self, skill: str) -> list[str]:
+        return self._graph.get(skill, {}).get("prerequisites", [])
+
+    def get_related(self, skill: str) -> list[str]:
+        return self._graph.get(skill, {}).get("related", [])
+
+    def get_dependents(self, skill: str) -> list[str]:
+        """返回依赖此技能的其他技能."""
+        return [s for s, info in self._graph.items() if skill in info.get("prerequisites", [])]
+
+    def has_unmastered_prerequisites(self, skill: str, mastery: dict[str, float],
+                                      threshold: float = 0.6) -> list[str]:
+        """返回 skill 中掌握度低于 threshold 的前置技能."""
+        prereqs = self.get_prerequisites(skill)
+        return [p for p in prereqs if mastery.get(p, 0) < threshold]
+
+    def propagate(self, skill: str, gain: float, mastery: dict[str, float],
+                  rate: float = 0.3) -> dict[str, float]:
+        """技能 mastery 提升后, 按 rate 传播到依赖它的子技能."""
+        result = {}
+        for dep in self.get_dependents(skill):
+            old = mastery.get(dep, 0.3)
+            boost = gain * rate
+            new = min(1.0, old + boost)
+            if new != old:
+                result[dep] = new
+        return result

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Frontend 修复 -- 类型补全 + 教学数据展示 + 状态指示</name>
+  <version>1.0.0</version>
+  <track>FRONTEND</track>
+  <phase>28</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>前端无法展示教学数据: 类型缺字段 + payload 提取不完整 + 无教学状态</sub_stage_name>
+
+  <context>
+    问题分析:
+    1. ChatResponse 类型缺 Phase 19-26 字段 -> TS 无法使用
+    2. extractPayloadText() 只取 statement/question/option 等文本字段, 不展示教学数据
+    3. ChatBubble 不展示 difficulty/personalization/mastery 状态
+    4. useCoachState 不存储教学元数据 (difficulty_contract, personalization_evidence)
+    5. 后端返回的教学数据到达前端后直接被丢弃
+  </context>
+
+  <risk_analysis>
+    改动范围: frontend/src/types/api.ts, App.tsx, ChatBubble.tsx, useCoachState.ts
+    副作用: localStorage 存储的消息格式变更, 已有缓存需兼容
+    兼容策略: 新增字段为 optional, 旧缓存缺失时不崩溃
+  </risk_analysis>
+
+  <sub_stages>
+    <stage id="f1" name="API 类型补全">
+      <meta_prompt>202_f1_api_types.xml</meta_prompt>
+    </stage>
+    <stage id="f2" name="教学数据展示">
+      <meta_prompt>203_f2_display.xml</meta_prompt>
+    </stage>
+    <stage id="f3" name="教学状态指示">
+      <meta_prompt>204_f3_status.xml</meta_prompt>
+    </stage>
+    <stage id="f4" name="回归验证">
+      <meta_prompt>205_f4_regression.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+</prompt>

@@ -96,13 +96,19 @@ def extract_memory_snippets(
 
 
 def format_history_for_prompt(history: list[dict]) -> str:
-    """将历史记录格式化为 prompt 可用的文本."""
+    """将历史记录格式化为 prompt 可用的文本，包含用户消息原文."""
     if not history:
         return "（无历史记录）"
     lines = []
     for h in history:
+        data = h.get("data", {}) if isinstance(h, dict) else {}
+        user_msg = data.get("user_input", "")
         intent = h.get("intent", "general")
-        lines.append(f"- 第{h.get('turn', '?')}轮: {intent}")
+        action = data.get("action_type", "")
+        if user_msg:
+            lines.append(f"- 第{h.get('turn', '?')}轮: 用户说\"{user_msg[:80]}\" (意图:{intent}, 策略:{action})")
+        else:
+            lines.append(f"- 第{h.get('turn', '?')}轮: {intent}")
     return "\n".join(lines)
 
 

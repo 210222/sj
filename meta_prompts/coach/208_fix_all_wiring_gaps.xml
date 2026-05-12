@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>全 7 处接线修复 (审查修订版)</name>
+  <version>1.1.0</version>
+  <track>COACH</track>
+  <phase>29</phase>
+  <sub_stage>FIX_ALL</sub_stage>
+  <sub_stage_name>审查发现 2 个 P0 bug: compose() 无 context 参数 + Pydantic 模型不能随机加字段</sub_stage_name>
+
+  <context>
+    审查发现 2 个 P0 bug:
+
+    1. P1-4 引用了 `context` 变量, 但 compose() 签名中无此参数:
+       def compose(self, user_state, intent, relevant, excursion_mode,
+                    ttm_strategy, sdt_profile, flow_result, self_eval)
+       — 没有 context 参数。
+
+    2. P2-7 直接往 UserDashboardResponse 追加 key:
+       return UserDashboardResponse(...) — Pydantic 模型固定字段, 不能随意加。
+
+    修复:
+    P1-4: 移到 agent.py compose 调用前 (diagnostic_engine 可访问)
+    P2-7: 先改 schemas.py 模型, 再加字段
+  </context>
+
+  <task>
+
+    === P0-1: save_current_topic (agent.py, return 前) ===
+
+    if self._persistence and intent and intent not in ("general", "suggest_options", "suggest"):
+        self._persistence.save_current_topic(intent)
+
+    === P0-2: save_learning_goal (agent.py, return 前) ===
+
+    if self._persistence and intent not in ("general", "suggest_options", "suggest"):
+        old = self._persistence.load_learning_goal()
+        if not old:
+            self._persistence.save_learning_goal(intent)
+
+    === P0-3: save_goal_progress (agent.py, return 前) ===
+
+    if self._persistence and self.diagnostic_engine:
+        summary = self.diagnostic_engine.get_mastery_summary()
+        skills = summary.get("skills", {})
+        if skills:
+            avg = sum(skills.values()) / max(len(skills), 1)
+            self._persistence.save_goal_progress(avg)
+
+    === P1-4: select_topic_by_mastery (agent.py, compose 调用前) ===
+
+    # 根据掌握度最低的技能自动选择教学话题
+    try:
+        if self.diagnostic_engine:
+            summary = self.diagnostic_engine.get_mastery_summary()
+            skills = summary.get("skills", {})
+            if skills:
+                weakest = PolicyComposer._select_topic_by_mastery({"skills": skills})
+                if weakest and intent == "general":
+                    intent = weakest
+    except Exception:
+        pass
+
+    === P1-5: adjust_difficulty (agent.py, return 前) ===
+
+    if self._persistence and self.diagnostic_engine:
+        summary = self.diagnostic_engine.get_mastery_summary()
+        recent = summary.get("recent_history", [])
+        if recent:
+            correct_count = sum(1 for r in recent if r.get("correct"))
+            rate = correct_count / max(len(recent), 1)
+            new_level = self._persistence.adjust_difficulty(rate)
+            if new_level:
+                _logger.info("Phase 29: difficulty adjusted to %s", new_level)
+
+    === P2-6: save_topics (agent.py, return 前) ===
+
+    if self._persistence and intent not in ("general", "suggest_options", "suggest"):
+        old_topics = self._persistence.load_topics()
+        if intent not in old_topics:
+            self._persistence.save_topics(old_topics + [intent])
+
+    === P2-7: mastery_snapshot API (schemas.py + dashboard.py) ===
+
+    2a. api/models/schemas.py UserDashboardResponse 新增:
+
+    class UserDashboardResponse(BaseModel):
+        session_id: str
+        ttm_radar: TTMRadarData
+        sdt_rings: SDTRingsData
+        progress: ProgressData
+        mastery_snapshot: dict | None = None  # Phase 29
+
+    2b. api/routers/dashboard.py get_user_dashboard return 前:
+
+    try:
+        from api.services.dashboard_aggregator import DashboardAggregator
+        snap = DashboardAggregator.get_mastery_snapshot(session_id)
+    except Exception:
+        snap = None
+    return UserDashboardResponse(
+        session_id=session_id,
+        ttm_radar=TTMRadarData(**ttm_data),
+        sdt_rings=SDTRingsData(**sdt_data),
+        progress=ProgressData(**progress_data),
+        mastery_snapshot=snap,
+    )
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>1 轮对话后: current_topic 非空, learning_goal 非空, topics 非空</item>
+    <item>"继续当前教学"显示具体 topic</item>
+    <item>GET /dashboard/user 响应含 mastery_snapshot</item>
+    <item>compose() 签名不变 (无 context 参数)</item>
+  </success_criteria>
+</prompt>

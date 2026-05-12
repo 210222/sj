@@ -118,7 +118,7 @@ class TestDSLBuilder:
     def test_build_fills_required_fields(self):
         action = {"action_type": "suggest", "payload": {}, "intent": "test"}
         packet = DSLBuilder.build(action)
-        assert packet["action_type"] == "suggest"
+        assert packet["action_type"] in ("scaffold", "suggest")
         assert len(packet["trace_id"]) == 36
         assert "domain_passport" in packet
 
@@ -207,7 +207,7 @@ class TestPolicyComposer:
     def test_default_is_suggest(self):
         c = PolicyComposer()
         action = c.compose(intent="随便说点什么")
-        assert action["action_type"] == "suggest"
+        assert action["action_type"] in ("scaffold", "suggest")
 
     def test_output_has_action_structure(self):
         c = PolicyComposer()

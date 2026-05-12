@@ -42,7 +42,7 @@ export function AwakeningPanel({
       border: `1px solid ${coachColors.lavenderGray}`,
     }}>
       <h4 style={{ fontSize: 15, fontWeight: 600, color: coachColors.deepMocha, marginBottom: 4 }}>
-        I have {totalModules} advanced capabilities you can enable
+        我有 {totalModules} 项高级能力可供你启用
       </h4>
 
       {/* ── 推荐启用区 ── */}
@@ -78,7 +78,7 @@ export function AwakeningPanel({
                   background: coachColors.sageGreen + '25',
                   color: coachColors.sageGreen, fontWeight: 600,
                 }}>
-                  RECOMMENDED
+                  推荐
                 </span>
               </div>
               <p style={{ fontSize: 11, color: coachColors.clayBrown, margin: '4px 0 0' }}>
@@ -150,7 +150,7 @@ export function AwakeningPanel({
                     cap.risk === '高' ? coachColors.coralCandy : coachColors.sageGreen + '30',
                   color: coachColors.deepMocha,
                 }}>
-                  {cap.risk === '高' ? 'advanced' : cap.risk === '中' ? 'moderate' : 'safe'}
+                  {cap.risk === 'high' ? '高级' : cap.risk === 'medium' ? '中等' : '安全'}
                 </span>
               </div>
               <p style={{ fontSize: 11, color: coachColors.clayBrown, margin: '4px 0 0' }}>

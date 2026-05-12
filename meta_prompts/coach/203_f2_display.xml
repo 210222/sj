@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>F2: 教学数据展示</name>
+  <version>1.0.0</version>
+  <track>FRONTEND</track>
+  <phase>28</phase>
+  <sub_stage>F2</sub_stage>
+  <sub_stage_name>ChatBubble 显示 difficulty/personalization/memory_status 教学标签</sub_stage_name>
+
+  <role>
+    ChatBubble 现在只显示消息文本 + source_tag 标签。
+    不显示 difficulty_contract (教学难度)、personalization_evidence (个性化证据)、llm_generated (是否 AI)。
+    用户看不到教学状态, 不知道回复是 LLM 生成还是规则模板。
+  </role>
+
+  <context>
+    每轮消息已经有了:
+      ttm_stage, sdt_profile, flow_channel 等 (已通过 setTTMStage 等存储)
+      difficulty_contract, personalization_evidence, memory_status (新加)
+
+    但 ChatBubble 只渲染 message.content, 不渲染这些元数据。
+
+    副作用: 添加过多 UI 元素可能使气泡拥挤。
+    缓解: 元数据用微型标签渲染, 非侵入式。
+  </context>
+
+  <task>
+
+    -- 改动: ChatBubble.tsx 在消息内容下方追加教学标签 --
+
+    在 `{tagStyle && (...)}` 标签块之前 (约第 66 行), 追加教学元数据显示:
+
+    // Phase 19-26: 教学标签 (仅教练消息)
+    {!isUser && (
+      <div style={{
+        display: 'flex', gap: 4, flexWrap: 'wrap',
+        marginTop: 4, fontSize: 11, opacity: 0.65,
+      }}>
+        {/* AI 生成标记 */}
+        {message.llm_generated && (
+          <span style={{ padding: '1px 6px', borderRadius: 8,
+            background: coachColors.sageGreen, color: '#fff' }}>
+            AI
+          </span>
+        )}
+        {!message.llm_generated && message.actionType !== 'awakening' && (
+          <span style={{ padding: '1px 6px', borderRadius: 8,
+            background: coachColors.lavenderGray, color: coachColors.deepMocha }}>
+            规则
+          </span>
+        )}
+        {/* 难度标记 */}
+        {message.difficulty_contract?.level && (
+          <span style={{ padding: '1px 6px', borderRadius: 8,
+            background: coachColors.coralCandy, color: coachColors.deepMocha }}>
+            难度: {msgLevelLabel(message.difficulty_contract.level as string)}
+          </span>
+        )}
+        {/* 个性化标记 */}
+        {message.personalization_evidence?.sources_count as number > 0 && (
+          <span style={{ padding: '1px 6px', borderRadius: 8,
+            background: coachColors.softBlue, color: coachColors.deepMocha }}>
+            已引用历史
+          </span>
+        )}
+      </div>
+    )}
+
+    新增辅助函数:
+
+    function msgLevelLabel(level: string): string {
+      return { easy: '简单', medium: '中等', hard: '困难' }[level] || level;
+    }
+  </task>
+
+  <success_criteria>
+    <item>npm run build 无 TS 错误</item>
+    <item>教练消息显示 AI/规则标签</item>
+    <item>有 difficulty 时显示难度标签</item>
+    <item>有 personalization_evidence 时显示已引用标签</item>
+    <item>用户消息不显示教学标签</item>
+  </success_criteria>
+</prompt>

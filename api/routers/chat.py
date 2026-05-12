@@ -74,6 +74,29 @@ async def chat(req: ChatMessageRequest, request: Request):
     return ChatMessageResponse(**result)
 
 
+@router.get("/chat/history")
+async def chat_history(session_id: str, limit: int = 50):
+    """恢复会话历史 —— 从 coherence.db sessions 表读取最近消息."""
+    import sqlite3
+    from pathlib import Path
+    db_path = Path(__file__).resolve().parent.parent.parent / "data" / "coherence.db"
+    try:
+        conn = sqlite3.connect(str(db_path))
+        rows = conn.execute(
+            "SELECT user_input, action_type, created_at_utc FROM sessions WHERE session_id = ? ORDER BY rowid ASC LIMIT ?",
+            (session_id, limit),
+        ).fetchall()
+        conn.close()
+        return {
+            "session_id": session_id,
+            "messages": [
+                {"content": r[0], "action_type": r[1], "timestamp": r[2]} for r in rows if r[0]
+            ],
+        }
+    except Exception:
+        return {"session_id": session_id, "messages": []}
+
+
 @router.websocket("/chat/ws")
 async def chat_websocket(ws: WebSocket):
     """WebSocket 实时推流通道."""

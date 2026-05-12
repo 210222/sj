@@ -41,7 +41,7 @@ class ChatMessageResponse(BaseModel):
     audit_level: str
     premise_rewrite_rate: float
     ttm_stage: str | None = None
-    sdt_profile: dict[str, float] | None = None
+    sdt_profile: dict[str, Any] | None = None
     flow_channel: str | None = None
     pulse: dict[str, Any] | None = None
     # Phase 10: LLM 元数据
@@ -126,6 +126,7 @@ class UserDashboardResponse(BaseModel):
     ttm_radar: TTMRadarData
     sdt_rings: SDTRingsData
     progress: ProgressData
+    mastery_snapshot: dict | None = None  # Phase 29
 
 
 # ── 管理员 ──

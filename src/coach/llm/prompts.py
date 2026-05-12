@@ -20,7 +20,7 @@ SYSTEM_PROMPT = """你是 Coherence 认知主权保护系统的教练引擎。
 输出要求:
 1. 用中文回复
 2. 只输出 JSON，不输出其他文字
-3. JSON 必须包含 "statement" 字段（你的主要回复）
+3. JSON 必须包含 "statement" 字段（你的主要回复）。禁止重复使用"好的，我们开始吧"等机械开场白，直接进入主题
 4. "question" 字段追问用户，保持对话流动
 5. "steps" 数组用于步骤拆解，每项含 order/action/expected 三个字段
 6. "option" 提供 2-4 个选项让用户选择下一步
@@ -90,10 +90,10 @@ JSON 必须包含以下字段:
 【脚手架引导模式 - 输出要求】
 你必须将概念拆解为 2-4 个步骤，逐步引导。
 JSON 必须包含以下字段:
-- "statement": 简短引言
+- "statement": 简短引言。禁止用"好的，我们开始吧"开头——直接进入教学主题
 - "steps": 步骤数组，每项含 order(int)/action(str)/expected(str)
 - "step_count": int，步骤总数
-- "question": 引导性问题
+- "question": 仅在全部 steps 拆解完后输出一次总结性追问 (不要每轮末尾重复确认)
 - "difficulty": 当前步骤难度
 """,
     "challenge": """
@@ -204,11 +204,11 @@ def build_coach_context(
         ttm_stage=stage,
         ttm_explanation=TTM_EXPLANATIONS.get(
             stage, "用户处于学习过程中"),
-        autonomy=int(autonomy * 100),
+        autonomy=autonomy,
         autonomy_signal=autonomy_signal,
-        competence=int(competence * 100),
+        competence=competence,
         competence_signal=competence_signal,
-        relatedness=int(relatedness * 100),
+        relatedness=relatedness,
         behavior_signals=behavior_signals,
         ttm_strategy_signal=ttm_signal,
         history=history_text,

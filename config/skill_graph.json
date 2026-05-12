@@ -1,0 +1,10 @@
+{
+  "python_variable":    {"prerequisites": [],           "related": ["python_type", "python_condition"]},
+  "python_condition":   {"prerequisites": ["python_variable"], "related": ["python_loop"]},
+  "python_loop":        {"prerequisites": ["python_variable","python_condition"], "related": ["python_list","python_comprehension"]},
+  "python_list":        {"prerequisites": ["python_variable","python_loop"], "related": ["python_dict","python_tuple"]},
+  "python_dict":        {"prerequisites": ["python_list","python_variable"], "related": ["python_json"]},
+  "python_function":    {"prerequisites": ["python_variable","python_condition","python_loop"], "related": ["python_class","python_module"]},
+  "python_comprehension": {"prerequisites": ["python_list","python_loop","python_function"], "related": ["python_generator"]},
+  "python_class":       {"prerequisites": ["python_function","python_variable"], "related": ["python_module"]}
+}

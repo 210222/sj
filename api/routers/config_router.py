@@ -44,8 +44,14 @@ def _read_config() -> dict:
 
 
 def _write_config(cfg: dict) -> None:
+    yaml_str = yaml.safe_dump(cfg, allow_unicode=True, default_flow_style=False, sort_keys=False)
     with open(_CONFIG_PATH, "w", encoding="utf-8") as f:
-        yaml.dump(cfg, f, allow_unicode=True, default_flow_style=False)
+        f.write(yaml_str)
+    # 清除模块缓存, 下次请求自动重载配置
+    import sys
+    for mod in list(sys.modules.keys()):
+        if mod.startswith("src.coach"):
+            del sys.modules[mod]
 
 
 def _get_nested(cfg: dict, key: str):

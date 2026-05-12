@@ -56,6 +56,12 @@ export interface ChatMessage {
   actionType?: ActionType;
   sourceTag?: 'rule' | 'statistical' | 'hypothesis';
   timestamp: string;
+  // Phase 19-26: 教学元数据 (展示用)
+  llm_generated?: boolean;
+  difficulty_contract?: Record<string, unknown>;
+  personalization_evidence?: Record<string, unknown> | null;
+  memory_status?: Record<string, unknown> | null;
+  options?: Array<{ label: string; description: string }>;
   pulse?: PulseEvent;
   awakening?: {
     triggered: boolean;

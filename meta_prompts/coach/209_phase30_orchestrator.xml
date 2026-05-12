@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 30 -- 技能知识图谱</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>30</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>BKT 技能关联 + 前置依赖传播 + composer 优先选前置</sub_stage_name>
+
+  <context>
+    BKT 当前技能独立追踪。不知道 list 是 dict 的前置, loop 是 comprehension 的前置。
+    学会 list 后 dict 的 prior 应该自动提升。
+
+    改动: 4 文件 / +110 行
+  </context>
+
+  <sub_stages>
+    <stage id="s30_1" name="技能图谱数据">
+      <meta_prompt>209_s30_1_graph.xml</meta_prompt>
+    </stage>
+    <stage id="s30_2" name="BKT 传播">
+      <meta_prompt>210_s30_2_propagation.xml</meta_prompt>
+    </stage>
+    <stage id="s30_3" name="composer 增强">
+      <meta_prompt>211_s30_3_composer.xml</meta_prompt>
+    </stage>
+    <stage id="s30_4" name="验证">
+      <meta_prompt>212_s30_4_verification.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+</prompt>

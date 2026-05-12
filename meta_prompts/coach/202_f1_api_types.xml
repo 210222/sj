@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>F1: API 类型补全</name>
+  <version>1.0.0</version>
+  <track>FRONTEND</track>
+  <phase>28</phase>
+  <sub_stage>F1</sub_stage>
+  <sub_stage_name>ChatResponse + extractPayloadText + useCoachState 补全 Phase 19-26 字段</sub_stage_name>
+
+  <role>
+    ChatResponse 类型只定义了 action_type/payload/trace_id 等基础字段,
+    缺少 Phase 19-26 的教学字段: llm_generated, personalization_evidence,
+    difficulty_contract, diagnostic_result, memory_status, awakening.
+
+    extractPayloadText() 只提取文本字段, 不展示教学状态。
+    useCoachState 不存储教学元数据。
+  </role>
+
+  <context>
+    后端实际返回的字段 (agent.act() 输出):
+      action_type, payload, trace_id, intent, domain_passport,
+      safety_allowed, gate_decision, audit_level,
+      llm_generated, llm_model, llm_tokens,
+      personalization_evidence, memory_status,
+      difficulty_contract, diagnostic_result, diagnostic_probe,
+      ttm_stage, sdt_profile, flow_channel,
+      awakening, _self_eval
+
+    前端定义的 ChatResponse (api.ts:11-27):
+      action_type, payload, trace_id, intent, domain_passport,
+      safety_allowed, gate_decision, audit_level,
+      ttm_stage, sdt_profile, flow_channel, pulse,
+      diagnostic_result, diagnostic_probe
+
+    缺少: llm_generated, llm_model, llm_tokens, personalization_evidence,
+          memory_status, difficulty_contract, awakening
+
+    副作用: localStorage 可能缓存了旧格式消息。
+    兼容: 新增字段全部 optional, 旧缓存缺失时不崩溃。
+  </context>
+
+  <task>
+
+    -- 改动 1: frontend/src/types/api.ts ChatResponse 接口补全 --
+
+    在 `pulse: PulseEvent | null;` 之后追加:
+
+    // Phase 19-26: 教学元数据
+    llm_generated?: boolean;
+    llm_model?: string;
+    llm_tokens?: number;
+    personalization_evidence?: Record<string, unknown> | null;
+    memory_status?: Record<string, unknown> | null;
+    difficulty_contract?: Record<string, unknown> | null;
+    awakening?: Record<string, unknown> | null;
+    diagnostic_probe?: Record<string, unknown> | null;
+
+    -- 改动 2: frontend/src/App.tsx extractPayloadText() 增强 --
+
+    不修改 extractPayloadText() (它负责文本提取, 职责不变)。
+    在 handleSendMessage 和 handleWSMessage 中, 除了调用 extractPayloadText(),
+    追加提取教学字段的逻辑:
+
+    // 在 handleSendMessage 的 addMessage 调用之前:
+    const coachMsg: ChatMessage = {
+      id: nextMsgId(),
+      role: 'coach',
+      content: extractPayloadText(res.payload, res.action_type),
+      actionType: res.action_type as ChatMessage['actionType'],
+      sourceTag: ...,
+      timestamp: new Date().toISOString(),
+      pulse: res.pulse ?? undefined,
+      // Phase 19-26: 教学元数据
+      llm_generated: res.llm_generated ?? undefined,
+      difficulty_contract: res.difficulty_contract ?? undefined,
+      personalization_evidence: res.personalization_evidence ?? undefined,
+      memory_status: res.memory_status ?? undefined,
+      awakening: res.awakening ?? undefined,
+    };
+    addMessage(coachMsg);
+
+    -- 改动 3: frontend/src/types/coach.ts ChatMessage 接口补全 --
+
+    在 ChatMessage 接口中追加:
+
+    // Phase 19-26: 教学元数据 (展示用)
+    llm_generated?: boolean;
+    difficulty_contract?: Record<string, unknown>;
+    personalization_evidence?: Record<string, unknown> | null;
+    memory_status?: Record<string, unknown> | null;
+  </task>
+
+  <success_criteria>
+    <item>npm run build 无 TS 错误</item>
+    <item>ChatResponse 包含全部 Phase 19-26 字段</item>
+    <item>ChatMessage 包含展示用字段</item>
+    <item>localStorage 旧消息不导致崩溃</item>
+  </success_criteria>
+</prompt>

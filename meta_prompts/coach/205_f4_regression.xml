@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>F4: 回归验证</name>
+  <version>1.0.0</version>
+  <track>FRONTEND</track>
+  <phase>28</phase>
+  <sub_stage>F4</sub_stage>
+  <sub_stage_name>TS 编译 + 旧缓存兼容 + 新字段展示验证</sub_stage_name>
+
+  <role>
+    修改后需要验证:
+    1. npm run build 通过 (TS 无错误)
+    2. 旧 localStorage 缓存不导致崩溃
+    3. 新字段正确展示
+  </role>
+
+  <context>
+    风险分析:
+    1. TS 类型错误: 新字段 added 但接口未完全对齐
+       -> 检查 ChatResponse, ChatMessage, WSMessage 类型一致性
+    2. localStorage 旧格式: messages 中缺少新字段 (undefined)
+       -> ChatBubble 用 optional chaining: message.llm_generated ? ... : ...
+    3. WebSocket 消息不含教学字段: WS 消息结构与 REST 不同
+       -> chat_stream 返回的字段少于 REST, handleWSMessage 需兼容
+
+    验证步骤:
+    1. cd frontend && npx tsc --noEmit (类型检查)
+    2. cd frontend && npm run build (构建)
+    3. 启动后端+前端, 发消息验证教学标签显示
+    4. 清空 localStorage, 刷新, 验证空状态不崩溃
+  </context>
+
+  <task>
+
+    -- 验证 1: TS 类型检查 --
+
+    cd D:/Claudedaoy/coherence/frontend
+    npx tsc --noEmit
+
+    预期: 0 errors
+    若出错: 修复类型不匹配
+
+    -- 验证 2: 前端构建 --
+
+    npm run build
+
+    预期: 构建成功, dist/ 输出
+    若失败: 检查 import 路径、类型引用
+
+    -- 验证 3: 运行时 --
+
+    启动后端 + 前端:
+    1. 发消息 "教我 Python"
+    2. 验证教练气泡显示 AI/规则标签
+    3. 验证难度标签显示
+    4. 验证头部显示教学状态
+
+    -- 验证 4: 兼容性 --
+
+    1. 在浏览器控制台执行:
+       localStorage.setItem('coherence_messages_test',
+         JSON.stringify([{id:'old',role:'coach',content:'test',timestamp:'2025-01-01'}]))
+    2. 刷新页面
+    3. 验证不崩溃 (旧消息无新字段, optional chaining 保护)
+  </task>
+
+  <success_criteria>
+    <item>npx tsc --noEmit 无错误</item>
+    <item>npm run build 成功</item>
+    <item>教练消息显示 AI/规则/难度标签</item>
+    <item>头部显示教学状态</item>
+    <item>旧 localStorage 缓存不崩溃</item>
+  </success_criteria>
+</prompt>

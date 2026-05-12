@@ -12,7 +12,6 @@ import { SettingsPanel } from './components/settings/SettingsPanel';
 import { TTMStageCard } from './components/dashboard/TTMStageCard';
 import { SDTEnergyRings } from './components/dashboard/SDTEnergyRings';
 import { GateShieldBadge } from './components/dashboard/GateShieldBadge';
-import { AwakeningPanel } from './components/chat/AwakeningPanel';
 import { getUserDashboard } from './api/client';
 import type { TTMRadarData, SDTRingsData } from './types/api';
 import { createSession, sendMessage, respondPulse } from './api/client';
@@ -60,6 +59,7 @@ export function App() {
     state,
     setSession,
     addMessage,
+    dismissAwakening,
     setTTMStage,
     setSDTProfile,
     setBlockingMode,
@@ -71,6 +71,7 @@ export function App() {
   const [pendingPulse, setPendingPulse] = useState<PulseEvent | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>('connecting');
+  const [isLoading, setIsLoading] = useState(false);
   // Phase 13x: 仪表盘可视化数据
   const [dashTTM, setDashTTM] = useState<TTMRadarData | null>(null);
   const [dashSDT, setDashSDT] = useState<SDTRingsData | null>(null);
@@ -147,7 +148,8 @@ export function App() {
 
     if (!state.sessionId) return;
 
-    // WebSocket 优先，HTTP fallback
+    setIsLoading(true);
+    const timeout = setTimeout(() => setIsLoading(false), 30000);
     try {
       const res = await sendMessage(state.sessionId, text);
       addMessage({
@@ -160,11 +162,17 @@ export function App() {
           : undefined,
         timestamp: new Date().toISOString(),
         pulse: res.pulse ?? undefined,
+        // Phase 19-26: 教学元数据
+        llm_generated: res.llm_generated ?? undefined,
+        difficulty_contract: res.difficulty_contract ?? undefined,
+        personalization_evidence: res.personalization_evidence ?? undefined,
+        memory_status: res.memory_status ?? undefined,
+        options: (res.payload as any)?.options ?? undefined,
+        awakening: res.awakening as ChatMessage['awakening'] ?? undefined,
       });
       if (res.ttm_stage) setTTMStage(res.ttm_stage as TTMStage);
       if (res.sdt_profile) setSDTProfile(res.sdt_profile);
       if (res.pulse) setPendingPulse(res.pulse);
-      // Phase 17: 注入能力唤醒面板
       if (res.awakening) {
         addMessage({
           id: nextMsgId(),
@@ -175,7 +183,6 @@ export function App() {
           awakening: res.awakening as ChatMessage['awakening'],
         });
       }
-      // Phase 13x: 更新仪表盘数据
       if (res.sdt_profile) setDashSDT(res.sdt_profile as unknown as SDTRingsData);
     } catch {
       addMessage({
@@ -185,7 +192,19 @@ export function App() {
         timestamp: new Date().toISOString(),
       });
     }
+    clearTimeout(timeout);
+    setIsLoading(false);
   }, [state.sessionId, addMessage, setTTMStage, setSDTProfile]);
+
+  // Phase 29: 选项按钮点击 → 发送消息
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as string;
+      if (detail) handleSendMessage(detail);
+    };
+    window.addEventListener('coach-option-click', handler);
+    return () => window.removeEventListener('coach-option-click', handler);
+  }, [handleSendMessage]);
 
   const handlePulseAccept = useCallback(() => {
     if (!pendingPulse) return;
@@ -279,6 +298,36 @@ export function App() {
           }} />
         </header>
 
+        {/* Phase 28: 教学状态指示器 */}
+        {state.messages.length > 0 && (() => {
+          const last = state.messages[state.messages.length - 1];
+          return (
+            <div style={{
+              display: 'flex', gap: 8, alignItems: 'center',
+              padding: '4px 16px', fontSize: 12,
+              background: 'var(--color-warm-white)',
+              borderBottom: '1px solid var(--color-lavender-gray)',
+            }}>
+              {last?.llm_generated ? (
+                <span style={{ padding: '1px 8px', borderRadius: 8,
+                  background: coachColors.sageGreen, color: '#fff' }}>LLM 教学</span>
+              ) : (
+                <span style={{ padding: '1px 8px', borderRadius: 8,
+                  background: coachColors.lavenderGray, color: coachColors.deepMocha }}>规则教学</span>
+              )}
+              {last?.difficulty_contract?.level != null && (
+                <span>难度: {String((({easy:'简单',medium:'中等',hard:'困难'} as Record<string,string>)[String(last.difficulty_contract.level)] || last.difficulty_contract.level))}</span>
+              )}
+              {last?.actionType && last.actionType !== 'awakening' && (
+                <span>策略: {last.actionType}</span>
+              )}
+              {state.ttmStage && (
+                <span>阶段: {state.ttmStage}</span>
+              )}
+            </div>
+          );
+        })()}
+
         {/* 消息列表 */}
         <div
           style={{
@@ -289,18 +338,30 @@ export function App() {
         >
           {state.messages.length === 0 && (
             <div style={{ textAlign: 'center', padding: 'var(--space-xl)', color: 'var(--color-clay-brown)' }}>
-              <p>Welcome to Coherence Coach</p>
-              <p style={{ fontSize: 13, marginTop: 'var(--space-xs)' }}>I am your cognitive sovereignty coach. Start a conversation.</p>
+              <p>欢迎使用 Coherence 教练</p>
+              <p style={{ fontSize: 13, marginTop: 'var(--space-xs)' }}>我是你的认知主权保护教练，开始对话吧</p>
             </div>
           )}
           {state.messages.map((msg) => (
             <ChatBubble
               key={msg.id}
               message={msg}
-              onEnableRecommended={() => handleSendMessage('启用推荐能力')}
-              onSkipAwakening={() => handleSendMessage('不用')}
+              onEnableRecommended={() => { dismissAwakening(); handleSendMessage('启用推荐能力'); }}
+              onSkipAwakening={() => { dismissAwakening(); handleSendMessage('不用'); }}
             />
           ))}
+
+          {/* 等待回复动画 */}
+          {isLoading && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', marginBottom: 8 }}>
+              <span style={{ fontSize: 13, color: 'var(--color-clay-brown)' }}>教练正在思考</span>
+              <span className="typing-dots" style={{ display: 'inline-flex', gap: 4 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-sage-green)', animation: 'typing-bounce 1.4s infinite' }} />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-sage-green)', animation: 'typing-bounce 1.4s 0.2s infinite' }} />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-sage-green)', animation: 'typing-bounce 1.4s 0.4s infinite' }} />
+              </span>
+            </div>
+          )}
 
           {/* 脉冲面板 */}
           {pendingPulse && (

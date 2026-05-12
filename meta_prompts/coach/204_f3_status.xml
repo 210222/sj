@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>F3: 教学状态指示器</name>
+  <version>1.0.0</version>
+  <track>FRONTEND</track>
+  <phase>28</phase>
+  <sub_stage>F3</sub_stage>
+  <sub_stage_name>聊天界面头部显示当前教学状态: 难度/个性化/策略</sub_stage_name>
+
+  <role>
+    聊天界面头部当前只显示标题 "Coherence Coach"。
+    不显示当前教学状态 (难度级别, 是否 LLM 模式, 策略连续性)。
+    用户无法感知系统正在做什么教学决策。
+  </role>
+
+  <context>
+    App.tsx 中有 state (useCoachState) 包含:
+      sessionId, ttmStage, sdtProfile, flowChannel, messages
+
+    但界面头部没有任何教学状态指示。
+    侧边栏有 TTMStageCard/SDTEnergyRings, 但需要手动打开。
+
+    副作用: 头部信息不能太多, 否则干扰聊天。
+    缓解: 只显示 3 个关键指标: LLM 状态、难度、策略。
+  </context>
+
+  <task>
+
+    -- 改动: App.tsx 在聊天界面头部新增教学状态指示器 --
+
+    在 `<main>` 标签内部, 在消息列表上方 (约第 200 行), 插入:
+
+    {/* Phase 19-26: 教学状态指示器 */}
+    {state.sessionId && (
+      <div style={{
+        display: 'flex', gap: 8, alignItems: 'center',
+        padding: '4px 16px', fontSize: 12,
+        background: 'var(--color-warm-white)',
+        borderBottom: '1px solid var(--color-lavender-gray)',
+      }}>
+        {/* LLM 模式 */}
+        {lastMsg?.llm_generated ? (
+          <span style={{ padding: '1px 8px', borderRadius: 8,
+            background: coachColors.sageGreen, color: '#fff' }}>
+            LLM 教学
+          </span>
+        ) : (
+          <span style={{ padding: '1px 8px', borderRadius: 8,
+            background: coachColors.lavenderGray, color: coachColors.deepMocha }}>
+            规则教学
+          </span>
+        )}
+        {/* 难度 */}
+        {lastMsg?.difficulty_contract?.level && (
+          <span>
+            难度: {{
+              easy: '简单', medium: '中等', hard: '困难'
+            }[lastMsg.difficulty_contract.level as string] || lastMsg.difficulty_contract.level}
+          </span>
+        )}
+        {/* 策略 */}
+        {lastMsg?.actionType && lastMsg.actionType !== 'awakening' && (
+          <span>策略: {lastMsg.actionType}</span>
+        )}
+        {/* TTM 阶段 */}
+        {state.ttmStage && (
+          <span>阶段: {state.ttmStage}</span>
+        )}
+      </div>
+    )}
+
+    需要在 App.tsx 中获取 lastMsg:
+
+    const lastMsg = state.messages[state.messages.length - 1];
+  </task>
+
+  <success_criteria>
+    <item>npm run build 无 TS 错误</item>
+    <item>头部显示 LLM/规则教学标签</item>
+    <item>有最新消息时显示难度/策略/阶段</item>
+    <item>无消息时不显示状态 (无可用数据)</item>
+  </success_criteria>
+</prompt>

@@ -40,9 +40,17 @@ async def get_user_dashboard(
     sdt_data = agg.get_sdt_rings(session_id)
     progress_data = agg.get_progress(session_id)
 
+    # Phase 29 P2-7: mastery_snapshot
+    snap = None
+    try:
+        snap = agg.get_mastery_snapshot(session_id)
+    except Exception:
+        pass
+
     return UserDashboardResponse(
         session_id=session_id,
         ttm_radar=TTMRadarData(**ttm_data),
         sdt_rings=SDTRingsData(**sdt_data),
         progress=ProgressData(**progress_data),
+        mastery_snapshot=snap,
     )
