@@ -1,12 +1,12 @@
 {
-  "replacement_cost_usd": 15000,
-  "debt_months_estimated": 1,
-  "annual_interest_usd": 4950,
-  "interest_rate_pct": 33.0,
+  "replacement_cost_usd": 45000,
+  "debt_months_estimated": 3,
+  "annual_interest_usd": 45000,
+  "interest_rate_pct": 100.0,
   "model_assumptions": {
     "dev_month_cost_usd": 15000,
     "loc": 16000,
     "finding_annual_cost_usd": 500
   },
-  "roi_notes": "Investing $15000 now saves $4950/year in carrying cost"
+  "roi_notes": "Investing $45000 now saves $45000/year in carrying cost"
 }

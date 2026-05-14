@@ -12,18 +12,21 @@ interface UseWebSocketOptions {
   sessionId: string;
   onMessage: (msg: WSMessage) => void;
   onPulseEvent?: (msg: WSMessage) => void;
+  onStatusChange?: (status: string) => void;
 }
 
-export function useWebSocket({ sessionId, onMessage, onPulseEvent }: UseWebSocketOptions) {
+export function useWebSocket({ sessionId, onMessage, onPulseEvent, onStatusChange }: UseWebSocketOptions) {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>();
 
   const connect = useCallback(() => {
     try {
-      // WebSocket 暂时关闭 — 全部走 HTTP (更稳定)
-      return;
       const ws = createChatWebSocket(sessionId);
       wsRef.current = ws;
+
+      ws.onopen = () => {
+        onStatusChange?.('connected');
+      };
 
       ws.onmessage = (event) => {
         try {
@@ -39,13 +42,17 @@ export function useWebSocket({ sessionId, onMessage, onPulseEvent }: UseWebSocke
       };
 
       ws.onclose = () => {
-        // 一次性失败即走 HTTP fallback, 不无限重连
         wsRef.current = null;
+        onStatusChange?.('disconnected');
+      };
+
+      ws.onerror = () => {
+        onStatusChange?.('error');
       };
     } catch {
-      // WebSocket 不可用, App.tsx 自动走 HTTP fallback
+      onStatusChange?.('error');
     }
-  }, [sessionId, onMessage, onPulseEvent]);
+  }, [sessionId, onMessage, onPulseEvent, onStatusChange]);
 
   useEffect(() => {
     connect();

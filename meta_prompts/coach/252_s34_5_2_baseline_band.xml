@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S34.5.2 -- baseline 波动带确认</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>34.5</phase>
+  <sub_stage>S34.5.2</sub_stage>
+  <sub_stage_name>多次 LLM run / 波动带确认 / 非单次绝对值</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责确认当前 LLM 链路的 baseline 波动带。
+    你的职责不是优化链路，而是证明当前链路的表现不是一次性偶然快照，而是存在可记录的正常波动范围。
+  </role>
+
+  <task>
+    1. 使用完全相同的运行模式重复执行 LLM 审计；
+    2. 默认先跑 3 次 quick LLM run；
+    3. 若波动超阈值，再补跑到 5 次；
+    4. 对 overall score、关键维度、llm_generated rate、breakpoint probes 做波动带统计；
+    5. 输出 llm_baseline_band.json。
+  </task>
+
+  <run_policy>
+    <item>固定命令：python run_experience_audit.py --mode quick --use-http</item>
+    <item>固定 profiles / scoring / prompt path / provider / model / base_url</item>
+    <item>默认样本数：3 runs</item>
+    <item>如波动超阈值，则扩展到 5 runs</item>
+  </run_policy>
+
+  <escalation_rules>
+    <item>overall_score 极差 &gt; 0.8 → 扩展到 5 runs</item>
+    <item>任一关键维度极差 &gt; 0.6 → 扩展到 5 runs</item>
+    <item>任一 run 的 llm_generated rate &lt; 1.0 → 扩展到 5 runs</item>
+    <item>任一 run 的 breakpoint probe 非全 passed → 扩展到 5 runs</item>
+    <item>任一 run 缺少正式产物 → 扩展到 5 runs</item>
+  </escalation_rules>
+
+  <must_measure>
+    <item>overall score</item>
+    <item>引用性</item>
+    <item>连续性</item>
+    <item>稳定性</item>
+    <item>推进感</item>
+    <item>llm_generated rate</item>
+    <item>breakpoint probes pass rate</item>
+  </must_measure>
+
+  <required_output_format>
+    <item>llm_baseline_band.json 必须包含 run_ids / sample_size / mean / min / max / std</item>
+    <item>不得只保留"最佳一次"或"最新一次"</item>
+    <item>必须明确记录 escalation 是否触发</item>
+  </required_output_format>
+
+  <risk_analysis>
+    1. 仍用单次 run 的绝对值作为正式 baseline；
+    2. 样本数过小导致误判波动；
+    3. 样本数过大导致 Phase 34.5 变成穷举评测；
+    4. 跑多次却没有保持输入条件恒定；
+    5. 只统计总分，不统计关键维度与 llm_generated 稳定性。
+  </risk_analysis>
+
+  <quality_gates>
+    <gate>默认 3 runs 已完成，必要时已扩展到 5 runs</gate>
+    <gate>所有 run 使用同一模式、同一 provider、同一 model、同一 prompt path</gate>
+    <gate>llm_baseline_band.json 成功落盘</gate>
+    <gate>baseline 不再依赖单次绝对值</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>当前 LLM baseline 拥有正式波动带</item>
+    <item>Phase 35 可在均值与波动区间两层语义上做 before/after 对比</item>
+    <item>本阶段没有偷跑任何 Phase 35 重构动作</item>
+  </success_criteria>
+</prompt>

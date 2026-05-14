@@ -1,0 +1,118 @@
+# Exhaustive Isolated Config Test — 2026-05-06T05:41:55.064731+00:00
+
+======================================================================
+EXHAUSTIVE ISOLATED CONFIG TEST
+Combos: 8 × 10 turns = 80 conversations
+Date: 2026-05-06T05:41:55.065698+00:00
+======================================================================
+
+--- COMBO: all_off ---
+  Config: {'llm.enabled': False, 'ttm.enabled': False, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': False}
+  10/10 ok | avg quality: 6.6/24 | llm: 0/10
+  steps: 0/10 | questions: 1/10 | avg tokens: 0
+  actions: {'probe': 1, 'suggest': 5, 'scaffold': 3, 'reflect': 1}
+  ttm: {}
+  dimensions: {'relevance': 1.0, 'clarity': 1.0, 'interactive': 0.6, 'structure': 1.0, 'personalization': 2.0, 'encouragement': 1.0}
+  time: 1s
+
+--- COMBO: llm_only ---
+  Config: {'llm.enabled': True, 'ttm.enabled': False, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': False}
+  10/10 ok | avg quality: 19.4/24 | llm: 10/10
+  steps: 10/10 | questions: 10/10 | avg tokens: 709
+  actions: {'probe': 1, 'suggest': 5, 'scaffold': 3, 'reflect': 1}
+  ttm: {}
+  dimensions: {'relevance': 3.3, 'clarity': 3.1, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.6, 'encouragement': 2.6}
+  time: 43s
+
+--- COMBO: llm_ttm ---
+  Config: {'llm.enabled': True, 'ttm.enabled': True, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': False}
+  10/10 ok | avg quality: 20.1/24 | llm: 10/10
+  steps: 10/10 | questions: 10/10 | avg tokens: 734
+  actions: {'probe': 1, 'scaffold': 3, 'reflect': 1, 'challenge': 5}
+  ttm: {'action': 10}
+  dimensions: {'relevance': 3.4, 'clarity': 3.4, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.9, 'encouragement': 2.8}
+  time: 41s
+
+--- COMBO: llm_ttm_sdt ---
+  Config: {'llm.enabled': True, 'ttm.enabled': True, 'sdt.enabled': True, 'flow.enabled': False, 'diagnostic_engine.enabled': False}
+  10/10 ok | avg quality: 20.1/24 | llm: 10/10
+  steps: 10/10 | questions: 10/10 | avg tokens: 728
+  actions: {'probe': 1, 'reflect': 4, 'challenge': 5}
+  ttm: {'action': 10}
+  dimensions: {'relevance': 3.4, 'clarity': 2.9, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.8, 'encouragement': 3.2}
+  time: 40s
+
+--- COMBO: full_behavior ---
+  Config: {'llm.enabled': True, 'ttm.enabled': True, 'sdt.enabled': True, 'flow.enabled': True, 'diagnostic_engine.enabled': False}
+  10/10 ok | avg quality: 19.2/24 | llm: 10/10
+  steps: 10/10 | questions: 10/10 | avg tokens: 724
+  actions: {'probe': 1, 'reflect': 4, 'challenge': 5}
+  ttm: {'action': 10}
+  dimensions: {'relevance': 3.4, 'clarity': 2.9, 'interactive': 2.7, 'structure': 4.0, 'personalization': 3.8, 'encouragement': 2.4}
+  time: 41s
+
+--- COMBO: full_stack ---
+  Config: {'llm.enabled': True, 'ttm.enabled': True, 'sdt.enabled': True, 'flow.enabled': True, 'diagnostic_engine.enabled': True}
+  10/10 ok | avg quality: 19.7/24 | llm: 10/10
+  steps: 10/10 | questions: 10/10 | avg tokens: 722
+  actions: {'probe': 3, 'reflect': 4, 'challenge': 3}
+  ttm: {'action': 10}
+  dimensions: {'relevance': 3.3, 'clarity': 3.2, 'interactive': 2.7, 'structure': 4.0, 'personalization': 3.9, 'encouragement': 2.6}
+  time: 45s
+
+--- COMBO: llm_diag ---
+  Config: {'llm.enabled': True, 'ttm.enabled': False, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': True}
+  10/10 ok | avg quality: 19.6/24 | llm: 10/10
+  steps: 10/10 | questions: 10/10 | avg tokens: 709
+  actions: {'probe': 3, 'suggest': 3, 'scaffold': 3, 'reflect': 1}
+  ttm: {}
+  dimensions: {'relevance': 3.3, 'clarity': 3.1, 'interactive': 2.5, 'structure': 4.0, 'personalization': 3.9, 'encouragement': 2.8}
+  time: 47s
+
+--- COMBO: rules_diag ---
+  Config: {'llm.enabled': False, 'ttm.enabled': False, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': True}
+  10/10 ok | avg quality: 6.6/24 | llm: 0/10
+  steps: 0/10 | questions: 3/10 | avg tokens: 0
+  actions: {'probe': 3, 'suggest': 3, 'scaffold': 3, 'reflect': 1}
+  ttm: {}
+  dimensions: {'relevance': 1.0, 'clarity': 1.0, 'interactive': 0.6, 'structure': 1.0, 'personalization': 2.0, 'encouragement': 1.0}
+  time: 1s
+
+======================================================================
+QUALITY RANKING
+======================================================================
+  1. llm_ttm            20.1/24 ████████████████████
+     steps=10/10 questions=10/10 actions={'probe': 1, 'scaffold': 3, 'reflect': 1, 'challenge': 5}
+  2. llm_ttm_sdt        20.1/24 ████████████████████
+     steps=10/10 questions=10/10 actions={'probe': 1, 'reflect': 4, 'challenge': 5}
+  3. full_stack         19.7/24 ███████████████████
+     steps=10/10 questions=10/10 actions={'probe': 3, 'reflect': 4, 'challenge': 3}
+  4. llm_diag           19.6/24 ███████████████████
+     steps=10/10 questions=10/10 actions={'probe': 3, 'suggest': 3, 'scaffold': 3, 'reflect': 1}
+  5. llm_only           19.4/24 ███████████████████
+     steps=10/10 questions=10/10 actions={'probe': 1, 'suggest': 5, 'scaffold': 3, 'reflect': 1}
+  6. full_behavior      19.2/24 ███████████████████
+     steps=10/10 questions=10/10 actions={'probe': 1, 'reflect': 4, 'challenge': 5}
+  7. all_off             6.6/24 ██████
+     steps=0/10 questions=1/10 actions={'probe': 1, 'suggest': 5, 'scaffold': 3, 'reflect': 1}
+  8. rules_diag          6.6/24 ██████
+     steps=0/10 questions=3/10 actions={'probe': 3, 'suggest': 3, 'scaffold': 3, 'reflect': 1}
+
+  LLM avg:  19.7/24
+  Rule avg: 6.6/24
+
+  TTM ON avg quality:  19.8/24
+  TTM OFF avg quality: 13.1/24
+
+--- Phase 11 Improvement Metrics ---
+  all_off           : steps=0/10 (0%), questions=1/10, quality=6.6/24
+  llm_only          : steps=10/10 (100%), questions=10/10, quality=19.4/24
+  llm_ttm           : steps=10/10 (100%), questions=10/10, quality=20.1/24
+  llm_ttm_sdt       : steps=10/10 (100%), questions=10/10, quality=20.1/24
+  full_behavior     : steps=10/10 (100%), questions=10/10, quality=19.2/24
+  full_stack        : steps=10/10 (100%), questions=10/10, quality=19.7/24
+  llm_diag          : steps=10/10 (100%), questions=10/10, quality=19.6/24
+  rules_diag        : steps=0/10 (0%), questions=3/10, quality=6.6/24
+
+Report: D:\Claudedaoy\coherence\reports\exhaustive_isolated_report.json
+Log: D:\Claudedaoy\coherence\reports\exhaustive_isolated_test.log

@@ -1,7 +1,11 @@
-S40 Layer D — Data Metabolism | 2026-05-04T07:26:06.439Z
+S40 Layer D — Data Metabolism | 2026-05-12T06:00:50.421Z
 Status: GO
-Contracts: 11/11 frozen
+Contracts: 13/13 frozen
 Schema Drift: False
-AI Models: {"bkt": 2, "flow": 3, "ttm": 3, "sdt": 3, "counterfactual": 3}
+AI Models: {"bkt": 6, "flow": 3, "ttm": 3, "sdt": 3, "counterfactual": 3}
+  [P3] model_params: BKT model: prior=0.3, guess=0.1, slip=0.1, learn=0.2 — verify against domain data
+  [P3] model_params: BKT model: prior=0.3, guess=0.1, slip=0.1, learn=0.2 — verify against domain data
+  [P3] model_params: BKT model: prior=0.3, guess=0.1, slip=0.1, learn=0.2 — verify against domain data
+  [P3] model_params: BKT model: prior=0.3, guess=0.1, slip=0.1, learn=0.2 — verify against domain data
   [P3] model_params: BKT model: prior=0.3, guess=0.1, slip=0.1, learn=0.2 — verify against domain data
   [P3] model_params: BKT model: prior=0.3, guess=0.1, slip=0.1, learn=0.2 — verify against domain data

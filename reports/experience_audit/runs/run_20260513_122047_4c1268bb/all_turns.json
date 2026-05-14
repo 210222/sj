@@ -1,0 +1,1596 @@
+{
+  "novice_confirm": [
+    {
+      "turn": 1,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "879f95bc-d245-4b26-b910-457cbcccd712",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "嗯",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "96dbbb30-cfaa-449d-8918-eaa042e70827",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "继续",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "c1e8e47b-64ff-466e-869b-fd4c897b2eef",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "可以",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "5bf24d44-cf19-4926-afec-815f93244a27",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "6fff5f0c-5e3d-4b0a-b47a-c96e5a24afa6",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 6,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "2323d4e0-0d4a-4bff-9c69-bdc4f1b920c4",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 7,
+      "user": "嗯",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "dca42774-b3c8-44ee-a017-70292e6e256b",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 8,
+      "user": "继续",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "e7f9aebf-ee8b-4e64-aa56-b3633dc5a8bf",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 9,
+      "user": "可以",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "36f1321a-1ade-4a80-aaf8-9218582269d5",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 10,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "c0c040f8-c18b-4400-aa6d-0093413c8ce1",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 11,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "9f1f0d48-0905-4a4b-8941-006754b76dc8",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 12,
+      "user": "嗯",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "6daeb8e6-4fd9-437f-b589-2d20ddcf98ff",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 13,
+      "user": "继续",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "ab1c3224-ef79-4680-ae45-7f7983aaef73",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 14,
+      "user": "可以",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "a2897975-3429-4c5f-9796-9d810cb51f86",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 15,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "f233ff5e-66f2-4791-9701-9c9566d506d6",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 16,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "58f36a15-3c66-4d5d-8c42-1c4276181454",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 17,
+      "user": "嗯",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "aff74a6a-bb82-48dc-af50-7789897ec3bc",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 18,
+      "user": "继续",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "eef22107-d4ba-4fd4-bc31-aa0c4c4f90da",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 19,
+      "user": "可以",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "86feabac-2222-4cae-9660-2bdeb6feb518",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 20,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "f0ef1002-fd06-4a64-a5cc-ad368558e552",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "novice_jump": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "adce66ca-6646-4748-a4d9-771c4338fe3e",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "讲列表",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "4b17774a-ab23-47c8-ad5a-5e1e78ce5a11",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "循环是什么",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "be7a202c-87ea-4669-90cc-6cdfd5013bb8",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "字典怎么用",
+      "action_type": "scaffold",
+      "payload_statement": "怎么",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "e3a49aae-cc51-4181-a1ef-8aa52f65a1a0",
+      "intent": "怎么",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "学函数",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "e79d8e32-b037-40e3-9b64-c1983699a8fd",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 6,
+      "user": "装饰器",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "b28846f3-0f06-468d-8686-c8111b82073b",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 7,
+      "user": "类",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "4f9a157c-a56f-47c5-bae4-0aceff44bdd8",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 8,
+      "user": "文件读写",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "576caaae-04bb-4a7a-a126-ded8e3ee8709",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 9,
+      "user": "异常处理",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "432dcc9d-4172-4aff-b40c-c84dfc8c3630",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 10,
+      "user": "pip 安装",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "64a7c3d7-5148-408a-8632-4a98db5de2ce",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 11,
+      "user": "写个爬虫",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "fdb92022-9df4-4e4e-8331-05d64779ec20",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 12,
+      "user": "数据可视化",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "a6982290-8682-4327-80b5-f765e683fabc",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 13,
+      "user": "机器学习",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "c74f4bc5-d1f0-4220-b338-61adf5522846",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 14,
+      "user": "深度学习",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "6586321f-9042-4516-a4cd-06809375184f",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 15,
+      "user": "PyTorch",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "fb7c73e4-6acb-4e1e-a50d-368faca49cc6",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 16,
+      "user": "回归",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "4d713752-8abe-4e5e-b35d-219f55dc458e",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 17,
+      "user": "分类",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "da3e21de-76c0-4329-a2bb-e8852ffd7774",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 18,
+      "user": "聚类",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "aef68731-8e21-45af-9b7a-b2ef74af3f9e",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 19,
+      "user": "RNN",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "7f91b46b-6026-45f0-88e3-da10be3c698c",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 20,
+      "user": "Transformer",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "0a90552b-774c-45fb-a1ee-d4b620040223",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "advanced": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "37e1aa93-bbc3-4019-aff4-acdae5d9771b",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "为什么",
+      "action_type": "reflect",
+      "payload_statement": "为什么",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "ef51f222-5229-48cf-ad6d-48dea76f5082",
+      "intent": "为什么",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "具体点",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "9c6db726-83b4-438d-893c-915b4a2ac0e8",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "还有吗",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "7b39a7f7-9cd6-4203-9a4a-069029343ada",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "举个例子",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "0b5314e5-e0be-41c9-9618-00abcd4ca28f",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 6,
+      "user": "还是不懂",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "15a19819-854e-47bc-8e62-76d39dbf611b",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 7,
+      "user": "换个说法",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "a5dda037-0be4-4f6f-b198-a62e8cbebe58",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 8,
+      "user": "和Java的区别",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "6be09e96-0a26-4066-aaf1-2ddf985ca7f0",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 9,
+      "user": "底层原理",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "659cc3bb-fa4a-4b10-b3fb-06679456d371",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 10,
+      "user": "还有吗",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "b29f2153-854a-4a4f-8007-2083e788d142",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 11,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "6f663e97-478b-4e13-be34-b26aa01bd395",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 12,
+      "user": "为什么",
+      "action_type": "reflect",
+      "payload_statement": "为什么",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "f0260a48-b918-4317-b700-6398759ec12c",
+      "intent": "为什么",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 13,
+      "user": "具体点",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "160b9559-dce8-480e-a4e7-e6ca07310037",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 14,
+      "user": "还有吗",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "acc863f5-f81c-4873-bf88-6ed5f28ce448",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 15,
+      "user": "举个例子",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "58b75cdc-6af6-4f44-9a28-88b8c2ac3c70",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 16,
+      "user": "还是不懂",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "1f5b8428-e528-4bc3-a334-95874c3cf62c",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 17,
+      "user": "换个说法",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "e54bd7dd-9893-4d53-b9d9-35282164f0a2",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 18,
+      "user": "和Java的区别",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "5aaedfbe-0afb-48a5-8c36-5b237ae6b88a",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 19,
+      "user": "底层原理",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "3247fe8c-e621-4dce-bdb6-a42b045b7feb",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 20,
+      "user": "还有吗",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "794e02b9-d6dd-46c7-875d-ef26fcca7f9a",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "reviewer": [
+    {
+      "turn": 1,
+      "user": "教列表",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "6c5602e7-2b3f-489d-9cc7-08257f7a85f3",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "0559cb30-1aea-4597-bd25-631b5b7d428e",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "再讲一遍列表",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "fb921b80-212c-4fc7-aad2-ec8f8157ea0e",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "327d589a-336e-40ba-94c5-86621ec55927",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "列表还有什么",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "e124637e-0586-4b8c-a377-aeb334949125",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 6,
+      "user": "循环高级用法",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "d6fd84f4-c513-483c-89d8-9e2123c23bc3",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 7,
+      "user": "再讲列表",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "3b92c8c0-7874-4ac3-a4f8-a8d0d99300ab",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 8,
+      "user": "列表推导式",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "aecc9ce7-6551-4d9e-86fd-890c305f3a8e",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 9,
+      "user": "再讲循环",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "0283f848-330c-48be-9390-775d0512984d",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 10,
+      "user": "教列表",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "21938376-1f17-4c96-8b88-3998d7626381",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 11,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "ed67d3cb-aa2c-4df3-86c3-a1a2d4863ecd",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 12,
+      "user": "再讲一遍列表",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "43aabffa-430a-4ea4-a80c-2c5473865a76",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 13,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "584f6d49-d1e9-49fb-ae23-cbed988cf964",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 14,
+      "user": "列表还有什么",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "2da11940-da01-4d80-8e1c-9695fab6fa7e",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 15,
+      "user": "循环高级用法",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "eb555bd2-3b96-4be7-b44c-33e0a1a62fc1",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 16,
+      "user": "再讲列表",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "2190f20d-8a51-4b2b-83bc-d110d8cf7454",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 17,
+      "user": "列表推导式",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "b64349e3-8f78-41da-bb50-ecd128ae2655",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 18,
+      "user": "再讲循环",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "0b359662-7b00-4bf7-b183-0b9bd8a2940d",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 19,
+      "user": "教完了吧",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "49d9315a-355e-4e1d-b595-62a4abee8d5e",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "tester": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "28168461-8e20-41e9-98fa-6e8b0651524f",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "考考",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "37e774a8-5cfc-43f5-a4c2-7890c9e4473f",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "教列表",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "7c70e0cd-3b2f-4918-b2f2-09e5bcd33a9a",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "考考",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "eef6e944-5bd5-4bc8-b7bd-43307c8863e1",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "9c95c90f-4acb-4c52-8648-764d402e066a",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 6,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "考考",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "47dff9e0-2193-47b6-b26f-f433232647e8",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 7,
+      "user": "教函数",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "5519f198-a3a0-4eee-8ee7-08e790379740",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 8,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "考考",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "c6c5a73b-b943-44c9-8138-1a7f7dba68d6",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 9,
+      "user": "教类",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "95b59716-3452-4d60-a4b4-b8aad5830775",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 10,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "考考",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "800e9bc6-8d1a-44cb-96b1-74eb883fa301",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 11,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "7dbc9a81-a43d-4332-a974-6eba40b7bc0e",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 12,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "考考",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "f310d7d0-9453-4ffd-bd09-40fcfacae387",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 13,
+      "user": "教列表",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "5c4778a2-0c8d-4594-a653-960418c1d903",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 14,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "考考",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "5e17d78d-d227-4c48-90e3-4688a272e326",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 15,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "c696ef8c-111b-4fc1-bd8c-f960551b9a43",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 16,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "考考",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "bec461dc-0746-4448-b4f1-abc42e2c3e49",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 17,
+      "user": "教函数",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "d5d72fd4-3ff7-4a21-bcce-55ef7c474fce",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 18,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "考考",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "f1304855-3494-4983-9359-e08b38c0e335",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 19,
+      "user": "教类",
+      "action_type": "scaffold",
+      "payload_statement": "general",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "d43a585f-c4b8-4544-8286-225feb7c1454",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 20,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "考考",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "12a45183-738a-4ad8-b728-290f18ab890e",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ]
+}

@@ -1,0 +1,231 @@
+{
+  "test_time": "2026-05-06T06:01:11.346780+00:00",
+  "combos": 8,
+  "total_turns": 120,
+  "summaries": {
+    "all_off": {
+      "turns": 15,
+      "ok": 15,
+      "avg_quality": 6.7,
+      "steps_turns": "0/15",
+      "total_steps": 0,
+      "avg_tokens": 0.0,
+      "actions": {
+        "suggest": 10,
+        "reflect": 1,
+        "scaffold": 4
+      },
+      "ttm_stages": {},
+      "dimensions": {
+        "relevance": 1.0,
+        "clarity": 1.0,
+        "interactive": 0.73,
+        "structure": 1.0,
+        "personalization": 2.0,
+        "encouragement": 1.0
+      },
+      "time_s": 1.0
+    },
+    "llm_only": {
+      "turns": 15,
+      "ok": 15,
+      "avg_quality": 19.5,
+      "steps_turns": "15/15",
+      "total_steps": 47,
+      "avg_tokens": 743.0,
+      "actions": {
+        "suggest": 10,
+        "reflect": 1,
+        "scaffold": 4
+      },
+      "ttm_stages": {},
+      "dimensions": {
+        "relevance": 3.6,
+        "clarity": 2.8,
+        "interactive": 3.07,
+        "structure": 4.0,
+        "personalization": 3.93,
+        "encouragement": 2.13
+      },
+      "time_s": 73.0
+    },
+    "llm_ttm": {
+      "turns": 15,
+      "ok": 15,
+      "avg_quality": 20.1,
+      "steps_turns": "15/15",
+      "total_steps": 52,
+      "avg_tokens": 798.0,
+      "actions": {
+        "scaffold": 3,
+        "challenge": 12
+      },
+      "ttm_stages": {
+        "action": 15
+      },
+      "dimensions": {
+        "relevance": 3.6,
+        "clarity": 2.67,
+        "interactive": 3.2,
+        "structure": 4.0,
+        "personalization": 4.0,
+        "encouragement": 2.67
+      },
+      "time_s": 82.0
+    },
+    "llm_ttm_sdt": {
+      "turns": 15,
+      "ok": 15,
+      "avg_quality": 20.0,
+      "steps_turns": "15/15",
+      "total_steps": 49,
+      "avg_tokens": 785.0,
+      "actions": {
+        "reflect": 1,
+        "challenge": 14
+      },
+      "ttm_stages": {
+        "action": 15
+      },
+      "dimensions": {
+        "relevance": 3.53,
+        "clarity": 2.87,
+        "interactive": 3.33,
+        "structure": 4.0,
+        "personalization": 4.0,
+        "encouragement": 2.27
+      },
+      "time_s": 80.0
+    },
+    "full_behavior": {
+      "turns": 15,
+      "ok": 15,
+      "avg_quality": 19.7,
+      "steps_turns": "15/15",
+      "total_steps": 47,
+      "avg_tokens": 757.0,
+      "actions": {
+        "reflect": 5,
+        "challenge": 10
+      },
+      "ttm_stages": {
+        "action": 15
+      },
+      "dimensions": {
+        "relevance": 3.47,
+        "clarity": 2.6,
+        "interactive": 2.8,
+        "structure": 4.0,
+        "personalization": 3.93,
+        "encouragement": 2.93
+      },
+      "time_s": 73.0
+    },
+    "full_stack": {
+      "turns": 15,
+      "ok": 15,
+      "avg_quality": 19.5,
+      "steps_turns": "15/15",
+      "total_steps": 47,
+      "avg_tokens": 757.0,
+      "actions": {
+        "reflect": 5,
+        "probe": 3,
+        "challenge": 7
+      },
+      "ttm_stages": {
+        "action": 15
+      },
+      "dimensions": {
+        "relevance": 3.4,
+        "clarity": 2.87,
+        "interactive": 2.67,
+        "structure": 4.0,
+        "personalization": 3.93,
+        "encouragement": 2.67
+      },
+      "time_s": 80.0
+    },
+    "llm_diag": {
+      "turns": 15,
+      "ok": 15,
+      "avg_quality": 19.9,
+      "steps_turns": "15/15",
+      "total_steps": 48,
+      "avg_tokens": 746.0,
+      "actions": {
+        "suggest": 9,
+        "reflect": 1,
+        "probe": 3,
+        "scaffold": 2
+      },
+      "ttm_stages": {},
+      "dimensions": {
+        "relevance": 3.53,
+        "clarity": 2.93,
+        "interactive": 2.93,
+        "structure": 4.0,
+        "personalization": 4.0,
+        "encouragement": 2.53
+      },
+      "time_s": 86.0
+    },
+    "rules_diag": {
+      "turns": 15,
+      "ok": 15,
+      "avg_quality": 6.9,
+      "steps_turns": "0/15",
+      "total_steps": 0,
+      "avg_tokens": 0.0,
+      "actions": {
+        "suggest": 10,
+        "probe": 3,
+        "scaffold": 2
+      },
+      "ttm_stages": {},
+      "dimensions": {
+        "relevance": 1.0,
+        "clarity": 1.0,
+        "interactive": 0.87,
+        "structure": 1.0,
+        "personalization": 2.0,
+        "encouragement": 1.0
+      },
+      "time_s": 1.0
+    }
+  },
+  "ranking": [
+    [
+      "llm_ttm",
+      20.1
+    ],
+    [
+      "llm_ttm_sdt",
+      20.0
+    ],
+    [
+      "llm_diag",
+      19.9
+    ],
+    [
+      "full_behavior",
+      19.7
+    ],
+    [
+      "llm_only",
+      19.5
+    ],
+    [
+      "full_stack",
+      19.5
+    ],
+    [
+      "rules_diag",
+      6.9
+    ],
+    [
+      "all_off",
+      6.7
+    ]
+  ]
+}

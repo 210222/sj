@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S32.5 -- 体验审计回归验证与前后对比</name>
+  <version>2.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>32</phase>
+  <sub_stage>S32.5</sub_stage>
+  <sub_stage_name>comparison / verify_summary / GO-NO-GO</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <task_definition>
+    | 字段 | 内容 |
+    |------|------|
+    | Name | Verification |
+    | Input | baseline run_id + 已实施的 FIX 条目 + 新一轮 runs 产物 |
+    | Output | comparison.json + verify_summary.json + GO / NO-GO |
+    | Tools | 读 reports/experience_audit/runs/<run_id>/ 产物，必要时读测试结果 |
+  </task_definition>
+
+  <role>
+    你是体验回归验证分析师。
+    你的职责不是写新修复，而是将“修复前 vs 修复后”的差异变成正式 comparison，并给出 GO / NO-GO 结论。
+  </role>
+
+  <context>
+    验证不能只输出一张均分表。
+    当前 Phase 32 的正式验证必须同时覆盖：
+    - 长轮 lane
+    - breakpoint probe lane
+    - failure_cases 分布
+    - 正式产物完整性
+    - 全量回归结果
+
+    comparison 必须绑定明确 baseline run_id，否则验证不具有审计意义。
+  </context>
+
+  <artifacts>
+    <item>reports/experience_audit/runs/<baseline_run_id>/...</item>
+    <item>reports/experience_audit/runs/<current_run_id>/...</item>
+    <item>comparison.json</item>
+    <item>verify_summary.json</item>
+  </artifacts>
+
+  <task>
+    1. 以 S32.1 / S32.2 形成的 baseline run 为基线；
+    2. 在已实施 FIX 后，重跑 long_turn lane 与 breakpoint probe lane；
+    3. 对比以下维度：
+       - 总分变化
+       - 各维度变化
+       - 各画像变化
+       - failure_cases 数量与类型变化
+       - 5 个关键断点的通过 / 失败状态
+       - 正式产物是否齐全
+       - 全量回归是否通过
+    4. 输出正式 comparison.json，必须包含 baseline_run_id 与 current_run_id；
+    5. 输出 verify_summary.json，明确：
+       - improved
+       - unchanged
+       - regressed
+       - deferred
+       - final_verdict
+    6. 对于“分数改善不明显但关键断点已消失”的情况，允许给出 GO，但必须说明理由；
+    7. 对于“均分提升但关键断点仍存在”的情况，必须给出 NO-GO。
+  </task>
+
+  <output_format>
+    {
+      "baseline_run_id": "run_2026_05_13_01",
+      "current_run_id": "run_2026_05_13_02",
+      "overall_delta": 1.2,
+      "dimension_delta": {
+        "引用性": 0.8,
+        "连续性": 1.1,
+        "无空转": 0.6,
+        "稳定性": 0.4,
+        "推进感": 1.5
+      },
+      "profile_delta": {
+        "novice_confirm": 2.7,
+        "novice_jump": 2.3,
+        "advanced": 0.3,
+        "reviewer": 0.7,
+        "tester": 0.1
+      },
+      "breakpoint_status": {
+        "ws_disabled_status_probe": "improved",
+        "pulse_next_action_probe": "fixed",
+        "dashboard_fetch_failure_probe": "improved",
+        "aggregator_degrade_shape_probe": "partial",
+        "payload_text_masking_probe": "partial"
+      },
+      "failure_delta": {
+        "dropped_next_action": -1,
+        "silent_dashboard_error": -1,
+        "non_progress_loop": -3
+      },
+      "artifacts_complete": true,
+      "full_regression": "passed",
+      "final_verdict": "GO"
+    }
+  </output_format>
+
+  <quality_gates>
+    <gate>comparison 绑定 baseline_run_id 与 current_run_id</gate>
+    <gate>同时覆盖 long_turn lane 与 breakpoint probe lane</gate>
+    <gate>failure_cases 与 breakpoint 状态都被纳入验证</gate>
+    <gate>正式产物完整</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+  </quality_gates>
+
+  <go_gate_policy>
+    <gate>GO: 关键断点已消失或显著改善，正式产物齐全，全量回归通过。</gate>
+    <gate>NO-GO: 关键断点仍存在，或 comparison 不可审计，或全量回归失败。</gate>
+  </go_gate_policy>
+
+  <side_effects>
+    1. 某些分数可能因评分口径修正而下降，但 failure 真实性更高；
+    2. comparison 会暴露历史 run 口径不一致问题；
+    3. 若关键断点消失但均分变化不大，结论将更依赖 breakpoint lane 而非总分。
+  </side_effects>
+
+  <success_criteria>
+    <item>comparison 成为正式机器可读产物</item>
+    <item>验证同时覆盖长轮体验与关键断点</item>
+    <item>GO / NO-GO 判断有审计依据，不依赖主观体感</item>
+    <item>全量回归通过，且无冻结层越界改动</item>
+  </success_criteria>
+</prompt>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 消歧义：本文件中 S31 表示 Phase 31 子阶段，不表示历史 Phase 10 S3.1 编号体系。 -->
+<prompt>
+  <name>Phase 31.C -- 配置写入一致性</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>31</phase>
+  <sub_stage>S31.C</sub_stage>
+  <sub_stage_name>safe_dump / 缓存失效 / 多入口统一</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责收口 Phase 31 的产品级配置写入一致性，不做全仓 YAML 清理，只解决产品运行路径上的双写与失效不一致。
+  </role>
+
+  <context>
+    当前真实状态（非乐观估计）：
+    1. api/routers/config_router.py::_write_config()
+       - 已使用 yaml.safe_dump
+       - 已清理 src.coach 模块缓存
+       - 但不调用 dashboard_aggregator._invalidate_cache()，API 侧配置缓存失效链尚未接入写入路径
+    2. src/coach/agent.py::_update_config()
+       - 仍使用 yaml.dump（非 safe_dump）
+       - 未清理任何缓存（模块缓存 / API 侧缓存均未处理）
+       - 导致对话式启停模块与 API 路由改配置的行为不一致
+
+    此外，api/services/dashboard_aggregator.py 已存在：
+    - _cached_config()
+    - _invalidate_cache()
+
+    _invalidate_cache() 目前是孤儿函数——定义存在但没有任何调用点。API 侧配置缓存失效闭环尚未建立。
+
+    本阶段目标是一致性，不是全仓 YAML 大扫除。
+  </context>
+
+  <risk_analysis>
+    1. yaml.dump 与 safe_dump 行为不一致，会产生格式漂移；
+    2. 写完配置后若新请求仍读旧缓存，会造成"改了但没生效"的错觉；
+    3. API 路径与对话式路径各改各的，会让后续维护继续分叉；
+    4. 若把 tests/scripts 中所有 yaml.dump 一并卷入，会让本阶段失焦。
+  </risk_analysis>
+
+  <task>
+    1. 以 api/routers/config_router.py 与 src/coach/agent.py 为核心落点，统一产品级 coach_defaults.yaml 写入规则；
+    2. 所有产品级写入必须使用 yaml.safe_dump，且保持现有格式约束；
+    3. 统一配置写入后的失效策略：
+       - src.coach 模块缓存失效；
+       - API 侧配置缓存失效（调用 _invalidate_cache()）；
+       - 至少覆盖 api/services/dashboard_aggregator.py；
+    4. 保持现有业务语义不变：
+       - EXPOSED_KEYS 白名单不扩张；
+       - auto_affects 语义不丢；
+    5. 若新增共享 helper 或收敛写入逻辑，必须同 Phase 完成全部调用点注入；
+    6. 明确 out_of_scope：
+       - 不在本阶段处理 tests/*.py、scripts/*.py 中所有 yaml.dump；
+    7. 测试补强：
+       - tests/test_api_config.py（本阶段必须新增，覆盖 /api/v1/config 直接路由测试）
+       - tests/test_s16_awakening.py
+       - 必要时补 tests/test_api_dashboard.py
+       - tests/test_phase31.py（追加配置一致性行为门禁）
+  </task>
+
+  <side_effects>
+    1. 写配置后主动清缓存，可能让部分测试暴露对模块单例的隐性依赖；
+    2. 统一到产品级 helper 后，能力启停与 API 路由可能共用一条逻辑；
+    3. "立即生效"的定义必须限定为"后续新读取 / 新请求可见"，不要承诺强制刷新已存在实例。
+  </side_effects>
+
+  <quality_gates>
+    <gate>api/routers/config_router.py 与 src/coach/agent.py 两条产品级写入路径都使用 safe_dump</gate>
+    <gate>写配置后，下一次读取不依赖旧缓存</gate>
+    <gate>API 改配置与对话式启停模块，对同一配置项的落盘格式和可见结果一致</gate>
+    <gate>不改 contracts/**、src/inner/**、src/middle/**、src/outer/**</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>产品级 config 写入规则一致</item>
+    <item>缓存失效规则一致</item>
+    <item>PUT 后 GET 可见，新请求不吃旧缓存</item>
+    <item>C 阶段 targeted tests 全绿，并覆盖 auto_affects 不变</item>
+  </success_criteria>
+</prompt>

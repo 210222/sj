@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 25 -- S25.2 策略切换</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>25</phase>
+  <sub_stage>S25.2</sub_stage>
+  <sub_stage_name>composer.compose() 接收 self_eval, 切换后即时重建 payload</sub_stage_name>
+
+  <role>
+    compose() 新增 self_eval 参数。策略无效时切换 action_type 并重建 payload。
+    注意: 切换必须在 domain_passport/fusor/tax 处理之前,
+    否则 payload 中会残留原 action_type 的字段。
+  </role>
+
+  <context>
+    compose() 执行顺序:
+    1. _select_action_type + _build_payload  (约第 48 行)
+    2. TTM 粗筛 + SDT 微调 + Flow 定难度 (约第 63-95 行)
+    3. Domain Passport + Fusor + Tax (约第 97-110 行)
+    4. return action
+
+    策略切换应在步骤 2 之后、步骤 3 之前执行。
+    这样切换后的 action_type 会经过 passport/fusor/tax 的校验。
+
+    约束:
+    - 只修改 src/coach/composer.py
+    - self_eval 为 None 时行为零变化
+    - 全量回归 1294+ 必须通过
+  </context>
+
+  <task>
+
+    -- 改动 1: compose() 方法签名新增 self_eval 参数 --
+
+    def compose(
+        self,
+        user_state: dict | None = None,
+        intent: str = "",
+        relevant: list[dict] | None = None,
+        excursion_mode: bool = False,
+        ttm_strategy: dict | None = None,
+        sdt_profile: dict | None = None,
+        flow_result: dict | None = None,
+        self_eval: dict | None = None,  # Phase 25
+    ) -> dict:
+
+    -- 改动 2: 在 Flow 定难度(约第 95 行)之后、Domain Passport(约第 97 行)之前插入 --
+
+    # Phase 25: 策略无效时切换教学模式
+    if self_eval and self_eval.get("strategy_ineffective"):
+        current = action_type
+        switch_map = {
+            "scaffold": "probe",
+            "challenge": "scaffold",
+            "probe": "reflect",
+            "suggest": "scaffold",
+        }
+        switched = switch_map.get(current)
+        if switched and switched != current:
+            action_type = switched
+            payload = self._build_payload(action_type, intent)
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>self_eval=None 时 compose() 行为不变</item>
+    <item>切换后 payload 重建正确(不含原 action_type 残留字段)</item>
+    <item>切换后的 action_type 经过 domain_passport/fusor/tax 校验</item>
+  </success_criteria>
+</prompt>

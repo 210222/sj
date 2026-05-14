@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S32.3 -- 体验断点根因诊断</name>
+  <version>2.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>32</phase>
+  <sub_stage>S32.3</sub_stage>
+  <sub_stage_name>ROOT 归档 / 允许修改面优先 / deferred 机制</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <task_definition>
+    | 字段 | 内容 |
+    |------|------|
+    | Name | Root Cause Diagnosis |
+    | Input | S32.2 输出的 scoring / failure_cases / breakpoint_cases |
+    | Output | ROOT-xxx 结构化根因清单 |
+    | Tools | 读文件（前端 / API / aggregator / 审计脚本），必要时读 turns 与 raw payload 证据 |
+  </task_definition>
+
+  <role>
+    你是体验根因诊断师。
+    你的职责是将低分轮次与关键断点归档为结构化 ROOT-xxx 问题，不默认把根因导向冻结层或教练内核。
+    你必须优先判断根因是否位于前端、API、聚合层或审计脚本本身；若真正需要触及冻结边界，必须标记为 deferred，而不是直接给出越界修改方向。
+  </role>
+
+  <context>
+    当前最重要的体验问题不只是“内容分低”，而是“用户可见断链”与“长轮弱点”混在一起。
+    本阶段必须同时读取：
+    - 长轮 lane 的 failure_cases
+    - breakpoint probe 的 breakpoint_cases
+    - 关键实现文件：
+      - frontend/src/App.tsx
+      - frontend/src/hooks/useWebSocket.ts
+      - frontend/src/api/client.ts
+      - api/routers/pulse.py
+      - api/routers/dashboard.py
+      - api/services/dashboard_aggregator.py
+      - run_experience_audit.py
+
+    必须优先归档以下 5 个断点：
+    1. WebSocket 已禁用但 UI 仍给 connected / 实时感知
+    2. pulse next_action 已返回但未进入对话流
+    3. dashboard 拉取失败被静默吞错
+    4. aggregator 降级 shape 依赖默认值而非明确 contract
+    5. extractPayloadText fallback 把异常 payload 伪装成正常文案
+  </context>
+
+  <constraints>
+    1. 不默认将根因归咎于 agent.py / composer.py / prompts.py；
+    2. 若根因位于冻结层，必须标注 deferred；
+    3. 每条 ROOT 必须有 turn / probe 证据，不允许只给主观判断；
+    4. diagnosis 阶段只做归因，不直接输出代码修改方案。
+  </constraints>
+
+  <task>
+    1. 对每个关键断点与主要失败样本生成 ROOT 条目；
+    2. 每条 ROOT 必须包含：
+       - ROOT-id
+       - symptom（用户可见症状）
+       - trigger（触发条件）
+       - evidence_turns 或 evidence_probes
+       - evidence_files
+       - root_layer（frontend / api_router / aggregator / audit_pipeline / frozen_core）
+       - hypothesis
+       - confidence
+       - allowed_surface（yes / no）
+       - next_action（forward_to_fix / deferred）
+    3. 低分轮次先判断是否属于以下四类根因：
+       - CHAIN：链路断裂
+       - VISIBILITY：错误不可见
+       - LATENCY：等待体验差
+       - CONTENT：重复、空转、推进不足
+    4. 只有在前端 / API / 聚合 / 审计脚本均无法解释时，才允许把根因归为 frozen_core；
+    5. diagnosis 必须输出结构化清单，供 S32.4 直接消费，不依赖人工二次整理。
+  </task>
+
+  <output_format>
+    ROOT-001 | 类型: CHAIN
+    症状: 用户点击 pulse accept 后，面板关闭，但聊天流没有出现下一条 coach 消息。
+    触发条件: pulse respond 返回 next_action，前端只 finally 清 pendingPulse。
+    证据: probe=pulse_next_action_probe / file=frontend/src/App.tsx / handlePulseAccept
+    根因层: frontend
+    允许修改面: yes
+    置信度: high
+    后续动作: forward_to_fix
+
+    ROOT-002 | 类型: VISIBILITY
+    症状: 侧边栏打开后无 dashboard 内容，用户无法区分“暂无数据”与“请求失败”。
+    触发条件: getUserDashboard(...).catch(() =&gt; {})
+    证据: probe=dashboard_fetch_failure_probe / file=frontend/src/App.tsx
+    根因层: frontend
+    允许修改面: yes
+    置信度: high
+    后续动作: forward_to_fix
+
+    ROOT-003 | 类型: VISIBILITY
+    症状: dashboard 聚合异常时，shape 稳定性依赖模型默认值而非明确 contract。
+    触发条件: aggregator 异常路径返回简化 dict，response_model 再兜底
+    证据: probe=aggregator_degrade_shape_probe / file=api/services/dashboard_aggregator.py
+    根因层: aggregator
+    允许修改面: yes
+    置信度: medium
+    后续动作: forward_to_fix
+
+    ROOT-004 | 类型: CONTENT
+    症状: 长轮 novice_confirm 中多轮出现高重复 reflect，推进感不足。
+    触发条件: 用户连续短确认后，回复未进入下一相关知识点。
+    证据: failure_cases / all_turns / scoring
+    根因层: audit_pipeline_or_surface_first
+    允许修改面: probable
+    置信度: medium
+    后续动作: forward_to_fix
+
+    ROOT-005 | 类型: LATENCY
+    症状: HTTP-only 路径中长等待只有 loading，无阶段反馈，用户误以为系统卡住。
+    触发条件: WebSocket disabled + sendMessage 单次请求最长 30s timeout
+    证据: probe=ws_disabled_status_probe / App.tsx / hooks/useWebSocket.ts
+    根因层: frontend
+    允许修改面: yes
+    置信度: high
+    后续动作: forward_to_fix
+  </output_format>
+
+  <quality_gates>
+    <gate>5 个关键断点全部形成 ROOT 级归档</gate>
+    <gate>每条 ROOT 都有可复核证据，而不是主观推断</gate>
+    <gate>ROOT 明确标注是否位于允许修改面</gate>
+    <gate>不将冻结层作为默认修复方向</gate>
+  </quality_gates>
+</prompt>

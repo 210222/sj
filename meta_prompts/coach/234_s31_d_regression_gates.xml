@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 消歧义：本文件中 S31 表示 Phase 31 子阶段，不表示历史 Phase 10 S3.1 编号体系。 -->
+<prompt>
+  <name>Phase 31.D -- 测试补强与稳态回归门禁</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>31</phase>
+  <sub_stage>S31.D</sub_stage>
+  <sub_stage_name>Phase 31 回归测试补强 + 最终 GO 门禁</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责收口 Phase 31 的最终回归门禁，不新增产品逻辑，只把 A/B/C 的闭环行为固化为测试与最终 GO/NO-GO 规则。
+  </role>
+
+  <context>
+    当前已有测试虽然存在，但还不够稳态门禁级别：
+    1. tests/test_phase27.py 已覆盖摘要存在性，但对"摘要内容是否正确"断言偏弱；
+    2. tests/test_coach_memory_upgrade.py 已覆盖持久化 / recall，但尚未覆盖 ai_response 闭环；
+    3. tests/test_api_dashboard.py 已覆盖 dashboard 基本字段，但尚未覆盖配置写入后的产品级一致性；
+    4. 当前仓库没有针对 /api/v1/config 的直接路由测试（tests/test_api_config.py 尚不存在）。
+
+    本阶段需要新增的测试文件（非既有资产）：
+    - tests/test_api_config.py —— 必须新增，覆盖 /api/v1/config 直接路由测试
+    - tests/test_phase31.py —— 必须新增，承接 A/B/C 三阶段跨文件行为门禁
+
+    本阶段目标是：
+    - 让 A/B/C 各有 targeted regression；
+    - 让最终全量回归真正代表收尾稳态完成；
+    - 防止"假绿"。
+  </context>
+
+  <risk_analysis>
+    1. 全量 pytest 通过，但真实行为并未闭环，属于假绿；
+    2. 若只测字段存在，不测链路行为，会留下回归盲区；
+    3. 为过测试顺手去改 protected layers，会直接偏离项目边界；
+    4. 若测试断言写死完整文案，会形成脆弱测试。
+  </risk_analysis>
+
+  <task>
+    1. 为 A/B/C 三个子阶段分别建立 targeted regression；
+    2. 测试文件组织（所有新文件均为必须新增，非可选）：
+       - 必须新增 tests/test_phase31.py 承接跨文件行为门禁；
+       - 必须新增 tests/test_api_config.py 覆盖 /api/v1/config 直接路由测试；
+       - 补强现有文件：
+         - tests/test_coach_memory_upgrade.py
+         - tests/test_phase27.py
+         - tests/test_api_dashboard.py
+    3. 每类测试至少覆盖一个行为断言，不能只有字段存在或方法不报错；
+    4. 最终门禁顺序必须串行：
+       - A targeted tests -&gt; GO_A
+       - B targeted tests -&gt; GO_B
+       - C targeted tests -&gt; GO_C
+       - D 汇总回归 -&gt; GO_D
+    5. D 阶段还要做边界门禁确认：
+       - 禁止目录无变更（contracts/**, src/inner/**, src/middle/**, src/outer/**）；
+       - 无 contracts/schema/reason_code 漂移；
+       - 无"新增 save/load/update 却没接调用点"的残留；
+       - 无 yaml.dump 残留在产品级 config 写入路径。
+  </task>
+
+  <side_effects>
+    1. 增强行为测试后，可能先暴露历史欠账；
+    2. 新增 API 测试会更依赖测试环境的 YAML 回滚稳定性；
+    3. 测试若过度绑定文案，会造成不必要脆弱性。
+  </side_effects>
+
+  <quality_gates>
+    <gate>A/B/C 三类 targeted tests 全部存在并覆盖关键行为</gate>
+    <gate>tests/test_phase27.py 不再只断言块存在，而能断言块内容正确</gate>
+    <gate>tests/test_coach_memory_upgrade.py 能验证 ai_response 闭环</gate>
+    <gate>tests/test_api_config.py 存在 /api/v1/config 的直接测试覆盖</gate>
+    <gate>tests/test_phase31.py 存在跨文件行为门禁</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+    <gate>无越界修改禁止目录</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>A/B/C 的关键行为都有对应测试守护</item>
+    <item>全量回归通过不再是假绿</item>
+    <item>满足 GO_D 后，Phase 31 才算完成</item>
+  </success_criteria>
+</prompt>

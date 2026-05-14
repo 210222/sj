@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 27 -- FULL/COMPRESS/PLACEHOLDER 三级上下文</name>
+  <version>2.0.0</version>
+  <track>COACH</track>
+  <phase>27</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>Adaptive Focus Memory + Mem0 + Cooperative Memory Paging 风格</sub_stage_name>
+
+  <role>
+    基于前沿研究: Adaptive Focus Memory (FULL/COMPRESS/PLACEHOLDER 三级, token 降 66%),
+    Mem0 (结构化记忆提取), Cooperative Memory Paging (关键词书签替代早期原文)。
+  </role>
+
+  <context>
+    当前: recall()[:5] -> format -> LLM. 5 轮后 token 膨胀。
+    改后: [FULL] 最近 1 轮 | [COMPRESS] 前 2-4 轮摘要 | [PLACEHOLDER] 更早轮关键词
+
+    约束:
+    - 不修改 contracts/ 内圈/中圈/外圈
+    - 不修改 prompts.py 签名
+    - 全量回归 1302+ 必须通过
+  </context>
+
+  <sub_stages>
+    <stage id="s27_1" priority="P0">
+      <description>agent.py _build_context_summary() 三级生成 + ctx system 注入</description>
+      <meta_prompt>200_s27_1_summary.xml</meta_prompt>
+    </stage>
+    <stage id="s27_2" priority="P1">
+      <description>测试</description>
+      <meta_prompt>201_s27_2_verification.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+</prompt>

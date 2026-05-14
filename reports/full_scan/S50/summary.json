@@ -1,18 +1,18 @@
 {
   "step": "S50",
   "status": "WARN",
-  "executed_at_utc": "2026-05-04T07:26:06.853Z",
+  "executed_at_utc": "2026-05-12T06:00:51.109Z",
   "layer": "E — Delivery & Governance",
   "dora_metrics": {
     "available": true,
-    "deploy_frequency_per_day": 0,
-    "deploy_frequency_label": "Low (monthly)",
-    "lead_time_days": 0,
-    "lead_time_commits": 1,
+    "deploy_frequency_per_day": 0.38,
+    "deploy_frequency_label": "Medium (weekly)",
+    "lead_time_days": 8,
+    "lead_time_commits": 3,
     "change_failure_rate": 0.0,
     "change_failure_label": "Low (<5%)",
     "mttr_estimate": "N/A (no revert data)",
-    "total_commits_analyzed": 1
+    "total_commits_analyzed": 3
   },
   "bus_factor": {
     "factor": 1,
@@ -26,9 +26,9 @@
     "health": "Good"
   },
   "test_pyramid": {
-    "total": 1003,
+    "total": 1308,
     "unit": 144,
-    "integration": 173,
+    "integration": 178,
     "e2e": 29,
     "healthy": false
   },

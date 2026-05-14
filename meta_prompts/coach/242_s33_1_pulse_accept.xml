@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S33.1 -- Pulse Accept 上下文注入</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>33</phase>
+  <sub_stage>S33.1</sub_stage>
+  <sub_stage_name>清除 pulse accept 硬编码话术，让其参与教练引擎决策</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责消除 pulse accept 路径的体验断点，使其在用户决策后继续教学上下文，而不是只返回固定话术。
+  </role>
+
+  <context>
+    当前 api/routers/pulse.py 的 accept 路径返回硬编码：
+    {"action_type": "suggest", "payload": {"statement": "好的，我们继续。"}}
+
+    这意味着用户做出关键的认知主权决策后，系统只说一句套话，没有承接上一轮教学内容。
+    这是 Phase 32 verify_summary.json 记录的唯一 deferred 项：
+    pulse_accept_hardcoded_next_action_context
+
+    rewrite 路径已经在调用 CoachBridge.chat()，不需要改动。
+  </context>
+
+  <risk_analysis>
+    1. accept 改成调用 chat 会引入一次完整的 agent.act() 调用，增加延迟；
+    2. 若传入的消息过于笼统，返回内容可能无关；
+    3. 若不传合适的消息，可能触发 agent 的某些默认分支（如意图判定为 general）。
+  </risk_analysis>
+
+  <task>
+    1. 修改 api/routers/pulse.py 的 accept 分支；
+    2. 用 `await loop.run_in_executor(_executor, CoachBridge.chat, "我接受，继续", req.session_id)`
+       复用现有 chat 路径；
+    3. 保持 rewrite 路径不变；
+    4. 保持响应 schema 不变（依然返回 next_action dict）；
+    5. 不影响 PulseService 的 record_pulse / blocking_mode 逻辑；
+    6. 不改 request 模型，不改 response 模型。
+  </task>
+
+  <side_effects>
+    1. accept 路径延迟会从毫秒级变为秒级（因为要跑一次教练决策）；
+    2. 返回的 next_action.action_type 不再固定为 suggest，可能是其他决策结果；
+    3. 这是预期变化，说明 pulse accept 真正参与了对话推进。
+  </side_effects>
+
+  <quality_gates>
+    <gate>python -m pytest tests/test_api_pulse.py -q 通过</gate>
+    <gate>accept 返回的 next_action 不是固定套话</gate>
+    <gate>pulse request / response schema 不变</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>pulse accept 路径不再返回硬编码话术</item>
+    <item>pulse 测试全部通过</item>
+    <item>Phase 32 verify_summary.json 记录的 deferred 项得以清理</item>
+  </success_criteria>
+</prompt>

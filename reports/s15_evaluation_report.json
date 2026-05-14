@@ -1,0 +1,75 @@
+{
+  "test_time": "2026-05-08T10:42:16.620694+00:00",
+  "configs": 11,
+  "scenarios": 8,
+  "s14_baseline": 15.6,
+  "summaries": {
+    "all_off": {
+      "ok": false,
+      "turns": 0,
+      "avg_quality": 0,
+      "new_dim_avg": 0
+    },
+    "rules_diag": {
+      "ok": false,
+      "turns": 0,
+      "avg_quality": 0,
+      "new_dim_avg": 0
+    },
+    "llm_only": {
+      "ok": false,
+      "turns": 0,
+      "avg_quality": 0,
+      "new_dim_avg": 0
+    },
+    "llm_ttm": {
+      "ok": false,
+      "turns": 0,
+      "avg_quality": 0,
+      "new_dim_avg": 0
+    },
+    "llm_ttm_sdt": {
+      "ok": false,
+      "turns": 0,
+      "avg_quality": 0,
+      "new_dim_avg": 0
+    },
+    "full_behavior": {
+      "ok": false,
+      "turns": 0,
+      "avg_quality": 0,
+      "new_dim_avg": 0
+    },
+    "llm_diag": {
+      "ok": false,
+      "turns": 0,
+      "avg_quality": 0,
+      "new_dim_avg": 0
+    },
+    "full_stack": {
+      "ok": false,
+      "turns": 0,
+      "avg_quality": 0,
+      "new_dim_avg": 0
+    },
+    "s15_person": {
+      "ok": false,
+      "turns": 0,
+      "avg_quality": 0,
+      "new_dim_avg": 0
+    },
+    "s15_diff": {
+      "ok": false,
+      "turns": 0,
+      "avg_quality": 0,
+      "new_dim_avg": 0
+    },
+    "s15_full": {
+      "ok": false,
+      "turns": 0,
+      "avg_quality": 0,
+      "new_dim_avg": 0
+    }
+  },
+  "ranking": []
+}

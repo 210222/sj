@@ -35,17 +35,21 @@ async def get_user_dashboard(
             detail={"error": "RATE_LIMITED", "detail": "Dashboard rate limit exceeded"},
         )
 
-    agg = DashboardAggregator()
-    ttm_data = agg.get_ttm_radar(session_id)
-    sdt_data = agg.get_sdt_rings(session_id)
-    progress_data = agg.get_progress(session_id)
+    agg = DashboardAggregator(session_id)
+    ttm_data = agg.get_ttm_radar()
+    sdt_data = agg.get_sdt_rings()
+    progress_data = agg.get_progress()
 
     # Phase 29 P2-7: mastery_snapshot
     snap = None
     try:
-        snap = agg.get_mastery_snapshot(session_id)
+        snap = agg.get_mastery_snapshot()
     except Exception:
         pass
+
+    # Phase 36+37: LLM runtime observability (global + session)
+    llm_runtime = DashboardAggregator.get_llm_runtime_summary()
+    session_llm = DashboardAggregator.get_session_llm_summary(session_id)
 
     return UserDashboardResponse(
         session_id=session_id,
@@ -53,4 +57,7 @@ async def get_user_dashboard(
         sdt_rings=SDTRingsData(**sdt_data),
         progress=ProgressData(**progress_data),
         mastery_snapshot=snap,
+        review_queue=agg.get_review_queue(),
+        llm_runtime_summary=llm_runtime,
+        session_llm_summary=session_llm,
     )

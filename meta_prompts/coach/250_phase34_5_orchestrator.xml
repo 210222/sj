@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 34.5 -- LLM Baseline 正式收口</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>34.5</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>基线锁定 / 波动带确认 / 上下文路径指纹归档</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 34.5 的总控执行。
+    你的职责不是重构 LLM 上下文路径，不是迁移 provider，也不是修改体验评分，
+    而是将 Phase 34 已跑出的真实 LLM 快照，正式收口为可复跑、可比较、可回归的 LLM baseline。
+    你必须严格按子阶段串行推进，任何阶段未 GO，禁止进入下一阶段。
+  </role>
+
+  <context>
+    Phase 34 已完成真实 LLM 能力快照审计（15/15 turns llm_generated）。
+    llm_vs_rule_comparison.json 已产出，overall: 12.31 → 14.60 (+2.29)。
+    但 Phase 34 未完成正式 baseline promotion：只有单次 snapshot，无波动带确认，无 context fingerprint 归档。
+    本阶段把这些缺口补齐，使当前 LLM 链路成为 Phase 35 重构前的正式 before-state 锚点。
+  </context>
+
+  <global_constraints>
+    1. 禁止修改 contracts/**；
+    2. 禁止修改 src/inner/**；
+    3. 禁止修改 src/middle/**；
+    4. 禁止修改 src/outer/**；
+    5. 禁止修改 provider / model / base_url；
+    6. 禁止修改 Phase 32 scoring 维度与 breakpoint probes；
+    7. 禁止将本阶段扩展成 Phase 35 的上下文主链重构；
+    8. 禁止直接修改 src/coach/agent.py、src/coach/llm/prompts.py、src/coach/llm/memory_context.py 的主行为逻辑；
+    9. 子阶段严格串行，未 GO 不得进入下一阶段。
+  </global_constraints>
+
+  <execution_order>
+    <step>S34.5.1 → S34.5.2 → S34.5.3 → S34.5.4</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s34_5_1" name="范围锁定与 baseline 定义">
+      <meta_prompt>251_s34_5_1_scope_lock.xml</meta_prompt>
+    </stage>
+    <stage id="s34_5_2" name="baseline 波动带确认">
+      <meta_prompt>252_s34_5_2_baseline_band.xml</meta_prompt>
+    </stage>
+    <stage id="s34_5_3" name="上下文路径指纹归档">
+      <meta_prompt>253_s34_5_3_context_fingerprint.xml</meta_prompt>
+    </stage>
+    <stage id="s34_5_4" name="验证与正式收口">
+      <meta_prompt>254_s34_5_4_verify_close.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+
+  <required_outputs>
+    <item>reports/experience_audit/llm_baseline_manifest.json</item>
+    <item>reports/experience_audit/llm_baseline_band.json</item>
+    <item>reports/experience_audit/llm_context_fingerprint.json</item>
+    <item>reports/phase34_5_llm_baseline_execution_plan.md</item>
+    <item>reports/phase34_5_llm_baseline_completion.md</item>
+  </required_outputs>
+
+  <risk_analysis>
+    1. 将 Phase 34 的单次快照误当作正式 baseline，忽略 LLM 输出波动；
+    2. 将 baseline 收口误写成上下文主链重构，提前偷跑 Phase 35；
+    3. baseline 只锁数字，不锁 prompt/context path 形态，导致后续 before/after 无法严格比较；
+    4. 将 rules baseline 与 LLM baseline 语义混淆；
+    5. 因为 Phase 34 已 GO 而误以为 Phase 34.5 不必存在。
+  </risk_analysis>
+
+  <go_gate_policy>
+    <gate>GO_S34.5.1: LLM baseline 的定义、范围、语义边界已锁定。</gate>
+    <gate>GO_S34.5.2: baseline 波动带已确认，不再依赖单次 run 的绝对值。</gate>
+    <gate>GO_S34.5.3: 当前 prompt/context path 的关键结构已归档。</gate>
+    <gate>GO_S34.5.4: completion 文档落盘，全量回归通过，可进入 Phase 35。</gate>
+  </go_gate_policy>
+
+  <quality_gates>
+    <gate>不得修改 contracts/**、src/inner/**、src/middle/**、src/outer/**</gate>
+    <gate>不得修改 provider / model / base_url</gate>
+    <gate>不得直接实装 Context Caching / 分层注入 / retention 重构</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>当前 LLM 链路被正式定义为 pre-refactor baseline</item>
+    <item>baseline 不再只是 snapshot，而是可回归锚点</item>
+    <item>Phase 35 有明确 before-state 输入</item>
+  </success_criteria>
+</prompt>

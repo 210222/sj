@@ -1,0 +1,67 @@
+{
+  "step": "S85",
+  "status": "FAIL",
+  "executed_at_utc": "2026-05-12T06:00:58.445Z",
+  "layer": "H — Phase 19-21 Wiring + Exhaustive Integration",
+  "checks_passed": 5,
+  "checks_failed": 10,
+  "score": 33.3,
+  "findings_count": 11,
+  "findings": [
+    {
+      "severity": "P1",
+      "type": "runtime_crash",
+      "detail": "运行时验证异常: 'NoneType' object has no attribute 'get'"
+    },
+    {
+      "severity": "P1",
+      "type": "regression_failures",
+      "detail": "全量回归有 55 个失败"
+    },
+    {
+      "severity": "P1",
+      "type": "exhaustive_fail",
+      "detail": "S14/S15 快速质量验证 (tests/test_s15_quick.py) 返回 1: ============================================================\nS15 QUICK EVALUATION: 5 configs x 5 turns\n============================================================\nTraceback (most recent call last):\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s15_quick.py\", line 151, in <module>\n    main()\n  File \"D:"
+    },
+    {
+      "severity": "P1",
+      "type": "exhaustive_fail",
+      "detail": "Phase 17 穷尽测试 (tests/test_s17_exhaustive.py) 返回 1: Traceback (most recent call last):\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s17_exhaustive.py\", line 373, in <module>\n    ok = run()\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s17_exhaustive.py\", line 64, in run\n    restore_config()\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s17_exhaustive.py\", li"
+    },
+    {
+      "severity": "P2",
+      "type": "dashboard_placeholder",
+      "detail": "Dashboard total_turns=0, 预期 > 0（可能是硬编码占位符）"
+    },
+    {
+      "severity": "P2",
+      "type": "composer_error",
+      "detail": "composer 验证异常: 'NoneType' object has no attribute 'get'"
+    },
+    {
+      "severity": "P2",
+      "type": "coach_bridge_error",
+      "detail": "CoachBridge 验证异常: 'NoneType' object has no attribute 'get'"
+    },
+    {
+      "severity": "P2",
+      "type": "sdt_tone_error",
+      "detail": "_build_behavior_signals 验证异常: 'NoneType' object has no attribute 'get'"
+    },
+    {
+      "severity": "P3",
+      "type": "history_data_error",
+      "detail": "profile_history 数据查询异常: local variable 'SessionPersistence' referenced before assignment"
+    },
+    {
+      "severity": "P2",
+      "type": "diag_engine_error",
+      "detail": "DiagnosticEngine 验证异常: 'NoneType' object has no attribute 'get'"
+    },
+    {
+      "severity": "P2",
+      "type": "data_flow_error",
+      "detail": "端到端数据流验证异常: 'NoneType' object has no attribute 'get'"
+    }
+  ]
+}

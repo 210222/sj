@@ -2,11 +2,96 @@
   {
     "severity": "P0",
     "type": "forbidden_change",
-    "detail": "Modified forbidden path: src/inner/ledger/__pycache__/db.cpython-310.pyc"
+    "detail": "Modified forbidden path: src/inner/audit/__pycache__/__init__.cpython-310.pyc"
   },
   {
     "severity": "P0",
     "type": "forbidden_change",
-    "detail": "Modified forbidden path: src/inner/ledger/db.py"
+    "detail": "Modified forbidden path: src/inner/audit/__pycache__/auditor.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/inner/clock/__pycache__/clock.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/inner/gates/__pycache__/__init__.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/inner/gates/__pycache__/engine.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/inner/ledger/__pycache__/event_store.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/inner/no_assist/__pycache__/config.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/inner/no_assist/__pycache__/evaluator.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/inner/resolver/__pycache__/resolver.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/middle/decision/__pycache__/__init__.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/middle/decision/__pycache__/engine.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/middle/semantic_safety/__pycache__/__init__.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/middle/semantic_safety/__pycache__/engine.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/middle/shared/__pycache__/constants.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/middle/state_l0/__pycache__/estimator.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/middle/state_l1/__pycache__/__init__.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/middle/state_l1/__pycache__/estimator.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/middle/state_l2/__pycache__/__init__.cpython-310.pyc"
+  },
+  {
+    "severity": "P0",
+    "type": "forbidden_change",
+    "detail": "Modified forbidden path: src/middle/state_l2/__pycache__/estimator.cpython-310.pyc"
   }
 ]

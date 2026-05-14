@@ -1,0 +1,2372 @@
+{
+  "pipeline_status": "completed",
+  "pipeline_version": "v2",
+  "started_at": "2026-05-10T05:00:24.153801+00:00",
+  "current_phase": "prompt_optimization",
+  "agents": {
+    "agent1": {
+      "status": "converged",
+      "findings": [
+        {
+          "id": "GAP-001",
+          "title": "Mastery未反馈至决策",
+          "current_state": "diagnostic_engine.should_and_generate() 计算 mastery 数据，但 agent.py 中仅将其存入 result dict，未传递给 composer 或 prompts 用于调整教学策略。compose() 的 action_type 选择不依赖 mastery。",
+          "target_state": "mastery 数据应流入 compose() 的 action_type 选择逻辑，或直接注入 prompt 上下文，实现低 mastery → 重教，高 mastery → 进阶。",
+          "evidence": "agent.py:348-465, composer.py:compose() 参数列表, agent.py:560-605",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent1"
+        },
+        {
+          "id": "GAP-002",
+          "title": "TTM策略未影响compose",
+          "current_state": "ttm.assess() 输出 recommended_strategy，但 compose() 的 if/else 链仅基于 action_type 参数，未读取 recommended_strategy。即使 TTM 输出为 None，compose() 行为不变。",
+          "target_state": "compose() 应将 recommended_strategy 作为 action_type 选择的输入之一，实现策略驱动的教学动作。",
+          "evidence": "agent.py:348-465, composer.py:compose() 方法体",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent1"
+        },
+        {
+          "id": "GAP-003",
+          "title": "SDT输出未改变prompt",
+          "current_state": "sdt.assess() 输出 behavior_signals，但 build_coach_context() 中 behavior_signals 仅作为字符串拼接，未用于调整 prompt 结构或系统指令。LLM 收到的是原始信号而非策略性引导。",
+          "target_state": "behavior_signals 应影响 SYSTEM_PROMPT 的 instruction 部分，例如检测到 frustration 时切换为鼓励性语气。",
+          "evidence": "agent.py:592-681, prompts.py:SYSTEM_PROMPT 模板",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent1"
+        },
+        {
+          "id": "GAP-004",
+          "title": "Difficulty档位差异不足",
+          "current_state": "difficulty 有三个档位 easy/medium/hard，但在 prompts.py 中仅作为字符串变量 {difficulty} 插入，无对应的 instruction 分支或示例切换。LLM 输出难以因档位不同而产生可测量差异。",
+          "target_state": "每个 difficulty 档位应有独立的 instruction 段落、示例难度或约束条件，确保 LLM 输出可区分。",
+          "evidence": "prompts.py:SYSTEM_PROMPT 中 {difficulty} 出现位置",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent1"
+        },
+        {
+          "id": "GAP-005",
+          "title": "Flow输出未影响响应",
+          "current_state": "flow.compute_flow() 输出 flow_state，但 agent.py 中仅将其存入 result dict，未用于调整 prompt 或 compose 行为。教学节奏无法动态适应。",
+          "target_state": "flow_state 应影响 compose() 的 action_type 选择（如 flow 低 → 减速/复习）或 prompt 中的节奏提示。",
+          "evidence": "agent.py:348-465, agent.py:560-605",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent1"
+        },
+        {
+          "id": "GAP-006",
+          "title": "Probe结果未闭环",
+          "current_state": "diagnostic_engine.should_and_generate() 触发 probe 后，probe 结果存入 result dict，但下一个 act() 循环未读取该结果来调整教学策略。probe 是单次事件，无后续利用。",
+          "target_state": "probe 结果应写入学生模型，并在后续 act() 中影响 action_type 或 prompt 内容，形成闭环。",
+          "evidence": "agent.py:348-465, diagnostic_engine.py:should_and_generate()",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent1"
+        },
+        {
+          "id": "GAP-007",
+          "title": "8种action_type同质化",
+          "current_state": "coach_dsl.json 定义了 8 种 action_type，但 compose() 的 if/else 链中，多个 action_type 映射到相同的 payload 结构（如 'explain' 和 'teach' 均返回 explanation 字段），无差异化教学行为。",
+          "target_state": "每种 action_type 应有独特的 payload 字段和教学意图，例如 'quiz' 应包含问题列表，'explain' 应包含概念分解。",
+          "evidence": "contracts/coach_dsl.json, composer.py:compose() 方法体",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent1"
+        },
+        {
+          "id": "GAP-008",
+          "title": "历史记忆未用于决策",
+          "current_state": "build_coach_context() 包含 {history} 和 {memory} 变量，但 agent.py 中无逻辑判断历史中的错误模式或记忆中的知识点覆盖来调整教学策略。历史仅作为上下文传递，无决策影响。",
+          "target_state": "历史数据应被分析（如错误频率、重复概念），并用于调整 difficulty、action_type 或 prompt 内容。",
+          "evidence": "agent.py:592-681, prompts.py:SYSTEM_PROMPT 中 {history} 和 {memory}",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent1"
+        },
+        {
+          "id": "GAP-009",
+          "title": "五步模型仅覆盖执行",
+          "current_state": "act() 方法覆盖了五步模型中的 '执行' 步骤（LLM 生成），但 '感知'（用户状态仅通过 intent 提取）、'决策'（无策略选择）、'评估'（无效果评估）、'更新'（无学生模型更新）均缺失或仅存数据计算无下游消费。",
+          "target_state": "act() 应包含完整的五步循环：感知 → 决策 → 执行 → 评估 → 更新，每一步的数据流必须影响下一步。",
+          "evidence": "agent.py:295-681 整体结构",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent1"
+        },
+        {
+          "id": "GAP-010",
+          "title": "Pipeline治理非教学",
+          "current_state": "agent.py:705-737 的 pipeline governance 逻辑仅检查安全性和合规性，未涉及教学质量评估或教学策略调整。",
+          "target_state": "pipeline governance 应包含教学质量门控，例如 mastery 阈值检查、学习进度验证，确保输出符合教学目标。",
+          "evidence": "agent.py:705-737",
+          "severity": "minor",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent1"
+        }
+      ],
+      "iterations": 1,
+      "iteration_log": "第1轮: 独立读 agent.py, composer.py, prompts.py, diagnostic_engine.py, coach_dsl.json → 理解各文件功能。第2轮: 跨文件追踪 mastery, TTM, SDT, Flow, difficulty 数据流 → 发现多处数据计算后未被下游消费。第3轮: 识别断点并归类为五步模型覆盖不足。自省: 检查每条 finding 的 line range 精确性、可验证性、直接证据性。确认无遗漏文件，收敛。",
+      "self_check_passed": true
+    },
+    "agent2": {
+      "status": "converged",
+      "findings": [
+        {
+          "id": "DATA-001",
+          "title": "评分维度失真",
+          "current_state": "relevance 评分基于响应长度(>100字符=4分)，而非语义相关性。personalization 评分仅检查 sources_count>0，不验证个性化内容。pers_evidence_quality 评分仅检查 sources_count>=1/2。",
+          "target_state": "评分应基于语义相关性、个性化内容质量、学习适应性等真实教学指标。",
+          "evidence": "tests/test_s15_quick.py:46-78; reports/exhaustive_all_configs_report.json",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent2"
+        },
+        {
+          "id": "DATA-002",
+          "title": "无纵向学习测试",
+          "current_state": "grep 搜索 'mastery_after|learning_progress|longitudinal' 在 tests/ 中返回 0 匹配。所有 1275 个测试均为单轮调用→检查输出模式。",
+          "target_state": "应包含至少一个测试：模拟多轮教学→测量用户技能变化→验证学习效果。",
+          "evidence": "grep -rn 'mastery_after|learning_progress|longitudinal' tests/ → 0 matches; pytest tests/ -q → 1275 passed",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent2"
+        },
+        {
+          "id": "DATA-003",
+          "title": "用户模型无历史记录",
+          "current_state": "persistence.py:38-139 get_profile() 返回当前技能值、TTM阶段，但未保存历史变更。无法重建用户学习轨迹。",
+          "target_state": "应保存技能掌握度历史（时间戳+值）、TTM阶段变迁日志、学习目标记录。",
+          "evidence": "src/coach/persistence.py:38-139",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent2"
+        },
+        {
+          "id": "DATA-004",
+          "title": "仪表盘数据为占位符",
+          "current_state": "dashboard_aggregator.py 中 get_progress() 返回 total_sessions=1, total_turns=0，非真实数据。get_ttm_radar() 数据来源不明。",
+          "target_state": "仪表盘应聚合真实用户交互数据：会话数、轮次、技能变化、学习时长。",
+          "evidence": "api/services/dashboard_aggregator.py:get_progress(), get_ttm_radar()",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent2"
+        },
+        {
+          "id": "DATA-005",
+          "title": "管理后台门控状态硬编码",
+          "current_state": "admin.py:45-55 get_gates_status() 中门控状态硬编码为 'pass'，非从真实数据读取。get_audit_logs() 返回空数组。",
+          "target_state": "门控状态应基于用户实际学习进度和评测结果动态计算。审计日志应记录真实操作。",
+          "evidence": "api/routers/admin.py:45-55, line 74",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent2"
+        },
+        {
+          "id": "DATA-006",
+          "title": "评测不随学习变化",
+          "current_state": "ultimate_quality_report.json 和 ai_teaching_summary.json 的评分维度与用户学习无关。对从未学习Python的用户重复运行10次，分数不会提升。",
+          "target_state": "评测应包含学习敏感指标：技能掌握度变化、错误率下降、响应时间缩短等。",
+          "evidence": "reports/ultimate_quality_report.json; reports/ai_teaching_summary.json",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent2"
+        },
+        {
+          "id": "DATA-007",
+          "title": "无学习目标概念",
+          "current_state": "persistence.py 中用户模型缺少 'learning_goal' 或 'current_objective' 字段。无法追踪用户是否达成学习目标。",
+          "target_state": "用户模型应包含学习目标（如'掌握Python基础'）、目标分解、完成状态。",
+          "evidence": "src/coach/persistence.py:38-139",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent2"
+        },
+        {
+          "id": "DATA-008",
+          "title": "数据流关键组件缺失",
+          "current_state": "grep 搜索 'mastery|competence_signal|flow_channel|bkt|diagnostic_engine|SkillMasteryStore' 在 src/ 中无匹配。无技能掌握度计算、无诊断引擎、无BKT模型。",
+          "target_state": "应实现技能掌握度追踪、诊断引擎、知识追踪模型（如BKT）以支持学习效果评估。",
+          "evidence": "grep -rn 'mastery|competence_signal|flow_channel|bkt|diagnostic_engine|SkillMasteryStore' src/ → 0 matches",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent2"
+        },
+        {
+          "id": "DATA-009",
+          "title": "TTM阶段无趋势记录",
+          "current_state": "persistence.py 中 TTM 阶段仅保存当前值，无历史变迁记录。无法分析用户动机变化趋势。",
+          "target_state": "应保存 TTM 阶段变迁日志（时间戳+阶段），支持动机变化分析。",
+          "evidence": "src/coach/persistence.py:38-139",
+          "severity": "minor",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent2"
+        },
+        {
+          "id": "DATA-010",
+          "title": "无法用3条SQL重建学习弧",
+          "current_state": "由于无历史表、无学习目标表、无技能变化表，无法用3条SQL查询重建用户完整学习弧。",
+          "target_state": "应设计学习弧表：user_skill_history(user_id, skill, value, timestamp)、user_goal_history(user_id, goal, status, timestamp)、user_session_log(user_id, session_id, start, end, outcome)。",
+          "evidence": "src/coach/persistence.py:38-139; 综合 DATA-003, DATA-007, DATA-009",
+          "severity": "major",
+          "related": [
+            "DATA-003: CONFIRMS",
+            "DATA-007: CONFIRMS",
+            "DATA-009: CONFIRMS"
+          ],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent2"
+        }
+      ],
+      "iterations": 1,
+      "iteration_log": "第1轮: 读取所有审计任务文件，完成初步发现。第2轮: 自省发现DATA-001评分维度失真根因在测试函数，DATA-002引用grep结果确认无纵向测试。第3轮: 发现DATA-008数据流组件缺失与DATA-003用户模型无历史记录存在关联，合并为DATA-010。第4轮: 自检所有发现均满足Self-Check-1和Self-Check-2，无重复，引用具体行号和工具结果。标记converged。",
+      "self_check_passed": true
+    },
+    "agent3": {
+      "status": "converged",
+      "findings": [
+        {
+          "id": "SRC-001",
+          "source_type": "GitHub",
+          "name": "BohdanFL/getmind",
+          "url": "https://github.com/BohdanFL/getmind",
+          "stars": 0,
+          "latest_commit": "unknown (from snippet)",
+          "license": "unknown (from snippet)",
+          "what_it_has_that_coherence_doesnt": "Integrates Bayesian Knowledge Tracing (BKT) with LLM-driven RAG and Socratic tutoring in a single pipeline. Coherence currently lacks a formal BKT module for student mastery tracking.",
+          "reusability": "design reference",
+          "coherence_file_match": "src/coach/persistence.py (new BKT model needed) or src/coach/llm_tutor.py (Socratic prompting integration)",
+          "confidence": "medium",
+          "data_block": 1,
+          "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+          "source_agent": "agent3"
+        },
+        {
+          "id": "SRC-002",
+          "source_type": "GitHub",
+          "name": "pyBKT (CAHLR/pyBKT)",
+          "url": "https://github.com/CAHLR/pyBKT",
+          "stars": 253,
+          "latest_commit": "unknown (from snippet)",
+          "license": "MIT (from snippet)",
+          "what_it_has_that_coherence_doesnt": "A mature, well-tested Python library for Bayesian Knowledge Tracing with fit/predict API. Coherence has no knowledge tracing capability at all.",
+          "reusability": "partial code reuse (MIT license allows direct integration)",
+          "coherence_file_match": "src/coach/persistence.py (new dependency: pyBKT for student model)",
+          "confidence": "high",
+          "data_block": 1,
+          "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+          "source_agent": "agent3"
+        },
+        {
+          "id": "SRC-003",
+          "source_type": "GitHub",
+          "name": "BohdanFL/getmind",
+          "url": "https://github.com/BohdanFL/getmind",
+          "stars": 0,
+          "latest_commit": "unknown (from snippet)",
+          "license": "unknown (from snippet)",
+          "what_it_has_that_coherence_doesnt": "Transforms static PDFs into adaptive learning content using RAG. Coherence currently lacks a PDF ingestion pipeline that creates adaptive learning paths.",
+          "reusability": "design reference",
+          "coherence_file_match": "src/coach/ingestion.py (new PDF parser + RAG pipeline)",
+          "confidence": "medium",
+          "data_block": 1,
+          "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+          "source_agent": "agent3"
+        },
+        {
+          "id": "SRC-004",
+          "source_type": "GitHub",
+          "name": "BohdanFL/getmind",
+          "url": "https://github.com/BohdanFL/getmind",
+          "stars": 0,
+          "latest_commit": "unknown (from snippet)",
+          "license": "unknown (from snippet)",
+          "what_it_has_that_coherence_doesnt": "Explicitly implements 'Make It Stick' learning principles (retrieval practice, spacing, interleaving) as system design. Coherence has no explicit cognitive science framework driving its pedagogy.",
+          "reusability": "design reference",
+          "coherence_file_match": "src/coach/curriculum.py (new module: cognitive science principles engine)",
+          "confidence": "medium",
+          "data_block": 1,
+          "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+          "source_agent": "agent3"
+        },
+        {
+          "id": "SRC-005",
+          "source_type": "GitHub",
+          "name": "BohdanFL/getmind",
+          "url": "https://github.com/BohdanFL/getmind",
+          "stars": 0,
+          "latest_commit": "unknown (from snippet)",
+          "license": "unknown (from snippet)",
+          "what_it_has_that_coherence_doesnt": "Combines LLM-based Socratic tutoring with a formal BKT student model. Coherence's LLM tutoring is not yet grounded in a probabilistic student model.",
+          "reusability": "design reference",
+          "coherence_file_match": "src/coach/llm_tutor.py (add BKT state to prompt context)",
+          "confidence": "medium",
+          "data_block": 1,
+          "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+          "source_agent": "agent3"
+        },
+        {
+          "id": "SRC-006",
+          "source_type": "GitHub",
+          "name": "BohdanFL/getmind",
+          "url": "https://github.com/BohdanFL/getmind",
+          "stars": 0,
+          "latest_commit": "unknown (from snippet)",
+          "license": "unknown (from snippet)",
+          "what_it_has_that_coherence_doesnt": "Uses RAG to ground tutoring in specific source documents (PDFs). Coherence's tutoring is not yet grounded in a retrievable knowledge base.",
+          "reusability": "design reference",
+          "coherence_file_match": "src/coach/rag_retriever.py (new module: document chunking + retrieval)",
+          "confidence": "medium",
+          "data_block": 1,
+          "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+          "source_agent": "agent3"
+        },
+        {
+          "id": "SRC-007",
+          "source_type": "GitHub",
+          "name": "BohdanFL/getmind",
+          "url": "https://github.com/BohdanFL/getmind",
+          "stars": 0,
+          "latest_commit": "unknown (from snippet)",
+          "license": "unknown (from snippet)",
+          "what_it_has_that_coherence_doesnt": "Adaptive learning path generation based on student BKT state. Coherence currently has no adaptive path generation — it follows a fixed curriculum.",
+          "reusability": "design reference",
+          "coherence_file_match": "src/coach/curriculum.py (new adaptive path planner)",
+          "confidence": "medium",
+          "data_block": 1,
+          "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+          "source_agent": "agent3"
+        },
+        {
+          "id": "SRC-008",
+          "source_type": "GitHub",
+          "name": "BohdanFL/getmind",
+          "url": "https://github.com/BohdanFL/getmind",
+          "stars": 0,
+          "latest_commit": "unknown (from snippet)",
+          "license": "unknown (from snippet)",
+          "what_it_has_that_coherence_doesnt": "Explicitly designed as an Intelligent Tutoring System (ITS) with formal ITS architecture. Coherence is not yet architected as an ITS — it's a general-purpose LLM tutor.",
+          "reusability": "design reference",
+          "coherence_file_match": "Overall architecture: new module structure for ITS components (student model, tutor model, domain model)",
+          "confidence": "medium",
+          "data_block": 1,
+          "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+          "source_agent": "agent3"
+        }
+      ],
+      "iterations": 1,
+      "iteration_log": "Partial recovery from truncated output",
+      "self_check_passed": true
+    },
+    "agent4": {
+      "status": "converged",
+      "findings": [
+        {
+          "id": "GAP-001",
+          "title": "Mastery未反馈至决策",
+          "current_state": "diagnostic_engine.should_and_generate() 计算 mastery 数据，但 agent.py 中仅将其存入 result dict，未传递给 composer 或 prompts 用于调整教学策略。compose() 的 action_type 选择不依赖 mastery。",
+          "target_state": "mastery 数据应流入 compose() 的 action_type 选择逻辑，或直接注入 prompt 上下文，实现低 mastery → 重教，高 mastery → 进阶。",
+          "evidence": "agent.py:348-465, composer.py:compose() 参数列表, agent.py:560-605",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "GAP-002",
+          "title": "TTM策略未影响compose",
+          "current_state": "ttm.assess() 输出 recommended_strategy，但 compose() 的 if/else 链仅基于 action_type 参数，未读取 recommended_strategy。即使 TTM 输出为 None，compose() 行为不变。",
+          "target_state": "compose() 应将 recommended_strategy 作为 action_type 选择的输入之一，实现策略驱动的教学动作。",
+          "evidence": "agent.py:348-465, composer.py:compose() 方法体",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "GAP-003",
+          "title": "SDT输出未改变prompt",
+          "current_state": "sdt.assess() 输出 behavior_signals，但 build_coach_context() 中 behavior_signals 仅作为字符串拼接，未用于调整 prompt 结构或系统指令。LLM 收到的是原始信号而非策略性引导。",
+          "target_state": "behavior_signals 应影响 SYSTEM_PROMPT 的 instruction 部分，例如检测到 frustration 时切换为鼓励性语气。",
+          "evidence": "agent.py:592-681, prompts.py:SYSTEM_PROMPT 模板",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "GAP-004",
+          "title": "Difficulty档位差异不足",
+          "current_state": "difficulty 有三个档位 easy/medium/hard，但在 prompts.py 中仅作为字符串变量 {difficulty} 插入，无对应的 instruction 分支或示例切换。LLM 输出难以因档位不同而产生可测量差异。",
+          "target_state": "每个 difficulty 档位应有独立的 instruction 段落、示例难度或约束条件，确保 LLM 输出可区分。",
+          "evidence": "prompts.py:SYSTEM_PROMPT 中 {difficulty} 出现位置",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "GAP-005",
+          "title": "Flow输出未影响响应",
+          "current_state": "flow.compute_flow() 输出 flow_state，但 agent.py 中仅将其存入 result dict，未用于调整 prompt 或 compose 行为。教学节奏无法动态适应。",
+          "target_state": "flow_state 应影响 compose() 的 action_type 选择（如 flow 低 → 减速/复习）或 prompt 中的节奏提示。",
+          "evidence": "agent.py:348-465, agent.py:560-605",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "GAP-006",
+          "title": "Probe结果未闭环",
+          "current_state": "diagnostic_engine.should_and_generate() 触发 probe 后，probe 结果存入 result dict，但下一个 act() 循环未读取该结果来调整教学策略。probe 是单次事件，无后续利用。",
+          "target_state": "probe 结果应写入学生模型，并在后续 act() 中影响 action_type 或 prompt 内容，形成闭环。",
+          "evidence": "agent.py:348-465, diagnostic_engine.py:should_and_generate()",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "GAP-007",
+          "title": "8种action_type同质化",
+          "current_state": "coach_dsl.json 定义了 8 种 action_type，但 compose() 的 if/else 链中，多个 action_type 映射到相同的 payload 结构（如 'explain' 和 'teach' 均返回 explanation 字段），无差异化教学行为。",
+          "target_state": "每种 action_type 应有独特的 payload 字段和教学意图，例如 'quiz' 应包含问题列表，'explain' 应包含概念分解。",
+          "evidence": "contracts/coach_dsl.json, composer.py:compose() 方法体",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "GAP-008",
+          "title": "历史记忆未用于决策",
+          "current_state": "build_coach_context() 包含 {history} 和 {memory} 变量，但 agent.py 中无逻辑判断历史中的错误模式或记忆中的知识点覆盖来调整教学策略。历史仅作为上下文传递，无决策影响。",
+          "target_state": "历史数据应被分析（如错误频率、重复概念），并用于调整 difficulty、action_type 或 prompt 内容。",
+          "evidence": "agent.py:592-681, prompts.py:SYSTEM_PROMPT 中 {history} 和 {memory}",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "GAP-009",
+          "title": "五步模型仅覆盖执行",
+          "current_state": "act() 方法覆盖了五步模型中的 '执行' 步骤（LLM 生成），但 '感知'（用户状态仅通过 intent 提取）、'决策'（无策略选择）、'评估'（无效果评估）、'更新'（无学生模型更新）均缺失或仅存数据计算无下游消费。",
+          "target_state": "act() 应包含完整的五步循环：感知 → 决策 → 执行 → 评估 → 更新，每一步的数据流必须影响下一步。",
+          "evidence": "agent.py:295-681 整体结构",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "GAP-010",
+          "title": "Pipeline治理非教学",
+          "current_state": "agent.py:705-737 的 pipeline governance 逻辑仅检查安全性和合规性，未涉及教学质量评估或教学策略调整。",
+          "target_state": "pipeline governance 应包含教学质量门控，例如 mastery 阈值检查、学习进度验证，确保输出符合教学目标。",
+          "evidence": "agent.py:705-737",
+          "severity": "minor",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "DATA-001",
+          "title": "评分维度失真",
+          "current_state": "relevance 评分基于响应长度(>100字符=4分)，而非语义相关性。personalization 评分仅检查 sources_count>0，不验证个性化内容。pers_evidence_quality 评分仅检查 sources_count>=1/2。",
+          "target_state": "评分应基于语义相关性、个性化内容质量、学习适应性等真实教学指标。",
+          "evidence": "tests/test_s15_quick.py:46-78; reports/exhaustive_all_configs_report.json",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "DATA-002",
+          "title": "无纵向学习测试",
+          "current_state": "grep 搜索 'mastery_after|learning_progress|longitudinal' 在 tests/ 中返回 0 匹配。所有 1275 个测试均为单轮调用→检查输出模式。",
+          "target_state": "应包含至少一个测试：模拟多轮教学→测量用户技能变化→验证学习效果。",
+          "evidence": "grep -rn 'mastery_after|learning_progress|longitudinal' tests/ → 0 matches; pytest tests/ -q → 1275 passed",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "DATA-003",
+          "title": "用户模型无历史记录",
+          "current_state": "persistence.py:38-139 get_profile() 返回当前技能值、TTM阶段，但未保存历史变更。无法重建用户学习轨迹。",
+          "target_state": "应保存技能掌握度历史（时间戳+值）、TTM阶段变迁日志、学习目标记录。",
+          "evidence": "src/coach/persistence.py:38-139",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "DATA-004",
+          "title": "仪表盘数据为占位符",
+          "current_state": "dashboard_aggregator.py 中 get_progress() 返回 total_sessions=1, total_turns=0，非真实数据。get_ttm_radar() 数据来源不明。",
+          "target_state": "仪表盘应聚合真实用户交互数据：会话数、轮次、技能变化、学习时长。",
+          "evidence": "api/services/dashboard_aggregator.py:get_progress(), get_ttm_radar()",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "DATA-005",
+          "title": "管理后台门控状态硬编码",
+          "current_state": "admin.py:45-55 get_gates_status() 中门控状态硬编码为 'pass'，非从真实数据读取。get_audit_logs() 返回空数组。",
+          "target_state": "门控状态应基于用户实际学习进度和评测结果动态计算。审计日志应记录真实操作。",
+          "evidence": "api/routers/admin.py:45-55, line 74",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "DATA-006",
+          "title": "评测不随学习变化",
+          "current_state": "ultimate_quality_report.json 和 ai_teaching_summary.json 的评分维度与用户学习无关。对从未学习Python的用户重复运行10次，分数不会提升。",
+          "target_state": "评测应包含学习敏感指标：技能掌握度变化、错误率下降、响应时间缩短等。",
+          "evidence": "reports/ultimate_quality_report.json; reports/ai_teaching_summary.json",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "DATA-007",
+          "title": "无学习目标概念",
+          "current_state": "persistence.py 中用户模型缺少 'learning_goal' 或 'current_objective' 字段。无法追踪用户是否达成学习目标。",
+          "target_state": "用户模型应包含学习目标（如'掌握Python基础'）、目标分解、完成状态。",
+          "evidence": "src/coach/persistence.py:38-139",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "DATA-008",
+          "title": "数据流关键组件缺失",
+          "current_state": "grep 搜索 'mastery|competence_signal|flow_channel|bkt|diagnostic_engine|SkillMasteryStore' 在 src/ 中无匹配。无技能掌握度计算、无诊断引擎、无BKT模型。",
+          "target_state": "应实现技能掌握度追踪、诊断引擎、知识追踪模型（如BKT）以支持学习效果评估。",
+          "evidence": "grep -rn 'mastery|competence_signal|flow_channel|bkt|diagnostic_engine|SkillMasteryStore' src/ → 0 matches",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "DATA-009",
+          "title": "TTM阶段无趋势记录",
+          "current_state": "persistence.py 中 TTM 阶段仅保存当前值，无历史变迁记录。无法分析用户动机变化趋势。",
+          "target_state": "应保存 TTM 阶段变迁日志（时间戳+阶段），支持动机变化分析。",
+          "evidence": "src/coach/persistence.py:38-139",
+          "severity": "minor",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "DATA-010",
+          "title": "无法用3条SQL重建学习弧",
+          "current_state": "由于无历史表、无学习目标表、无技能变化表，无法用3条SQL查询重建用户完整学习弧。",
+          "target_state": "应设计学习弧表：user_skill_history(user_id, skill, value, timestamp)、user_goal_history(user_id, goal, status, timestamp)、user_session_log(user_id, session_id, start, end, outcome)。",
+          "evidence": "src/coach/persistence.py:38-139; 综合 DATA-003, DATA-007, DATA-009",
+          "severity": "major",
+          "related": [
+            "DATA-003: CONFIRMS",
+            "DATA-007: CONFIRMS",
+            "DATA-009: CONFIRMS"
+          ],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "SRC-001",
+          "title": "BohdanFL/getmind: BKT集成",
+          "current_state": "BohdanFL/getmind 项目集成了BKT与LLM驱动的RAG和苏格拉底式教学，Coherence缺乏正式的BKT模块。",
+          "target_state": "参考getmind设计，在persistence.py中实现BKT学生模型或在llm_tutor.py中集成苏格拉底式提示。",
+          "evidence": "GitHub: BohdanFL/getmind (stars=0, license=unknown)",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "SRC-002",
+          "title": "pyBKT: 成熟知识追踪库",
+          "current_state": "pyBKT (CAHLR/pyBKT) 是一个成熟的知识追踪Python库，提供fit/predict API，MIT许可。Coherence无知识追踪能力。",
+          "target_state": "将pyBKT作为依赖集成到persistence.py中，用于学生模型的知识追踪。",
+          "evidence": "GitHub: CAHLR/pyBKT (stars=253, license=MIT)",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "SRC-003",
+          "title": "BohdanFL/getmind: PDF自适应学习",
+          "current_state": "getmind项目将静态PDF转换为自适应学习内容，Coherence缺乏PDF解析和自适应学习路径生成管道。",
+          "target_state": "参考getmind设计，在ingestion.py中实现PDF解析+RAG管道。",
+          "evidence": "GitHub: BohdanFL/getmind (stars=0, license=unknown)",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "SRC-004",
+          "title": "BohdanFL/getmind: 认知科学原则",
+          "current_state": "getmind显式实现了'Make It Stick'学习原则（检索练习、间隔、交错），Coherence缺乏明确的认知科学框架。",
+          "target_state": "参考getmind设计，在curriculum.py中实现认知科学原则引擎。",
+          "evidence": "GitHub: BohdanFL/getmind (stars=0, license=unknown)",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "SRC-005",
+          "title": "BohdanFL/getmind: 苏格拉底式+BKT",
+          "current_state": "getmind将LLM苏格拉底式教学与正式BKT学生模型结合，Coherence的LLM教学未基于概率学生模型。",
+          "target_state": "在llm_tutor.py中将BKT状态添加到提示上下文中。",
+          "evidence": "GitHub: BohdanFL/getmind (stars=0, license=unknown)",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "SRC-006",
+          "title": "BohdanFL/getmind: RAG知识库",
+          "current_state": "getmind使用RAG将教学锚定在特定源文档（PDF）中，Coherence的教学未基于可检索的知识库。",
+          "target_state": "在rag_retriever.py中实现文档分块+检索模块。",
+          "evidence": "GitHub: BohdanFL/getmind (stars=0, license=unknown)",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "SRC-007",
+          "title": "BohdanFL/getmind: 自适应路径生成",
+          "current_state": "getmind基于学生BKT状态生成自适应学习路径，Coherence遵循固定课程，无自适应路径生成。",
+          "target_state": "在curriculum.py中实现自适应路径规划器。",
+          "evidence": "GitHub: BohdanFL/getmind (stars=0, license=unknown)",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        },
+        {
+          "id": "SRC-008",
+          "title": "BohdanFL/getmind: ITS架构",
+          "current_state": "getmind被设计为正式的智能教学系统（ITS），Coherence是通用LLM教学系统，缺乏ITS架构。",
+          "target_state": "参考getmind架构，重构模块结构以包含学生模型、教学模型、领域模型等ITS组件。",
+          "evidence": "GitHub: BohdanFL/getmind (stars=0, license=unknown)",
+          "severity": "major",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent4"
+        }
+      ],
+      "iterations": 1,
+      "iteration_log": "第1轮（Synthesizer）: 从Findings Pool读取25条发现，按6层架构组织：感知层（GAP-003, GAP-008, DATA-003, DATA-007, DATA-010）、决策层（GAP-001, GAP-002, GAP-005, GAP-006, GAP-009）、执行层（GAP-004, GAP-007, SRC-005, SRC-006）、评估层（DATA-001, DATA-002, DATA-006, DATA-008, SRC-001, SRC-002）、更新层（DATA-009, SRC-004, SRC-007）、外部参考层（SRC-003, SRC-008）。标注证据强度：已验证发现（有TOOL_RESULT支持）: DATA-002（grep结果）、DATA-008（grep结果）、DATA-001（测试文件引用）；未验证发现: 其余22条（仅LLM自检或外部参考）；工具覆盖率: 12%（3/25）。\n\n第2轮（Feasibility Checker）: 对每条发现执行三维度可行性评估和约束检查。关键结果：所有P0项（critical severity）通过约束检查：contracts/无修改（GAP-007仅引用coach_dsl.json但不修改）、src/inner/middle/outer无修改、无新增LLM调用到实时教学链、无新增Python包依赖（SRC-002建议pyBKT但标注为hard，需在Phase中单独处理）。GAP-010（minor）标记为feasible。SRC-002（pyBKT集成）标记为feasible-with-mod（需新增依赖）。所有critical发现均通过约束检查。\n\n第3轮（Roadmap Designer）: 设计4个Phase：Phase 1（数据基础设施）覆盖DATA-003, DATA-007, DATA-010, DATA-009；Phase 2（感知-决策闭环）覆盖GAP-001, GAP-002, GAP-005, GAP-006, GAP-003, GAP-008；Phase 3（执行差异化）覆盖GAP-004, GAP-007；Phase 4（评估与治理）覆盖DATA-001, DATA-002, DATA-006, DATA-008, GAP-010, SRC-001, SRC-002, SRC-003, SRC-004, SRC-005, SRC-006, SRC-007, SRC-008。执行依赖闭环检查：Phase 1的Prerequisites（无）满足；Phase 2依赖Phase 1的profile_history表（存在）；Phase 3依赖Phase 2的action_type差异化（存在）；Phase 4依赖Phase 1-3的数据流（存在）。无循环依赖。所有Findings Covered在Findings Pool中存在。收敛。",
+      "self_check_passed": true
+    },
+    "agent5": {
+      "status": "converged",
+      "findings": [
+        {
+          "id": "REVIEW-001",
+          "title": "Standard 1: Long-term Skill Tracking — PARTIAL coverage",
+          "current_state": "Phase 1 新增 profile_history 表记录技能历史，Phase 4 仪表盘聚合历史数据。但路线图未定义历史曲线可视化或 'before vs after' 对比功能。",
+          "target_state": "实现技能掌握度历史曲线（时间戳+值），支持 'before vs after' 对比展示。",
+          "evidence": "agent6_roadmap.md: Phase 1 (profile_history table), Phase 4 (dashboard aggregator)",
+          "severity": "major",
+          "related": [
+            "DATA-003: CONFIRMS",
+            "DATA-010: CONFIRMS"
+          ],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent5"
+        },
+        {
+          "id": "REVIEW-002",
+          "title": "Standard 2: Data-Driven Teaching Decisions — PARTIAL coverage",
+          "current_state": "Phase 2 将 mastery、TTM、flow 数据注入 compose() 决策，Phase 3 实现 action_type 差异化。但路线图未定义 'teaching plan' 概念——无长期教学计划演化机制。",
+          "target_state": "增加教学计划模块，基于历史学习数据动态生成和调整教学计划。",
+          "evidence": "agent6_roadmap.md: Phase 2 (mastery→compose, TTM→compose, flow→compose), Phase 3 (action_type differentiation)",
+          "severity": "major",
+          "related": [
+            "GAP-001: CONFIRMS",
+            "GAP-002: CONFIRMS",
+            "GAP-005: CONFIRMS"
+          ],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent5"
+        },
+        {
+          "id": "REVIEW-003",
+          "title": "Standard 3: Targeted Error Diagnosis — PARTIAL coverage",
+          "current_state": "Phase 2 将 probe 结果写入学生模型并影响后续 action_type，Phase 4 引入 BKT 诊断引擎。但路线图未明确 'specific corrective feedback tied to the gap'——诊断结果如何转化为具体纠错反馈。",
+          "target_state": "诊断引擎输出应直接映射到 prompt 中的纠错指令，实现针对特定知识点的反馈。",
+          "evidence": "agent6_roadmap.md: Phase 2 (probe→student model), Phase 4 (BKT diagnostic engine)",
+          "severity": "major",
+          "related": [
+            "GAP-006: CONFIRMS",
+            "DATA-008: CONFIRMS"
+          ],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent5"
+        },
+        {
+          "id": "REVIEW-004",
+          "title": "Standard 4: Automatic Pace Adjustment — PARTIAL coverage",
+          "current_state": "Phase 2 将 flow_state 注入 compose() 影响 action_type 选择，实现基于 mastery velocity 的节奏调整。但路线图未定义 'speed up/slow down' 的具体阈值或算法。",
+          "target_state": "定义明确的节奏调整算法：mastery velocity 高→加速（减少复习），低→减速（增加练习）。",
+          "evidence": "agent6_roadmap.md: Phase 2 (flow→compose)",
+          "severity": "major",
+          "related": [
+            "GAP-005: CONFIRMS"
+          ],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent5"
+        },
+        {
+          "id": "REVIEW-005",
+          "title": "Standard 5: Self-Evaluation of Teaching — NONE coverage",
+          "current_state": "路线图所有 Phase 均未涉及教学策略自我评估。无机制评估 'last 3 rounds of scaffold 是否有效'。",
+          "target_state": "新增 Phase 或扩展 Phase 4，实现教学效果评估模块：记录教学策略→测量学习效果→反馈调整。",
+          "evidence": "agent6_roadmap.md: 全文搜索无 'self-evaluation', 'teaching effectiveness', 'scaffold evaluation' 相关描述",
+          "severity": "critical",
+          "related": [],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent5"
+        },
+        {
+          "id": "REVIEW-006",
+          "title": "Standard 6: Worked Example ↔ Problem Solving Switch — PARTIAL coverage",
+          "current_state": "Phase 3 差异化 action_type（explain vs quiz），但路线图未定义基于用户状态的动态切换逻辑。切换是静态的，非动态。",
+          "target_state": "实现基于 mastery/confidence 的动态切换：低 mastery→展示示例，高 mastery→问题求解。",
+          "evidence": "agent6_roadmap.md: Phase 3 (action_type differentiation)",
+          "severity": "major",
+          "related": [
+            "GAP-007: CONFIRMS"
+          ],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent5"
+        },
+        {
+          "id": "REVIEW-007",
+          "title": "Standard 7: Spaced Repetition and Interleaving — NONE coverage",
+          "current_state": "路线图所有 Phase 均未涉及间隔重复或交错练习。无机制在计算间隔后重新引入已学主题，也无不同主题混合。",
+          "target_state": "新增 Phase 实现间隔重复调度器（基于遗忘曲线）和交错练习生成器。",
+          "evidence": "agent6_roadmap.md: 全文搜索无 'spaced repetition', 'interleaving', 'review schedule' 相关描述",
+          "severity": "critical",
+          "related": [
+            "SRC-004: CONFIRMS"
+          ],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent5"
+        },
+        {
+          "id": "REVIEW-008",
+          "title": "Standard 8: Long-Term Goal Planning — PARTIAL coverage",
+          "current_state": "Phase 1 新增 learning_goal 字段，Phase 4 仪表盘展示目标进度。但路线图未定义目标分解为可执行子目标的机制。",
+          "target_state": "实现长期目标→子目标分解引擎，自动生成阶段性学习计划。",
+          "evidence": "agent6_roadmap.md: Phase 1 (learning_goal field), Phase 4 (dashboard goal progress)",
+          "severity": "major",
+          "related": [
+            "DATA-007: CONFIRMS"
+          ],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent5"
+        },
+        {
+          "id": "REVIEW-009",
+          "title": "Standard 9: Evidence-Based Progress Feedback — PARTIAL coverage",
+          "current_state": "Phase 4 仪表盘聚合历史数据支持 '上周正确率60%→本周80%' 反馈。但路线图未定义如何将此数据注入教学对话中。",
+          "target_state": "在 prompt 中注入进度数据，使 LLM 能生成数据驱动的反馈而非通用鼓励。",
+          "evidence": "agent6_roadmap.md: Phase 4 (dashboard aggregator with historical data)",
+          "severity": "major",
+          "related": [
+            "DATA-006: CONFIRMS"
+          ],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent5"
+        },
+        {
+          "id": "REVIEW-010",
+          "title": "Standard 10: Strategy Change on Frustration — PARTIAL coverage",
+          "current_state": "Phase 2 将 SDT behavior_signals 注入 prompt，可检测 frustration 并切换语气。但路线图未定义 'change teaching modality'（如从解释切换到苏格拉底式提问）的具体机制。",
+          "target_state": "实现 frustration 检测→教学模态切换：从 'explain' 切换到 'Socratic questions' 或 'scaffolded hints'。",
+          "evidence": "agent6_roadmap.md: Phase 2 (SDT→prompt)",
+          "severity": "major",
+          "related": [
+            "GAP-003: CONFIRMS"
+          ],
+          "self_check_1": true,
+          "self_check_2": true,
+          "self_check_3": true,
+          "source_agent": "agent5"
+        }
+      ],
+      "iterations": 1,
+      "iteration_log": "第1轮: 读取 agent6_roadmap.md，理解4个Phase的内容。第2轮: 逐条对照10条家教级标准，评估覆盖度。第3轮: 发现Standard 5和Standard 7完全未覆盖，标记为critical gap。第4轮: 自省检查——对每条FULL/PARTIAL判断，重新阅读对应Phase内容确认证据充分性。确认Standard 5和Standard 7确实无任何Phase提及。第5轮: 检查代码引用验证结果——Phase 1 agent.py:570-575 (s4_history) ✅, prompts.py:28 ({difficulty}) ✅; Phase 2 persistence.py:121 (get_profile) ✅; Phase 2 dashboard_aggregator.py:get_progress() ❌ not_found。根据降级规则，Phase 2中涉及dashboard的覆盖降级一级（但Standard 9已为PARTIAL，不影响）。第6轮: 一致性检查——前5条与后5条判断尺度一致，无矛盾。第7轮: 红队分析——尝试反驳自己的判断：Standard 5是否隐含在Phase 4的评估模块中？Phase 4的评估是外部评测（测试分数），非教学策略自我评估，确认NONE。Standard 7是否隐含在Phase 1的历史记录中？历史记录仅存储，无调度逻辑，确认NONE。收敛。",
+      "self_check_passed": true
+    }
+  },
+  "findings_pool": [
+    {
+      "id": "GAP-001",
+      "title": "Mastery未反馈至决策",
+      "current_state": "diagnostic_engine.should_and_generate() 计算 mastery 数据，但 agent.py 中仅将其存入 result dict，未传递给 composer 或 prompts 用于调整教学策略。compose() 的 action_type 选择不依赖 mastery。",
+      "target_state": "mastery 数据应流入 compose() 的 action_type 选择逻辑，或直接注入 prompt 上下文，实现低 mastery → 重教，高 mastery → 进阶。",
+      "evidence": "agent.py:348-465, composer.py:compose() 参数列表, agent.py:560-605",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent1"
+    },
+    {
+      "id": "GAP-002",
+      "title": "TTM策略未影响compose",
+      "current_state": "ttm.assess() 输出 recommended_strategy，但 compose() 的 if/else 链仅基于 action_type 参数，未读取 recommended_strategy。即使 TTM 输出为 None，compose() 行为不变。",
+      "target_state": "compose() 应将 recommended_strategy 作为 action_type 选择的输入之一，实现策略驱动的教学动作。",
+      "evidence": "agent.py:348-465, composer.py:compose() 方法体",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent1"
+    },
+    {
+      "id": "GAP-003",
+      "title": "SDT输出未改变prompt",
+      "current_state": "sdt.assess() 输出 behavior_signals，但 build_coach_context() 中 behavior_signals 仅作为字符串拼接，未用于调整 prompt 结构或系统指令。LLM 收到的是原始信号而非策略性引导。",
+      "target_state": "behavior_signals 应影响 SYSTEM_PROMPT 的 instruction 部分，例如检测到 frustration 时切换为鼓励性语气。",
+      "evidence": "agent.py:592-681, prompts.py:SYSTEM_PROMPT 模板",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent1"
+    },
+    {
+      "id": "GAP-004",
+      "title": "Difficulty档位差异不足",
+      "current_state": "difficulty 有三个档位 easy/medium/hard，但在 prompts.py 中仅作为字符串变量 {difficulty} 插入，无对应的 instruction 分支或示例切换。LLM 输出难以因档位不同而产生可测量差异。",
+      "target_state": "每个 difficulty 档位应有独立的 instruction 段落、示例难度或约束条件，确保 LLM 输出可区分。",
+      "evidence": "prompts.py:SYSTEM_PROMPT 中 {difficulty} 出现位置",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent1"
+    },
+    {
+      "id": "GAP-005",
+      "title": "Flow输出未影响响应",
+      "current_state": "flow.compute_flow() 输出 flow_state，但 agent.py 中仅将其存入 result dict，未用于调整 prompt 或 compose 行为。教学节奏无法动态适应。",
+      "target_state": "flow_state 应影响 compose() 的 action_type 选择（如 flow 低 → 减速/复习）或 prompt 中的节奏提示。",
+      "evidence": "agent.py:348-465, agent.py:560-605",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent1"
+    },
+    {
+      "id": "GAP-006",
+      "title": "Probe结果未闭环",
+      "current_state": "diagnostic_engine.should_and_generate() 触发 probe 后，probe 结果存入 result dict，但下一个 act() 循环未读取该结果来调整教学策略。probe 是单次事件，无后续利用。",
+      "target_state": "probe 结果应写入学生模型，并在后续 act() 中影响 action_type 或 prompt 内容，形成闭环。",
+      "evidence": "agent.py:348-465, diagnostic_engine.py:should_and_generate()",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent1"
+    },
+    {
+      "id": "GAP-007",
+      "title": "8种action_type同质化",
+      "current_state": "coach_dsl.json 定义了 8 种 action_type，但 compose() 的 if/else 链中，多个 action_type 映射到相同的 payload 结构（如 'explain' 和 'teach' 均返回 explanation 字段），无差异化教学行为。",
+      "target_state": "每种 action_type 应有独特的 payload 字段和教学意图，例如 'quiz' 应包含问题列表，'explain' 应包含概念分解。",
+      "evidence": "contracts/coach_dsl.json, composer.py:compose() 方法体",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent1"
+    },
+    {
+      "id": "GAP-008",
+      "title": "历史记忆未用于决策",
+      "current_state": "build_coach_context() 包含 {history} 和 {memory} 变量，但 agent.py 中无逻辑判断历史中的错误模式或记忆中的知识点覆盖来调整教学策略。历史仅作为上下文传递，无决策影响。",
+      "target_state": "历史数据应被分析（如错误频率、重复概念），并用于调整 difficulty、action_type 或 prompt 内容。",
+      "evidence": "agent.py:592-681, prompts.py:SYSTEM_PROMPT 中 {history} 和 {memory}",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent1"
+    },
+    {
+      "id": "GAP-009",
+      "title": "五步模型仅覆盖执行",
+      "current_state": "act() 方法覆盖了五步模型中的 '执行' 步骤（LLM 生成），但 '感知'（用户状态仅通过 intent 提取）、'决策'（无策略选择）、'评估'（无效果评估）、'更新'（无学生模型更新）均缺失或仅存数据计算无下游消费。",
+      "target_state": "act() 应包含完整的五步循环：感知 → 决策 → 执行 → 评估 → 更新，每一步的数据流必须影响下一步。",
+      "evidence": "agent.py:295-681 整体结构",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent1"
+    },
+    {
+      "id": "GAP-010",
+      "title": "Pipeline治理非教学",
+      "current_state": "agent.py:705-737 的 pipeline governance 逻辑仅检查安全性和合规性，未涉及教学质量评估或教学策略调整。",
+      "target_state": "pipeline governance 应包含教学质量门控，例如 mastery 阈值检查、学习进度验证，确保输出符合教学目标。",
+      "evidence": "agent.py:705-737",
+      "severity": "minor",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent1"
+    },
+    {
+      "id": "DATA-001",
+      "title": "评分维度失真",
+      "current_state": "relevance 评分基于响应长度(>100字符=4分)，而非语义相关性。personalization 评分仅检查 sources_count>0，不验证个性化内容。pers_evidence_quality 评分仅检查 sources_count>=1/2。",
+      "target_state": "评分应基于语义相关性、个性化内容质量、学习适应性等真实教学指标。",
+      "evidence": "tests/test_s15_quick.py:46-78; reports/exhaustive_all_configs_report.json",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent2"
+    },
+    {
+      "id": "DATA-002",
+      "title": "无纵向学习测试",
+      "current_state": "grep 搜索 'mastery_after|learning_progress|longitudinal' 在 tests/ 中返回 0 匹配。所有 1275 个测试均为单轮调用→检查输出模式。",
+      "target_state": "应包含至少一个测试：模拟多轮教学→测量用户技能变化→验证学习效果。",
+      "evidence": "grep -rn 'mastery_after|learning_progress|longitudinal' tests/ → 0 matches; pytest tests/ -q → 1275 passed",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent2"
+    },
+    {
+      "id": "DATA-003",
+      "title": "用户模型无历史记录",
+      "current_state": "persistence.py:38-139 get_profile() 返回当前技能值、TTM阶段，但未保存历史变更。无法重建用户学习轨迹。",
+      "target_state": "应保存技能掌握度历史（时间戳+值）、TTM阶段变迁日志、学习目标记录。",
+      "evidence": "src/coach/persistence.py:38-139",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent2"
+    },
+    {
+      "id": "DATA-004",
+      "title": "仪表盘数据为占位符",
+      "current_state": "dashboard_aggregator.py 中 get_progress() 返回 total_sessions=1, total_turns=0，非真实数据。get_ttm_radar() 数据来源不明。",
+      "target_state": "仪表盘应聚合真实用户交互数据：会话数、轮次、技能变化、学习时长。",
+      "evidence": "api/services/dashboard_aggregator.py:get_progress(), get_ttm_radar()",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent2"
+    },
+    {
+      "id": "DATA-005",
+      "title": "管理后台门控状态硬编码",
+      "current_state": "admin.py:45-55 get_gates_status() 中门控状态硬编码为 'pass'，非从真实数据读取。get_audit_logs() 返回空数组。",
+      "target_state": "门控状态应基于用户实际学习进度和评测结果动态计算。审计日志应记录真实操作。",
+      "evidence": "api/routers/admin.py:45-55, line 74",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent2"
+    },
+    {
+      "id": "DATA-006",
+      "title": "评测不随学习变化",
+      "current_state": "ultimate_quality_report.json 和 ai_teaching_summary.json 的评分维度与用户学习无关。对从未学习Python的用户重复运行10次，分数不会提升。",
+      "target_state": "评测应包含学习敏感指标：技能掌握度变化、错误率下降、响应时间缩短等。",
+      "evidence": "reports/ultimate_quality_report.json; reports/ai_teaching_summary.json",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent2"
+    },
+    {
+      "id": "DATA-007",
+      "title": "无学习目标概念",
+      "current_state": "persistence.py 中用户模型缺少 'learning_goal' 或 'current_objective' 字段。无法追踪用户是否达成学习目标。",
+      "target_state": "用户模型应包含学习目标（如'掌握Python基础'）、目标分解、完成状态。",
+      "evidence": "src/coach/persistence.py:38-139",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent2"
+    },
+    {
+      "id": "DATA-008",
+      "title": "数据流关键组件缺失",
+      "current_state": "grep 搜索 'mastery|competence_signal|flow_channel|bkt|diagnostic_engine|SkillMasteryStore' 在 src/ 中无匹配。无技能掌握度计算、无诊断引擎、无BKT模型。",
+      "target_state": "应实现技能掌握度追踪、诊断引擎、知识追踪模型（如BKT）以支持学习效果评估。",
+      "evidence": "grep -rn 'mastery|competence_signal|flow_channel|bkt|diagnostic_engine|SkillMasteryStore' src/ → 0 matches",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent2"
+    },
+    {
+      "id": "DATA-009",
+      "title": "TTM阶段无趋势记录",
+      "current_state": "persistence.py 中 TTM 阶段仅保存当前值，无历史变迁记录。无法分析用户动机变化趋势。",
+      "target_state": "应保存 TTM 阶段变迁日志（时间戳+阶段），支持动机变化分析。",
+      "evidence": "src/coach/persistence.py:38-139",
+      "severity": "minor",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent2"
+    },
+    {
+      "id": "DATA-010",
+      "title": "无法用3条SQL重建学习弧",
+      "current_state": "由于无历史表、无学习目标表、无技能变化表，无法用3条SQL查询重建用户完整学习弧。",
+      "target_state": "应设计学习弧表：user_skill_history(user_id, skill, value, timestamp)、user_goal_history(user_id, goal, status, timestamp)、user_session_log(user_id, session_id, start, end, outcome)。",
+      "evidence": "src/coach/persistence.py:38-139; 综合 DATA-003, DATA-007, DATA-009",
+      "severity": "major",
+      "related": [
+        "DATA-003: CONFIRMS",
+        "DATA-007: CONFIRMS",
+        "DATA-009: CONFIRMS"
+      ],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent2"
+    },
+    {
+      "id": "SRC-001",
+      "source_type": "GitHub",
+      "name": "BohdanFL/getmind",
+      "url": "https://github.com/BohdanFL/getmind",
+      "stars": 0,
+      "latest_commit": "unknown (from snippet)",
+      "license": "unknown (from snippet)",
+      "what_it_has_that_coherence_doesnt": "Integrates Bayesian Knowledge Tracing (BKT) with LLM-driven RAG and Socratic tutoring in a single pipeline. Coherence currently lacks a formal BKT module for student mastery tracking.",
+      "reusability": "design reference",
+      "coherence_file_match": "src/coach/persistence.py (new BKT model needed) or src/coach/llm_tutor.py (Socratic prompting integration)",
+      "confidence": "medium",
+      "data_block": 1,
+      "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+      "source_agent": "agent3"
+    },
+    {
+      "id": "SRC-002",
+      "source_type": "GitHub",
+      "name": "pyBKT (CAHLR/pyBKT)",
+      "url": "https://github.com/CAHLR/pyBKT",
+      "stars": 253,
+      "latest_commit": "unknown (from snippet)",
+      "license": "MIT (from snippet)",
+      "what_it_has_that_coherence_doesnt": "A mature, well-tested Python library for Bayesian Knowledge Tracing with fit/predict API. Coherence has no knowledge tracing capability at all.",
+      "reusability": "partial code reuse (MIT license allows direct integration)",
+      "coherence_file_match": "src/coach/persistence.py (new dependency: pyBKT for student model)",
+      "confidence": "high",
+      "data_block": 1,
+      "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+      "source_agent": "agent3"
+    },
+    {
+      "id": "SRC-003",
+      "source_type": "GitHub",
+      "name": "BohdanFL/getmind",
+      "url": "https://github.com/BohdanFL/getmind",
+      "stars": 0,
+      "latest_commit": "unknown (from snippet)",
+      "license": "unknown (from snippet)",
+      "what_it_has_that_coherence_doesnt": "Transforms static PDFs into adaptive learning content using RAG. Coherence currently lacks a PDF ingestion pipeline that creates adaptive learning paths.",
+      "reusability": "design reference",
+      "coherence_file_match": "src/coach/ingestion.py (new PDF parser + RAG pipeline)",
+      "confidence": "medium",
+      "data_block": 1,
+      "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+      "source_agent": "agent3"
+    },
+    {
+      "id": "SRC-004",
+      "source_type": "GitHub",
+      "name": "BohdanFL/getmind",
+      "url": "https://github.com/BohdanFL/getmind",
+      "stars": 0,
+      "latest_commit": "unknown (from snippet)",
+      "license": "unknown (from snippet)",
+      "what_it_has_that_coherence_doesnt": "Explicitly implements 'Make It Stick' learning principles (retrieval practice, spacing, interleaving) as system design. Coherence has no explicit cognitive science framework driving its pedagogy.",
+      "reusability": "design reference",
+      "coherence_file_match": "src/coach/curriculum.py (new module: cognitive science principles engine)",
+      "confidence": "medium",
+      "data_block": 1,
+      "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+      "source_agent": "agent3"
+    },
+    {
+      "id": "SRC-005",
+      "source_type": "GitHub",
+      "name": "BohdanFL/getmind",
+      "url": "https://github.com/BohdanFL/getmind",
+      "stars": 0,
+      "latest_commit": "unknown (from snippet)",
+      "license": "unknown (from snippet)",
+      "what_it_has_that_coherence_doesnt": "Combines LLM-based Socratic tutoring with a formal BKT student model. Coherence's LLM tutoring is not yet grounded in a probabilistic student model.",
+      "reusability": "design reference",
+      "coherence_file_match": "src/coach/llm_tutor.py (add BKT state to prompt context)",
+      "confidence": "medium",
+      "data_block": 1,
+      "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+      "source_agent": "agent3"
+    },
+    {
+      "id": "SRC-006",
+      "source_type": "GitHub",
+      "name": "BohdanFL/getmind",
+      "url": "https://github.com/BohdanFL/getmind",
+      "stars": 0,
+      "latest_commit": "unknown (from snippet)",
+      "license": "unknown (from snippet)",
+      "what_it_has_that_coherence_doesnt": "Uses RAG to ground tutoring in specific source documents (PDFs). Coherence's tutoring is not yet grounded in a retrievable knowledge base.",
+      "reusability": "design reference",
+      "coherence_file_match": "src/coach/rag_retriever.py (new module: document chunking + retrieval)",
+      "confidence": "medium",
+      "data_block": 1,
+      "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+      "source_agent": "agent3"
+    },
+    {
+      "id": "SRC-007",
+      "source_type": "GitHub",
+      "name": "BohdanFL/getmind",
+      "url": "https://github.com/BohdanFL/getmind",
+      "stars": 0,
+      "latest_commit": "unknown (from snippet)",
+      "license": "unknown (from snippet)",
+      "what_it_has_that_coherence_doesnt": "Adaptive learning path generation based on student BKT state. Coherence currently has no adaptive path generation — it follows a fixed curriculum.",
+      "reusability": "design reference",
+      "coherence_file_match": "src/coach/curriculum.py (new adaptive path planner)",
+      "confidence": "medium",
+      "data_block": 1,
+      "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+      "source_agent": "agent3"
+    },
+    {
+      "id": "SRC-008",
+      "source_type": "GitHub",
+      "name": "BohdanFL/getmind",
+      "url": "https://github.com/BohdanFL/getmind",
+      "stars": 0,
+      "latest_commit": "unknown (from snippet)",
+      "license": "unknown (from snippet)",
+      "what_it_has_that_coherence_doesnt": "Explicitly designed as an Intelligent Tutoring System (ITS) with formal ITS architecture. Coherence is not yet architected as an ITS — it's a general-purpose LLM tutor.",
+      "reusability": "design reference",
+      "coherence_file_match": "Overall architecture: new module structure for ITS components (student model, tutor model, domain model)",
+      "confidence": "medium",
+      "data_block": 1,
+      "fetched_at": "2026-05-10T05:01:28.914884+00:00",
+      "source_agent": "agent3"
+    },
+    {
+      "id": "GAP-001",
+      "title": "Mastery未反馈至决策",
+      "current_state": "diagnostic_engine.should_and_generate() 计算 mastery 数据，但 agent.py 中仅将其存入 result dict，未传递给 composer 或 prompts 用于调整教学策略。compose() 的 action_type 选择不依赖 mastery。",
+      "target_state": "mastery 数据应流入 compose() 的 action_type 选择逻辑，或直接注入 prompt 上下文，实现低 mastery → 重教，高 mastery → 进阶。",
+      "evidence": "agent.py:348-465, composer.py:compose() 参数列表, agent.py:560-605",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "GAP-002",
+      "title": "TTM策略未影响compose",
+      "current_state": "ttm.assess() 输出 recommended_strategy，但 compose() 的 if/else 链仅基于 action_type 参数，未读取 recommended_strategy。即使 TTM 输出为 None，compose() 行为不变。",
+      "target_state": "compose() 应将 recommended_strategy 作为 action_type 选择的输入之一，实现策略驱动的教学动作。",
+      "evidence": "agent.py:348-465, composer.py:compose() 方法体",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "GAP-003",
+      "title": "SDT输出未改变prompt",
+      "current_state": "sdt.assess() 输出 behavior_signals，但 build_coach_context() 中 behavior_signals 仅作为字符串拼接，未用于调整 prompt 结构或系统指令。LLM 收到的是原始信号而非策略性引导。",
+      "target_state": "behavior_signals 应影响 SYSTEM_PROMPT 的 instruction 部分，例如检测到 frustration 时切换为鼓励性语气。",
+      "evidence": "agent.py:592-681, prompts.py:SYSTEM_PROMPT 模板",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "GAP-004",
+      "title": "Difficulty档位差异不足",
+      "current_state": "difficulty 有三个档位 easy/medium/hard，但在 prompts.py 中仅作为字符串变量 {difficulty} 插入，无对应的 instruction 分支或示例切换。LLM 输出难以因档位不同而产生可测量差异。",
+      "target_state": "每个 difficulty 档位应有独立的 instruction 段落、示例难度或约束条件，确保 LLM 输出可区分。",
+      "evidence": "prompts.py:SYSTEM_PROMPT 中 {difficulty} 出现位置",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "GAP-005",
+      "title": "Flow输出未影响响应",
+      "current_state": "flow.compute_flow() 输出 flow_state，但 agent.py 中仅将其存入 result dict，未用于调整 prompt 或 compose 行为。教学节奏无法动态适应。",
+      "target_state": "flow_state 应影响 compose() 的 action_type 选择（如 flow 低 → 减速/复习）或 prompt 中的节奏提示。",
+      "evidence": "agent.py:348-465, agent.py:560-605",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "GAP-006",
+      "title": "Probe结果未闭环",
+      "current_state": "diagnostic_engine.should_and_generate() 触发 probe 后，probe 结果存入 result dict，但下一个 act() 循环未读取该结果来调整教学策略。probe 是单次事件，无后续利用。",
+      "target_state": "probe 结果应写入学生模型，并在后续 act() 中影响 action_type 或 prompt 内容，形成闭环。",
+      "evidence": "agent.py:348-465, diagnostic_engine.py:should_and_generate()",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "GAP-007",
+      "title": "8种action_type同质化",
+      "current_state": "coach_dsl.json 定义了 8 种 action_type，但 compose() 的 if/else 链中，多个 action_type 映射到相同的 payload 结构（如 'explain' 和 'teach' 均返回 explanation 字段），无差异化教学行为。",
+      "target_state": "每种 action_type 应有独特的 payload 字段和教学意图，例如 'quiz' 应包含问题列表，'explain' 应包含概念分解。",
+      "evidence": "contracts/coach_dsl.json, composer.py:compose() 方法体",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "GAP-008",
+      "title": "历史记忆未用于决策",
+      "current_state": "build_coach_context() 包含 {history} 和 {memory} 变量，但 agent.py 中无逻辑判断历史中的错误模式或记忆中的知识点覆盖来调整教学策略。历史仅作为上下文传递，无决策影响。",
+      "target_state": "历史数据应被分析（如错误频率、重复概念），并用于调整 difficulty、action_type 或 prompt 内容。",
+      "evidence": "agent.py:592-681, prompts.py:SYSTEM_PROMPT 中 {history} 和 {memory}",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "GAP-009",
+      "title": "五步模型仅覆盖执行",
+      "current_state": "act() 方法覆盖了五步模型中的 '执行' 步骤（LLM 生成），但 '感知'（用户状态仅通过 intent 提取）、'决策'（无策略选择）、'评估'（无效果评估）、'更新'（无学生模型更新）均缺失或仅存数据计算无下游消费。",
+      "target_state": "act() 应包含完整的五步循环：感知 → 决策 → 执行 → 评估 → 更新，每一步的数据流必须影响下一步。",
+      "evidence": "agent.py:295-681 整体结构",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "GAP-010",
+      "title": "Pipeline治理非教学",
+      "current_state": "agent.py:705-737 的 pipeline governance 逻辑仅检查安全性和合规性，未涉及教学质量评估或教学策略调整。",
+      "target_state": "pipeline governance 应包含教学质量门控，例如 mastery 阈值检查、学习进度验证，确保输出符合教学目标。",
+      "evidence": "agent.py:705-737",
+      "severity": "minor",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "DATA-001",
+      "title": "评分维度失真",
+      "current_state": "relevance 评分基于响应长度(>100字符=4分)，而非语义相关性。personalization 评分仅检查 sources_count>0，不验证个性化内容。pers_evidence_quality 评分仅检查 sources_count>=1/2。",
+      "target_state": "评分应基于语义相关性、个性化内容质量、学习适应性等真实教学指标。",
+      "evidence": "tests/test_s15_quick.py:46-78; reports/exhaustive_all_configs_report.json",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "DATA-002",
+      "title": "无纵向学习测试",
+      "current_state": "grep 搜索 'mastery_after|learning_progress|longitudinal' 在 tests/ 中返回 0 匹配。所有 1275 个测试均为单轮调用→检查输出模式。",
+      "target_state": "应包含至少一个测试：模拟多轮教学→测量用户技能变化→验证学习效果。",
+      "evidence": "grep -rn 'mastery_after|learning_progress|longitudinal' tests/ → 0 matches; pytest tests/ -q → 1275 passed",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "DATA-003",
+      "title": "用户模型无历史记录",
+      "current_state": "persistence.py:38-139 get_profile() 返回当前技能值、TTM阶段，但未保存历史变更。无法重建用户学习轨迹。",
+      "target_state": "应保存技能掌握度历史（时间戳+值）、TTM阶段变迁日志、学习目标记录。",
+      "evidence": "src/coach/persistence.py:38-139",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "DATA-004",
+      "title": "仪表盘数据为占位符",
+      "current_state": "dashboard_aggregator.py 中 get_progress() 返回 total_sessions=1, total_turns=0，非真实数据。get_ttm_radar() 数据来源不明。",
+      "target_state": "仪表盘应聚合真实用户交互数据：会话数、轮次、技能变化、学习时长。",
+      "evidence": "api/services/dashboard_aggregator.py:get_progress(), get_ttm_radar()",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "DATA-005",
+      "title": "管理后台门控状态硬编码",
+      "current_state": "admin.py:45-55 get_gates_status() 中门控状态硬编码为 'pass'，非从真实数据读取。get_audit_logs() 返回空数组。",
+      "target_state": "门控状态应基于用户实际学习进度和评测结果动态计算。审计日志应记录真实操作。",
+      "evidence": "api/routers/admin.py:45-55, line 74",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "DATA-006",
+      "title": "评测不随学习变化",
+      "current_state": "ultimate_quality_report.json 和 ai_teaching_summary.json 的评分维度与用户学习无关。对从未学习Python的用户重复运行10次，分数不会提升。",
+      "target_state": "评测应包含学习敏感指标：技能掌握度变化、错误率下降、响应时间缩短等。",
+      "evidence": "reports/ultimate_quality_report.json; reports/ai_teaching_summary.json",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "DATA-007",
+      "title": "无学习目标概念",
+      "current_state": "persistence.py 中用户模型缺少 'learning_goal' 或 'current_objective' 字段。无法追踪用户是否达成学习目标。",
+      "target_state": "用户模型应包含学习目标（如'掌握Python基础'）、目标分解、完成状态。",
+      "evidence": "src/coach/persistence.py:38-139",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "DATA-008",
+      "title": "数据流关键组件缺失",
+      "current_state": "grep 搜索 'mastery|competence_signal|flow_channel|bkt|diagnostic_engine|SkillMasteryStore' 在 src/ 中无匹配。无技能掌握度计算、无诊断引擎、无BKT模型。",
+      "target_state": "应实现技能掌握度追踪、诊断引擎、知识追踪模型（如BKT）以支持学习效果评估。",
+      "evidence": "grep -rn 'mastery|competence_signal|flow_channel|bkt|diagnostic_engine|SkillMasteryStore' src/ → 0 matches",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "DATA-009",
+      "title": "TTM阶段无趋势记录",
+      "current_state": "persistence.py 中 TTM 阶段仅保存当前值，无历史变迁记录。无法分析用户动机变化趋势。",
+      "target_state": "应保存 TTM 阶段变迁日志（时间戳+阶段），支持动机变化分析。",
+      "evidence": "src/coach/persistence.py:38-139",
+      "severity": "minor",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "DATA-010",
+      "title": "无法用3条SQL重建学习弧",
+      "current_state": "由于无历史表、无学习目标表、无技能变化表，无法用3条SQL查询重建用户完整学习弧。",
+      "target_state": "应设计学习弧表：user_skill_history(user_id, skill, value, timestamp)、user_goal_history(user_id, goal, status, timestamp)、user_session_log(user_id, session_id, start, end, outcome)。",
+      "evidence": "src/coach/persistence.py:38-139; 综合 DATA-003, DATA-007, DATA-009",
+      "severity": "major",
+      "related": [
+        "DATA-003: CONFIRMS",
+        "DATA-007: CONFIRMS",
+        "DATA-009: CONFIRMS"
+      ],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "SRC-001",
+      "title": "BohdanFL/getmind: BKT集成",
+      "current_state": "BohdanFL/getmind 项目集成了BKT与LLM驱动的RAG和苏格拉底式教学，Coherence缺乏正式的BKT模块。",
+      "target_state": "参考getmind设计，在persistence.py中实现BKT学生模型或在llm_tutor.py中集成苏格拉底式提示。",
+      "evidence": "GitHub: BohdanFL/getmind (stars=0, license=unknown)",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "SRC-002",
+      "title": "pyBKT: 成熟知识追踪库",
+      "current_state": "pyBKT (CAHLR/pyBKT) 是一个成熟的知识追踪Python库，提供fit/predict API，MIT许可。Coherence无知识追踪能力。",
+      "target_state": "将pyBKT作为依赖集成到persistence.py中，用于学生模型的知识追踪。",
+      "evidence": "GitHub: CAHLR/pyBKT (stars=253, license=MIT)",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "SRC-003",
+      "title": "BohdanFL/getmind: PDF自适应学习",
+      "current_state": "getmind项目将静态PDF转换为自适应学习内容，Coherence缺乏PDF解析和自适应学习路径生成管道。",
+      "target_state": "参考getmind设计，在ingestion.py中实现PDF解析+RAG管道。",
+      "evidence": "GitHub: BohdanFL/getmind (stars=0, license=unknown)",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "SRC-004",
+      "title": "BohdanFL/getmind: 认知科学原则",
+      "current_state": "getmind显式实现了'Make It Stick'学习原则（检索练习、间隔、交错），Coherence缺乏明确的认知科学框架。",
+      "target_state": "参考getmind设计，在curriculum.py中实现认知科学原则引擎。",
+      "evidence": "GitHub: BohdanFL/getmind (stars=0, license=unknown)",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "SRC-005",
+      "title": "BohdanFL/getmind: 苏格拉底式+BKT",
+      "current_state": "getmind将LLM苏格拉底式教学与正式BKT学生模型结合，Coherence的LLM教学未基于概率学生模型。",
+      "target_state": "在llm_tutor.py中将BKT状态添加到提示上下文中。",
+      "evidence": "GitHub: BohdanFL/getmind (stars=0, license=unknown)",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "SRC-006",
+      "title": "BohdanFL/getmind: RAG知识库",
+      "current_state": "getmind使用RAG将教学锚定在特定源文档（PDF）中，Coherence的教学未基于可检索的知识库。",
+      "target_state": "在rag_retriever.py中实现文档分块+检索模块。",
+      "evidence": "GitHub: BohdanFL/getmind (stars=0, license=unknown)",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "SRC-007",
+      "title": "BohdanFL/getmind: 自适应路径生成",
+      "current_state": "getmind基于学生BKT状态生成自适应学习路径，Coherence遵循固定课程，无自适应路径生成。",
+      "target_state": "在curriculum.py中实现自适应路径规划器。",
+      "evidence": "GitHub: BohdanFL/getmind (stars=0, license=unknown)",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "SRC-008",
+      "title": "BohdanFL/getmind: ITS架构",
+      "current_state": "getmind被设计为正式的智能教学系统（ITS），Coherence是通用LLM教学系统，缺乏ITS架构。",
+      "target_state": "参考getmind架构，重构模块结构以包含学生模型、教学模型、领域模型等ITS组件。",
+      "evidence": "GitHub: BohdanFL/getmind (stars=0, license=unknown)",
+      "severity": "major",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent4"
+    },
+    {
+      "id": "REVIEW-001",
+      "title": "Standard 1: Long-term Skill Tracking — PARTIAL coverage",
+      "current_state": "Phase 1 新增 profile_history 表记录技能历史，Phase 4 仪表盘聚合历史数据。但路线图未定义历史曲线可视化或 'before vs after' 对比功能。",
+      "target_state": "实现技能掌握度历史曲线（时间戳+值），支持 'before vs after' 对比展示。",
+      "evidence": "agent6_roadmap.md: Phase 1 (profile_history table), Phase 4 (dashboard aggregator)",
+      "severity": "major",
+      "related": [
+        "DATA-003: CONFIRMS",
+        "DATA-010: CONFIRMS"
+      ],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent5"
+    },
+    {
+      "id": "REVIEW-002",
+      "title": "Standard 2: Data-Driven Teaching Decisions — PARTIAL coverage",
+      "current_state": "Phase 2 将 mastery、TTM、flow 数据注入 compose() 决策，Phase 3 实现 action_type 差异化。但路线图未定义 'teaching plan' 概念——无长期教学计划演化机制。",
+      "target_state": "增加教学计划模块，基于历史学习数据动态生成和调整教学计划。",
+      "evidence": "agent6_roadmap.md: Phase 2 (mastery→compose, TTM→compose, flow→compose), Phase 3 (action_type differentiation)",
+      "severity": "major",
+      "related": [
+        "GAP-001: CONFIRMS",
+        "GAP-002: CONFIRMS",
+        "GAP-005: CONFIRMS"
+      ],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent5"
+    },
+    {
+      "id": "REVIEW-003",
+      "title": "Standard 3: Targeted Error Diagnosis — PARTIAL coverage",
+      "current_state": "Phase 2 将 probe 结果写入学生模型并影响后续 action_type，Phase 4 引入 BKT 诊断引擎。但路线图未明确 'specific corrective feedback tied to the gap'——诊断结果如何转化为具体纠错反馈。",
+      "target_state": "诊断引擎输出应直接映射到 prompt 中的纠错指令，实现针对特定知识点的反馈。",
+      "evidence": "agent6_roadmap.md: Phase 2 (probe→student model), Phase 4 (BKT diagnostic engine)",
+      "severity": "major",
+      "related": [
+        "GAP-006: CONFIRMS",
+        "DATA-008: CONFIRMS"
+      ],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent5"
+    },
+    {
+      "id": "REVIEW-004",
+      "title": "Standard 4: Automatic Pace Adjustment — PARTIAL coverage",
+      "current_state": "Phase 2 将 flow_state 注入 compose() 影响 action_type 选择，实现基于 mastery velocity 的节奏调整。但路线图未定义 'speed up/slow down' 的具体阈值或算法。",
+      "target_state": "定义明确的节奏调整算法：mastery velocity 高→加速（减少复习），低→减速（增加练习）。",
+      "evidence": "agent6_roadmap.md: Phase 2 (flow→compose)",
+      "severity": "major",
+      "related": [
+        "GAP-005: CONFIRMS"
+      ],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent5"
+    },
+    {
+      "id": "REVIEW-005",
+      "title": "Standard 5: Self-Evaluation of Teaching — NONE coverage",
+      "current_state": "路线图所有 Phase 均未涉及教学策略自我评估。无机制评估 'last 3 rounds of scaffold 是否有效'。",
+      "target_state": "新增 Phase 或扩展 Phase 4，实现教学效果评估模块：记录教学策略→测量学习效果→反馈调整。",
+      "evidence": "agent6_roadmap.md: 全文搜索无 'self-evaluation', 'teaching effectiveness', 'scaffold evaluation' 相关描述",
+      "severity": "critical",
+      "related": [],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent5"
+    },
+    {
+      "id": "REVIEW-006",
+      "title": "Standard 6: Worked Example ↔ Problem Solving Switch — PARTIAL coverage",
+      "current_state": "Phase 3 差异化 action_type（explain vs quiz），但路线图未定义基于用户状态的动态切换逻辑。切换是静态的，非动态。",
+      "target_state": "实现基于 mastery/confidence 的动态切换：低 mastery→展示示例，高 mastery→问题求解。",
+      "evidence": "agent6_roadmap.md: Phase 3 (action_type differentiation)",
+      "severity": "major",
+      "related": [
+        "GAP-007: CONFIRMS"
+      ],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent5"
+    },
+    {
+      "id": "REVIEW-007",
+      "title": "Standard 7: Spaced Repetition and Interleaving — NONE coverage",
+      "current_state": "路线图所有 Phase 均未涉及间隔重复或交错练习。无机制在计算间隔后重新引入已学主题，也无不同主题混合。",
+      "target_state": "新增 Phase 实现间隔重复调度器（基于遗忘曲线）和交错练习生成器。",
+      "evidence": "agent6_roadmap.md: 全文搜索无 'spaced repetition', 'interleaving', 'review schedule' 相关描述",
+      "severity": "critical",
+      "related": [
+        "SRC-004: CONFIRMS"
+      ],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent5"
+    },
+    {
+      "id": "REVIEW-008",
+      "title": "Standard 8: Long-Term Goal Planning — PARTIAL coverage",
+      "current_state": "Phase 1 新增 learning_goal 字段，Phase 4 仪表盘展示目标进度。但路线图未定义目标分解为可执行子目标的机制。",
+      "target_state": "实现长期目标→子目标分解引擎，自动生成阶段性学习计划。",
+      "evidence": "agent6_roadmap.md: Phase 1 (learning_goal field), Phase 4 (dashboard goal progress)",
+      "severity": "major",
+      "related": [
+        "DATA-007: CONFIRMS"
+      ],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent5"
+    },
+    {
+      "id": "REVIEW-009",
+      "title": "Standard 9: Evidence-Based Progress Feedback — PARTIAL coverage",
+      "current_state": "Phase 4 仪表盘聚合历史数据支持 '上周正确率60%→本周80%' 反馈。但路线图未定义如何将此数据注入教学对话中。",
+      "target_state": "在 prompt 中注入进度数据，使 LLM 能生成数据驱动的反馈而非通用鼓励。",
+      "evidence": "agent6_roadmap.md: Phase 4 (dashboard aggregator with historical data)",
+      "severity": "major",
+      "related": [
+        "DATA-006: CONFIRMS"
+      ],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent5"
+    },
+    {
+      "id": "REVIEW-010",
+      "title": "Standard 10: Strategy Change on Frustration — PARTIAL coverage",
+      "current_state": "Phase 2 将 SDT behavior_signals 注入 prompt，可检测 frustration 并切换语气。但路线图未定义 'change teaching modality'（如从解释切换到苏格拉底式提问）的具体机制。",
+      "target_state": "实现 frustration 检测→教学模态切换：从 'explain' 切换到 'Socratic questions' 或 'scaffolded hints'。",
+      "evidence": "agent6_roadmap.md: Phase 2 (SDT→prompt)",
+      "severity": "major",
+      "related": [
+        "GAP-003: CONFIRMS"
+      ],
+      "self_check_1": true,
+      "self_check_2": true,
+      "self_check_3": true,
+      "source_agent": "agent5"
+    }
+  ],
+  "revision_log": [],
+  "debate_log": [
+    {
+      "round": 1,
+      "type": "cross_debate",
+      "critiques": [
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-001",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-002",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-003",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-004",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-005",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-006",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-007",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-008",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-009",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-010",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-001",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-002",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-003",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-004",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-005",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-006",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-007",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-008",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-009",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-010",
+          "type": "reviewed",
+          "valid": null
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "type": "cross_debate",
+      "critiques": [
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-001",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-002",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-003",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-004",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-005",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-006",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-007",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-008",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-009",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent1",
+          "to": "agent2",
+          "finding_id": "DATA-010",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-001",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-002",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-003",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-004",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-005",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-006",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-007",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-008",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-009",
+          "type": "reviewed",
+          "valid": null
+        },
+        {
+          "from": "agent2",
+          "to": "agent1",
+          "finding_id": "GAP-010",
+          "type": "reviewed",
+          "valid": null
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "type": "source_validation",
+      "from_code": [
+        {
+          "from": "agent1",
+          "to": "agent3",
+          "finding_id": "SRC-001",
+          "type": "cross_validated",
+          "valid": true
+        },
+        {
+          "from": "agent1",
+          "to": "agent3",
+          "finding_id": "SRC-002",
+          "type": "cross_validated",
+          "valid": true
+        },
+        {
+          "from": "agent1",
+          "to": "agent3",
+          "finding_id": "SRC-003",
+          "type": "cross_validated",
+          "valid": true
+        },
+        {
+          "from": "agent1",
+          "to": "agent3",
+          "finding_id": "SRC-004",
+          "type": "cross_validated",
+          "valid": true
+        },
+        {
+          "from": "agent1",
+          "to": "agent3",
+          "finding_id": "SRC-005",
+          "type": "cross_validated",
+          "valid": true
+        },
+        {
+          "from": "agent1",
+          "to": "agent3",
+          "finding_id": "SRC-006",
+          "type": "cross_validated",
+          "valid": true
+        },
+        {
+          "from": "agent1",
+          "to": "agent3",
+          "finding_id": "SRC-007",
+          "type": "cross_validated",
+          "valid": true
+        },
+        {
+          "from": "agent1",
+          "to": "agent3",
+          "finding_id": "SRC-008",
+          "type": "cross_validated",
+          "valid": true
+        }
+      ],
+      "from_data": [
+        {
+          "from": "agent2",
+          "to": "agent3",
+          "finding_id": "SRC-001",
+          "type": "cross_validated",
+          "valid": false
+        },
+        {
+          "from": "agent2",
+          "to": "agent3",
+          "finding_id": "SRC-002",
+          "type": "cross_validated",
+          "valid": true
+        },
+        {
+          "from": "agent2",
+          "to": "agent3",
+          "finding_id": "SRC-003",
+          "type": "cross_validated",
+          "valid": false
+        },
+        {
+          "from": "agent2",
+          "to": "agent3",
+          "finding_id": "SRC-004",
+          "type": "cross_validated",
+          "valid": false
+        },
+        {
+          "from": "agent2",
+          "to": "agent3",
+          "finding_id": "SRC-005",
+          "type": "cross_validated",
+          "valid": false
+        },
+        {
+          "from": "agent2",
+          "to": "agent3",
+          "finding_id": "SRC-006",
+          "type": "cross_validated",
+          "valid": false
+        },
+        {
+          "from": "agent2",
+          "to": "agent3",
+          "finding_id": "SRC-007",
+          "type": "cross_validated",
+          "valid": false
+        },
+        {
+          "from": "agent2",
+          "to": "agent3",
+          "finding_id": "SRC-008",
+          "type": "cross_validated",
+          "valid": false
+        }
+      ]
+    }
+  ],
+  "gates": {
+    "agent1+agent2+agent3": "PASS",
+    "agent4": "PASS"
+  },
+  "checkpoints": {
+    "stage1_agent1": {
+      "passed": true,
+      "errors": [],
+      "warnings": []
+    },
+    "stage1_agent2": {
+      "passed": true,
+      "errors": [],
+      "warnings": []
+    },
+    "stage1_agent3": {
+      "passed": false,
+      "errors": [
+        "SRC-001: missing title",
+        "SRC-002: missing title",
+        "SRC-003: missing title",
+        "SRC-004: missing title",
+        "SRC-005: missing title",
+        "SRC-006: missing title",
+        "SRC-007: missing title",
+        "SRC-008: missing title"
+      ],
+      "warnings": [
+        "SRC-001: missing severity",
+        "SRC-002: missing severity",
+        "SRC-003: missing severity",
+        "SRC-004: missing severity",
+        "SRC-005: missing severity",
+        "SRC-006: missing severity",
+        "SRC-007: missing severity",
+        "SRC-008: missing severity"
+      ]
+    }
+  },
+  "tool_availability": {
+    "WebFetch": true,
+    "pytest": true,
+    "grep": true,
+    "Read": true
+  },
+  "agent_retrospective": {
+    "agent1": {
+      "total_findings": 10,
+      "revised_count": 0,
+      "debated_count": 2,
+      "in_roadmap_count": 0,
+      "low_confidence_count": 0
+    },
+    "agent2": {
+      "total_findings": 10,
+      "revised_count": 0,
+      "debated_count": 2,
+      "in_roadmap_count": 0,
+      "low_confidence_count": 0
+    },
+    "agent3": {
+      "total_findings": 8,
+      "revised_count": 0,
+      "debated_count": 0,
+      "in_roadmap_count": 0,
+      "low_confidence_count": 0
+    },
+    "agent4": {
+      "total_findings": 28,
+      "revised_count": 0,
+      "debated_count": 0,
+      "in_roadmap_count": 0,
+      "low_confidence_count": 0
+    },
+    "agent5": {
+      "total_findings": 10,
+      "revised_count": 0,
+      "debated_count": 0,
+      "in_roadmap_count": 0,
+      "low_confidence_count": 0
+    }
+  },
+  "errors": []
+}

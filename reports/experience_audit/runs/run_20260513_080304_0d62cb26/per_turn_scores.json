@@ -1,0 +1,1299 @@
+{
+  "novice_confirm": [
+    {
+      "turn": 1,
+      "user": "好",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 3,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 12
+      }
+    },
+    {
+      "turn": 2,
+      "user": "嗯",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 3,
+      "user": "继续",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 4,
+      "user": "可以",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 5,
+      "user": "好",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 6,
+      "user": "好",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 7,
+      "user": "嗯",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 8,
+      "user": "继续",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 9,
+      "user": "可以",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 10,
+      "user": "好",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 11,
+      "user": "好",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 12,
+      "user": "嗯",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 13,
+      "user": "继续",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 14,
+      "user": "可以",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 15,
+      "user": "好",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 16,
+      "user": "好",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 17,
+      "user": "嗯",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 18,
+      "user": "继续",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 19,
+      "user": "可以",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    },
+    {
+      "turn": 20,
+      "user": "好",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 1,
+        "total": 11
+      }
+    }
+  ],
+  "novice_jump": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 3,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 12
+      }
+    },
+    {
+      "turn": 2,
+      "user": "讲列表",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 3,
+      "user": "循环是什么",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 4,
+      "user": "字典怎么用",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 5,
+      "user": "学函数",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 6,
+      "user": "装饰器",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 7,
+      "user": "类",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 8,
+      "user": "文件读写",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 9,
+      "user": "异常处理",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 10,
+      "user": "pip 安装",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 11,
+      "user": "写个爬虫",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 12,
+      "user": "数据可视化",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 13,
+      "user": "机器学习",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 14,
+      "user": "深度学习",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 15,
+      "user": "PyTorch",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 16,
+      "user": "回归",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 17,
+      "user": "分类",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 18,
+      "user": "聚类",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 19,
+      "user": "RNN",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 20,
+      "user": "Transformer",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    }
+  ],
+  "advanced": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 3,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 12
+      }
+    },
+    {
+      "turn": 2,
+      "user": "为什么",
+      "action_type": "reflect",
+      "scores": {
+        "引用性": 0,
+        "连续性": 2,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 11
+      }
+    },
+    {
+      "turn": 3,
+      "user": "具体点",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 2,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 11
+      }
+    },
+    {
+      "turn": 4,
+      "user": "还有吗",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 5,
+      "user": "举个例子",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 6,
+      "user": "还是不懂",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 7,
+      "user": "换个说法",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 8,
+      "user": "和Java的区别",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 9,
+      "user": "底层原理",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 10,
+      "user": "还有吗",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 11,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 12,
+      "user": "为什么",
+      "action_type": "reflect",
+      "scores": {
+        "引用性": 0,
+        "连续性": 2,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 11
+      }
+    },
+    {
+      "turn": 13,
+      "user": "具体点",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 2,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 11
+      }
+    },
+    {
+      "turn": 14,
+      "user": "还有吗",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 15,
+      "user": "举个例子",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 16,
+      "user": "还是不懂",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 17,
+      "user": "换个说法",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 18,
+      "user": "和Java的区别",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 19,
+      "user": "底层原理",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 20,
+      "user": "还有吗",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    }
+  ],
+  "reviewer": [
+    {
+      "turn": 1,
+      "user": "教列表",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 3,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 12
+      }
+    },
+    {
+      "turn": 2,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 3,
+      "user": "再讲一遍列表",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 4,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 5,
+      "user": "列表还有什么",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 6,
+      "user": "循环高级用法",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 7,
+      "user": "再讲列表",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 8,
+      "user": "列表推导式",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 9,
+      "user": "再讲循环",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 10,
+      "user": "教列表",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 11,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 12,
+      "user": "再讲一遍列表",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 13,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 14,
+      "user": "列表还有什么",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 15,
+      "user": "循环高级用法",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 16,
+      "user": "再讲列表",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 17,
+      "user": "列表推导式",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 18,
+      "user": "再讲循环",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 19,
+      "user": "教完了吧",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    }
+  ],
+  "tester": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 3,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 12
+      }
+    },
+    {
+      "turn": 2,
+      "user": "考考我",
+      "action_type": "probe",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 3,
+      "user": "教列表",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 2,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 11
+      }
+    },
+    {
+      "turn": 4,
+      "user": "考考我",
+      "action_type": "probe",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 5,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 2,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 11
+      }
+    },
+    {
+      "turn": 6,
+      "user": "考考我",
+      "action_type": "probe",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 7,
+      "user": "教函数",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 2,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 11
+      }
+    },
+    {
+      "turn": 8,
+      "user": "考考我",
+      "action_type": "probe",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 9,
+      "user": "教类",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 2,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 11
+      }
+    },
+    {
+      "turn": 10,
+      "user": "考考我",
+      "action_type": "probe",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 11,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 2,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 11
+      }
+    },
+    {
+      "turn": 12,
+      "user": "考考我",
+      "action_type": "probe",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 13,
+      "user": "教列表",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 2,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 11
+      }
+    },
+    {
+      "turn": 14,
+      "user": "考考我",
+      "action_type": "probe",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 15,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 2,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 11
+      }
+    },
+    {
+      "turn": 16,
+      "user": "考考我",
+      "action_type": "probe",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 17,
+      "user": "教函数",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 2,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 11
+      }
+    },
+    {
+      "turn": 18,
+      "user": "考考我",
+      "action_type": "probe",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    },
+    {
+      "turn": 19,
+      "user": "教类",
+      "action_type": "scaffold",
+      "scores": {
+        "引用性": 0,
+        "连续性": 2,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 11
+      }
+    },
+    {
+      "turn": 20,
+      "user": "考考我",
+      "action_type": "probe",
+      "scores": {
+        "引用性": 0,
+        "连续性": 4,
+        "无空转": 4,
+        "稳定性": 2,
+        "推进感": 3,
+        "total": 13
+      }
+    }
+  ]
+}

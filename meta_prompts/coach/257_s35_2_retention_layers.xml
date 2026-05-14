@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S35.2 -- 重要性保留与层化后缀</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>35</phase>
+  <sub_stage>S35.2</sub_stage>
+  <sub_stage_name>importance retention / dedupe / session isolation</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责将变化后缀从“最近几轮原样注入”重构为“按重要性保留的结构化层”。
+  </role>
+
+  <context>
+    当前 history / memory / summary / progress 存在重复注入与弱筛选。
+    retention 的目标不是塞入更多文本，而是在 1M 窗口下提升变化层的信息密度和连续性价值。
+  </context>
+
+  <task>
+    1. 增加 session-scoped retrieval helpers；
+    2. 引入 importance scoring；
+    3. 引入 dedupe；
+    4. 引入 per-layer budget；
+    5. retained context 输出元数据；
+    6. 优先保留上一轮教学内容、当前目标、未解决困惑、mastery 变化与高相关历史轮次。
+  </task>
+
+  <priority_order>
+    <item>上一轮 AI 教学内容</item>
+    <item>当前学习目标 / 当前主题</item>
+    <item>未解决困惑 / 用户追问</item>
+    <item>mastery 变化 / review hint</item>
+    <item>与当前消息强相关的历史轮次</item>
+    <item>一般背景记忆</item>
+  </priority_order>
+
+  <design_constraints>
+    <item>prompt-bound retrieval 默认按 session 隔离</item>
+    <item>同一事实不得在 summary / memory / progress 多层重复注入</item>
+    <item>变化层目标是信息密度提升，不是单纯压 token</item>
+  </design_constraints>
+
+  <risk_analysis>
+    1. 把 retention 写成“加更多历史”；
+    2. cross-session leakage；
+    3. 没有去重，导致多个层块注入相同事实；
+    4. 只按 recency 排序，无法保留真正关键的 continuity 信号。
+  </risk_analysis>
+
+  <quality_gates>
+    <gate>第二轮可恢复上一轮教学内容</gate>
+    <gate>无 cross-session leakage</gate>
+    <gate>变化层存在去重和预算控制</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>retained context 明显优于“最近几轮原样注入”</item>
+    <item>变化层具备稳定的优先级结构</item>
+  </success_criteria>
+</prompt>

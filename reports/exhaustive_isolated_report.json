@@ -1,0 +1,246 @@
+{
+  "test_time": "2026-05-06T05:46:13.627269+00:00",
+  "combos": 8,
+  "total_turns": 80,
+  "summaries": {
+    "all_off": {
+      "turns": 10,
+      "ok": 10,
+      "avg_quality": 6.6,
+      "llm_rate": "0/10",
+      "has_steps": "0/10",
+      "has_question": "1/10",
+      "avg_tokens": 0.0,
+      "ttm_stages": {},
+      "actions": {
+        "probe": 1,
+        "suggest": 5,
+        "scaffold": 3,
+        "reflect": 1
+      },
+      "dimensions": {
+        "relevance": 1.0,
+        "clarity": 1.0,
+        "interactive": 0.6,
+        "structure": 1.0,
+        "personalization": 2.0,
+        "encouragement": 1.0
+      },
+      "time_s": 1.0
+    },
+    "llm_only": {
+      "turns": 10,
+      "ok": 10,
+      "avg_quality": 19.4,
+      "llm_rate": "10/10",
+      "has_steps": "10/10",
+      "has_question": "10/10",
+      "avg_tokens": 709.0,
+      "ttm_stages": {},
+      "actions": {
+        "probe": 1,
+        "suggest": 5,
+        "scaffold": 3,
+        "reflect": 1
+      },
+      "dimensions": {
+        "relevance": 3.3,
+        "clarity": 3.1,
+        "interactive": 2.8,
+        "structure": 4.0,
+        "personalization": 3.6,
+        "encouragement": 2.6
+      },
+      "time_s": 43.0
+    },
+    "llm_ttm": {
+      "turns": 10,
+      "ok": 10,
+      "avg_quality": 20.1,
+      "llm_rate": "10/10",
+      "has_steps": "10/10",
+      "has_question": "10/10",
+      "avg_tokens": 734.0,
+      "ttm_stages": {
+        "action": 10
+      },
+      "actions": {
+        "probe": 1,
+        "scaffold": 3,
+        "reflect": 1,
+        "challenge": 5
+      },
+      "dimensions": {
+        "relevance": 3.4,
+        "clarity": 3.4,
+        "interactive": 2.6,
+        "structure": 4.0,
+        "personalization": 3.9,
+        "encouragement": 2.8
+      },
+      "time_s": 41.0
+    },
+    "llm_ttm_sdt": {
+      "turns": 10,
+      "ok": 10,
+      "avg_quality": 20.1,
+      "llm_rate": "10/10",
+      "has_steps": "10/10",
+      "has_question": "10/10",
+      "avg_tokens": 728.0,
+      "ttm_stages": {
+        "action": 10
+      },
+      "actions": {
+        "probe": 1,
+        "reflect": 4,
+        "challenge": 5
+      },
+      "dimensions": {
+        "relevance": 3.4,
+        "clarity": 2.9,
+        "interactive": 2.8,
+        "structure": 4.0,
+        "personalization": 3.8,
+        "encouragement": 3.2
+      },
+      "time_s": 40.0
+    },
+    "full_behavior": {
+      "turns": 10,
+      "ok": 10,
+      "avg_quality": 19.2,
+      "llm_rate": "10/10",
+      "has_steps": "10/10",
+      "has_question": "10/10",
+      "avg_tokens": 724.0,
+      "ttm_stages": {
+        "action": 10
+      },
+      "actions": {
+        "probe": 1,
+        "reflect": 4,
+        "challenge": 5
+      },
+      "dimensions": {
+        "relevance": 3.4,
+        "clarity": 2.9,
+        "interactive": 2.7,
+        "structure": 4.0,
+        "personalization": 3.8,
+        "encouragement": 2.4
+      },
+      "time_s": 41.0
+    },
+    "full_stack": {
+      "turns": 10,
+      "ok": 10,
+      "avg_quality": 19.7,
+      "llm_rate": "10/10",
+      "has_steps": "10/10",
+      "has_question": "10/10",
+      "avg_tokens": 722.0,
+      "ttm_stages": {
+        "action": 10
+      },
+      "actions": {
+        "probe": 3,
+        "reflect": 4,
+        "challenge": 3
+      },
+      "dimensions": {
+        "relevance": 3.3,
+        "clarity": 3.2,
+        "interactive": 2.7,
+        "structure": 4.0,
+        "personalization": 3.9,
+        "encouragement": 2.6
+      },
+      "time_s": 45.0
+    },
+    "llm_diag": {
+      "turns": 10,
+      "ok": 10,
+      "avg_quality": 19.6,
+      "llm_rate": "10/10",
+      "has_steps": "10/10",
+      "has_question": "10/10",
+      "avg_tokens": 709.0,
+      "ttm_stages": {},
+      "actions": {
+        "probe": 3,
+        "suggest": 3,
+        "scaffold": 3,
+        "reflect": 1
+      },
+      "dimensions": {
+        "relevance": 3.3,
+        "clarity": 3.1,
+        "interactive": 2.5,
+        "structure": 4.0,
+        "personalization": 3.9,
+        "encouragement": 2.8
+      },
+      "time_s": 47.0
+    },
+    "rules_diag": {
+      "turns": 10,
+      "ok": 10,
+      "avg_quality": 6.6,
+      "llm_rate": "0/10",
+      "has_steps": "0/10",
+      "has_question": "3/10",
+      "avg_tokens": 0.0,
+      "ttm_stages": {},
+      "actions": {
+        "probe": 3,
+        "suggest": 3,
+        "scaffold": 3,
+        "reflect": 1
+      },
+      "dimensions": {
+        "relevance": 1.0,
+        "clarity": 1.0,
+        "interactive": 0.6,
+        "structure": 1.0,
+        "personalization": 2.0,
+        "encouragement": 1.0
+      },
+      "time_s": 1.0
+    }
+  },
+  "ranking": [
+    [
+      "llm_ttm",
+      20.1
+    ],
+    [
+      "llm_ttm_sdt",
+      20.1
+    ],
+    [
+      "full_stack",
+      19.7
+    ],
+    [
+      "llm_diag",
+      19.6
+    ],
+    [
+      "llm_only",
+      19.4
+    ],
+    [
+      "full_behavior",
+      19.2
+    ],
+    [
+      "all_off",
+      6.6
+    ],
+    [
+      "rules_diag",
+      6.6
+    ]
+  ]
+}

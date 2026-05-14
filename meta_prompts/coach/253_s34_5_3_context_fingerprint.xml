@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S34.5.3 -- 上下文路径指纹归档</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>34.5</phase>
+  <sub_stage>S34.5.3</sub_stage>
+  <sub_stage_name>prompt/context path fingerprint / before-state 归档</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责归档当前 LLM 上下文路径的结构指纹。
+    你的职责不是优化 prompt，不是重构注入策略，而是把"Phase 35 重构前的真实形态"冻结成可比较的 before-state。
+  </role>
+
+  <task>
+    1. 归档当前 build_coach_context() 的输入结构；
+    2. 归档当前主路径与 streaming 路径的 context strategy 差异；
+    3. 归档当前 history / memory / summary / progress 的注入方式；
+    4. 归档当前 difficulty 的 prompt/runtime 分叉情况；
+    5. 归档当前小窗口保守限制；
+    6. 输出 llm_context_fingerprint.json。
+  </task>
+
+  <must_archive>
+    <item>system prompt 当前结构是否为 monolithic</item>
+    <item>history 是否直接注入、还是通过 context_summary 间接注入</item>
+    <item>progress_summary 是否在 build_coach_context() 之后追加</item>
+    <item>memory_snippets 的来源与 session 边界</item>
+    <item>covered_topics 的来源</item>
+    <item>ai_response 当前保存截断长度</item>
+    <item>extract_recent_history / extract_memory_snippets 的 limit 与 max_chars</item>
+    <item>主路径与 streaming 路径的 context 差异</item>
+    <item>difficulty 在 prompt 与 runtime contract 中是否同源</item>
+  </must_archive>
+
+  <required_output_format>
+    <item>llm_context_fingerprint.json 必须记录结构而不只是主观描述</item>
+    <item>必须同时记录 sync path 与 stream path</item>
+    <item>必须标注这是 Phase 35 before-state</item>
+  </required_output_format>
+
+  <forbidden_actions>
+    <item>禁止在归档过程中直接优化或重构 prompt 结构</item>
+    <item>禁止修改 src/coach/agent.py、src/coach/llm/prompts.py、src/coach/llm/memory_context.py 主行为逻辑</item>
+    <item>禁止把 fingerprint 文档写成 Phase 35 设计稿</item>
+  </forbidden_actions>
+
+  <risk_analysis>
+    1. 只归档数字，不归档结构；
+    2. 只归档主路径，不归档 streaming 路径；
+    3. 用"应该是什么"替代"现在是什么"；
+    4. 把 fingerprint 过程变成提前重构。
+  </risk_analysis>
+
+  <quality_gates>
+    <gate>llm_context_fingerprint.json 成功落盘</gate>
+    <gate>fingerprint 描述的是当前真实实现，而不是目标设计</gate>
+    <gate>sync path / stream path 差异被明确记录</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>Phase 35 拥有严格的 before-state 结构锚点</item>
+    <item>后续重构不再只比总分，也能比上下文路径形态</item>
+  </success_criteria>
+</prompt>

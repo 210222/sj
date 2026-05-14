@@ -1,0 +1,47 @@
+# S15 Evaluation — 2026-05-08T10:42:12.192636+00:00
+
+============================================================
+S15 EVALUATION: 11 configs x 8 scenarios = 88 runs
+Scoring: 8 dimensions (6 legacy + 2 new)
+============================================================
+
+--- all_off ---
+  FAILED: no valid turns
+
+--- rules_diag ---
+  FAILED: no valid turns
+
+--- llm_only ---
+  FAILED: no valid turns
+
+--- llm_ttm ---
+  FAILED: no valid turns
+
+--- llm_ttm_sdt ---
+  FAILED: no valid turns
+
+--- full_behavior ---
+  FAILED: no valid turns
+
+--- llm_diag ---
+  FAILED: no valid turns
+
+--- full_stack ---
+  FAILED: no valid turns
+
+--- s15_person ---
+  FAILED: no valid turns
+
+--- s15_diff ---
+  FAILED: no valid turns
+
+--- s15_full ---
+  FAILED: no valid turns
+
+============================================================
+S15 EVALUATION RESULTS
+============================================================
+
+S14 baseline: 15.6/24 | S15 top-5: 0.0/32 | Delta: -15.6
+
+Report: D:\Claudedaoy\coherence\reports\s15_evaluation_report.json

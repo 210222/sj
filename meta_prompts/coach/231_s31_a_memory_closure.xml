@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 消歧义：本文件中 S31 表示 Phase 31 子阶段，不表示历史 Phase 10 S3.1 编号体系。 -->
+<prompt>
+  <name>Phase 31.A -- 记忆链路闭环</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>31</phase>
+  <sub_stage>S31.A</sub_stage>
+  <sub_stage_name>SessionMemory ai_response 端到端可用</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责收口 Phase 31 的记忆闭环，不新增记忆新能力，只把尚未打通的 ai_response 链路从 schema + store + recall 三层全部打通。
+  </role>
+
+  <context>
+    当前真实状态（非乐观估计）：
+    1. src/coach/agent.py 中已在第 8 步尝试把 ai_response 写入会话记忆，但因 result 变量尚未构造完成，ai_stmt 恒为空串；
+    2. src/coach/agent.py::_build_context_summary() 已经尝试读取上一轮教学内容，但因 recall() 返回结构中不包含 ai_response 字段，永远读不到；
+    3. src/coach/memory.py 的 sessions 表尚无 ai_response 列，store() 未写入该字段，recall() 未返回该字段 —— schema + store + recall 三层都未打通；
+    4. src/coach/agent.py 中还存在 _prev_teaching 持久化兜底逻辑，可作为二级来源。
+
+    本阶段的目标不是重做记忆系统，而是从零建立最小可用闭环（schema + store + recall 三层全部打通）：
+    - sessions 表新增 ai_response 列（幂等迁移）；
+    - store() 真实写入 ai_response；
+    - recall() 返回结构中包含 data.ai_response；
+    - _build_context_summary() 可稳定引用；
+    - 旧库 / 旧数据不炸。
+  </context>
+
+  <risk_analysis>
+    1. 若对 sessions 表做非幂等迁移，会破坏旧数据库；
+    2. 若同时把 ai_response 与 _prev_teaching 都当作主数据源，会出现双真相源；
+    3. 若 recall 不按 session 收敛，会把别的会话内容带进摘要；
+    4. 若为了补 ai_response 顺手重做 recall / FTS 语义，会把本阶段扩大成大重构。
+  </risk_analysis>
+
+  <task>
+    1. 以 src/coach/memory.py 为主落点，增量扩展 SessionMemory 对 ai_response 的本地持久化能力；
+    2. 保证 sessions 表增加 ai_response 字段时具备幂等迁移能力，不破坏旧库；
+    3. 更新 SessionMemory.store()，让 ai_response 真实写入，而不是只在调用侧传参；
+    4. 更新 SessionMemory.recall()，让返回结构中的 data 包含 ai_response；
+    5. 以 src/coach/agent.py 为锚点，保证会话记忆中写入的 ai_response 来自本轮最终可返回教学文本；
+    6. 明确主次来源：
+       - 一级：SessionMemory 中上一轮最终 ai_response；
+       - 二级：_prev_teaching 持久化兜底；
+    7. 同阶段完成调用点注入，禁止"先加字段、后补读取"的拆段实现；
+    8. 测试补强优先挂载现有文件：
+       - tests/test_coach_memory_upgrade.py
+       - tests/test_phase27.py
+    9. 本阶段必须新增 tests/test_phase31.py 承载跨文件行为门禁。
+  </task>
+
+  <side_effects>
+    1. 旧数据库首次打开会经历加列路径；必须保证幂等；
+    2. 摘要中引用上一轮 AI 文本后，prompt 体积会增加；必须限制为当前 session 最近一轮；
+    3. 保留 _prev_teaching 兜底时，可能短期同时存在两条读取路径；必须明确一级优先来源。
+  </side_effects>
+
+  <quality_gates>
+    <gate>SessionMemory.recall() 返回的当前 session 最近记录中，data.ai_response 非空</gate>
+    <gate>第 2 轮 _build_context_summary() 能引用第 1 轮 AI 教学文本</gate>
+    <gate>旧库路径不抛异常</gate>
+    <gate>不修改 contracts/**、src/inner/**、src/middle/**、src/outer/**</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>ai_response 在 SessionMemory 中真实闭环（schema + store + recall 三层全部打通）</item>
+    <item>上下文摘要不再因 recall 缺字段而空转</item>
+    <item>旧数据兼容</item>
+    <item>A 阶段 targeted tests 全绿，且包含行为断言</item>
+  </success_criteria>
+</prompt>

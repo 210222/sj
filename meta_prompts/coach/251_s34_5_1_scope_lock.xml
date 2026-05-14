@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S34.5.1 -- 范围锁定与 baseline 定义</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>34.5</phase>
+  <sub_stage>S34.5.1</sub_stage>
+  <sub_stage_name>定义 LLM baseline 的正式语义边界</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责定义 Phase 34.5 的 baseline 语义边界。
+    你的职责不是优化链路，而是清楚写明：什么是本轮 LLM baseline，什么不是。
+  </role>
+
+  <task>
+    1. 明确 LLM baseline 的定义；
+    2. 明确它与 rules baseline 的关系；
+    3. 明确本 baseline 的作用仅为"Phase 35 重构前锚点"；
+    4. 明确不允许在本阶段修改核心 prompt/context 行为；
+    5. 输出 llm_baseline_manifest.json 的字段定义。
+  </task>
+
+  <must_define>
+    <item>baseline_run_id 的语义</item>
+    <item>canonical llm baseline 与 rules baseline 的并列关系</item>
+    <item>provider / model / mode / profiles / scoring version / run mode 的固定项</item>
+    <item>本 baseline 的用途：Phase 35 before-state</item>
+  </must_define>
+
+  <risk_analysis>
+    1. 把 rules baseline 锚点替换成 LLM baseline；
+    2. 把本阶段误扩展为 code refactor；
+    3. baseline 只记录 run_id，不记录语义边界。
+  </risk_analysis>
+
+  <quality_gates>
+    <gate>baseline 语义边界清晰</gate>
+    <gate>rules baseline 与 LLM baseline 不混淆</gate>
+    <gate>llm_baseline_manifest.json 字段完整</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>Phase 35 的 before-state 定义清楚</item>
+    <item>LLM baseline 不再只是口头概念</item>
+  </success_criteria>
+</prompt>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 25 -- S25.3 验证</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>25</phase>
+  <sub_stage>S25.3</sub_stage>
+  <sub_stage_name>测试策略切换逻辑</sub_stage_name>
+
+  <role>
+    验证 self_eval 为 None 时 composer 行为不变, 以及策略无效时 action_type 正确切换。
+  </role>
+
+  <context>
+    约束:
+    - 新建 tests/test_phase25.py
+    - pytest 风格
+    - 不需要 DEEPSEEK_API_KEY
+  </context>
+
+  <task>
+
+    新建 tests/test_phase25.py:
+
+    from src.coach.composer import PolicyComposer
+
+
+    class TestStrategySwitch:
+        def setup_method(self):
+            self.c = PolicyComposer()
+
+        def test_no_self_eval_behavior_unchanged(self):
+            r = self.c.compose(intent="teach python")
+            assert r["action_type"] in ("suggest", "probe", "challenge")
+
+        def test_self_eval_none_unchanged(self):
+            r = self.c.compose(intent="teach python", self_eval=None)
+            assert r["action_type"] in ("suggest", "probe", "challenge")
+
+        def test_scaffold_switches_to_probe(self):
+            r = self.c.compose(intent="teach python",
+                               ttm_strategy={"recommended_action_types": ["scaffold"]},
+                               self_eval={"strategy_ineffective": True, "reason": "mastery_not_improving"})
+            assert r["action_type"] == "probe", f"scaffold should switch to probe, got {r['action_type']}"
+
+        def test_challenge_switches_to_scaffold(self):
+            r = self.c.compose(intent="teach python",
+                               ttm_strategy={"recommended_action_types": ["challenge"]},
+                               self_eval={"strategy_ineffective": True, "reason": "competence_low"})
+            assert r["action_type"] == "scaffold", f"challenge should switch to scaffold, got {r['action_type']}"
+
+        def test_not_in_switch_map_unchanged(self):
+            r = self.c.compose(intent="teach python",
+                               ttm_strategy={"recommended_action_types": ["excursion"]},
+                               self_eval={"strategy_ineffective": True, "reason": "mastery_not_improving"})
+            assert r["action_type"] == "excursion", "excursion not in switch map, should stay"
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/test_phase25.py -v 全绿</item>
+    <item>python -m pytest tests/ -q 全绿</item>
+  </success_criteria>
+</prompt>

@@ -52,6 +52,9 @@ def _write_config(cfg: dict) -> None:
     for mod in list(sys.modules.keys()):
         if mod.startswith("src.coach"):
             del sys.modules[mod]
+    # 清除 API 侧配置缓存
+    from api.services.dashboard_aggregator import _invalidate_cache
+    _invalidate_cache()
 
 
 def _get_nested(cfg: dict, key: str):

@@ -59,6 +59,8 @@ class ChatMessageResponse(BaseModel):
     difficulty_contract: dict[str, Any] | None = None
     # Phase 16: 能力唤醒
     awakening: dict[str, Any] | None = None
+    # Phase 36: LLM 运行时可观测性
+    llm_observability: dict[str, Any] | None = None
 
 
 # ── 脉冲 ──
@@ -127,6 +129,9 @@ class UserDashboardResponse(BaseModel):
     sdt_rings: SDTRingsData
     progress: ProgressData
     mastery_snapshot: dict | None = None  # Phase 29
+    review_queue: list | None = None  # Phase 33
+    llm_runtime_summary: dict[str, Any] | None = None  # Phase 36
+    session_llm_summary: dict[str, Any] | None = None  # Phase 37
 
 
 # ── 管理员 ──

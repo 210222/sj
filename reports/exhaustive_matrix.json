@@ -1,0 +1,515 @@
+{
+  "test_time": "2026-05-06T04:52:15.580647+00:00",
+  "groups": 36,
+  "total_runs": 108,
+  "passed": 108,
+  "crashed": 0,
+  "crash_rate": "0.0%",
+  "per_group": {
+    "G1-0": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 99.66666666666667,
+      "avg_time": 2.0100000000000002,
+      "crash_rate": "0.0%"
+    },
+    "G1-1": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 49.333333333333336,
+      "avg_time": 1.9600000000000002,
+      "crash_rate": "0.0%"
+    },
+    "G1-2": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 88.66666666666667,
+      "avg_time": 1.82,
+      "crash_rate": "0.0%"
+    },
+    "G1-3": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 64.33333333333333,
+      "avg_time": 1.8366666666666667,
+      "crash_rate": "0.0%"
+    },
+    "G2-0": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 96.33333333333333,
+      "avg_time": 1.49,
+      "crash_rate": "0.0%"
+    },
+    "G2-1": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 94.66666666666667,
+      "avg_time": 2.396666666666667,
+      "crash_rate": "0.0%"
+    },
+    "G2-2": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 37.333333333333336,
+      "avg_time": 1.83,
+      "crash_rate": "0.0%"
+    },
+    "G2-3": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 109.0,
+      "avg_time": 1.7699999999999998,
+      "crash_rate": "0.0%"
+    },
+    "G2-4": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 69.66666666666667,
+      "avg_time": 1.7833333333333332,
+      "crash_rate": "0.0%"
+    },
+    "G2-5": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 111.66666666666667,
+      "avg_time": 1.87,
+      "crash_rate": "0.0%"
+    },
+    "G2-6": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 53.333333333333336,
+      "avg_time": 1.9066666666666665,
+      "crash_rate": "0.0%"
+    },
+    "G2-7": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 93.0,
+      "avg_time": 1.7633333333333334,
+      "crash_rate": "0.0%"
+    },
+    "G2-8": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 45.666666666666664,
+      "avg_time": 1.8933333333333333,
+      "crash_rate": "0.0%"
+    },
+    "G2-9": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 69.0,
+      "avg_time": 1.8999999999999997,
+      "crash_rate": "0.0%"
+    },
+    "G2-10": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 64.33333333333333,
+      "avg_time": 1.843333333333333,
+      "crash_rate": "0.0%"
+    },
+    "G2-11": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 59.333333333333336,
+      "avg_time": 1.64,
+      "crash_rate": "0.0%"
+    },
+    "G2-12": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 57.333333333333336,
+      "avg_time": 1.7433333333333332,
+      "crash_rate": "0.0%"
+    },
+    "G2-13": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 65.66666666666667,
+      "avg_time": 1.8499999999999999,
+      "crash_rate": "0.0%"
+    },
+    "G2-14": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 37.666666666666664,
+      "avg_time": 1.7966666666666669,
+      "crash_rate": "0.0%"
+    },
+    "G2-15": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 54.0,
+      "avg_time": 1.7733333333333334,
+      "crash_rate": "0.0%"
+    },
+    "G3-0": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 85.0,
+      "avg_time": 1.7266666666666666,
+      "crash_rate": "0.0%"
+    },
+    "G3-1": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 118.33333333333333,
+      "avg_time": 1.74,
+      "crash_rate": "0.0%"
+    },
+    "G3-2": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 66.0,
+      "avg_time": 1.8066666666666666,
+      "crash_rate": "0.0%"
+    },
+    "G3-3": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 109.0,
+      "avg_time": 1.9566666666666663,
+      "crash_rate": "0.0%"
+    },
+    "G3-4": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 52.333333333333336,
+      "avg_time": 1.79,
+      "crash_rate": "0.0%"
+    },
+    "G3-5": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 57.333333333333336,
+      "avg_time": 1.8066666666666666,
+      "crash_rate": "0.0%"
+    },
+    "G3-6": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 86.0,
+      "avg_time": 1.91,
+      "crash_rate": "0.0%"
+    },
+    "G3-7": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 107.33333333333333,
+      "avg_time": 2.0966666666666667,
+      "crash_rate": "0.0%"
+    },
+    "G4-0": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 173.66666666666666,
+      "avg_time": 2.146666666666667,
+      "crash_rate": "0.0%"
+    },
+    "G4-1": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 46.666666666666664,
+      "avg_time": 1.7833333333333334,
+      "crash_rate": "0.0%"
+    },
+    "G4-2": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 46.666666666666664,
+      "avg_time": 1.7833333333333332,
+      "crash_rate": "0.0%"
+    },
+    "G4-3": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 35.0,
+      "avg_time": 1.8133333333333332,
+      "crash_rate": "0.0%"
+    },
+    "G4-4": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 32.0,
+      "avg_time": 1.9433333333333334,
+      "crash_rate": "0.0%"
+    },
+    "G4-5": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 112.33333333333333,
+      "avg_time": 2.063333333333333,
+      "crash_rate": "0.0%"
+    },
+    "G4-6": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 57.666666666666664,
+      "avg_time": 1.6500000000000001,
+      "crash_rate": "0.0%"
+    },
+    "G4-7": {
+      "total": 3,
+      "ok": 3,
+      "crashed": 0,
+      "llm_generated": 3,
+      "rule_based": 0,
+      "safety_blocks": 0,
+      "action_types": {
+        "suggest": 3
+      },
+      "avg_stmt_len": 89.0,
+      "avg_time": 1.6066666666666667,
+      "crash_rate": "0.0%"
+    }
+  },
+  "crash_combos": []
+}

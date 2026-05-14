@@ -1,0 +1,125 @@
+{
+  "avg": 14.7,
+  "samples": [
+    {
+      "label": "T+F+D+R_2433",
+      "topic": "python_beginner_1",
+      "avg": 14.833333333333334,
+      "llm": "0/6"
+    },
+    {
+      "label": "R_50e3",
+      "topic": "python_beginner_2",
+      "avg": 14.8,
+      "llm": "0/5"
+    },
+    {
+      "label": "S+F+D+R_7889",
+      "topic": "python_beginner_3",
+      "avg": 15.4,
+      "llm": "0/5"
+    },
+    {
+      "label": "D+P_3dca",
+      "topic": "python_variables_deep",
+      "avg": 14.4,
+      "llm": "0/5"
+    },
+    {
+      "label": "S+D+E_5d8b",
+      "topic": "python_functions",
+      "avg": 14.0,
+      "llm": "0/5"
+    },
+    {
+      "label": "T_8e67",
+      "topic": "python_lists_dicts",
+      "avg": 14.4,
+      "llm": "0/5"
+    },
+    {
+      "label": "S+D+P+E+R_a86b",
+      "topic": "python_oop_basics",
+      "avg": 15.2,
+      "llm": "0/5"
+    },
+    {
+      "label": "T+D+R_b9ba",
+      "topic": "python_modules",
+      "avg": 14.6,
+      "llm": "0/5"
+    },
+    {
+      "label": "T+S+D_aac8",
+      "topic": "python_file_io",
+      "avg": 15.4,
+      "llm": "0/5"
+    },
+    {
+      "label": "S+P+E+R_e4c9",
+      "topic": "python_exceptions",
+      "avg": 15.6,
+      "llm": "0/5"
+    },
+    {
+      "label": "T+S+P+E_6036",
+      "topic": "python_debugging",
+      "avg": 13.8,
+      "llm": "0/5"
+    },
+    {
+      "label": "T+S+F+P+E+R_97be",
+      "topic": "python_string_methods",
+      "avg": 13.2,
+      "llm": "0/5"
+    },
+    {
+      "label": "F+R_6e8f",
+      "topic": "js_basics",
+      "avg": 15.8,
+      "llm": "0/5"
+    },
+    {
+      "label": "S+D+P+R_12a7",
+      "topic": "js_functions",
+      "avg": 15.0,
+      "llm": "0/5"
+    },
+    {
+      "label": "S+F+R_aa4a",
+      "topic": "js_arrays",
+      "avg": 14.6,
+      "llm": "0/5"
+    },
+    {
+      "label": "T+S+R_4061",
+      "topic": "js_dom_manipulation",
+      "avg": 15.4,
+      "llm": "0/5"
+    },
+    {
+      "label": "S+D+E+R_7fed",
+      "topic": "js_events",
+      "avg": 14.4,
+      "llm": "0/5"
+    },
+    {
+      "label": "P+R_4969",
+      "topic": "html_css_layout",
+      "avg": 15.2,
+      "llm": "0/5"
+    },
+    {
+      "label": "T+S+P_fc0e",
+      "topic": "css_flexbox",
+      "avg": 12.8,
+      "llm": "0/5"
+    },
+    {
+      "label": "T+S+F+D+E+R_395f",
+      "topic": "react_components",
+      "avg": 15.6,
+      "llm": "0/5"
+    }
+  ]
+}

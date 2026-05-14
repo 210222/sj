@@ -2,11 +2,11 @@
   {
     "severity": "P2",
     "type": "knowledge_silo",
-    "detail": "Top author 210222 owns 95% of code — bus factor=1"
+    "detail": "Top author 210222 owns 96% of code — bus factor=1"
   },
   {
     "severity": "P3",
     "type": "test_pyramid",
-    "detail": "Unit: 42%, Integration: 50%, E2E: 8% — aim for 70/20/10"
+    "detail": "Unit: 41%, Integration: 51%, E2E: 8% — aim for 70/20/10"
   }
 ]

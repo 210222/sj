@@ -1,0 +1,248 @@
+{
+  "novice_confirm": [
+    {
+      "turn": 1,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才提到了'好'，这让我想到我们正在讨论的那个情境。你之前说'我肯定做不好'，现在我们来看看这个解读背后的证据。第一步，我们先列出支持这个解读的事实依据。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "217b9d6a-d400-467b-aaf7-20ca5f86c68a",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "嗯",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说'嗯'，看来你准备好继续了。我们刚才开始列出支持'我肯定做不好'这个解读的事实依据。现在，我们进入第二步，列出反驳这个解读的事实证据。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "cfa4568c-4239-41d9-803e-fde268ad7cfb",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "继续",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说'嗯'，看来你准备好继续了。我们刚才完成了第二步，列出反驳'我肯定做不好'这个解读的事实证据。现在，我们进入第三步，也是最后一步：综合两边的证据，得出一个更平衡、更客观的结论。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "28bcfd58-9227-42ba-b6b7-d68f3f8dd9a9",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "可以",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说'可以'，看来你准备好进行第三步了。现在我们来综合两边的证据：一边是支持'我肯定做不好'的事实，另一边是反驳它的事实。你的任务是把这些证据放在一起，看看哪个更站得住脚。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "33a981a9-86b3-4bdc-af39-7b5bd653ca53",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说'好'，看来你准备好进行第三步了。综合两边的证据：支持'我肯定做不好'的事实和反驳它的事实。你的任务是把这些证据放在一起，看看哪个更站得住脚。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "88dc4eb2-5c58-4222-8943-77a64fe096f8",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "novice_jump": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才问了学习状态，现在我们接着上次的函数概念继续。函数就像一台加工机器，你给它输入原料（参数），它就会输出成品（返回值）。我们先看如何定义函数：使用 def 关键字，后面跟函数名和括号，括号内可以放参数。比如 def greet(name): 就定义了一个接收 name 参数的函数。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "3e770412-e9ed-4f25-90e4-1b9dd44f99c6",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "讲列表",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了函数的概念，现在我们来看看列表。列表是 Python 中用来存储多个数据的有序容器，就像一排带编号的抽屉，每个抽屉里可以放任何东西。我们分三步来理解：先看如何创建列表，再看如何访问元素，最后看如何修改列表。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "d7e2250a-f802-447f-8536-2d7ec2b45d71",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "循环是什么",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才提到了列表，现在我们来看看循环。循环就像一条传送带，让计算机反复执行同一组操作，直到满足某个条件为止。我们先从最常用的 for 循环开始，分三步来理解。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "bdd7b060-ef4a-4f1b-87cd-8c1ea9ac3b71",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "字典怎么用",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才问字典怎么用，字典是Python中一种非常实用的数据结构，它像一本电话簿，通过名字（键）快速找到号码（值）。我们分三步来理解：",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "afbcd440-fe17-4573-8381-9ec9612e7260",
+      "intent": "怎么",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "学函数",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才问了字典的用法，现在我们来看看函数这个新概念。函数就像一台加工机器，你给它输入原料（参数），它就会输出成品（返回值）。我们分两步来理解：先看如何定义函数，再看如何调用函数。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "d544e2d8-0b96-4a29-ab88-d4ba09f766c1",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "tester": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说想被考考，那我们继续深入循环。循环的核心是让代码重复执行，但需要明确什么时候停。我们先拆解循环的基本结构。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "4d3a09e9-37c4-4d3d-a383-1008d3652497",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "你刚才说想被考考，那我们继续深入循环。来检测一下你对循环的理解。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "bf907b35-8076-4ad0-905b-f25e5001fc09",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "教列表",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说想被考考，现在我们来学列表。列表是Python中用来存储多个数据的有序集合。我们先拆解列表的基本概念。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "f9ba0628-1867-4f3d-9780-8fc9d175fd57",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "你刚才说想被考考，那我们来检测一下你对列表的理解。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "8e486d0b-decc-4c68-b92d-628847c15d6d",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说想被考考，现在我们继续深入循环。循环的核心是让代码重复执行，但需要明确什么时候停。我们先拆解循环的基本结构。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "df81e67a-c5f4-4ebf-a3e9-60ece6768341",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ]
+}

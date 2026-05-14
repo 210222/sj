@@ -1,0 +1,116 @@
+# Exhaustive Config Test — 2026-05-06T04:48:54.907226+00:00
+
+
+### GROUP 1: LLM Switches (4 combos) ###
+
+  [G1-0] {'llm.enabled': True, 'llm.streaming': True}
+  [G1-1] {'llm.enabled': True, 'llm.streaming': False}
+  [G1-2] {'llm.enabled': False, 'llm.streaming': True}
+  [G1-3] {'llm.enabled': False, 'llm.streaming': False}
+
+### GROUP 2: Behavior Models (16 combos) ###
+
+  [G2-0] {'ttm.enabled': True, 'sdt.enabled': True, 'flow.enabled': True, 'diagnostic_engine.enabled': True}
+  [G2-1] {'ttm.enabled': True, 'sdt.enabled': True, 'flow.enabled': True, 'diagnostic_engine.enabled': False}
+  [G2-2] {'ttm.enabled': True, 'sdt.enabled': True, 'flow.enabled': False, 'diagnostic_engine.enabled': True}
+  [G2-3] {'ttm.enabled': True, 'sdt.enabled': True, 'flow.enabled': False, 'diagnostic_engine.enabled': False}
+  [G2-4] {'ttm.enabled': True, 'sdt.enabled': False, 'flow.enabled': True, 'diagnostic_engine.enabled': True}
+  [G2-5] {'ttm.enabled': True, 'sdt.enabled': False, 'flow.enabled': True, 'diagnostic_engine.enabled': False}
+  [G2-6] {'ttm.enabled': True, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': True}
+  [G2-7] {'ttm.enabled': True, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': False}
+  [G2-8] {'ttm.enabled': False, 'sdt.enabled': True, 'flow.enabled': True, 'diagnostic_engine.enabled': True}
+  [G2-9] {'ttm.enabled': False, 'sdt.enabled': True, 'flow.enabled': True, 'diagnostic_engine.enabled': False}
+  [G2-10] {'ttm.enabled': False, 'sdt.enabled': True, 'flow.enabled': False, 'diagnostic_engine.enabled': True}
+  [G2-11] {'ttm.enabled': False, 'sdt.enabled': True, 'flow.enabled': False, 'diagnostic_engine.enabled': False}
+  [G2-12] {'ttm.enabled': False, 'sdt.enabled': False, 'flow.enabled': True, 'diagnostic_engine.enabled': True}
+  [G2-13] {'ttm.enabled': False, 'sdt.enabled': False, 'flow.enabled': True, 'diagnostic_engine.enabled': False}
+  [G2-14] {'ttm.enabled': False, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': True}
+  [G2-15] {'ttm.enabled': False, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': False}
+
+### GROUP 3: Safety Switches (8 combos) ###
+
+  [G3-0] {'sovereignty_pulse.enabled': True, 'excursion.enabled': True, 'relational_safety.enabled': True}
+  [G3-1] {'sovereignty_pulse.enabled': True, 'excursion.enabled': True, 'relational_safety.enabled': False}
+  [G3-2] {'sovereignty_pulse.enabled': True, 'excursion.enabled': False, 'relational_safety.enabled': True}
+  [G3-3] {'sovereignty_pulse.enabled': True, 'excursion.enabled': False, 'relational_safety.enabled': False}
+  [G3-4] {'sovereignty_pulse.enabled': False, 'excursion.enabled': True, 'relational_safety.enabled': True}
+  [G3-5] {'sovereignty_pulse.enabled': False, 'excursion.enabled': True, 'relational_safety.enabled': False}
+  [G3-6] {'sovereignty_pulse.enabled': False, 'excursion.enabled': False, 'relational_safety.enabled': True}
+  [G3-7] {'sovereignty_pulse.enabled': False, 'excursion.enabled': False, 'relational_safety.enabled': False}
+
+### GROUP 4: Critical Cross-Combos (8 combos) ###
+
+  [G4-0] {'llm.enabled': True, 'ttm.enabled': True, 'sovereignty_pulse.enabled': True}
+  [G4-1] {'llm.enabled': True, 'ttm.enabled': True, 'sovereignty_pulse.enabled': False}
+  [G4-2] {'llm.enabled': True, 'ttm.enabled': False, 'sovereignty_pulse.enabled': True}
+  [G4-3] {'llm.enabled': True, 'ttm.enabled': False, 'sovereignty_pulse.enabled': False}
+  [G4-4] {'llm.enabled': False, 'ttm.enabled': True, 'sovereignty_pulse.enabled': True}
+  [G4-5] {'llm.enabled': False, 'ttm.enabled': True, 'sovereignty_pulse.enabled': False}
+  [G4-6] {'llm.enabled': False, 'ttm.enabled': False, 'sovereignty_pulse.enabled': True}
+  [G4-7] {'llm.enabled': False, 'ttm.enabled': False, 'sovereignty_pulse.enabled': False}
+
+======================================================================
+EXHAUSTIVE CONFIG TEST — FINAL SUMMARY
+======================================================================
+  Config combos tested: 36
+  Total test runs:     108
+  Passed:              108
+  Crashed:             0 (0.0%)
+  LLM generated:       108
+  Rule-based:          0
+  Safety blocks:       0
+  Action types:        {'suggest': 108}
+  Avg stmt length:     75 chars
+  Avg response time:   1.8s
+
+--- Per-Group Breakdown ---
+  G1-0: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=100
+  G1-1: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=49
+  G1-2: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=89
+  G1-3: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=64
+  G2-0: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=96
+  G2-1: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=95
+  G2-2: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=37
+  G2-3: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=109
+  G2-4: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=70
+  G2-5: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=112
+  G2-6: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=53
+  G2-7: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=93
+  G2-8: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=46
+  G2-9: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=69
+  G2-10: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=64
+  G2-11: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=59
+  G2-12: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=57
+  G2-13: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=66
+  G2-14: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=38
+  G2-15: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=54
+  G3-0: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=85
+  G3-1: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=118
+  G3-2: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=66
+  G3-3: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=109
+  G3-4: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=52
+  G3-5: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=57
+  G3-6: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=86
+  G3-7: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=107
+  G4-0: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=174
+  G4-1: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=47
+  G4-2: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=47
+  G4-3: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=35
+  G4-4: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=32
+  G4-5: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=112
+  G4-6: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=58
+  G4-7: 3/3 ok, llm=3, crash=0, blocks=0, avg_len=89
+
+--- Dimension Breakdown ---
+  llm.enabled: ON=18/18 OFF=90/90
+  ttm.enabled: ON=36/36 OFF=72/72
+  sdt.enabled: ON=24/24 OFF=84/84
+  flow.enabled: ON=24/24 OFF=84/84
+  diagnostic_engine.enabled: ON=24/24 OFF=84/84
+  sovereignty_pulse.enabled: ON=24/24 OFF=84/84
+  excursion.enabled: ON=12/12 OFF=96/96
+  relational_safety.enabled: ON=12/12 OFF=96/96
+  llm.streaming: ON=6/6 OFF=102/102
+
+Matrix JSON: D:\Claudedaoy\coherence\reports\exhaustive_matrix.json
+Full log: D:\Claudedaoy\coherence\reports\exhaustive_config_test.log

@@ -1,0 +1,248 @@
+{
+  "novice_confirm": [
+    {
+      "turn": 1,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说“好”，那我们继续推进。既然你已经理解了“识别触发点”是第一步，接下来第二步是：暂停三秒——在识别到触发点后，有意识地停顿三秒，不做任何反应。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "7b542847-25e7-4fc9-b689-b58748b6d558",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "嗯",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才提到“嗯”，看来你对暂停三秒这个动作还需要一点时间来消化。那我们先把第三步也拆解出来，让你看到完整的框架：第三步是“选择回应”——在暂停三秒后，你有意识地从习惯性反应切换到主动回应，比如深呼吸、换位思考或直接表达感受。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "acfd83da-4450-4719-a2b6-ac52ba9618e8",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "继续",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说“继续”，那我们就把第三步“选择回应”具体拆开来看。这一步的关键是：在暂停三秒后，你有意识地决定如何回应，而不是被情绪带着走。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "3d853b68-b0a4-4442-8038-51ba93d713ef",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "可以",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说“可以”，那我们继续拆解“选择回应”这一步。选择回应时，你可以从三个角度考虑：第一，你的回应是否有助于解决问题？第二，它是否尊重对方？第三，它是否符合你的长期关系目标？我们可以分三步来练习。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "39b5b3eb-4fda-4dd4-90e6-e830e5eba3bc",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说“好”，那我们继续推进。现在来看第二步：评估你的第一反应是否有助于解决问题。比如，如果对方说了让你生气的话，你第一反应可能是反驳或指责。这时候先停一下，问自己：这个回应会让事情变好还是变糟？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "7a6a018c-f63f-4b8d-81b5-60b6fd16809f",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "novice_jump": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才提到了函数，现在我们来看如何定义和调用一个简单的函数。我帮你拆解成几步：",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "b88fd0ea-02e8-437e-acd5-23f6ea7d5e10",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "讲列表",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了函数，现在我们来看列表。列表是Python中用来存储多个数据的有序容器。我帮你拆解成几步：",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "06dfcabc-b450-4779-8b4a-deebce9ca240",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "循环是什么",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了列表，现在问循环，这是编程中另一个核心概念。循环用来重复执行一段代码，直到满足某个条件。我把它拆成几步来理解：",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "bfddde1f-08b9-4b15-bf2d-0ab2bf278a54",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "字典怎么用",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才问了循环是什么，现在问字典怎么用——字典和列表一样是容器，但它是通过键（key）来查找值（value），而不是通过位置。我来帮你拆解字典的使用步骤：",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "ce50cb0d-54fa-4b6f-8c8f-20561ded56be",
+      "intent": "怎么",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "学函数",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才在学字典，现在想学函数——函数是一段可重复使用的代码块，用来执行特定任务。我来帮你拆解函数的核心概念。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "aafb52e7-619e-42a8-8c40-95e7ca137137",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "tester": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说想学循环，那我们先从最基础的 for 循环开始。for 循环可以让你依次处理列表中的每个元素，比如有一个列表 `[1, 2, 3]`，用 for 循环就能逐个打印出来。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "5f536920-4b50-4f3b-b023-fdd611bf1669",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "你刚才说想学循环，那我先考考你对 for 循环的理解。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "97579c95-ba57-419b-824a-d887fa32e450",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "教列表",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才提到想学列表，那我们先从列表的基本概念开始。列表是 Python 中用来存储多个数据的有序容器，你可以把它想象成一个可以装各种东西的盒子。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "9b47d0ac-97b1-4a19-a835-b24488634544",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "好的，来检测一下你对列表的理解。你刚才学了列表是有序容器，那你能说说列表和普通变量（比如存一个数字的变量）最本质的区别是什么吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "b1091771-da42-4c14-b8f9-2c37842e4f14",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了列表，现在我们来接触一个更强大的概念——循环。循环能让你重复执行一段代码，而不用写很多遍。我们先从最简单的 for 循环开始。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "6848cbe0-ea80-46a2-a837-02dc799a747e",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S34.5.4 -- 验证与正式收口</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>34.5</phase>
+  <sub_stage>S34.5.4</sub_stage>
+  <sub_stage_name>manifest / band / fingerprint / regression / GO-NO-GO</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 34.5 的最终验证与收口。
+    你的职责不是继续扩范围，而是在 manifest、band、fingerprint 完成后，正式判定当前 LLM 链路是否已具备进入 Phase 35 的 before-state 资格。
+  </role>
+
+  <task>
+    1. 校验 llm_baseline_manifest.json；
+    2. 校验 llm_baseline_band.json；
+    3. 校验 llm_context_fingerprint.json；
+    4. 运行 python -m pytest tests/ -q；
+    5. 生成 reports/phase34_5_llm_baseline_completion.md；
+    6. 给出 GO / NO-GO。
+  </task>
+
+  <must_confirm>
+    <item>rules baseline 与 LLM baseline 的语义边界未混淆</item>
+    <item>当前 baseline 已被明确定义为 pre-refactor anchor</item>
+    <item>波动带不是单次 snapshot</item>
+    <item>context fingerprint 已完整记录 sync/stream 差异</item>
+    <item>本阶段没有偷跑 Phase 35 重构</item>
+  </must_confirm>
+
+  <required_completion_content>
+    <item>baseline_run_id 与 baseline band</item>
+    <item>manifest / band / fingerprint 的路径</item>
+    <item>当前 LLM baseline 的正式语义</item>
+    <item>可进入 Phase 35 的理由</item>
+    <item>若 NO-GO，必须明确阻塞原因</item>
+  </required_completion_content>
+
+  <risk_analysis>
+    1. 三份核心产物都在，但语义边界仍不清晰；
+    2. baseline 已锁，但 key 安全与 provider 固定性没有重新确认；
+    3. 本阶段结束后仍无法回答"Phase 35 改动前到底是什么状态"。
+  </risk_analysis>
+
+  <quality_gates>
+    <gate>llm_baseline_manifest.json 存在且可读</gate>
+    <gate>llm_baseline_band.json 存在且可读</gate>
+    <gate>llm_context_fingerprint.json 存在且可读</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+    <gate>phase34_5_llm_baseline_completion.md 成功落盘</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>当前 LLM 链路成为正式 pre-refactor baseline</item>
+    <item>Phase 35 可在严格 before-state 上启动</item>
+    <item>本阶段完成后，不再需要回头补 baseline 定义</item>
+  </success_criteria>
+</prompt>

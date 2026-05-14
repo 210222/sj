@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S34.4 -- 验证与收口</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>34</phase>
+  <sub_stage>S34.4</sub_stage>
+  <sub_stage_name>全量回归 / completion 文档 / GO-NO-GO</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 34 的最终验证与文档收口。
+    你的职责不是写新代码，而是在 comparison 完成后冻结结果、落盘文档并给出 GO / NO-GO。
+  </role>
+
+  <context>
+    LLM run 与 rules baseline comparison 完成后，必须做最终收口：
+    - 全量回归
+    - completion 文档落盘
+    - baseline 语义锁定
+    - key 安全确认
+  </context>
+
+  <risk_analysis>
+    1. 若 comparison 解释不充分，会让 Phase 34 不具审计意义；
+    2. 若全量回归失败，Phase 34 必须 NO-GO；
+    3. 若 completion 文档不明确规则 baseline 与 LLM snapshot 的关系，后续阶段会误读 baseline 语义。
+  </risk_analysis>
+
+  <task>
+    1. 运行 `python -m pytest tests/ -q`；
+    2. 新建 `reports/phase34_llm_baseline_completion.md`；
+    3. 在 completion 文档中明确：
+       - rules baseline vs LLM snapshot
+       - key 安全原则
+       - 本轮未改 provider / model / base_url
+       - run_id 与 comparison 路径
+    4. 给出 GO / NO-GO。
+  </task>
+
+  <side_effects>
+    1. completion 文档会成为 Phase 34 的唯一治理归档；
+    2. 不新增代码改动；
+    3. 如 comparison 为 NO-GO，本阶段必须如实记录原因。
+  </side_effects>
+
+  <quality_gates>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+    <gate>phase34_llm_baseline_completion.md 成功落盘</gate>
+    <gate>comparison 已被引用且 baseline 语义未漂移</gate>
+    <gate>无 key 落盘</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>全量回归通过</item>
+    <item>completion 文档落盘</item>
+    <item>baseline 语义不漂移</item>
+    <item>key 不泄漏</item>
+  </success_criteria>
+</prompt>

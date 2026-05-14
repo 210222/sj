@@ -1,0 +1,32 @@
+{
+  "total_failures": 1,
+  "runs_analyzed": 1,
+  "hot_action_types": [
+    {
+      "action_type": "defer",
+      "count": 1
+    }
+  ],
+  "hot_profiles": [
+    {
+      "profile": "novice_confirm",
+      "count": 1
+    }
+  ],
+  "hot_failure_phrases": [
+    {
+      "phrase": "系统暂时繁忙，请稍后再试。",
+      "count": 1
+    }
+  ],
+  "recent_failures": [
+    {
+      "run_id": "run_20260514_063713_c35ff55b",
+      "profile": "novice_confirm",
+      "turn": 4,
+      "user": "可以",
+      "action_type": "defer",
+      "score": 9
+    }
+  ]
+}

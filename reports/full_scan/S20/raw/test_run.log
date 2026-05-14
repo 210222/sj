@@ -1,15 +1,15 @@
-S20 Layer B — Runtime Physiology | 2026-05-04T07:24:29.721Z
-Status: GO
-Tests: 1070 passed / 0 failed / 1070 total
-  coach: 80 passed / 0 failed
-  coach_composer: 8 passed / 0 failed
-  coach_flow: 14 passed / 0 failed
-  coach_phase5: 35 passed / 0 failed
-  coach_sdt: 8 passed / 0 failed
-  coach_ttm: 12 passed / 0 failed
+S20 Layer B — Runtime Physiology | 2026-05-12T05:58:44.850Z
+Status: NO-GO
+Tests: 818 passed / 17 failed / 835 total
+  coach: 0 passed / 0 failed
+  coach_composer: 0 passed / 0 failed
+  coach_flow: 0 passed / 0 failed
+  coach_phase5: 0 passed / 0 failed
+  coach_sdt: 0 passed / 0 failed
+  coach_ttm: 0 passed / 0 failed
   inner: 224 passed / 0 failed
   middle: 274 passed / 0 failed
-  other: 386 passed / 0 failed
+  other: 291 passed / 17 failed
   outer: 29 passed / 0 failed
 Cognitive Load: 10/10 — Healthy
 Accessibility: 100%

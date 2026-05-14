@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 消歧义：本文件中 S31 表示 Phase 31 子阶段，不表示历史 Phase 10 S3.1 编号体系。 -->
+<prompt>
+  <name>Phase 31.B -- act 顺序与上下文摘要稳态化</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>31</phase>
+  <sub_stage>S31.B</sub_stage>
+  <sub_stage_name>act 顺序 / 上下文摘要 / 策略连续性正确性</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责收口 Phase 31 的 act 顺序与上下文摘要正确性，不新增摘要块，不重做对话系统，只修正确性与时机。
+  </role>
+
+  <context>
+    当前 src/coach/agent.py 已具备：
+    - _build_context_summary()
+    - _current_atype
+    - _prev_ctx
+    - _prev_teaching
+    - build_coach_context() 前的上下文注入
+
+    但现状存在两个关键问题：
+    1. action_type 在 act() 内部会经历多次 override，如果摘要过早绑定 action_type，会出现摘要与最终返回动作不一致；
+    2. _current_atype 在 act() 尾部更新，如果摘要在更新前读取它，会误把上一轮状态当作本轮状态。
+
+    本阶段的目标是把顺序做对，不新增摘要花样，不扩大摘要块数量。
+  </context>
+
+  <risk_analysis>
+    1. 若挪错 act() 中各步骤顺序，会破坏既有编排链；
+    2. 若摘要绑定的是草稿动作而非最终动作，会出现"摘要说 scaffold，最终返回 probe"的错配；
+    3. 若把未治理 / 未过滤的中间态文本注入 prompt，会污染 LLM 上下文；
+    4. 若为修摘要而重构整个 act()，极易引发大面积回归。
+  </risk_analysis>
+
+  <task>
+    1. 以 src/coach/agent.py 为唯一核心落点，明确 act() 的稳定顺序；
+    2. 必须在所有 action override 完成后，再确定本轮 planned / final action_type；
+    3. _build_context_summary() 中"策略连续性"只能比较：
+       - 上一轮真实完成动作；
+       - 本轮真实准备用于教学 / 返回的动作；
+       不能比较草稿动作；
+    4. 摘要中的"上一轮教学内容"必须来自上一轮最终输出，而不是当前轮中间态；
+    5. 本阶段禁止新增摘要块数量，禁止做文案美化型改动；
+    6. 测试优先补强：
+       - tests/test_phase27.py
+       - tests/test_phase31.py（必须新增，本阶段承接 A 阶段已创建的文件）
+       - 场景至少覆盖：两轮、三轮、同策略连续、跨策略切换
+  </task>
+
+  <side_effects>
+    1. 若 _build_context_summary() 需要显式接收本轮最终动作信息，会影响其私有调用方式；必须在 agent.py 内部同步完成；
+    2. 顺序修正后，部分原本误打误撞通过的测试可能暴露；
+    3. 摘要文本可能略有变化，但优先级必须是"真实一致"，不是"文案不变"。
+  </side_effects>
+
+  <quality_gates>
+    <gate>第二轮 / 第三轮摘要中的策略连续性与真实上一轮 action_type 一致</gate>
+    <gate>本轮摘要与最终返回 action_type 不再错配</gate>
+    <gate>上一轮教学内容来源于上一轮最终输出</gate>
+    <gate>不新增 contracts/schema/reason_code 漂移</gate>
+    <gate>不修改 contracts/**、src/inner/**、src/middle/**、src/outer/**</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>act() 顺序稳定，不再出现摘要动作与最终动作不一致</item>
+    <item>上下文摘要中的上一轮教学内容真实可用</item>
+    <item>B 阶段 targeted tests 全绿，并覆盖同策略连续与跨策略切换行为断言</item>
+  </success_criteria>
+</prompt>

@@ -1,0 +1,925 @@
+# ULTIMATE Quality Test — 2026-05-06T04:58:40.298506+00:00
+# 12 combos × 10 turns = 120 conversations
+
+======================================================================
+ULTIMATE QUALITY TEST: 12 Configs × 10 Continuous Turns
+Date: 2026-05-06T04:58:40.299502+00:00
+======================================================================
+
+============================================================
+COMBO: baseline_rules
+  Config: {'llm.enabled': False, 'ttm.enabled': False, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': False}
+============================================================
+
+  [baseline_rules] Turn 1
+    USER: 我想学 Python，但是完全零基础，从哪开始
+    COACH: at=suggest llm=True ttm=None score=15/24 2.49s
+    REPLY: 从零开始学 Python 是个好主意！你可以从基础语法学起，比如变量、数据类型和条件语句。...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=2 enc=3 → 15/24
+
+  [baseline_rules] Turn 2
+    USER: 变量是什么，用最简单的话解释
+    COACH: at=suggest llm=True ttm=None score=15/24 2.03s
+    REPLY: 变量就像一个带标签的盒子，你可以往里面放东西（比如数字、文字），并且可以随时更换里面的东西。...
+    QUESTION: 你觉得变量在生活中像什么？比如一个储物箱、一个名字标签，还是其他？...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=2 enc=3 → 15/24
+
+  [baseline_rules] Turn 3
+    USER: 所以变量就像一个盒子，可以放不同的东西进去对吧
+    COACH: at=suggest llm=True ttm=None score=20/24 1.68s
+    REPLY: 是的，这个比喻很形象。变量就像一个有标签的盒子，你可以把不同的值放进去，但一次只能放一个。你想更深入地了解变量的哪个方面？...
+    QUESTION: 你希望先探索哪个方面？...
+    QUALITY: rel=2 cla=4 int=4 str=3 per=4 enc=3 → 20/24
+
+  [baseline_rules] Turn 4
+    USER: 那我怎么知道一个变量里面放的是什么类型的数据
+    COACH: at=scaffold llm=True ttm=None score=23/24 2.58s
+    REPLY: 在 Python 中，你可以使用内置函数 `type()` 来查看变量的类型。例如：`type(变量名)`。这会返回变量的类型对象，比如 `<class 'int'>`。如果你只需要类型名称字符串，可以用 `type(变量名).__name__`。...
+    QUALITY: rel=4 cla=4 int=4 str=4 per=4 enc=3 → 23/24
+
+  [baseline_rules] Turn 5
+    USER: type(42) 返回 int，type('hello') 返回 str — 我试了！那为什么要有不同类型
+    COACH: at=reflect llm=True ttm=None score=20/24 3.61s
+    REPLY: 你观察得很仔细！不同类型的存在是为了让计算机能更高效地处理数据——比如整数和字符串的存储方式、支持的操作都不同。但这也带来一个问题：不同类型之间不能随意混用，比如 'hello' + 42 会报错。你觉得这种限制是好事还是坏事？...
+    QUESTION: 在你看来，类型带来的约束是否值得？...
+    QUALITY: rel=4 cla=4 int=4 str=3 per=2 enc=3 → 20/24
+
+  [baseline_rules] Turn 6
+    USER: 所以数字可以加减，字符串可以拼接？那列表呢
+    COACH: at=suggest llm=True ttm=None score=20/24 2.64s
+    REPLY: 列表也可以拼接，但使用的是加号（+）来合并两个列表。例如，[1, 2] + [3, 4] 会得到 [1, 2, 3, 4]。除了拼接，列表还支持乘法（*）来重复元素，比如 [1] * 3 得到 [1, 1, 1]。...
+    QUESTION: 你想了解列表的其他操作吗？比如如何添加、删除或修改元素？...
+    QUALITY: rel=4 cla=4 int=4 str=3 per=2 enc=3 → 20/24
+
+  [baseline_rules] Turn 7
+    USER: colors = ['red', 'blue'] — 我怎么取出第一个颜色
+    COACH: at=scaffold llm=True ttm=None score=14/24 1.84s
+    REPLY: 要取出列表的第一个元素，可以使用索引0：colors[0]。这会返回'red'。...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=2 enc=3 → 14/24
+
+  [baseline_rules] Turn 8
+    USER: colors[0] 是 red！那如果我有 100 个颜色，怎么一个个处理
+    COACH: at=scaffold llm=True ttm=None score=15/24 1.95s
+    REPLY: 你可以用循环来逐个处理。比如，用 for 循环遍历列表中的每个元素。...
+    QUESTION: 想试试用 for 循环处理 colors 列表吗？...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=2 enc=3 → 15/24
+
+  [baseline_rules] Turn 9
+    USER: for c in colors: print(c) — 这就叫循环对吧。那 while 循环又是什么
+    COACH: at=suggest llm=True ttm=None score=20/24 2.37s
+    REPLY: 是的，`for c in colors: print(c)` 是一个循环，它遍历 `colors` 中的每个元素并打印。`while` 循环则是另一种循环，它会在一个条件为真的情况下重复执行代码块。例如：...
+    QUESTION: 你想了解 while 循环的哪个方面？...
+    QUALITY: rel=4 cla=4 int=4 str=3 per=4 enc=1 → 20/24
+
+  [baseline_rules] Turn 10
+    USER: 我好像有点感觉了。能考考我今天学的东西吗
+    COACH: at=probe llm=True ttm=None score=14/24 2.05s
+    REPLY: 好的，我们来检验一下今天的学习成果。请问，认知主权保护系统的主要目标是什么？...
+    QUESTION: 认知主权保护系统的主要目标是什么？...
+    QUALITY: rel=2 cla=2 int=2 str=1 per=4 enc=3 → 14/24
+
+  >> COMBO baseline_rules SUMMARY: 10/10 ok, avg quality=17.6/24, llm=10/10, actions={'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+
+============================================================
+COMBO: llm_only
+  Config: {'llm.enabled': True, 'ttm.enabled': False, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': False}
+============================================================
+
+  [llm_only] Turn 1
+    USER: 我想学 Python，但是完全零基础，从哪开始
+    COACH: at=suggest llm=True ttm=None score=16/24 2.08s
+    REPLY: 零基础开始学习 Python 是一个很好的选择。通常的路径是：先了解基础语法（变量、数据类型、条件判断、循环），然后学习函数和模块。你可以选择在线教程（如官方文档、Codecademy）或书籍（如《Python编程从入门到实践》）。你想从哪种方式开始？...
+    QUALITY: rel=4 cla=3 int=2 str=2 per=2 enc=3 → 16/24
+
+  [llm_only] Turn 2
+    USER: 变量是什么，用最简单的话解释
+    COACH: at=suggest llm=True ttm=None score=13/24 1.27s
+    REPLY: 变量就像一个带标签的盒子，你可以往里面放东西（数据），并且随时可以换掉里面的东西。...
+    QUALITY: rel=2 cla=3 int=2 str=1 per=2 enc=3 → 13/24
+
+  [llm_only] Turn 3
+    USER: 所以变量就像一个盒子，可以放不同的东西进去对吧
+    COACH: at=suggest llm=True ttm=None score=20/24 2.4s
+    REPLY: 是的，你的理解很准确。变量就像一个有标签的盒子，你可以把不同的值放进去，并且随时可以取出或替换里面的内容。...
+    QUESTION: 如果你想进一步理解，你更想探讨哪个方面？...
+    QUALITY: rel=2 cla=4 int=4 str=3 per=4 enc=3 → 20/24
+
+  [llm_only] Turn 4
+    USER: 那我怎么知道一个变量里面放的是什么类型的数据
+    COACH: at=scaffold llm=True ttm=None score=19/24 2.25s
+    REPLY: 在Python中，你可以使用`type()`函数来获取变量的类型。例如：`x = 10; print(type(x))`会输出`<class 'int'>`。...
+    QUESTION: 如果你有一个变量y，不确定它是字符串还是数字，你会怎么检查它的类型？...
+    QUALITY: rel=2 cla=4 int=4 str=4 per=2 enc=3 → 19/24
+
+  [llm_only] Turn 5
+    USER: type(42) 返回 int，type('hello') 返回 str — 我试了！那为什么要有不同类型
+    COACH: at=reflect llm=True ttm=None score=12/24 1.5s
+    REPLY: 不同类型帮助计算机更高效地处理数据，也让我们能表达更丰富的信息。...
+    QUESTION: 你觉得如果没有类型区分，编程会有什么麻烦？...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=2 enc=1 → 12/24
+
+  [llm_only] Turn 6
+    USER: 所以数字可以加减，字符串可以拼接？那列表呢
+    COACH: at=suggest llm=True ttm=None score=20/24 1.49s
+    REPLY: 是的，数字可以加减，字符串可以拼接。列表也有自己的操作，比如可以用加号合并两个列表，或者用乘号重复列表。...
+    QUESTION: 你想先了解列表的合并还是重复操作？...
+    QUALITY: rel=2 cla=4 int=4 str=3 per=4 enc=3 → 20/24
+
+  [llm_only] Turn 7
+    USER: colors = ['red', 'blue'] — 我怎么取出第一个颜色
+    COACH: at=scaffold llm=True ttm=None score=14/24 1.63s
+    REPLY: 你可以通过索引来访问列表中的元素。在Python中，索引从0开始，所以第一个元素的索引是0。...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=2 enc=3 → 14/24
+
+  [llm_only] Turn 8
+    USER: colors[0] 是 red！那如果我有 100 个颜色，怎么一个个处理
+    COACH: at=scaffold llm=True ttm=None score=15/24 1.49s
+    REPLY: 你可以用循环来一个个处理。比如用 for 循环遍历数组中的每个元素。...
+    QUESTION: 你想先学 for 循环的写法，还是 while 循环？...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=2 enc=3 → 15/24
+
+  [llm_only] Turn 9
+    USER: for c in colors: print(c) — 这就叫循环对吧。那 while 循环又是什么
+    COACH: at=suggest llm=True ttm=None score=16/24 1.88s
+    REPLY: 对的，`for c in colors: print(c)` 就是一个循环，它遍历列表中的每个元素。`while` 循环是另一种循环，它会重复执行一段代码，直到指定的条件不再为真。...
+    QUALITY: rel=4 cla=3 int=2 str=2 per=4 enc=1 → 16/24
+
+  [llm_only] Turn 10
+    USER: 我好像有点感觉了。能考考我今天学的东西吗
+    COACH: at=probe llm=True ttm=None score=16/24 1.81s
+    REPLY: 好的，让我们来检验一下你的理解。今天你学习了‘怎么’和‘为什么’这两个知识点。请问在中文中，‘怎么’通常用来询问什么？...
+    QUESTION: 在中文中，‘怎么’通常用来询问什么？...
+    QUALITY: rel=2 cla=2 int=2 str=3 per=4 enc=3 → 16/24
+
+  >> COMBO llm_only SUMMARY: 10/10 ok, avg quality=16.1/24, llm=10/10, actions={'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+
+============================================================
+COMBO: llm_ttm
+  Config: {'llm.enabled': True, 'ttm.enabled': True, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': False}
+============================================================
+
+  [llm_ttm] Turn 1
+    USER: 我想学 Python，但是完全零基础，从哪开始
+    COACH: at=suggest llm=True ttm=None score=14/24 2.17s
+    REPLY: 从零开始学习Python是一个很棒的决定！建议从基础语法开始，比如变量、数据类型和简单的输入输出。你可以先尝试一些在线互动教程，或者阅读官方文档的入门部分。...
+    QUALITY: rel=2 cla=4 int=2 str=1 per=2 enc=3 → 14/24
+
+  [llm_ttm] Turn 2
+    USER: 变量是什么，用最简单的话解释
+    COACH: at=suggest llm=True ttm=None score=13/24 1.09s
+    REPLY: 变量就像一个带标签的盒子，你可以往里面放东西（比如数字、文字），并且可以随时更换里面的东西。...
+    QUALITY: rel=2 cla=3 int=2 str=1 per=2 enc=3 → 13/24
+
+  [llm_ttm] Turn 3
+    USER: 所以变量就像一个盒子，可以放不同的东西进去对吧
+    COACH: at=suggest llm=True ttm=None score=16/24 1.74s
+    REPLY: 没错，这个比喻很形象。变量就像一个有标签的盒子，你可以放入不同的值（比如数字、文字），而且可以随时替换里面的内容。...
+    QUALITY: rel=2 cla=4 int=2 str=1 per=4 enc=3 → 16/24
+
+  [llm_ttm] Turn 4
+    USER: 那我怎么知道一个变量里面放的是什么类型的数据
+    COACH: at=scaffold llm=True ttm=None score=19/24 1.98s
+    REPLY: 在Python中，你可以使用type()函数来查看变量的数据类型。例如：type(x)会返回变量x的类型。...
+    QUESTION: 你想知道type()函数返回的具体是什么吗？...
+    QUALITY: rel=2 cla=4 int=4 str=4 per=2 enc=3 → 19/24
+
+  [llm_ttm] Turn 5
+    USER: type(42) 返回 int，type('hello') 返回 str — 我试了！那为什么要有不同类型
+    COACH: at=reflect llm=True ttm=None score=18/24 1.84s
+    REPLY: 不同类型让计算机能更高效地存储和处理数据。比如，整数运算比字符串快，而且不同类型有不同的方法（如字符串可以分割，整数不能）。这就像工具箱里有不同的工具，各司其职。...
+    QUESTION: 你有没有遇到过因为类型不匹配而出错的情况？比如试图把字符串和整数相加？...
+    QUALITY: rel=4 cla=4 int=2 str=3 per=2 enc=3 → 18/24
+
+  [llm_ttm] Turn 6
+    USER: 所以数字可以加减，字符串可以拼接？那列表呢
+    COACH: at=suggest llm=True ttm=None score=17/24 2.2s
+    REPLY: 列表可以进行拼接和重复操作。例如，[1, 2] + [3, 4] 得到 [1, 2, 3, 4]，[1, 2] * 3 得到 [1, 2, 1, 2, 1, 2]。...
+    QUALITY: rel=4 cla=4 int=2 str=2 per=2 enc=3 → 17/24
+
+  [llm_ttm] Turn 7
+    USER: colors = ['red', 'blue'] — 我怎么取出第一个颜色
+    COACH: at=scaffold llm=True ttm=None score=16/24 1.58s
+    REPLY: 你可以通过索引来访问列表中的元素。在Python中，索引从0开始，所以第一个元素对应的索引是0。...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=4 enc=3 → 16/24
+
+  [llm_ttm] Turn 8
+    USER: colors[0] 是 red！那如果我有 100 个颜色，怎么一个个处理
+    COACH: at=scaffold llm=True ttm=None score=17/24 1.99s
+    REPLY: 好问题！如果你有一个包含100个颜色的列表，想要一个个处理，可以使用循环。比如用for循环：...
+    QUESTION: 你想了解更详细的循环语法，还是想直接尝试写一个例子？...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=4 enc=3 → 17/24
+
+  [llm_ttm] Turn 9
+    USER: for c in colors: print(c) — 这就叫循环对吧。那 while 循环又是什么
+    COACH: at=suggest llm=True ttm=None score=18/24 2.48s
+    REPLY: 是的，`for` 循环是遍历序列的一种方式。`while` 循环是另一种循环，它会在条件为真时重复执行代码块。例如：...
+    QUESTION: 你更想了解 while 循环的哪种用法？...
+    QUALITY: rel=2 cla=4 int=4 str=3 per=4 enc=1 → 18/24
+
+  [llm_ttm] Turn 10
+    USER: 我好像有点感觉了。能考考我今天学的东西吗
+    COACH: at=probe llm=True ttm=None score=18/24 2.85s
+    REPLY: 好的，让我考考你。关于认知主权，它指的是个体对自己的知识、信念和决策过程的自主控制权。请问，以下哪个选项最符合认知主权的核心原则？...
+    QUESTION: 以下哪个选项最符合认知主权的核心原则？...
+    QUALITY: rel=2 cla=2 int=4 str=3 per=4 enc=3 → 18/24
+
+  >> COMBO llm_ttm SUMMARY: 10/10 ok, avg quality=16.6/24, llm=10/10, actions={'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+
+============================================================
+COMBO: llm_ttm_sdt
+  Config: {'llm.enabled': True, 'ttm.enabled': True, 'sdt.enabled': True, 'flow.enabled': False, 'diagnostic_engine.enabled': False}
+============================================================
+
+  [llm_ttm_sdt] Turn 1
+    USER: 我想学 Python，但是完全零基础，从哪开始
+    COACH: at=suggest llm=True ttm=None score=12/24 1.72s
+    REPLY: 对于零基础学习 Python，通常有几个起点可以选择：...
+    QUESTION: 你更倾向于哪种方式？...
+    QUALITY: rel=1 cla=1 int=4 str=1 per=2 enc=3 → 12/24
+
+  [llm_ttm_sdt] Turn 2
+    USER: 变量是什么，用最简单的话解释
+    COACH: at=suggest llm=True ttm=None score=16/24 2.33s
+    REPLY: 变量就像是一个带标签的盒子，你可以把东西放进去，也可以随时换成别的东西。在编程里，它就是用来存数据的一个名字。...
+    QUALITY: rel=2 cla=4 int=4 str=1 per=2 enc=3 → 16/24
+
+  [llm_ttm_sdt] Turn 3
+    USER: 所以变量就像一个盒子，可以放不同的东西进去对吧
+    COACH: at=suggest llm=True ttm=None score=15/24 1.32s
+    REPLY: 是的，这个比喻很形象。变量就像一个有标签的盒子，你可以往里面放不同的值，比如数字、文字或者其他数据。...
+    QUALITY: rel=2 cla=3 int=2 str=1 per=4 enc=3 → 15/24
+
+  [llm_ttm_sdt] Turn 4
+    USER: 那我怎么知道一个变量里面放的是什么类型的数据
+    COACH: at=scaffold llm=True ttm=None score=13/24 2.02s
+    REPLY: 在Python中，可以使用type()函数来查看变量的类型。比如：type(x)会返回x的类型。...
+    QUALITY: rel=2 cla=3 int=2 str=1 per=2 enc=3 → 13/24
+
+  [llm_ttm_sdt] Turn 5
+    USER: type(42) 返回 int，type('hello') 返回 str — 我试了！那为什么要有不同类型
+    COACH: at=reflect llm=True ttm=None score=20/24 1.85s
+    REPLY: 你发现了类型存在的核心问题。不同类型的存在是为了让计算机更高效、更准确地处理数据。比如整数和字符串在内存中的存储方式不同，运算规则也不同。你试过对不同类型的数据做运算吗？...
+    QUESTION: 你觉得如果所有数据都是同一种类型，会带来什么问题？...
+    QUALITY: rel=4 cla=4 int=4 str=3 per=4 enc=1 → 20/24
+
+  [llm_ttm_sdt] Turn 6
+    USER: 所以数字可以加减，字符串可以拼接？那列表呢
+    COACH: at=suggest llm=True ttm=None score=14/24 1.72s
+    REPLY: 是的，数字可以加减，字符串可以拼接。列表也有类似的操作，但方式不同。...
+    QUALITY: rel=2 cla=2 int=2 str=1 per=4 enc=3 → 14/24
+
+  [llm_ttm_sdt] Turn 7
+    USER: colors = ['red', 'blue'] — 我怎么取出第一个颜色
+    COACH: at=scaffold llm=True ttm=None score=17/24 1.57s
+    REPLY: 你可以通过索引来取出列表中的元素。Python列表的索引从0开始，所以第一个元素是colors[0]。...
+    QUALITY: rel=2 cla=2 int=4 str=4 per=2 enc=3 → 17/24
+
+  [llm_ttm_sdt] Turn 8
+    USER: colors[0] 是 red！那如果我有 100 个颜色，怎么一个个处理
+    COACH: at=scaffold llm=True ttm=None score=19/24 2.39s
+    REPLY: 你可以使用循环（loop）来依次处理数组中的每个元素。在JavaScript中，最常用的循环是for循环。例如：...
+    QUESTION: 你想试试用for循环输出数组中的每个颜色吗？...
+    QUALITY: rel=2 cla=4 int=4 str=4 per=2 enc=3 → 19/24
+
+  [llm_ttm_sdt] Turn 9
+    USER: for c in colors: print(c) — 这就叫循环对吧。那 while 循环又是什么
+    COACH: at=suggest llm=True ttm=None score=12/24 1.72s
+    REPLY: 是的，`for` 循环用于遍历一个序列（如列表）。`while` 循环则是在条件为真时重复执行代码块。...
+    QUALITY: rel=2 cla=2 int=2 str=1 per=4 enc=1 → 12/24
+
+  [llm_ttm_sdt] Turn 10
+    USER: 我好像有点感觉了。能考考我今天学的东西吗
+    COACH: at=probe llm=True ttm=None score=16/24 2.18s
+    REPLY: 好的，我们来检验一下你对今天所学内容的掌握程度。请问，认知主权保护系统的主要目标是什么？...
+    QUESTION: 认知主权保护系统的主要目标是什么？...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=4 enc=3 → 16/24
+
+  >> COMBO llm_ttm_sdt SUMMARY: 10/10 ok, avg quality=15.4/24, llm=10/10, actions={'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+
+============================================================
+COMBO: all_behavior
+  Config: {'llm.enabled': True, 'ttm.enabled': True, 'sdt.enabled': True, 'flow.enabled': True, 'diagnostic_engine.enabled': False}
+============================================================
+
+  [all_behavior] Turn 1
+    USER: 我想学 Python，但是完全零基础，从哪开始
+    COACH: at=suggest llm=True ttm=None score=14/24 1.89s
+    REPLY: 从零开始学 Python 是一个很好的决定。通常的路径是：先了解基本概念，然后动手写代码。...
+    QUESTION: 你更倾向于哪种方式开始？...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=2 enc=3 → 14/24
+
+  [all_behavior] Turn 2
+    USER: 变量是什么，用最简单的话解释
+    COACH: at=suggest llm=True ttm=None score=15/24 2.09s
+    REPLY: 变量就像一个带标签的盒子，你可以把数据放进去，标签就是变量名。...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=2 enc=3 → 15/24
+
+  [all_behavior] Turn 3
+    USER: 所以变量就像一个盒子，可以放不同的东西进去对吧
+    COACH: at=suggest llm=True ttm=None score=15/24 1.64s
+    REPLY: 是的，变量就像一个有标签的盒子，你可以把不同的值放进去，而且可以随时更换里面的内容。...
+    QUALITY: rel=2 cla=3 int=2 str=1 per=4 enc=3 → 15/24
+
+  [all_behavior] Turn 4
+    USER: 那我怎么知道一个变量里面放的是什么类型的数据
+    COACH: at=scaffold llm=True ttm=None score=19/24 2.04s
+    REPLY: 你可以使用 `type()` 函数来获取变量的类型。例如：`type(variable)` 会返回变量 `variable` 的类型。...
+    QUALITY: rel=2 cla=4 int=4 str=4 per=2 enc=3 → 19/24
+
+  [all_behavior] Turn 5
+    USER: type(42) 返回 int，type('hello') 返回 str — 我试了！那为什么要有不同类型
+    COACH: at=reflect llm=True ttm=None score=19/24 1.72s
+    REPLY: 你观察到不同类型的存在，这很好。想想看，如果没有类型区分，计算机如何知道 '42' 是数字可以进行加减，而 'hello' 是文字不能进行算术？类型让程序更安全、更明确。你觉得如果没有类型，编程会遇到什么问题？...
+    QUESTION: 如果没有类型区分，你可能会遇到哪些问题？...
+    QUALITY: rel=4 cla=3 int=2 str=3 per=4 enc=3 → 19/24
+
+  [all_behavior] Turn 6
+    USER: 所以数字可以加减，字符串可以拼接？那列表呢
+    COACH: at=suggest llm=True ttm=None score=14/24 1.67s
+    REPLY: 列表也可以进行拼接，你可以通过加号（+）将两个列表合并成一个新列表。...
+    QUESTION: 你希望我展示一个列表拼接的例子吗？...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=2 enc=3 → 14/24
+
+  [all_behavior] Turn 7
+    USER: colors = ['red', 'blue'] — 我怎么取出第一个颜色
+    COACH: at=scaffold llm=True ttm=None score=20/24 2.08s
+    REPLY: 要取出列表 `colors` 的第一个颜色，可以使用索引 `0`。在 Python 中，列表索引从 0 开始，所以 `colors[0]` 会返回 `'red'`。...
+    QUALITY: rel=4 cla=3 int=4 str=4 per=2 enc=3 → 20/24
+
+  [all_behavior] Turn 8
+    USER: colors[0] 是 red！那如果我有 100 个颜色，怎么一个个处理
+    COACH: at=scaffold llm=True ttm=None score=19/24 1.79s
+    REPLY: 当有100个颜色时，可以使用循环来逐个处理。比如用for循环遍历数组：for (let i = 0; i < colors.length; i++) { 处理 colors[i] }。这样就能自动处理每个颜色。...
+    QUALITY: rel=4 cla=4 int=2 str=4 per=2 enc=3 → 19/24
+
+  [all_behavior] Turn 9
+    USER: for c in colors: print(c) — 这就叫循环对吧。那 while 循环又是什么
+    COACH: at=suggest llm=True ttm=None score=12/24 1.83s
+    REPLY: 是的，for循环是一种循环。while循环是另一种，它在条件为真时重复执行代码块。你想知道while循环和for循环的主要区别吗？...
+    QUALITY: rel=2 cla=2 int=2 str=1 per=4 enc=1 → 12/24
+
+  [all_behavior] Turn 10
+    USER: 我好像有点感觉了。能考考我今天学的东西吗
+    COACH: at=probe llm=True ttm=None score=12/24 1.5s
+    REPLY: 好的，我们来测试一下。请问，什么是认知主权？...
+    QUESTION: 什么是认知主权？...
+    QUALITY: rel=1 cla=1 int=4 str=1 per=2 enc=3 → 12/24
+
+  >> COMBO all_behavior SUMMARY: 10/10 ok, avg quality=15.9/24, llm=10/10, actions={'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+
+============================================================
+COMBO: full_stack
+  Config: {'llm.enabled': True, 'ttm.enabled': True, 'sdt.enabled': True, 'flow.enabled': True, 'diagnostic_engine.enabled': True}
+============================================================
+
+  [full_stack] Turn 1
+    USER: 我想学 Python，但是完全零基础，从哪开始
+    COACH: at=suggest llm=True ttm=None score=12/24 2.33s
+    REPLY: 零基础学 Python，建议先理解计算机如何执行代码，再动手实践。...
+    QUESTION: 你觉得哪种方式更适合你目前的状态？...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=2 enc=1 → 12/24
+
+  [full_stack] Turn 2
+    USER: 变量是什么，用最简单的话解释
+    COACH: at=suggest llm=True ttm=None score=14/24 1.32s
+    REPLY: 变量就像一个带标签的盒子，你可以往里面放东西（比如数字、文字），需要时再拿出来用。标签就是变量名，盒子里的东西就是变量的值。...
+    QUALITY: rel=2 cla=4 int=2 str=1 per=2 enc=3 → 14/24
+
+  [full_stack] Turn 3
+    USER: 所以变量就像一个盒子，可以放不同的东西进去对吧
+    COACH: at=suggest llm=True ttm=None score=22/24 2.97s
+    REPLY: 你这个比喻很形象！变量确实像盒子，可以存放不同的数据。不过，这个盒子有个特点：它一次只能放一样东西，当你放入新东西时，旧东西就会被替换掉。你觉得这个特性在编程中会带来什么好处或问题呢？...
+    QUESTION: 你能想到一个场景，其中变量被重新赋值会导致问题吗？...
+    QUALITY: rel=4 cla=4 int=4 str=3 per=4 enc=3 → 22/24
+
+  [full_stack] Turn 4
+    USER: 那我怎么知道一个变量里面放的是什么类型的数据
+    COACH: at=scaffold llm=True ttm=None score=21/24 2.17s
+    REPLY: 要检查一个变量中存储的数据类型，你可以使用 `type()` 函数。例如，`type(variable)` 会返回该变量的类型对象。...
+    QUALITY: rel=2 cla=4 int=4 str=4 per=4 enc=3 → 21/24
+
+  [full_stack] Turn 5
+    USER: type(42) 返回 int，type('hello') 返回 str — 我试了！那为什么要有不同类型
+    COACH: at=reflect llm=True ttm=None score=22/24 2.72s
+    REPLY: 你已经发现了不同类型的存在，这很棒！不同类型的出现，是因为计算机需要区分不同种类的数据，以便正确处理它们。比如，数字42可以进行数学运算，而字符串'hello'则不能直接加减。类型系统帮助计算机理解数据的含义，避免错误操作。你对此有什么进一步的想法吗？...
+    QUESTION: 你觉得如果所有数据都只有一种类型，会有什么问题？...
+    QUALITY: rel=4 cla=4 int=4 str=3 per=4 enc=3 → 22/24
+
+  [full_stack] Turn 6
+    USER: 所以数字可以加减，字符串可以拼接？那列表呢
+    COACH: at=suggest llm=True ttm=None score=18/24 1.78s
+    REPLY: 列表也有类似的操作。比如，你可以用加号（+）拼接两个列表，用乘号（*）重复列表。你想了解具体怎么用吗？...
+    QUESTION: 你想了解列表的拼接还是重复操作？...
+    QUALITY: rel=2 cla=4 int=4 str=3 per=2 enc=3 → 18/24
+
+  [full_stack] Turn 7
+    USER: colors = ['red', 'blue'] — 我怎么取出第一个颜色
+    COACH: at=scaffold llm=True ttm=None score=17/24 1.95s
+    REPLY: 你可以使用索引来取出列表中的元素。在Python中，列表的索引从0开始，所以第一个元素是colors[0]。...
+    QUESTION: 你能试试取出第二个颜色吗？...
+    QUALITY: rel=2 cla=2 int=4 str=4 per=2 enc=3 → 17/24
+
+  [full_stack] Turn 8
+    USER: colors[0] 是 red！那如果我有 100 个颜色，怎么一个个处理
+    COACH: at=scaffold llm=True ttm=None score=16/24 1.79s
+    REPLY: 你可以使用循环来逐个处理数组中的元素。对于100个颜色，可以这样写：...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=4 enc=3 → 16/24
+
+  [full_stack] Turn 9
+    USER: for c in colors: print(c) — 这就叫循环对吧。那 while 循环又是什么
+    COACH: at=suggest llm=True ttm=None score=14/24 2.29s
+    REPLY: 对，for 循环是遍历可迭代对象的一种方式。while 循环则是在条件为真时重复执行代码块。...
+    QUESTION: 你想了解 while 循环的具体语法，还是它与 for 循环的区别？...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=4 enc=1 → 14/24
+
+  [full_stack] Turn 10
+    USER: 我好像有点感觉了。能考考我今天学的东西吗
+    COACH: at=probe llm=True ttm=None score=16/24 1.39s
+    REPLY: 好的，我们来考考你今天学的内容。首先，什么是认知主权？请用你自己的话解释一下。...
+    QUESTION: 什么是认知主权？...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=4 enc=3 → 16/24
+
+  >> COMBO full_stack SUMMARY: 10/10 ok, avg quality=17.2/24, llm=10/10, actions={'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+
+============================================================
+COMBO: llm_diag
+  Config: {'llm.enabled': True, 'ttm.enabled': False, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': True}
+============================================================
+
+  [llm_diag] Turn 1
+    USER: 我想学 Python，但是完全零基础，从哪开始
+    COACH: at=suggest llm=True ttm=None score=14/24 2.39s
+    REPLY: 从零开始学 Python 确实需要规划好路径。你可以考虑从以下几个方向起步：...
+    QUESTION: 你更倾向于哪种学习方式？...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=2 enc=3 → 14/24
+
+  [llm_diag] Turn 2
+    USER: 变量是什么，用最简单的话解释
+    COACH: at=suggest llm=True ttm=None score=15/24 1.88s
+    REPLY: 变量就像一个带标签的盒子，可以把数据放进去，需要时再拿出来用。...
+    QUESTION: 你想先了解哪个方面？...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=2 enc=3 → 15/24
+
+  [llm_diag] Turn 3
+    USER: 所以变量就像一个盒子，可以放不同的东西进去对吧
+    COACH: at=suggest llm=True ttm=None score=16/24 2.1s
+    REPLY: 是的，这个比喻很形象！变量确实像一个可以存放不同数据的盒子。你想了解变量的更多特性吗？比如，变量有类型（如数字、文本），或者变量可以被重新赋值？...
+    QUALITY: rel=2 cla=4 int=2 str=1 per=4 enc=3 → 16/24
+
+  [llm_diag] Turn 4
+    USER: 那我怎么知道一个变量里面放的是什么类型的数据
+    COACH: at=scaffold llm=True ttm=None score=19/24 1.93s
+    REPLY: 在Python中，你可以使用type()函数来检查一个变量中存储的数据类型。例如，type(x)会返回变量x的类型。...
+    QUESTION: 你希望我给出一个具体的例子来演示如何使用type()吗？...
+    QUALITY: rel=2 cla=4 int=4 str=4 per=2 enc=3 → 19/24
+
+  [llm_diag] Turn 5
+    USER: type(42) 返回 int，type('hello') 返回 str — 我试了！那为什么要有不同类型
+    COACH: at=reflect llm=True ttm=None score=18/24 2.55s
+    REPLY: 你发现了类型系统的核心作用。不同类型让计算机能更高效地处理数据，比如整数运算比字符串快得多，同时也能避免错误操作，比如把数字当作文本来拼接。你觉得这和你之前学过的'为什么'有什么联系？...
+    QUESTION: 如果所有数据都只有一种类型，比如字符串，你觉得编程会变得更容易还是更困难？...
+    QUALITY: rel=4 cla=4 int=4 str=3 per=2 enc=1 → 18/24
+
+  [llm_diag] Turn 6
+    USER: 所以数字可以加减，字符串可以拼接？那列表呢
+    COACH: at=suggest llm=True ttm=None score=15/24 1.85s
+    REPLY: 列表也可以进行拼接操作，比如用加号将两个列表合并成一个新列表。...
+    QUESTION: 你想了解列表的其他操作吗？比如如何添加、删除或查找元素？...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=2 enc=3 → 15/24
+
+  [llm_diag] Turn 7
+    USER: colors = ['red', 'blue'] — 我怎么取出第一个颜色
+    COACH: at=scaffold llm=True ttm=None score=17/24 2.15s
+    REPLY: 要取出列表的第一个元素，可以使用索引。在Python中，索引从0开始，所以第一个元素的索引是0。代码为：colors[0]。...
+    QUESTION: 你想试试看吗？...
+    QUALITY: rel=2 cla=2 int=4 str=4 per=2 enc=3 → 17/24
+
+  [llm_diag] Turn 8
+    USER: colors[0] 是 red！那如果我有 100 个颜色，怎么一个个处理
+    COACH: at=scaffold llm=True ttm=None score=15/24 2.01s
+    REPLY: 你可以用循环来处理。比如 for 循环，可以逐个访问列表中的每个元素。...
+    QUESTION: 你想了解 for 循环的基本写法吗？...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=2 enc=3 → 15/24
+
+  [llm_diag] Turn 9
+    USER: for c in colors: print(c) — 这就叫循环对吧。那 while 循环又是什么
+    COACH: at=suggest llm=True ttm=None score=12/24 1.97s
+    REPLY: 你理解得对，`for` 循环用于遍历序列。而 `while` 循环则是在条件为真时重复执行代码块。...
+    QUALITY: rel=2 cla=2 int=2 str=1 per=4 enc=1 → 12/24
+
+  [llm_diag] Turn 10
+    USER: 我好像有点感觉了。能考考我今天学的东西吗
+    COACH: at=probe llm=True ttm=None score=12/24 1.68s
+    REPLY: 当然可以！我来考考你。请问，认知主权保护系统的核心目标是什么？...
+    QUESTION: 认知主权保护系统的核心目标是什么？...
+    QUALITY: rel=2 cla=2 int=2 str=1 per=2 enc=3 → 12/24
+
+  >> COMBO llm_diag SUMMARY: 10/10 ok, avg quality=15.3/24, llm=10/10, actions={'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+
+============================================================
+COMBO: llm_ttm_diag
+  Config: {'llm.enabled': True, 'ttm.enabled': True, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': True}
+============================================================
+
+  [llm_ttm_diag] Turn 1
+    USER: 我想学 Python，但是完全零基础，从哪开始
+    COACH: at=suggest llm=True ttm=None score=19/24 2.47s
+    REPLY: 从零开始学 Python 是个很好的选择！通常有两种入门路径：一是通过在线互动课程（如 Codecademy 或 freeCodeCamp），二是阅读书籍（如《Python编程从入门到实践》）。你更倾向于哪种学习方式？...
+    QUESTION: 你更喜欢哪种学习方式？...
+    QUALITY: rel=4 cla=3 int=4 str=3 per=2 enc=3 → 19/24
+
+  [llm_ttm_diag] Turn 2
+    USER: 变量是什么，用最简单的话解释
+    COACH: at=suggest llm=True ttm=None score=13/24 1.33s
+    REPLY: 变量就像一个有名字的盒子，你可以往里面放东西（比如数字、文字），并且随时可以换掉里面的东西。...
+    QUALITY: rel=2 cla=3 int=2 str=1 per=2 enc=3 → 13/24
+
+  [llm_ttm_diag] Turn 3
+    USER: 所以变量就像一个盒子，可以放不同的东西进去对吧
+    COACH: at=suggest llm=True ttm=None score=15/24 1.73s
+    REPLY: 是的，这是一个很好的比喻！变量就像盒子，可以存放不同类型的数据。你想进一步了解变量吗？...
+    QUALITY: rel=2 cla=3 int=2 str=1 per=4 enc=3 → 15/24
+
+  [llm_ttm_diag] Turn 4
+    USER: 那我怎么知道一个变量里面放的是什么类型的数据
+    COACH: at=scaffold llm=True ttm=None score=18/24 2.18s
+    REPLY: 在 Python 中，你可以使用 `type()` 函数来查看变量的数据类型。例如，`type(变量名)` 会返回该变量的类型信息。...
+    QUESTION: 你希望我举个例子来演示如何使用 `type()` 吗？...
+    QUALITY: rel=2 cla=4 int=4 str=3 per=2 enc=3 → 18/24
+
+  [llm_ttm_diag] Turn 5
+    USER: type(42) 返回 int，type('hello') 返回 str — 我试了！那为什么要有不同类型
+    COACH: at=reflect llm=True ttm=None score=18/24 2.71s
+    REPLY: 你发现了不同类型存在的核心问题。简单来说，不同类型让计算机能更高效地处理数据，因为不同数据需要的存储方式和操作规则不同。比如，整数和字符串在内存中的表示完全不同，混合使用会导致错误。...
+    QUESTION: 你能想到一个场景，如果Python把所有数据都当作同一类型，可能会出什么问题吗？...
+    QUALITY: rel=4 cla=4 int=4 str=3 per=2 enc=1 → 18/24
+
+  [llm_ttm_diag] Turn 6
+    USER: 所以数字可以加减，字符串可以拼接？那列表呢
+    COACH: at=suggest llm=True ttm=None score=14/24 1.64s
+    REPLY: 列表也可以拼接，你可以通过 '+' 运算符将两个列表合并成一个新列表。...
+    QUESTION: 你想试试列表拼接吗？...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=2 enc=3 → 14/24
+
+  [llm_ttm_diag] Turn 7
+    USER: colors = ['red', 'blue'] — 我怎么取出第一个颜色
+    COACH: at=scaffold llm=True ttm=None score=17/24 1.82s
+    REPLY: 你可以通过索引来取出列表中的元素。Python列表索引从0开始，所以第一个元素是colors[0]。试试看：colors[0]会返回'red'。...
+    QUESTION: 你知道列表索引是从0还是从1开始计数的吗？...
+    QUALITY: rel=2 cla=2 int=4 str=4 per=2 enc=3 → 17/24
+
+  [llm_ttm_diag] Turn 8
+    USER: colors[0] 是 red！那如果我有 100 个颜色，怎么一个个处理
+    COACH: at=scaffold llm=True ttm=None score=21/24 2.48s
+    REPLY: 当有100个颜色需要一个个处理时，可以使用循环。比如用for循环遍历数组：for (let i = 0; i < colors.length; i++) { console.log(colors[i]); } 这样就能依次处理每个颜色了。...
+    QUALITY: rel=4 cla=4 int=4 str=4 per=2 enc=3 → 21/24
+
+  [llm_ttm_diag] Turn 9
+    USER: for c in colors: print(c) — 这就叫循环对吧。那 while 循环又是什么
+    COACH: at=suggest llm=True ttm=None score=14/24 2.11s
+    REPLY: 是的，for循环用于遍历序列。而while循环则是在条件为真时重复执行代码块。...
+    QUESTION: 你选择哪个选项来描述while循环？...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=4 enc=1 → 14/24
+
+  [llm_ttm_diag] Turn 10
+    USER: 我好像有点感觉了。能考考我今天学的东西吗
+    COACH: at=probe llm=True ttm=None score=10/24 1.52s
+    REPLY: 好的！那我先考考你：今天学习的核心概念是什么？...
+    QUESTION: 请用一句话概括你今天学到的最重要的知识点。...
+    QUALITY: rel=1 cla=1 int=2 str=1 per=2 enc=3 → 10/24
+
+  >> COMBO llm_ttm_diag SUMMARY: 10/10 ok, avg quality=15.9/24, llm=10/10, actions={'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+
+============================================================
+COMBO: safety_full
+  Config: {'llm.enabled': True, 'sovereignty_pulse.enabled': True, 'excursion.enabled': True, 'relational_safety.enabled': True}
+============================================================
+
+  [safety_full] Turn 1
+    USER: 我想学 Python，但是完全零基础，从哪开始
+    COACH: at=suggest llm=True ttm=None score=15/24 1.94s
+    REPLY: 零基础学 Python 是个很棒的想法！你可以从理解基本概念开始，比如变量、数据类型和简单输出。...
+    QUESTION: 你更倾向于哪种学习方式？...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=2 enc=3 → 15/24
+
+  [safety_full] Turn 2
+    USER: 变量是什么，用最简单的话解释
+    COACH: at=suggest llm=True ttm=None score=13/24 1.47s
+    REPLY: 变量就像一个带标签的盒子，你可以把东西放进去，标签就是变量名，东西就是变量值。...
+    QUALITY: rel=2 cla=3 int=2 str=1 per=2 enc=3 → 13/24
+
+  [safety_full] Turn 3
+    USER: 所以变量就像一个盒子，可以放不同的东西进去对吧
+    COACH: at=suggest llm=True ttm=None score=22/24 2.31s
+    REPLY: 是的，变量确实像一个可以存放不同东西的盒子。不过，这个盒子有一些特别的地方，比如它一次只能放一样东西，而且你可以随时改变里面的内容。你觉得这样的理解对你有帮助吗？...
+    QUESTION: 你更想了解变量的哪些方面呢？比如变量如何命名、变量的类型，还是变量在程序中的实际应用？...
+    QUALITY: rel=4 cla=4 int=4 str=3 per=4 enc=3 → 22/24
+
+  [safety_full] Turn 4
+    USER: 那我怎么知道一个变量里面放的是什么类型的数据
+    COACH: at=scaffold llm=True ttm=None score=15/24 1.6s
+    REPLY: 你可以用 `type()` 函数来查看变量的类型。比如：`type(变量名)` 会返回该变量的类型。...
+    QUESTION: 你想试试用 type() 检查一个变量吗？...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=2 enc=3 → 15/24
+
+  [safety_full] Turn 5
+    USER: type(42) 返回 int，type('hello') 返回 str — 我试了！那为什么要有不同类型
+    COACH: at=reflect llm=True ttm=None score=16/24 1.81s
+    REPLY: 你已经发现了不同类型的存在。想象一下，如果所有数据都是同一类型，计算机怎么区分数字和文字？不同类型让计算机能正确处理数据，比如数字能加减，文字能拼接。...
+    QUESTION: 你觉得如果没有类型区分，计算机在处理 '2' + '3' 时应该返回 5 还是 '23'？...
+    QUALITY: rel=2 cla=4 int=2 str=3 per=4 enc=1 → 16/24
+
+  [safety_full] Turn 6
+    USER: 所以数字可以加减，字符串可以拼接？那列表呢
+    COACH: at=suggest llm=True ttm=None score=11/24 1.39s
+    REPLY: 列表也支持类似的操作，比如拼接和重复。你想了解列表的加法（拼接）还是乘法（重复）？...
+    QUALITY: rel=2 cla=3 int=2 str=1 per=2 enc=1 → 11/24
+
+  [safety_full] Turn 7
+    USER: colors = ['red', 'blue'] — 我怎么取出第一个颜色
+    COACH: at=scaffold llm=True ttm=None score=15/24 1.34s
+    REPLY: 你可以使用索引0来获取列表的第一个元素，例如：colors[0]。...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=2 enc=3 → 15/24
+
+  [safety_full] Turn 8
+    USER: colors[0] 是 red！那如果我有 100 个颜色，怎么一个个处理
+    COACH: at=scaffold llm=True ttm=None score=21/24 2.45s
+    REPLY: 你可以用循环来处理。比如 Python 里，可以用 for 循环：for color in colors: print(color)。这样每个颜色都会被依次处理。...
+    QUESTION: 你想用哪种循环方式？比如 for 循环或 while 循环？...
+    QUALITY: rel=4 cla=4 int=4 str=4 per=2 enc=3 → 21/24
+
+  [safety_full] Turn 9
+    USER: for c in colors: print(c) — 这就叫循环对吧。那 while 循环又是什么
+    COACH: at=suggest llm=True ttm=None score=12/24 1.93s
+    REPLY: 是的，`for` 循环遍历可迭代对象，而 `while` 循环基于条件重复执行。你想了解 while 循环的典型用法吗？...
+    QUALITY: rel=2 cla=2 int=2 str=1 per=4 enc=1 → 12/24
+
+  [safety_full] Turn 10
+    USER: 我好像有点感觉了。能考考我今天学的东西吗
+    COACH: at=probe llm=True ttm=None score=12/24 2.02s
+    REPLY: 当然可以！让我们来检验一下你今天的学习成果。...
+    QUESTION: 请用你自己的话解释，为什么保护认知主权对个人很重要？...
+    QUALITY: rel=1 cla=1 int=4 str=1 per=2 enc=3 → 12/24
+
+  >> COMBO safety_full SUMMARY: 10/10 ok, avg quality=15.2/24, llm=10/10, actions={'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+
+============================================================
+COMBO: behavior_safety
+  Config: {'llm.enabled': True, 'ttm.enabled': True, 'sdt.enabled': True, 'sovereignty_pulse.enabled': True, 'relational_safety.enabled': True}
+============================================================
+
+  [behavior_safety] Turn 1
+    USER: 我想学 Python，但是完全零基础，从哪开始
+    COACH: at=suggest llm=True ttm=None score=16/24 2.31s
+    REPLY: 从零开始学 Python 是个很好的目标！通常有两种常见路径：一是通过互动式平台（如 Codecademy 或 freeCodeCamp）边做边学，二是从经典书籍（如《Python 编程：从入门到实践》）系统学习。你想先试试哪种方式？...
+    QUALITY: rel=4 cla=3 int=2 str=2 per=2 enc=3 → 16/24
+
+  [behavior_safety] Turn 2
+    USER: 变量是什么，用最简单的话解释
+    COACH: at=suggest llm=True ttm=None score=18/24 1.87s
+    REPLY: 变量就像一个带标签的盒子，你可以往里面放东西，也可以随时换东西。标签就是变量名，里面的东西就是变量值。...
+    QUESTION: 你想试试自己创建一个变量吗？...
+    QUALITY: rel=2 cla=4 int=4 str=3 per=2 enc=3 → 18/24
+
+  [behavior_safety] Turn 3
+    USER: 所以变量就像一个盒子，可以放不同的东西进去对吧
+    COACH: at=suggest llm=True ttm=None score=20/24 2.12s
+    REPLY: 是的，这个比喻很形象！变量就像是一个有标签的盒子，你可以把不同的数据放进去，并且随时可以替换里面的内容。...
+    QUESTION: 那你想知道变量除了存数字，还能存什么类型的数据吗？...
+    QUALITY: rel=2 cla=4 int=4 str=3 per=4 enc=3 → 20/24
+
+  [behavior_safety] Turn 4
+    USER: 那我怎么知道一个变量里面放的是什么类型的数据
+    COACH: at=scaffold llm=True ttm=None score=19/24 2.75s
+    REPLY: 你可以使用 `type()` 函数来查看变量的类型。例如：`type(variable_name)` 会返回该变量的类型信息。...
+    QUESTION: 你尝试过用 `type()` 检查不同类型的数据吗？比如字符串、浮点数？...
+    QUALITY: rel=2 cla=4 int=4 str=4 per=2 enc=3 → 19/24
+
+  [behavior_safety] Turn 5
+    USER: type(42) 返回 int，type('hello') 返回 str — 我试了！那为什么要有不同类型
+    COACH: at=reflect llm=True ttm=None score=18/24 1.73s
+    REPLY: 你已经发现了不同类型的存在，这很好。不同类型能帮助计算机更高效地存储和处理数据。比如，整数和字符串在内存中的存储方式不同，运算规则也不同。...
+    QUESTION: 你觉得如果所有数据都只有一种类型，会带来什么问题？...
+    QUALITY: rel=2 cla=4 int=2 str=3 per=4 enc=3 → 18/24
+
+  [behavior_safety] Turn 6
+    USER: 所以数字可以加减，字符串可以拼接？那列表呢
+    COACH: at=suggest llm=True ttm=None score=18/24 2.22s
+    REPLY: 列表也可以拼接，但用的是加号（+）来合并两个列表，比如 [1,2] + [3,4] 得到 [1,2,3,4]。另外，星号（*）可以重复列表。你想试试哪种操作？...
+    QUESTION: 你希望了解列表的拼接还是重复？...
+    QUALITY: rel=2 cla=4 int=4 str=3 per=2 enc=3 → 18/24
+
+  [behavior_safety] Turn 7
+    USER: colors = ['red', 'blue'] — 我怎么取出第一个颜色
+    COACH: at=scaffold llm=True ttm=None score=14/24 1.45s
+    REPLY: 要取出第一个颜色，可以使用索引0：colors[0] 会返回 'red'。...
+    QUESTION: 如果你想取出第二个颜色，应该怎么写？...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=2 enc=3 → 14/24
+
+  [behavior_safety] Turn 8
+    USER: colors[0] 是 red！那如果我有 100 个颜色，怎么一个个处理
+    COACH: at=scaffold llm=True ttm=None score=21/24 1.59s
+    REPLY: 你可以使用循环来逐个处理数组中的每个元素。比如，用 for 循环：for (let i = 0; i < colors.length; i++) { console.log(colors[i]); }。这样就能从第一个处理到最后一个。...
+    QUESTION: 你想试试用循环打印出 colors 数组里的所有颜色吗？...
+    QUALITY: rel=4 cla=4 int=4 str=4 per=2 enc=3 → 21/24
+
+  [behavior_safety] Turn 9
+    USER: for c in colors: print(c) — 这就叫循环对吧。那 while 循环又是什么
+    COACH: at=suggest llm=True ttm=None score=19/24 2.31s
+    REPLY: 对，`for c in colors: print(c)` 是循环，它遍历列表中的每个元素。`while` 循环是另一种循环，它根据条件重复执行代码块，直到条件为假。...
+    QUESTION: 你想了解 while 循环的具体语法，还是它与 for 循环的对比？...
+    QUALITY: rel=4 cla=3 int=4 str=3 per=4 enc=1 → 19/24
+
+  [behavior_safety] Turn 10
+    USER: 我好像有点感觉了。能考考我今天学的东西吗
+    COACH: at=probe llm=True ttm=None score=11/24 1.15s
+    REPLY: 好的！我来考考你。请问，我们通常说的“认知主权”指的是什么？...
+    QUESTION: 认知主权指的是什么？...
+    QUALITY: rel=2 cla=1 int=2 str=1 per=2 enc=3 → 11/24
+
+  >> COMBO behavior_safety SUMMARY: 10/10 ok, avg quality=17.4/24, llm=10/10, actions={'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+
+============================================================
+COMBO: rules_diag
+  Config: {'llm.enabled': False, 'diagnostic_engine.enabled': True}
+============================================================
+
+  [rules_diag] Turn 1
+    USER: 我想学 Python，但是完全零基础，从哪开始
+    COACH: at=suggest llm=True ttm=None score=18/24 2.27s
+    REPLY: 从零开始学习Python是个很棒的决定！你可以从安装Python和配置开发环境开始，然后学习基础语法，比如变量、数据类型、条件语句和循环。...
+    QUESTION: 你倾向于哪种入门方式？...
+    QUALITY: rel=2 cla=4 int=4 str=3 per=2 enc=3 → 18/24
+
+  [rules_diag] Turn 2
+    USER: 变量是什么，用最简单的话解释
+    COACH: at=suggest llm=True ttm=None score=15/24 1.63s
+    REPLY: 变量就像一个有名字的盒子，你可以往里面放东西（数据），也可以随时拿出或更换里面的东西。...
+    QUESTION: 你想知道变量具体怎么用，还是想了解其他概念？...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=2 enc=3 → 15/24
+
+  [rules_diag] Turn 3
+    USER: 所以变量就像一个盒子，可以放不同的东西进去对吧
+    COACH: at=suggest llm=True ttm=None score=17/24 2.39s
+    REPLY: 是的，这个比喻很形象。变量就像一个标签明确的盒子，你可以往里面放入不同类型的数据，比如数字、文字等。...
+    QUESTION: 你知道变量在编程中通常需要遵循哪些命名规则吗？...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=4 enc=3 → 17/24
+
+  [rules_diag] Turn 4
+    USER: 那我怎么知道一个变量里面放的是什么类型的数据
+    COACH: at=scaffold llm=True ttm=None score=21/24 2.34s
+    REPLY: 在Python中，你可以使用type()函数来查看变量的类型。例如：type(变量名)会返回变量的类型对象。...
+    QUESTION: 你想知道type()和isinstance()的区别吗？...
+    QUALITY: rel=2 cla=4 int=4 str=4 per=4 enc=3 → 21/24
+
+  [rules_diag] Turn 5
+    USER: type(42) 返回 int，type('hello') 返回 str — 我试了！那为什么要有不同类型
+    COACH: at=reflect llm=True ttm=None score=18/24 2.17s
+    REPLY: 你观察得很仔细。不同类型的存在，是为了让计算机更高效地处理不同种类的数据。比如，整数和字符串在内存中的存储方式不同，运算规则也不同。如果没有类型区分，计算机会混淆 1 + 1 和 '1' + '1' 的含义。...
+    QUESTION: 你觉得如果没有类型，编程中可能会遇到哪些麻烦？...
+    QUALITY: rel=4 cla=4 int=4 str=3 per=2 enc=1 → 18/24
+
+  [rules_diag] Turn 6
+    USER: 所以数字可以加减，字符串可以拼接？那列表呢
+    COACH: at=suggest llm=True ttm=None score=20/24 1.98s
+    REPLY: 是的，数字可以加减，字符串可以拼接。至于列表，它也可以进行类似操作，比如用加号拼接两个列表，或者用乘号重复列表元素。你想了解具体的操作方式吗？...
+    QUESTION: 你想了解列表的哪些操作？...
+    QUALITY: rel=2 cla=4 int=4 str=3 per=4 enc=3 → 20/24
+
+  [rules_diag] Turn 7
+    USER: colors = ['red', 'blue'] — 我怎么取出第一个颜色
+    COACH: at=scaffold llm=True ttm=None score=17/24 1.62s
+    REPLY: 你可以通过索引来取出列表中的元素。在Python中，索引从0开始，所以第一个元素的索引是0。使用`colors[0]`即可取出'red'。...
+    QUALITY: rel=2 cla=2 int=4 str=4 per=2 enc=3 → 17/24
+
+  [rules_diag] Turn 8
+    USER: colors[0] 是 red！那如果我有 100 个颜色，怎么一个个处理
+    COACH: at=scaffold llm=True ttm=None score=21/24 2.01s
+    REPLY: 你可以使用循环来逐个处理数组中的元素。例如，在JavaScript中，可以用for循环：for (let i = 0; i < colors.length; i++) { console.log(colors[i]); }。这样就能依次访问每个颜色。...
+    QUESTION: 你想了解哪种语言的循环写法？比如JavaScript、Python还是其他？...
+    QUALITY: rel=4 cla=4 int=4 str=4 per=2 enc=3 → 21/24
+
+  [rules_diag] Turn 9
+    USER: for c in colors: print(c) — 这就叫循环对吧。那 while 循环又是什么
+    COACH: at=suggest llm=True ttm=None score=16/24 2.06s
+    REPLY: 是的，for 循环是遍历序列的一种方式。while 循环则不同，它会重复执行代码块，直到指定的条件不再为真。...
+    QUESTION: 你想了解 while 循环的具体语法吗？还是想知道它和 for 循环的主要区别？...
+    QUALITY: rel=2 cla=2 int=4 str=3 per=4 enc=1 → 16/24
+
+  [rules_diag] Turn 10
+    USER: 我好像有点感觉了。能考考我今天学的东西吗
+    COACH: at=probe llm=True ttm=None score=16/24 2.18s
+    REPLY: 好的，我们来检验一下今天的学习成果。请回答：学习过程中，保持认知主权意味着什么？...
+    QUESTION: 学习过程中，保持认知主权意味着什么？...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=4 enc=3 → 16/24
+
+  >> COMBO rules_diag SUMMARY: 10/10 ok, avg quality=17.9/24, llm=10/10, actions={'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+
+============================================================
+COMBO: all_off
+  Config: {'llm.enabled': False, 'ttm.enabled': False, 'sdt.enabled': False, 'flow.enabled': False, 'diagnostic_engine.enabled': False, 'sovereignty_pulse.enabled': False, 'excursion.enabled': False, 'relational_safety.enabled': False}
+============================================================
+
+  [all_off] Turn 1
+    USER: 我想学 Python，但是完全零基础，从哪开始
+    COACH: at=suggest llm=True ttm=None score=12/24 1.8s
+    REPLY: 零基础学 Python 是个很棒的目标。通常有两种常见路径：一种是先学基础语法，再做小项目；另一种是直接通过项目学习，边做边查。你更倾向于哪种方式？...
+    QUALITY: rel=2 cla=2 int=2 str=1 per=2 enc=3 → 12/24
+
+  [all_off] Turn 2
+    USER: 变量是什么，用最简单的话解释
+    COACH: at=suggest llm=True ttm=None score=16/24 2.05s
+    REPLY: 变量就像一个带标签的盒子，你可以把任何东西放进去，然后通过标签找到它。在编程中，变量用来存储数据，比如数字、文字等。...
+    QUALITY: rel=2 cla=4 int=4 str=1 per=2 enc=3 → 16/24
+
+  [all_off] Turn 3
+    USER: 所以变量就像一个盒子，可以放不同的东西进去对吧
+    COACH: at=suggest llm=True ttm=None score=20/24 1.81s
+    REPLY: 是的，变量就像一个可以存放不同数据的盒子。不过，这个盒子有名字和类型，决定了它能放什么类型的东西。你想了解变量命名规则或常见的数据类型吗？...
+    QUESTION: 你想先了解哪方面？...
+    QUALITY: rel=2 cla=4 int=4 str=3 per=4 enc=3 → 20/24
+
+  [all_off] Turn 4
+    USER: 那我怎么知道一个变量里面放的是什么类型的数据
+    COACH: at=scaffold llm=True ttm=None score=23/24 2.62s
+    REPLY: 在Python中，你可以使用内置函数 `type()` 来检查变量的数据类型。例如，`type(variable)` 会返回该变量的类型对象。如果你需要判断变量是否为特定类型，可以使用 `isinstance(variable, type)`，它返回布尔值。...
+    QUESTION: 你能否尝试用 `type()` 检查一个变量并告诉我结果？...
+    QUALITY: rel=4 cla=4 int=4 str=4 per=4 enc=3 → 23/24
+
+  [all_off] Turn 5
+    USER: type(42) 返回 int，type('hello') 返回 str — 我试了！那为什么要有不同类型
+    COACH: at=reflect llm=True ttm=None score=18/24 3.46s
+    REPLY: 你已经亲自验证了不同类型的存在，这很棒。不同类型的出现，是为了让程序能更精确地处理不同种类的数据，比如数字用于计算，文本用于表达信息。这就像工具箱里有不同的工具，各有各的用途。...
+    QUESTION: 你觉得如果只有一种类型，比如所有数据都是文本，会带来哪些麻烦？...
+    QUALITY: rel=4 cla=4 int=2 str=3 per=2 enc=3 → 18/24
+
+  [all_off] Turn 6
+    USER: 所以数字可以加减，字符串可以拼接？那列表呢
+    COACH: at=suggest llm=True ttm=None score=12/24 1.65s
+    REPLY: 列表也可以拼接和重复。你可以用加号（+）来合并两个列表，用乘号（*）来重复列表中的元素。...
+    QUALITY: rel=2 cla=2 int=2 str=1 per=2 enc=3 → 12/24
+
+  [all_off] Turn 7
+    USER: colors = ['red', 'blue'] — 我怎么取出第一个颜色
+    COACH: at=scaffold llm=True ttm=None score=15/24 1.58s
+    REPLY: 要取出第一个颜色，可以使用索引0：`colors[0]`。在Python中，列表索引从0开始，所以第一个元素是索引0。...
+    QUALITY: rel=2 cla=2 int=2 str=4 per=2 enc=3 → 15/24
+
+  [all_off] Turn 8
+    USER: colors[0] 是 red！那如果我有 100 个颜色，怎么一个个处理
+    COACH: at=scaffold llm=True ttm=None score=15/24 2.12s
+    REPLY: 你可以使用循环（loop）来重复执行相同的操作。比如，用 for 循环遍历每个颜色。...
+    QUESTION: 你想先学习 for 循环的写法吗？...
+    QUALITY: rel=2 cla=3 int=4 str=1 per=2 enc=3 → 15/24
+
+  [all_off] Turn 9
+    USER: for c in colors: print(c) — 这就叫循环对吧。那 while 循环又是什么
+    COACH: at=suggest llm=True ttm=None score=14/24 1.42s
+    REPLY: 是的，for 循环用于遍历序列。while 循环是另一种循环，它会在条件为真时重复执行代码块。...
+    QUESTION: 你想了解 while 循环的语法，还是它与 for 循环的区别？...
+    QUALITY: rel=2 cla=2 int=4 str=1 per=4 enc=1 → 14/24
+
+  [all_off] Turn 10
+    USER: 我好像有点感觉了。能考考我今天学的东西吗
+    COACH: at=probe llm=True ttm=None score=14/24 1.62s
+    REPLY: 好的！那我先问你一个问题：你如何理解“认知主权”这个概念？它对你的学习有什么意义？...
+    QUESTION: 请用自己的话解释“认知主权”的含义及其对学习的影响。...
+    QUALITY: rel=2 cla=2 int=2 str=1 per=4 enc=3 → 14/24
+
+  >> COMBO all_off SUMMARY: 10/10 ok, avg quality=15.9/24, llm=10/10, actions={'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+
+======================================================================
+ULTIMATE QUALITY REPORT
+======================================================================
+  Configs tested:      12
+  Total turns:         120
+  Passed:              120/120
+  Crashed:             0
+  Overall avg quality: 16.4/24
+
+--- Quality Ranking (avg score /24) ---
+   1. rules_diag           17.9/24 █████████████████ | llm=10/10 | {'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+   2. baseline_rules       17.6/24 █████████████████ | llm=10/10 | {'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+   3. behavior_safety      17.4/24 █████████████████ | llm=10/10 | {'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+   4. full_stack           17.2/24 █████████████████ | llm=10/10 | {'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+   5. llm_ttm              16.6/24 ████████████████ | llm=10/10 | {'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+   6. llm_only             16.1/24 ████████████████ | llm=10/10 | {'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+   7. all_behavior         15.9/24 ███████████████ | llm=10/10 | {'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+   8. llm_ttm_diag         15.9/24 ███████████████ | llm=10/10 | {'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+   9. all_off              15.9/24 ███████████████ | llm=10/10 | {'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+  10. llm_ttm_sdt          15.4/24 ███████████████ | llm=10/10 | {'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+  11. llm_diag             15.3/24 ███████████████ | llm=10/10 | {'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+  12. safety_full          15.2/24 ███████████████ | llm=10/10 | {'scaffold': 3, 'reflect': 1, 'suggest': 5, 'probe': 1}
+
+--- Dimension Averages (0-4) ---
+  relevance           : 2.42
+  clarity             : 3.02
+  interactive         : 3.38
+  structure           : 2.12
+  personalization     : 2.77
+  encouragement       : 2.67
+
+  LLM avg quality:  16.4/24 (120 turns)
+  TTM OFF avg quality: 16.4/24
+
+Report JSON: D:\Claudedaoy\coherence\reports\ultimate_quality_report.json

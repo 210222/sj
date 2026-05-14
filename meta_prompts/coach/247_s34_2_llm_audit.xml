@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S34.2 -- LLM 审计运行</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>34</phase>
+  <sub_stage>S34.2</sub_stage>
+  <sub_stage_name>运行真实 LLM 审计快照，不改审计契约</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责用现有的体验审计管道跑出第一份真实 LLM 审计快照。
+    你不重写脚本，不新增评分维度，不新增 probes，只运行并产出新 run。
+  </role>
+
+  <context>
+    当前 run_experience_audit.py 已具备：
+    - long_turn lane
+    - breakpoint probe lane
+    - scoring / failure_cases / comparison 契约
+
+    本阶段目标不是改审计逻辑，而是验证在 DEEPSEEK_API_KEY 环境下，HTTP 模式可以真实命中 LLM 路径，
+    生成与规则引擎 baseline 并列的新 run。
+  </context>
+
+  <risk_analysis>
+    1. LLM 响应慢，quick 模式耗时会增加；
+    2. 若后端未继承环境变量，run 会退回规则模式；
+    3. LLM 输出存在波动，不保证分数稳定复现。
+  </risk_analysis>
+
+  <task>
+    1. 在 DEEPSEEK_API_KEY 环境下启动后端；
+    2. 运行 `python run_experience_audit.py --mode quick --use-http`；
+    3. 确认新 run 成功落盘；
+    4. 确认 run 数据中 llm_generated=true 的比例显著高于 rules baseline；
+    5. 不覆盖旧 run，不重置 baseline_run_id。
+  </task>
+
+  <side_effects>
+    1. 运行时间显著增加；
+    2. 同一画像结果存在波动；
+    3. scoring 仍沿用 Phase 32/33 规则，不新增 LLM 评分。
+  </side_effects>
+
+  <quality_gates>
+    <gate>成功产出完整 run 目录</gate>
+    <gate>llm_generated 命中真实发生</gate>
+    <gate>未覆盖旧 run</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>真实 LLM run 成功生成</item>
+    <item>run 结构完整</item>
+    <item>审计契约未被改变</item>
+  </success_criteria>
+</prompt>

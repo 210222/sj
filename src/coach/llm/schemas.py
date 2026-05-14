@@ -5,11 +5,127 @@ LLM 生成的 payload 必须符合 DSL schema，否则回退规则模式。
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
 
 _logger = logging.getLogger(__name__)
+
+
+@dataclass
+class CacheObservability:
+    """Prompt cache-eligibility 结构证据."""
+    cache_eligible: bool = False
+    cache_eligibility_reason: str = ""
+    stable_prefix_hash: str = ""
+    stable_prefix_chars: int = 0
+    stable_prefix_lines: int = 0
+    stable_prefix_share: float = 0.0
+    action_contract_hash: str = ""
+    policy_layer_hash: str = ""
+    context_layer_hash: str = ""
+    context_fingerprint: str = ""
+    prefix_shape_version: str = "1.0.0"
+
+    def to_dict(self) -> dict:
+        return {
+            "cache_eligible": self.cache_eligible,
+            "cache_eligibility_reason": self.cache_eligibility_reason,
+            "stable_prefix_hash": self.stable_prefix_hash,
+            "stable_prefix_chars": self.stable_prefix_chars,
+            "stable_prefix_lines": self.stable_prefix_lines,
+            "stable_prefix_share": round(self.stable_prefix_share, 4),
+            "action_contract_hash": self.action_contract_hash,
+            "policy_layer_hash": self.policy_layer_hash,
+            "context_layer_hash": self.context_layer_hash,
+            "context_fingerprint": self.context_fingerprint,
+            "prefix_shape_version": self.prefix_shape_version,
+        }
+
+
+@dataclass
+class RuntimeObservability:
+    """LLM 调用运行时证据."""
+    path: str = ""
+    streaming: bool = False
+    request_started_at_utc: str = ""
+    latency_ms: float = 0.0
+    first_chunk_latency_ms: float | None = None
+    stream_duration_ms: float | None = None
+    finish_reason: str = "stop"
+    response_model: str = ""
+    tokens_total: int = 0
+    tokens_prompt: int | None = None
+    tokens_completion: int | None = None
+    token_usage_available: bool = False
+    prompt_cache_hit_tokens: int | None = None
+    prompt_cache_miss_tokens: int | None = None
+    retry_count: int = 0
+    timeout_s: float = 30.0
+    transport_status: str = "ok"
+
+    def to_dict(self) -> dict:
+        return {
+            "path": self.path,
+            "streaming": self.streaming,
+            "request_started_at_utc": self.request_started_at_utc,
+            "latency_ms": round(self.latency_ms, 1),
+            "first_chunk_latency_ms": round(self.first_chunk_latency_ms, 1) if self.first_chunk_latency_ms is not None else None,
+            "stream_duration_ms": round(self.stream_duration_ms, 1) if self.stream_duration_ms is not None else None,
+            "finish_reason": self.finish_reason,
+            "response_model": self.response_model,
+            "tokens_total": self.tokens_total,
+            "tokens_prompt": self.tokens_prompt,
+            "tokens_completion": self.tokens_completion,
+            "token_usage_available": self.token_usage_available,
+            "prompt_cache_hit_tokens": self.prompt_cache_hit_tokens,
+            "prompt_cache_miss_tokens": self.prompt_cache_miss_tokens,
+            "retry_count": self.retry_count,
+            "timeout_s": self.timeout_s,
+            "transport_status": self.transport_status,
+        }
+
+
+@dataclass
+class RetentionObservability:
+    """上下文保留策略执行指标."""
+    retention_history_hits: int = 0
+    retention_memory_hits: int = 0
+    retention_duplicate_dropped: int = 0
+    retention_budget_history_limit: int = 12
+    retention_budget_memory_limit: int = 6
+    retention_progress_included: bool = False
+    retention_context_summary_included: bool = False
+    session_scoped: bool = False
+
+    def to_dict(self) -> dict:
+        return {
+            "retention_history_hits": self.retention_history_hits,
+            "retention_memory_hits": self.retention_memory_hits,
+            "retention_duplicate_dropped": self.retention_duplicate_dropped,
+            "retention_budget_history_limit": self.retention_budget_history_limit,
+            "retention_budget_memory_limit": self.retention_budget_memory_limit,
+            "retention_progress_included": self.retention_progress_included,
+            "retention_context_summary_included": self.retention_context_summary_included,
+            "session_scoped": self.session_scoped,
+        }
+
+
+@dataclass
+class LLMObservability:
+    """统一的 LLM 运行时可观测性对象."""
+    cache: CacheObservability = field(default_factory=CacheObservability)
+    runtime: RuntimeObservability = field(default_factory=RuntimeObservability)
+    retention: RetentionObservability = field(default_factory=RetentionObservability)
+
+    def to_dict(self) -> dict:
+        return {
+            "cache": self.cache.to_dict(),
+            "runtime": self.runtime.to_dict(),
+            "retention": self.retention.to_dict(),
+        }
 
 
 @dataclass
@@ -19,6 +135,9 @@ class LLMResponse:
     model: str = ""
     tokens_used: int = 0
     finish_reason: str = "stop"
+    observability: LLMObservability | None = None
+    # Phase 37: full token breakdown + cache telemetry from provider
+    usage: dict | None = None
 
     def to_payload(self) -> dict:
         """将 LLM 内容转为 DSL payload 字典."""
@@ -29,6 +148,11 @@ class LLMResponse:
         except (json.JSONDecodeError, TypeError):
             pass
         return {"statement": self.content.strip()}
+
+
+def _sha256(text: str) -> str:
+    """SHA-256 hash of text, truncated to 16 hex chars for readability."""
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
 
 class LLMOutputValidator:

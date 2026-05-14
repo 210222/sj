@@ -1,8 +1,8 @@
-S50 Layer E — Delivery & Governance | 2026-05-04T07:26:06.853Z
+S50 Layer E — Delivery & Governance | 2026-05-12T06:00:51.109Z
 Status: WARN
-DORA: deploy_freq=Low (monthly), failure_rate=Low (<5%)
+DORA: deploy_freq=Medium (weekly), failure_rate=Low (<5%)
 Bus Factor: 1 (2 authors)
-Test Pyramid: 1003 tests (unit=144 int=173 e2e=29)
+Test Pyramid: 1308 tests (unit=144 int=178 e2e=29)
 CI/CD: 29%
-  [P2] knowledge_silo: Top author 210222 owns 95% of code — bus factor=1
-  [P3] test_pyramid: Unit: 42%, Integration: 50%, E2E: 8% — aim for 70/20/10
+  [P2] knowledge_silo: Top author 210222 owns 96% of code — bus factor=1
+  [P3] test_pyramid: Unit: 41%, Integration: 51%, E2E: 8% — aim for 70/20/10

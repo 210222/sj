@@ -1,0 +1,127 @@
+[
+  {
+    "latest_run_id": "run_20260513_080304_0d62cb26",
+    "timestamp_utc": "2026-05-13T08:03:30.421706+00:00",
+    "overall_score": 12.31
+  },
+  {
+    "latest_run_id": "run_20260513_081509_40dda9ee",
+    "timestamp_utc": "2026-05-13T08:15:36.220275+00:00",
+    "overall_score": 12.31
+  },
+  {
+    "latest_run_id": "run_20260513_093620_5e529bc1",
+    "timestamp_utc": "2026-05-13T09:36:47.412872+00:00",
+    "overall_score": 12.31
+  },
+  {
+    "latest_run_id": "run_20260513_100614_b3a6134a",
+    "timestamp_utc": "2026-05-13T10:06:40.591251+00:00",
+    "overall_score": 12.31
+  },
+  {
+    "latest_run_id": "run_20260513_122047_4c1268bb",
+    "timestamp_utc": "2026-05-13T12:21:10.570876+00:00",
+    "overall_score": 12.31
+  },
+  {
+    "latest_run_id": "run_20260513_125812_2f41dbf7",
+    "timestamp_utc": "2026-05-13T12:59:56.620734+00:00",
+    "overall_score": 14.6
+  },
+  {
+    "latest_run_id": "run_20260514_063312_56a16e69",
+    "timestamp_utc": "2026-05-14T06:34:47.310743+00:00",
+    "overall_score": 14.47
+  },
+  {
+    "latest_run_id": "run_20260514_063501_80d1d307",
+    "timestamp_utc": "2026-05-14T06:36:57.374748+00:00",
+    "overall_score": 14.8
+  },
+  {
+    "latest_run_id": "run_20260514_063713_c35ff55b",
+    "timestamp_utc": "2026-05-14T06:39:18.528665+00:00",
+    "overall_score": 14.2
+  },
+  {
+    "latest_run_id": "run_20260514_064103_509f7e5c",
+    "timestamp_utc": "2026-05-14T06:42:45.216697+00:00",
+    "overall_score": 14.67
+  },
+  {
+    "latest_run_id": "run_20260514_064256_a9782c60",
+    "timestamp_utc": "2026-05-14T06:44:34.964981+00:00",
+    "overall_score": 14.8
+  },
+  {
+    "latest_run_id": "run_20260514_073224_497a6ca8",
+    "timestamp_utc": "2026-05-14T07:34:06.106015+00:00",
+    "overall_score": 14.8
+  },
+  {
+    "latest_run_id": "run_20260514_073459_a44d1430",
+    "timestamp_utc": "2026-05-14T07:36:30.536711+00:00",
+    "overall_score": 14.07
+  },
+  {
+    "latest_run_id": "run_20260514_073644_31753a34",
+    "timestamp_utc": "2026-05-14T07:38:36.812474+00:00",
+    "overall_score": 14.2
+  },
+  {
+    "latest_run_id": "run_20260514_075507_3a990131",
+    "timestamp_utc": "2026-05-14T07:56:52.493923+00:00",
+    "overall_score": 14.93
+  },
+  {
+    "latest_run_id": "run_20260514_075712_9fb4ebb0",
+    "timestamp_utc": "2026-05-14T07:58:57.275845+00:00",
+    "overall_score": 14.6
+  },
+  {
+    "latest_run_id": "run_20260514_075908_0bb33995",
+    "timestamp_utc": "2026-05-14T08:00:56.752132+00:00",
+    "overall_score": 15.33
+  },
+  {
+    "latest_run_id": "run_20260514_110914_101857e3",
+    "timestamp_utc": "2026-05-14T11:10:39.400657+00:00",
+    "overall_score": 15.33
+  },
+  {
+    "latest_run_id": "run_20260514_112146_e0453238",
+    "timestamp_utc": "2026-05-14T11:23:13.671613+00:00",
+    "overall_score": 15.2
+  },
+  {
+    "latest_run_id": "run_20260514_120123_5ad48cdb",
+    "timestamp_utc": "2026-05-14T12:02:59.307668+00:00",
+    "overall_score": 15.07
+  },
+  {
+    "latest_run_id": "run_20260514_125920_f98e50b6",
+    "timestamp_utc": "2026-05-14T13:00:55.577690+00:00",
+    "overall_score": 15.07
+  },
+  {
+    "latest_run_id": "run_20260514_130245_468b94da",
+    "timestamp_utc": "2026-05-14T13:04:16.253759+00:00",
+    "overall_score": 15.67
+  },
+  {
+    "latest_run_id": "run_20260514_131249_aece2baa",
+    "timestamp_utc": "2026-05-14T13:14:17.131335+00:00",
+    "overall_score": 15.07
+  },
+  {
+    "latest_run_id": "run_20260514_131617_1db65181",
+    "timestamp_utc": "2026-05-14T13:17:49.134258+00:00",
+    "overall_score": 15.47
+  },
+  {
+    "latest_run_id": "run_20260514_132116_3347d4aa",
+    "timestamp_utc": "2026-05-14T13:22:52.530824+00:00",
+    "overall_score": 15.13
+  }
+]

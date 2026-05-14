@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 26 -- S26.1 progress_summary 生成</name>
+  <version>1.1.0</version>
+  <track>COACH</track>
+  <phase>26</phase>
+  <sub_stage>S26.1</sub_stage>
+  <sub_stage_name>agent.py 事件驱动式 progress_summary 生成</sub_stage_name>
+
+  <role>
+    在 return result 之前, 检查 4 个触发条件, 生成 progress_summary 文本。
+    不固定轮数, 只有真正有数据变化时才触发。
+  </role>
+
+  <context>
+    可用数据:
+    - diagnostic_engine.get_mastery_summary().skills -> 当前掌握度
+    - persistence.get_skills_with_recency() -> 技能 + 距上次天数
+    - BKTEngine.estimate_retention(mastery, days) -> retention
+    - self._last_progress_ts -> 上次反馈时间戳 (rate limit)
+
+    触发条件:
+    1. 任何技能 mastery 变化 > 0.1 (需存上一次的值)
+    2. 任何技能 mastery >= 0.7 且上一次 < 0.7 (首次达到)
+    3. 任何技能 retention < 0.6 (间隔重复触发)
+    4. 距上次反馈 time.time() - self._last_progress_ts > 3600
+
+    约束:
+    - 只修改 src/coach/agent.py
+    - try/except 包裹, 异常时不影响主流程
+    - 全量回归 1299+ 必须通过
+  </context>
+
+  <task>
+
+    -- 改动 1: __init__() 新增两个变量 (约第 95 行) --
+
+    self._last_progress_ts: float = 0.0       # Phase 26: 上次进步反馈时间
+    self._last_mastery: dict[str, float] = {}   # Phase 26: 上次记录的技能 mastery
+
+    -- 改动 2: return result 之前 (约第 635 行) 插入 --
+
+    # Phase 26: 进步反馈生成 (事件驱动)
+    self._progress_summary = None
+    try:
+        import time
+        now = time.time()
+        # rate limit: 1 小时内不重复
+        if now - self._last_progress_ts < 3600:
+            pass
+        else:
+            reasons: list[str] = []
+            skills: dict[str, float] = {}
+
+            if self.diagnostic_engine:
+                summary = self.diagnostic_engine.get_mastery_summary()
+                skills = summary.get("skills", {})
+                for skill, mastery in skills.items():
+                    old = self._last_mastery.get(skill, mastery)
+                    diff = mastery - old
+                    if diff > 0.1:
+                        reasons.append(f"{skill}: {old:.0%}->{mastery:.0%}")
+                    # 条件 2: 首次达到 >= 0.7 (仅在之前有记录时)
+                    if skill in self._last_mastery and mastery >= 0.7 and self._last_mastery.get(skill, 0) < 0.7:
+                        reasons.append(f"{skill}: 已达到{mastery:.0%}")
+
+            if self._persistence:
+                from src.coach.flow import BKTEngine
+                bkt = BKTEngine()
+                skills_data = self._persistence.get_skills_with_recency()
+                for skill, data in skills_data.items():
+                    ret = bkt.estimate_retention(data["mastery"], data["days_elapsed"])
+                    if ret < 0.6:
+                        reasons.append(f"{skill}: 建议复习(保留率{ret:.0%})")
+
+            if reasons:
+                self._progress_summary = "学习进展: " + "; ".join(reasons[:3])
+                self._last_progress_ts = now
+                self._last_mastery = dict(skills)  # 保存当前 mastery 供下次对比
+    except Exception:
+        pass
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>首次对话后 skills 为空时不触发误报</item>
+    <item>1 小时内不重复触发</item>
+    <item>无 mastery 数据时不崩溃</item>
+  </success_criteria>
+</prompt>

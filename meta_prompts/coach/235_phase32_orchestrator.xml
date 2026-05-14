@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 32 -- 体验审计管道正式收口</name>
+  <version>2.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>32</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>正式 baseline / 用户可见断链 / 长轮弱点与验证</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 32 的总控执行者。
+    你的职责不是扩展产品功能，而是将当前系统的体验问题收口成一条可重复、可比较、可回归的正式体验审计管道。
+    你必须按 Phase 32-A -> Phase 32-B -> Phase 32-C 严格串行推进，任何阶段未 GO，禁止进入下一阶段。
+  </role>
+
+  <context>
+    当前 Phase 32 的官方定位是“体验审计管道”，现有骨架文件已经存在：
+    - 235_phase32_orchestrator.xml
+    - 236_s32_1_simulator.xml
+    - 237_s32_2_scoring.xml
+    - 238_s32_3_diagnosis.xml
+    - 239_s32_4_fix.xml
+    - 240_s32_5_verify.xml
+
+    当前 run_experience_audit.py 已具有 40%-60% 的真实逻辑：
+    - 已有 5 画像 × 20 轮模拟
+    - 已能输出 all_turns.json 与 scoring.json
+    - 但尚未成为正式 baseline 系统
+
+    当前最关键的体验断点不在教练内核，而在体验链路：
+    1. WebSocket 已禁用，但 UI 仍可能给用户“connected / 实时正常”的感知
+    2. pulse respond 的 next_action 当前前端未消费，用户决策后对话可能断掉
+    3. dashboard 拉取失败被静默吞错
+    4. aggregator 降级输出存在 shape 稳定性风险
+    5. extractPayloadText 的 fallback 可能掩盖真实 payload 问题
+
+    本 Phase 32 的目标不是单纯提高 100 轮平均分，而是：
+    - 建立正式 baseline
+    - 识别真实体验断点
+    - 输出可实施修复方案
+    - 对比修复前后差异
+    - 用全量回归门禁收口
+  </context>
+
+  <global_constraints>
+    1. 禁止修改 contracts/**；
+    2. 禁止修改 src/inner/**；
+    3. 禁止修改 src/middle/**；
+    4. 禁止修改 src/outer/**；
+    5. 本阶段默认不以 src/coach/agent.py、src/coach/composer.py、src/coach/llm/prompts.py 为第一轮主修复面；
+    5. 不将体验审计扩展成通用产品分析平台；
+    6. 所有正式产物必须可机器读取、可比较、可回归；
+    7. 全量回归必须通过。
+  </global_constraints>
+
+  <audit_targets>
+    <lane id="lane_1_long_turn_dialogue">5 画像 × 20 轮长轮对话，评估连续性、推进感、重复、漂移。</lane>
+    <lane id="lane_2_breakpoint_probes">针对关键体验断点的专项探针：ws 状态、pulse next_action、dashboard 错误可见性、aggregator 降级 shape、payload masking。</lane>
+  </audit_targets>
+
+  <execution_order>
+    <phase_step>Phase 32-A: S32.1 -> S32.2</phase_step>
+    <phase_step>Phase 32-B: S32.3 -> S32.4 (ROUND1)</phase_step>
+    <phase_step>Phase 32-C: S32.4 (ROUND2) -> S32.5</phase_step>
+  </execution_order>
+
+  <meta_prompts>
+    <prompt stage="S32.1" role="baseline_input">236_s32_1_simulator.xml</prompt>
+    <prompt stage="S32.2" role="baseline_scoring">237_s32_2_scoring.xml</prompt>
+    <prompt stage="S32.3" role="root_cause">238_s32_3_diagnosis.xml</prompt>
+    <prompt stage="S32.4" role="fix_round_1_and_2">239_s32_4_fix.xml</prompt>
+    <prompt stage="S32.5" role="verification">240_s32_5_verify.xml</prompt>
+  </meta_prompts>
+
+  <required_outputs>
+    <item>reports/experience_audit/runs/&lt;run_id&gt;/all_turns.json</item>
+    <item>reports/experience_audit/runs/&lt;run_id&gt;/per_turn_scores.json</item>
+    <item>reports/experience_audit/runs/&lt;run_id&gt;/scoring.json</item>
+    <item>reports/experience_audit/runs/&lt;run_id&gt;/failure_cases.json</item>
+    <item>reports/experience_audit/runs/&lt;run_id&gt;/breakpoint_cases.json</item>
+    <item>reports/experience_audit/runs/&lt;run_id&gt;/comparison.json</item>
+    <item>reports/experience_audit/runs/&lt;run_id&gt;/run_summary.json</item>
+    <item>reports/experience_audit/shared_state.json</item>
+    <item>reports/experience_audit/run_history.json</item>
+  </required_outputs>
+
+  <go_gate_policy>
+    <gate>GO_A: baseline 具备 run_id、run_history、failure_cases、comparison 机制，且 lane 分层明确。</gate>
+    <gate>GO_B: 5 个关键断点全部完成 ROOT 级归档，且根因定位优先落在允许修改面。</gate>
+    <gate>GO_C: 第一轮用户可见断链修复方案形成，并有 comparison 与 failure 改善证据。</gate>
+    <gate>GO_D: 长轮 lane、breakpoint lane、正式产物、全量回归全部通过，Phase 32 才可判定完成。</gate>
+  </go_gate_policy>
+
+  <risk_analysis>
+    1. 过度关注 100 轮均分，忽略真实体验断点；
+    2. 根因误导到冻结层或教练内核，偏离当前项目边界；
+    3. 评分定义与中文体验不一致，导致数字存在但不可信；
+    4. 产物被覆盖，无法形成回归基线；
+    5. fallback 将真实问题伪装成“看起来正常”的体验。
+  </risk_analysis>
+
+  <task>
+    1. 先执行 Phase 32-A，将 run_experience_audit.py 收口为正式 baseline 系统；
+    2. baseline 未 GO，不进入 S32.3 / S32.4；
+    3. 再执行 Phase 32-B，优先处理用户可见断链：pulse next_action、connected 误感知、dashboard 静默失败、payload masking、aggregator shape 风险；
+    4. 再执行 Phase 32-C，处理剩余长轮弱点、评分口径问题与正式验证；
+    5. 任一阶段若试图触碰冻结层作为主修复面，立即标记为 deferred，不得强行越界实施；
+    6. 每个阶段必须输出：行为证据、结构化产物、GO/NO-GO、下一阶段输入。
+  </task>
+
+  <side_effects>
+    1. baseline 正式化后，问题会看起来更多，因为隐藏问题会被系统性暴露；
+    2. 第一轮修复后，UI 可能从“静默正常”转向“明确降级/明确错误”，但这提升了体验真实性；
+    3. 第二轮后均分不一定大幅提升，但 failure distribution 与 breakpoint 通过率应改善。
+  </side_effects>
+
+  <quality_gates>
+    <gate>存在正式 run_id 与 run_history</gate>
+    <gate>同时存在 long_turn lane 与 breakpoint probe lane</gate>
+    <gate>failure_cases / breakpoint_cases / comparison 为正式机器可读产物</gate>
+    <gate>不得修改 contracts/**、src/inner/**、src/middle/**、src/outer/**</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>Phase 32 baseline 成为正式可复跑管道</item>
+    <item>5 个关键体验断点可被稳定识别并进入比较</item>
+    <item>修复前后可通过 comparison 对比</item>
+    <item>审计结果可回归，且不依赖人工读报告</item>
+    <item>全量回归通过，且无冻结层越界改动</item>
+  </success_criteria>
+</prompt>

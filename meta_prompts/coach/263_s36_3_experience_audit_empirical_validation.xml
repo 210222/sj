@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S36.3 — Experience Audit Empirical Validation</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>36</phase>
+  <sub_stage>S36.3</sub_stage>
+  <sub_stage_name>Repeated runs / cache-eligibility evidence / prefix stability report</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责将 cache-friendly 设计从"结构推断"升级为"repeated runs 的证据链"。
+    你的职责不是修改评分逻辑，不是覆盖已有 baseline，而是在现有 experience audit 管道上扩展 observability 证据层。
+  </role>
+
+  <task>
+    1. 扩展 run_experience_audit.py 以收集 per-turn observability；
+    2. 在 per-run 目录下产出 llm_runtime_turns.json / llm_cache_evidence.json / llm_observability_summary.json；
+    3. 基于 repeated runs 产出 cross-run evidence artifacts；
+    4. 生成 prefix_stability_report.json；
+    5. 不破坏已有 scoring.json / all_turns.json 的结构与兼容性。
+  </task>
+
+  <primary_modification_surfaces>
+    <item>run_experience_audit.py — 扩展 simulate_profile() 收集 observability；扩展 main() 产出新 artifacts</item>
+    <item>tests/test_experience_audit.py — 扩展覆盖新 artifact 生成</item>
+    <item>reports/experience_audit/ 输出结构 — 新增 cross-run 与 per-run evidence 文件</item>
+  </primary_modification_surfaces>
+
+  <per_run_evidence>
+    <file>llm_runtime_turns.json — 每轮次的 cache / latency / token / path / retention 字段</file>
+    <file>llm_cache_evidence.json — per-run 的 cache_eligible rate / prefix_hash / prefix_share 汇总</file>
+    <file>llm_observability_summary.json — per-run 的 runtime 聚合 (mean/min/max/std latency, token, etc.)</file>
+  </per_run_evidence>
+
+  <cross_run_evidence>
+    <file>llm_cache_observability_manifest.json — cache-eligibility 的定义、测量方法、run 列表</file>
+    <file>llm_cache_empirical_band.json — repeated runs 的 cache-eligible rate / prefix stability / latency band</file>
+    <file>llm_runtime_observability_summary.json — cross-run 的 token/latency/transport 汇总</file>
+    <file>llm_prefix_stability_report.json — 同结构下 stable_prefix_hash 是否跨 run 不变</file>
+  </cross_run_evidence>
+
+  <measurement_requirements>
+    <item>per-turn: stable_prefix_hash / context_fingerprint / cache_eligible / latency / token / path</item>
+    <item>per-run: cache-eligible rate / mean latency / mean tokens / prefix hash consistency</item>
+    <item>cross-run: prefix stability (同结构下 hash 是否一致) / latency band / token band / cache-eligible band</item>
+  </measurement_requirements>
+
+  <critical_note>
+    本阶段验证的是"结构上 cache-friendly + repeated evidence 支持"，不是 provider 明确承认 hit/miss。
+    DeepSeek 的内部 cache hit/miss 信息不在当前 API response 中暴露，因此：
+    - cache_eligible 基于结构判断（稳定前缀长度/占比/一致性）
+    - 不得宣称"DeepSeek 已确认 cache hit"
+    - completion 文档必须明确区分"理论可命中"与"实证证据"
+  </critical_note>
+
+  <forbidden_actions>
+    <item>禁止修改现有 scoring 逻辑</item>
+    <item>禁止覆盖已有 baseline / comparison 文件语义</item>
+    <item>禁止修改 provider / model / base_url</item>
+    <item>禁止新建独立审计脚本（扩展现有 run_experience_audit.py 即可）</item>
+  </forbidden_actions>
+
+  <quality_gates>
+    <gate>repeated runs 可生成正式 cache/latency/token observability artifacts</gate>
+    <gate>prefix stability 可被报告化</gate>
+    <gate>sync / stream 差异可被实证展示</gate>
+    <gate>已有 scoring.json / all_turns.json 未被破坏</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>cache-friendly 声明有 repeated-run 实证支持</item>
+    <item>prefix stability 在跨 run 比较中有量化结论</item>
+    <item>Phase 37+ 可在这些 artifacts 上做优化前后对比</item>
+  </success_criteria>
+</prompt>

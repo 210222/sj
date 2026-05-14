@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 36 — DeepSeek Context Caching 实证化 + 运行时可观测性</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>36</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>Runtime instrumentation / API-Admin-Dashboard surfaces / Empirical validation / Gate verify close</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 36 的总控执行。
+    你的职责不是重构 prompt 结构，不是迁移 provider，而是将 Phase 35 已完成的 stable-prefix 设计，
+    从"结构上应该有效"提升为"运行时可证、审计可复现、后续优化可比较"的正式证据链。
+    你必须严格按子阶段串行推进，任何阶段未 GO，禁止进入下一阶段。
+  </role>
+
+  <context>
+    Phase 35 已完成 stable-prefix 分层 prompt assembly + retention bundle + sync/stream 主链一致性治理。
+    当前系统已有部分可复用基础：
+    - client.py 可提取 usage.total_tokens
+    - agent.py 已暴露 llm_generated / llm_model / llm_tokens / memory_status / difficulty_contract
+    - prompts.py 已返回 context_meta
+    - run_experience_audit.py 已有 per-run / cross-run JSON 产物结构
+    - API / dashboard / admin 表面已存在
+
+    但仍缺：
+    - stable_prefix_hash / cache_eligible / context_fingerprint runtime 证据
+    - sync / stream 统一的 LLM runtime observability 对象
+    - LLM call latency、stream 首包延迟、token/cost proxy 的持久化记录
+    - 基于 repeated runs 的 cache-friendly 行为实证
+  </context>
+
+  <global_constraints>
+    1. 禁止修改 contracts/**；
+    2. 禁止修改 src/inner/**；
+    3. 禁止修改 src/middle/**；
+    4. 禁止修改 src/outer/**；
+    5. 禁止修改 provider / model / base_url；
+    6. 禁止修改 scoring 维度与 breakpoint probes；
+    7. 禁止把结构性 cache-eligibility 伪装成 provider-confirmed cache-hit telemetry；
+    8. 所有新增 observability 字段必须在 sync / stream / audit 三处语义一致；
+    9. 子阶段严格串行，未 GO 不得进入下一阶段。
+  </global_constraints>
+
+  <execution_order>
+    <step>S36.1 → S36.2 → S36.3 → S36.4</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s36_1" name="Runtime instrumentation">
+      <meta_prompt>261_s36_1_runtime_instrumentation.xml</meta_prompt>
+    </stage>
+    <stage id="s36_2" name="API / admin / dashboard surfaces">
+      <meta_prompt>262_s36_2_api_admin_dashboard_surfaces.xml</meta_prompt>
+    </stage>
+    <stage id="s36_3" name="Experience audit empirical validation">
+      <meta_prompt>263_s36_3_experience_audit_empirical_validation.xml</meta_prompt>
+    </stage>
+    <stage id="s36_4" name="Gate verify and close">
+      <meta_prompt>264_s36_4_gate_verify_close.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+
+  <required_outputs>
+    <item>reports/phase36_cache_observability_execution_plan.md</item>
+    <item>reports/phase36_cache_observability_completion.md</item>
+    <item>reports/experience_audit/llm_cache_observability_manifest.json</item>
+    <item>reports/experience_audit/llm_cache_empirical_band.json</item>
+    <item>reports/experience_audit/llm_runtime_observability_summary.json</item>
+    <item>reports/experience_audit/llm_prefix_stability_report.json</item>
+    <item>Per-run: llm_runtime_turns.json / llm_cache_evidence.json / llm_observability_summary.json</item>
+  </required_outputs>
+
+  <risk_analysis>
+    1. 把"结构上可命中缓存"错误写成"API 已明确返回命中"；
+    2. sync / stream 只改一边，形成新的可观测性分叉；
+    3. 只记 token，不记 prefix/hash/path/latency，导致证据不闭环；
+    4. 改了审计 JSON 结构但破坏已有 baseline / comparison 文件的兼容性；
+    5. 将 observability phase 扩展为新的 prompt redesign phase。
+  </risk_analysis>
+
+  <go_gate_policy>
+    <gate>GO_S36.1: 每次 LLM 调用都能产生结构化 runtime 证据。</gate>
+    <gate>GO_S36.2: HTTP / WS / admin / dashboard 至少可见同一套核心 observability 字段。</gate>
+    <gate>GO_S36.3: repeated runs 形成 cache-eligibility / prefix stability / latency / token 的正式 evidence artifacts。</gate>
+    <gate>GO_S36.4: targeted suites + full regression 通过，Phase 36 completion 可明确说明"理论可命中"与"实证证据"之间的关系。</gate>
+  </go_gate_policy>
+
+  <drift_definitions>
+    <hard_drift>provider/model/base_url drift</hard_drift>
+    <hard_drift>scoring drift 或 breakpoint probe drift</hard_drift>
+    <hard_drift>冻结层改动</hard_drift>
+    <hard_drift>sync / stream 只有一边有 observability 字段</hard_drift>
+    <hard_drift>破坏已有 audit artifact 兼容性</hard_drift>
+    <structural_drift>同配置下 stable_prefix_hash 不稳定</structural_drift>
+    <structural_drift>cache_eligible 在结构相同场景中异常翻转</structural_drift>
+    <observability_drift>llm_generated=True 但 runtime evidence 缺失</observability_drift>
+    <observability_drift>stream_end 缺 path / latency / finish marker</observability_drift>
+  </drift_definitions>
+
+  <success_criteria>
+    <item>Phase 35 的结构收益被提升为运行时可证、审计可复现的证据链</item>
+    <item>cache-friendly 设计不再只是推断，而是有 repeated-run 实证支持</item>
+    <item>sync / stream / audit / dashboard / admin 共享统一 observability 语义</item>
+  </success_criteria>
+</prompt>

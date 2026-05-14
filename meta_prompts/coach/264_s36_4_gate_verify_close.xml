@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S36.4 — Gate Verify and Close</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>36</phase>
+  <sub_stage>S36.4</sub_stage>
+  <sub_stage_name>Targeted suites / full regression / completion 收口</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 36 的最终验证与收口。
+    你的职责不是继续扩范围，而是在 instrumentation、API surfaces、empirical validation 全部完成后，
+    通过 targeted suites + full regression + completion 文档完成正式收口。
+  </role>
+
+  <task>
+    1. 验证 S36.1/S36.2/S36.3 的全部产出完整；
+    2. 运行 targeted test suites（新增 + 已有相关）；
+    3. 运行 repeated audit runs 验证 observability artifacts 可复现；
+    4. 运行 python -m pytest tests/ -q 全量回归；
+    5. 生成 reports/phase36_cache_observability_completion.md；
+    6. 给出 GO / NO-GO。
+  </task>
+
+  <targeted_test_suites>
+    <item>tests/test_phase36_llm_observability.py — 新增：验证 sync/stream observability 字段完整性</item>
+    <item>tests/test_phase36_stream_runtime_parity.py — 新增：验证 sync/stream observability 一致性</item>
+    <item>tests/test_experience_audit.py — 扩展：覆盖新 artifact 生成</item>
+    <item>tests/test_llm_client.py — 扩展：覆盖 observability 附加逻辑</item>
+  </targeted_test_suites>
+
+  <must_verify>
+    <item>相同结构条件下 stable_prefix_hash 稳定（跨 run 不变）</item>
+    <item>suffix 变化（不同 user input）不应改变 stable_prefix_hash</item>
+    <item>sync / stream 的 llm_observability 核心字段一致</item>
+    <item>audit artifacts 完整生成（per-run + cross-run）</item>
+    <item>已有 baseline / comparison / scoring 文件未被破坏</item>
+    <item>无冻结层越界</item>
+    <item>key 未被写入任何文件</item>
+  </must_verify>
+
+  <required_completion_content>
+    <item>Phase 35 作为 before-state 的结构锚点引用</item>
+    <item>新增 observability 字段完整清单</item>
+    <item>repeated runs 的 empirical evidence 总结</item>
+    <item>prefix stability 报告摘要</item>
+    <item>token / latency / path parity 摘要</item>
+    <item>cache-eligibility 的理论基础与实证证据的区分</item>
+    <item>最终 GO / NO-GO 结论</item>
+  </required_completion_content>
+
+  <drift_checklist>
+    <check>provider/model/base_url 未变</check>
+    <check>scoring 维度未变</check>
+    <check>breakpoint probes 未变</check>
+    <check>冻结层未动</check>
+    <check>sync / stream 双路径 observability 一致</check>
+    <check>已有 audit artifact 兼容</check>
+    <check>stable_prefix_hash 同结构下稳定</check>
+    <check>stream_end 含 path/latency/finish marker</check>
+    <check>llm_generated=True 时 runtime evidence 不缺失</check>
+  </drift_checklist>
+
+  <quality_gates>
+    <gate>targeted suites 全绿</gate>
+    <gate>repeated audit runs 产物完备</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+    <gate>phase36_cache_observability_completion.md 成功落盘</gate>
+    <gate>completion 文档明确区分"理论可命中"与"实证证据"</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>Phase 35 的结构收益被提升为运行时可证、审计可复现的证据链</item>
+    <item>Phase 37+ 可在本阶段 artifacts 上做优化前后对比</item>
+    <item>本阶段完成后，不再需要回头补 observability 基础</item>
+  </success_criteria>
+</prompt>

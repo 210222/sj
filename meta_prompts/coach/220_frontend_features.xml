@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 33 -- 前端教学功能展示 (审查修复版)</name>
+  <version>1.1.0</version>
+  <track>FRONTEND</track>
+  <phase>33</phase>
+  <sub_stage>FEATURES</sub_stage>
+  <sub_stage_name>修复 3 个 bug: frontend api 类型缺字段 + App.tsx 无 dashData + 后端缺 review_queue 字段</sub_stage_name>
+
+  <context>
+    后端 Phase 19-31 的教学数据未在前端展示。
+
+    审查发现 3 个 bug:
+    1. frontend/types/api.ts UserDashboardResponse 缺 mastery_snapshot + review_queue 字段
+    2. App.tsx 存 dashTTM/dashSDT 但不存完整响应, 无 dashData 对象
+    3. 后端 schemas.py UserDashboardResponse 已加 mastery_snapshot 但缺 review_queue
+
+    风险: 前端 TS 编译会报错, 运行时 dashboard API 返回未知字段被忽略。
+  </context>
+
+  <task>
+
+    === Bug 1: 后端 schemas.py 加 review_queue 字段 ===
+
+    api/models/schemas.py UserDashboardResponse 追加:
+    review_queue: list | None = None  # Phase 33
+
+    === Bug 2: 前端 types/api.ts 补全字段 ===
+
+    frontend/src/types/api.ts UserDashboardResponse 追加:
+    mastery_snapshot?: Record<string, unknown> | null;
+    review_queue?: Array<Record<string, unknown>> | null;
+
+    === Bug 3: App.tsx 存储完整 dashboard 响应 + 集成教学面板 ===
+
+    当前: 只存 dashTTM/dashSDT
+    改后: 新增 dashFull 存完整响应
+
+    // Phase 33: 完整 dashboard 响应 (含教学快照)
+    const [dashFull, setDashFull] = useState<UserDashboardResponse | null>(null);
+
+    // 在 getUserDashboard 回调中:
+    getUserDashboard(state.sessionId).then((d) => {
+        setDashTTM(d.ttm_radar);
+        setDashSDT(d.sdt_rings);
+        setDashFull(d);  // Phase 33
+    })
+
+    // 在 side 边栏中 TTM/SDT 组件下方:
+    {dashFull?.mastery_snapshot && (
+        <TeachingStatus dashboard={dashFull} />
+    )}
+
+    === 4: TeachingStatus.tsx 组件 ===
+
+    frontend/src/components/TeachingStatus.tsx:
+
+    import type { UserDashboardResponse } from '../types/api';
+
+    export function TeachingStatus({ dashboard }: { dashboard: UserDashboardResponse }) {
+        return (
+            <div style={{ padding: 'var(--space-md)', fontSize: 13 }}>
+                {dashboard.mastery_snapshot?.skills && (
+                    <div style={{ marginBottom: 12 }}>
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>技能掌握度</div>
+                        {Object.entries(dashboard.mastery_snapshot.skills as Record<string,number>).map(([s, v]) => (
+                            <div key={s} style={{ display:'flex', justifyContent:'space-between' }}>
+                                <span>{s}</span>
+                                <span>{(v * 100).toFixed(0)}%</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {dashboard.review_queue && dashboard.review_queue.length > 0 && (
+                    <div style={{ marginBottom: 12 }}>
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>待复习</div>
+                        {dashboard.review_queue.map((r: any, i: number) => (
+                            <div key={i} style={{ display:'flex', justifyContent:'space-between' }}>
+                                <span>{r.skill}</span>
+                                <span style={{ color: '#c44' }}>{(r.retention * 100).toFixed(0)}%</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    }
+  </task>
+
+  <success_criteria>
+    <item>npm run build 无 TS 错误</item>
+    <item>Dashboard API 返回 mastery_snapshot + review_queue</item>
+    <item>侧边栏显示技能快照和待复习</item>
+    <item>无数据时组件不渲染 (?. 保护)</item>
+  </success_criteria>
+</prompt>

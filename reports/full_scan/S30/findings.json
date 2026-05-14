@@ -1,5 +1,68 @@
 [
   {
+    "severity": "P1",
+    "type": "sql_injection",
+    "file": "src/coach/persistence.py",
+    "line": 45,
+    "detail": "Potential SQL injection (f-string in query)"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_api_admin.py",
+    "line": 25,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_api_chat.py",
+    "line": 20,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_api_dashboard.py",
+    "line": 14,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_api_excursion.py",
+    "line": 16,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_api_pulse.py",
+    "line": 19,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_api_pulse_degradation.py",
+    "line": 21,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_api_rate_limit.py",
+    "line": 16,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_api_session.py",
+    "line": 14,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
     "severity": "P2",
     "type": "assert_used",
     "file": "tests/test_audit.py",
@@ -79,6 +142,34 @@
   {
     "severity": "P2",
     "type": "assert_used",
+    "file": "tests/test_diagnostic_engine.py",
+    "line": 20,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "weak_hash",
+    "file": "tests/test_exhaustive_all_configs.py",
+    "line": 71,
+    "detail": "Weak hash MD5"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_exhaustive_all_configs.py",
+    "line": 229,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_exhaustive_quality.py",
+    "line": 34,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
     "file": "tests/test_flow.py",
     "line": 10,
     "detail": "assert statement — disabled with -O flag"
@@ -95,6 +186,41 @@
     "type": "assert_used",
     "file": "tests/test_ledger.py",
     "line": 32,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_llm_client.py",
+    "line": 15,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_llm_integration.py",
+    "line": 15,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_llm_s2_safety.py",
+    "line": 13,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_llm_s4_memory.py",
+    "line": 13,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_llm_s5_sandbox.py",
+    "line": 11,
     "detail": "assert statement — disabled with -O flag"
   },
   {
@@ -184,6 +310,55 @@
   {
     "severity": "P2",
     "type": "assert_used",
+    "file": "tests/test_phase22.py",
+    "line": 34,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_phase23.py",
+    "line": 12,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_phase24_longitudinal.py",
+    "line": 21,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_phase25.py",
+    "line": 11,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_phase26.py",
+    "line": 10,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_phase27.py",
+    "line": 10,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_phase30.py",
+    "line": 28,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
     "file": "tests/test_pipeline_audit_integration.py",
     "line": 27,
     "detail": "assert statement — disabled with -O flag"
@@ -228,6 +403,20 @@
     "type": "assert_used",
     "file": "tests/test_resolver.py",
     "line": 52,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_s16_awakening.py",
+    "line": 20,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_s17_consent.py",
+    "line": 49,
     "detail": "assert statement — disabled with -O flag"
   },
   {
@@ -364,18 +553,28 @@
     "detail": "assert statement — disabled with -O flag"
   },
   {
-    "severity": "P4",
-    "type": "crypto_audit",
-    "detail": "No weak cryptography detected"
+    "severity": "P0",
+    "type": "api_key",
+    "file": ".claude/settings.local.json",
+    "line": 152,
+    "detail": "OpenAI/API Secret Key"
+  },
+  {
+    "severity": "P0",
+    "type": "api_key",
+    "file": "docs/USER_GUIDE.md",
+    "line": 14,
+    "detail": "OpenAI/API Secret Key"
+  },
+  {
+    "severity": "P2",
+    "type": "weak_crypto",
+    "file": "tests/test_exhaustive_all_configs.py",
+    "detail": "Weak hash function: md5"
   },
   {
     "severity": "P3",
     "type": "auth_profile",
-    "detail": "{\"auth_detected\": false, \"mfa_detected\": false, \"rbac_detected\": true, \"session_management\": true, \"rate_limiting\": false}"
-  },
-  {
-    "severity": "P2",
-    "type": "missing_mfa",
-    "detail": "No MFA/2FA patterns detected — single-factor auth risk"
+    "detail": "{\"auth_detected\": true, \"mfa_detected\": true, \"rbac_detected\": true, \"session_management\": true, \"rate_limiting\": true}"
   }
 ]

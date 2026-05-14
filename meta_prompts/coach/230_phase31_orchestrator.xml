@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 消歧义：本文件中 S31 表示 Phase 31 子阶段，不表示历史 Phase 10 S3.1 编号体系。 -->
+<prompt>
+  <name>Phase 31 -- 收尾稳态段</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>31</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>记忆闭环 / act 顺序稳态 / 配置写入一致性 / 测试回归门禁</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你是 Coherence Phase 31 收尾稳态段的总控执行者。
+    你的职责不是扩功能，而是将已存在但未完全闭环的链路收口为可验证、可回归、可防漂移的稳态实现。
+    你必须严格按子阶段串行推进，任何阶段未 GO，禁止进入下一阶段。
+  </role>
+
+  <context>
+    当前仓库中，Phase 31 已有部分半落地逻辑：
+    1. src/coach/agent.py 中已经存在 _build_context_summary()、_prev_teaching、entity/facts 写入等收尾逻辑；
+    2. src/coach/memory.py 中 SessionMemory 的 sessions 表尚无 ai_response 列，store() 未写入该字段，recall() 未返回该字段 —— schema + store + recall 三层都未打通；
+    3. api/routers/config_router.py 与 src/coach/agent.py::_update_config() 存在 coach_defaults.yaml 写入路径不一致，且 API 侧配置缓存失效链尚未接入写入路径；
+    4. api/services/dashboard_aggregator.py 中 _cached_config() / _invalidate_cache() 已存在，但 _invalidate_cache() 是孤儿函数，无任何调用点；
+    5. tests/test_phase27.py、tests/test_coach_memory_upgrade.py、tests/test_api_dashboard.py 等已有基础测试，但仍缺行为级门禁。
+
+    本 Phase 31 的目标：
+    - 不新增产品功能面；
+    - 只收敛已有链路；
+    - 保证上下文摘要不再空转；
+    - 保证配置写入与缓存失效一致；
+    - 保证回归测试不再只验证"字段存在"，而是验证"行为闭环"。
+
+    本 Phase 的 out_of_scope：
+    - 不扩展 contracts；
+    - 不修改 inner / middle / outer 冻结层；
+    - 不偷跑 Phase 32；
+    - 不做全仓 YAML 大扫除；
+    - 不以调整 schema / reason_code / 编排链顺序的方式绕过问题。
+  </context>
+
+  <global_constraints>
+    1. 禁止修改 contracts/**；
+    2. 禁止修改 src/inner/**；
+    3. 禁止修改 src/middle/**；
+    4. 禁止修改 src/outer/**；
+    5. 禁止引入 schema drift；
+    6. 禁止引入 reason_code drift；
+    7. 禁止调整既有编排链顺序来绕过问题；
+    8. 所有 YAML 写入必须 yaml.safe_dump；
+    9. 涉及 config 的修改必须处理模块缓存；
+    10. 新增 save/load/update 必须同 Phase 完成调用点注入；
+    11. 子阶段严格串行，未 GO 不得进入下一阶段。
+  </global_constraints>
+
+  <execution_order>
+    S31.A -&gt; S31.B -&gt; S31.C -&gt; S31.D
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s31_a" name="记忆链路闭环">
+      <meta_prompt>231_s31_a_memory_closure.xml</meta_prompt>
+    </stage>
+    <stage id="s31_b" name="act() 顺序与上下文摘要正确性">
+      <meta_prompt>232_s31_b_act_order_summary.xml</meta_prompt>
+    </stage>
+    <stage id="s31_c" name="配置写入一致性">
+      <meta_prompt>233_s31_c_config_consistency.xml</meta_prompt>
+    </stage>
+    <stage id="s31_d" name="测试补强与稳态回归门禁">
+      <meta_prompt>234_s31_d_regression_gates.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+
+  <risk_analysis>
+    1. 记忆链路看似已接，实际没有最终 payload 闭环；
+    2. act 顺序局部调整后，摘要与最终 action_type 可能失配；
+    3. config 写入多入口，safe_dump 与缓存失效策略不一致；
+    4. 只用全量 pytest 作为验收，会掩盖真实行为回退；
+    5. 若不拆阶段而一次性补丁式实现，最容易产生范围扩散与重复接线。
+  </risk_analysis>
+
+  <go_gate_policy>
+    <gate>GO_A: SessionMemory 中 ai_response 对当前 session 可读，且可用于下一轮摘要。</gate>
+    <gate>GO_B: 摘要中的上一轮策略 / 上一轮教学内容 与真实返回结果一致。</gate>
+    <gate>GO_C: 产品级 config 写入统一 safe_dump，且下一次读取不吃旧缓存。</gate>
+    <gate>GO_D: targeted suite + full suite 通过，且无越界修改。</gate>
+  </go_gate_policy>
+
+  <task>
+    1. 先执行 231_s31_a_memory_closure.xml；
+    2. 仅在 GO_A 达成后，执行 232_s31_b_act_order_summary.xml；
+    3. 仅在 GO_B 达成后，执行 233_s31_c_config_consistency.xml；
+    4. 仅在 GO_C 达成后，执行 234_s31_d_regression_gates.xml；
+    5. 每个阶段结束时，必须保留：改动面、行为证据、测试结果、GO/NO-GO 判断；
+    6. 任一阶段若触碰禁止目录、引入 schema drift、reason_code drift、编排链顺序漂移，立即判定 NO-GO。
+  </task>
+
+  <side_effects>
+    1. 拆成多阶段后，交付看上去更慢，但这是为了防止一次性修复造成链路漂移；
+    2. 阶段性测试会先暴露旧问题，不代表方案错误，而是门禁开始发挥作用；
+    3. 某些已有"误打误撞通过"的测试在稳态修复后可能需要同步收紧断言。
+  </side_effects>
+
+  <quality_gates>
+    <gate>Phase 31 相关 targeted tests 全绿</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+    <gate>forbidden paths (contracts/**, src/inner/**, src/middle/**, src/outer/**) 无修改</gate>
+    <gate>无 contracts/schema/reason_code 漂移</gate>
+    <gate>无新增 save/load/update 却未接调用点的残留</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>第二轮能稳定引用上一轮 AI 教学内容，不是空白占位</item>
+    <item>配置写入路径序列化规则一致</item>
+    <item>摘要中的策略连续性与真实动作一致</item>
+    <item>未修改禁止目录</item>
+    <item>无新增 schema drift</item>
+  </success_criteria>
+</prompt>

@@ -1,0 +1,21 @@
+{
+  "total_runs": 25,
+  "first_run_utc": "2026-05-13T08:03:30.421706+00:00",
+  "last_run_utc": "2026-05-14T13:22:52.530824+00:00",
+  "first_score": 12.31,
+  "last_score": 15.13,
+  "delta": 2.82,
+  "mean": 14.36,
+  "min": 12.31,
+  "max": 15.67,
+  "std": 1.12,
+  "recent_5": [
+    15.07,
+    15.67,
+    15.07,
+    15.47,
+    15.13
+  ],
+  "trend_direction": "up",
+  "trend_strength": "strong"
+}

@@ -1,0 +1,18 @@
+{
+  "phase": "36",
+  "description": "Cache-eligibility 的定义、测量方法、run 列表",
+  "cache_eligibility_definition": "structural: stable_prefix_chars >= 400 AND stable_prefix_share >= 0.15",
+  "measurement_method": "per-turn context_meta from build_coach_context() → client.generate() → API response → audit extraction",
+  "note": "This is structural evidence, NOT provider-confirmed cache-hit telemetry",
+  "runs_analyzed": [
+    "run_20260514_110914_101857e3",
+    "run_20260514_112146_e0453238",
+    "run_20260514_120123_5ad48cdb",
+    "run_20260514_125920_f98e50b6",
+    "run_20260514_130245_468b94da",
+    "run_20260514_131249_aece2baa",
+    "run_20260514_131617_1db65181",
+    "run_20260514_132116_3347d4aa"
+  ],
+  "total_runs": 8
+}

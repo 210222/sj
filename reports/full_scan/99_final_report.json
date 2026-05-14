@@ -2,107 +2,107 @@
   "report_meta": {
     "audit_name": "platinum_full_system_audit_l3",
     "version": "2.0.0",
-    "generated_at_utc": "2026-05-04T07:26:40.612Z",
+    "generated_at_utc": "2026-05-12T06:02:21.985Z",
     "framework": "L3 Platinum — 五层六维八章 (蓝皮书规范)",
     "scope": "All completed phases (0-5) + A/B/C tracks"
   },
   "chapter_1_executive_summary": {
-    "health_index": 73.4,
-    "risk_index": 33.0,
+    "health_index": 53.0,
+    "risk_index": 100,
     "labels": {
-      "availability": "Production-ready",
-      "maintainability": "Sustainable (可持续演进)",
-      "auditability": "Traceable (全链路可追溯)"
+      "availability": "Guarded (受保护运行)",
+      "maintainability": "Fragile (脆弱不堪)",
+      "auditability": "Partial (部分断层)"
     },
     "go_no_go_decision": "WARN",
-    "go_no_go_statement": "WARN — 1070 tests pass but non-critical findings require attention before production deployment.",
+    "go_no_go_statement": "WARN — 835 tests pass but non-critical findings require attention before production deployment.",
     "key_metrics": {
-      "total_files": 136,
-      "total_lines": 20960,
-      "tests_passed": 1070,
-      "contracts_frozen": "11/11",
-      "critical_security_findings": 0,
-      "total_findings": 224,
-      "tech_debt_estimate": "$15,000"
+      "total_files": 188,
+      "total_lines": 31884,
+      "tests_passed": 835,
+      "contracts_frozen": "13/13",
+      "critical_security_findings": 4,
+      "total_findings": 364,
+      "tech_debt_estimate": "$45,000"
     }
   },
   "chapter_2_risk_overview": {
-    "total_risks": 224,
-    "p0_count": 0,
-    "p1_count": 0,
-    "p2_count": 55,
+    "total_risks": 364,
+    "p0_count": 2,
+    "p1_count": 6,
+    "p2_count": 90,
     "risks_by_business_impact": [
       {
         "id": "F001",
+        "severity": "P0",
+        "type": "api_key",
+        "source": "S30",
+        "business_impact": "Critical — 可能引发数据泄露、系统崩溃或法律诉讼",
+        "detail": "OpenAI/API Secret Key"
+      },
+      {
+        "id": "F002",
+        "severity": "P0",
+        "type": "api_key",
+        "source": "S30",
+        "business_impact": "Critical — 可能引发数据泄露、系统崩溃或法律诉讼",
+        "detail": "OpenAI/API Secret Key"
+      },
+      {
+        "id": "F003",
+        "severity": "P1",
+        "type": "sql_injection",
+        "source": "S30",
+        "business_impact": "High — 可能导致功能失效或安全边界突破",
+        "detail": "Potential SQL injection (f-string in query)"
+      },
+      {
+        "id": "F004",
+        "severity": "P1",
+        "type": "runtime_wiring_failure",
+        "source": "S65",
+        "business_impact": "High — 可能导致功能失效或安全边界突破",
+        "detail": "运行时接线验证失败: 'NoneType' object has no attribute 'get'"
+      },
+      {
+        "id": "F005",
+        "severity": "P1",
+        "type": "runtime_crash",
+        "source": "S85",
+        "business_impact": "High — 可能导致功能失效或安全边界突破",
+        "detail": "运行时验证异常: 'NoneType' object has no attribute 'get'"
+      },
+      {
+        "id": "F006",
+        "severity": "P1",
+        "type": "regression_failures",
+        "source": "S85",
+        "business_impact": "High — 可能导致功能失效或安全边界突破",
+        "detail": "全量回归有 55 个失败"
+      },
+      {
+        "id": "F007",
+        "severity": "P1",
+        "type": "exhaustive_fail",
+        "source": "S85",
+        "business_impact": "High — 可能导致功能失效或安全边界突破",
+        "detail": "S14/S15 快速质量验证 (tests/test_s15_quick.py) 返回 1: ============================================================\nS15 QUICK EVALUATION: 5 configs x 5 turns\n============================================================\nTraceback (most recent call last):\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s15_quick.py\", line 151, in <module>\n    main()\n  File \"D:"
+      },
+      {
+        "id": "F008",
+        "severity": "P1",
+        "type": "exhaustive_fail",
+        "source": "S85",
+        "business_impact": "High — 可能导致功能失效或安全边界突破",
+        "detail": "Phase 17 穷尽测试 (tests/test_s17_exhaustive.py) 返回 1: Traceback (most recent call last):\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s17_exhaustive.py\", line 373, in <module>\n    ok = run()\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s17_exhaustive.py\", line 64, in run\n    restore_config()\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s17_exhaustive.py\", li"
+      },
+      {
+        "id": "F009",
         "severity": "P2",
         "type": "race_condition_risk",
         "source": "S10",
         "business_impact": "Medium — 影响系统可靠性或维护效率",
         "detail": "Threading usage without Lock/RLock — potential race condition"
-      },
-      {
-        "id": "F002",
-        "severity": "P2",
-        "type": "assert_used",
-        "source": "S30",
-        "business_impact": "Medium — 影响系统可靠性或维护效率",
-        "detail": "assert statement — disabled with -O flag"
-      },
-      {
-        "id": "F003",
-        "severity": "P2",
-        "type": "assert_used",
-        "source": "S30",
-        "business_impact": "Medium — 影响系统可靠性或维护效率",
-        "detail": "assert statement — disabled with -O flag"
-      },
-      {
-        "id": "F004",
-        "severity": "P2",
-        "type": "assert_used",
-        "source": "S30",
-        "business_impact": "Medium — 影响系统可靠性或维护效率",
-        "detail": "assert statement — disabled with -O flag"
-      },
-      {
-        "id": "F005",
-        "severity": "P2",
-        "type": "assert_used",
-        "source": "S30",
-        "business_impact": "Medium — 影响系统可靠性或维护效率",
-        "detail": "assert statement — disabled with -O flag"
-      },
-      {
-        "id": "F006",
-        "severity": "P2",
-        "type": "assert_used",
-        "source": "S30",
-        "business_impact": "Medium — 影响系统可靠性或维护效率",
-        "detail": "assert statement — disabled with -O flag"
-      },
-      {
-        "id": "F007",
-        "severity": "P2",
-        "type": "assert_used",
-        "source": "S30",
-        "business_impact": "Medium — 影响系统可靠性或维护效率",
-        "detail": "assert statement — disabled with -O flag"
-      },
-      {
-        "id": "F008",
-        "severity": "P2",
-        "type": "assert_used",
-        "source": "S30",
-        "business_impact": "Medium — 影响系统可靠性或维护效率",
-        "detail": "assert statement — disabled with -O flag"
-      },
-      {
-        "id": "F009",
-        "severity": "P2",
-        "type": "assert_used",
-        "source": "S30",
-        "business_impact": "Medium — 影响系统可靠性或维护效率",
-        "detail": "assert statement — disabled with -O flag"
       },
       {
         "id": "F010",
@@ -200,26 +200,26 @@
       "status": "GO",
       "details": [
         "Per-module stats with complexity breakdown",
-        "Code smells: 91",
+        "Code smells: 144",
         "SBOM: 3 packages",
         "TLA+ ready: True"
       ]
     },
     "layer_b_runtime": {
       "layer": "B — Runtime Physiology",
-      "status": "GO",
+      "status": "NO-GO",
       "details": [
-        "Tests: 1070 passed / 0 failed",
+        "Tests: 818 passed / 17 failed",
         "Per-module breakdown available",
         "Cognitive load: 10/10"
       ]
     },
     "layer_c_security": {
       "layer": "C — Security Immunology",
-      "status": "GO",
+      "status": "FAIL",
       "details": [
-        "SAST: 52 findings (P0:0)",
-        "Secrets: 0",
+        "SAST: 79 findings (P0:2)",
+        "Secrets: 2",
         "Dependency score: 3"
       ]
     },
@@ -227,7 +227,7 @@
       "layer": "D — Data Metabolism",
       "status": "GO",
       "details": [
-        "Contracts: 11/11 frozen",
+        "Contracts: 13/13 frozen",
         "Schema drift: False",
         "AI drift detection: True"
       ]
@@ -236,9 +236,28 @@
       "layer": "E — Delivery & Governance",
       "status": "WARN",
       "details": [
-        "DORA: Low (monthly) deploys",
+        "DORA: Medium (weekly) deploys",
         "Bus factor: 1",
         "Test pyramid healthy: False"
+      ]
+    },
+    "layer_f_phase6": {
+      "layer": "F — Phase 6 Integration Health",
+      "status": "FAIL",
+      "details": [
+        "Wiring checks: 14/18",
+        "Phase 6 contracts frozen check: FAIL",
+        "Runtime verify: 77.8%"
+      ]
+    },
+    "layer_h_phase19_21": {
+      "layer": "H — Phase 19-21 Wiring & Exhaustive",
+      "status": "FAIL",
+      "details": [
+        "Wiring checks: 5/15",
+        "Full regression: verified in S85 run",
+        "Exhaustive test integration: FAIL",
+        "Runtime verify score: 33.3%"
       ]
     }
   },
@@ -246,11 +265,11 @@
     "pairs": {
       "contracts_vs_source": {
         "status": "GO",
-        "detail": "11 contracts, source imports verified"
+        "detail": "13 contracts, source imports verified"
       },
       "source_vs_tests": {
         "status": "GO",
-        "detail": "35/41 source modules have test coverage"
+        "detail": "42/53 source modules have test coverage"
       },
       "tests_vs_runtime": {
         "status": "GO",
@@ -269,13 +288,13 @@
   },
   "chapter_5_stress_and_limits": {
     "test_limits": {
-      "max_tests_run": 1070,
-      "all_passed": true
+      "max_tests_run": 835,
+      "all_passed": false
     },
     "cognitive_load": {
-      "comment_ratio": 0.0727,
-      "long_lines": 70,
-      "max_line_length": 190,
+      "comment_ratio": 0.0749,
+      "long_lines": 222,
+      "max_line_length": 259,
       "cognitive_load_score": 10,
       "assessment": "Healthy"
     },
@@ -293,9 +312,9 @@
   },
   "chapter_6_attack_defense": {
     "automated_scan_results": {
-      "sast_critical": 0,
-      "secrets_critical": 0,
-      "extended_sast_patterns": 52
+      "sast_critical": 2,
+      "secrets_critical": 2,
+      "extended_sast_patterns": 79
     },
     "requires_manual_audit": [
       "社会工程学审计 (钓鱼/伪装/诱饵攻击模拟)",
@@ -307,25 +326,25 @@
   },
   "chapter_7_fix_roadmap": {
     "tech_debt": {
-      "replacement_cost_usd": 15000,
-      "debt_months_estimated": 1,
-      "annual_interest_usd": 4950,
-      "interest_rate_pct": 33.0,
+      "replacement_cost_usd": 45000,
+      "debt_months_estimated": 3,
+      "annual_interest_usd": 45000,
+      "interest_rate_pct": 100.0,
       "model_assumptions": {
         "dev_month_cost_usd": 15000,
         "loc": 16000,
         "finding_annual_cost_usd": 500
       },
-      "roi_notes": "Investing $15000 now saves $4950/year in carrying cost"
+      "roi_notes": "Investing $45000 now saves $45000/year in carrying cost"
     },
     "roadmap_30_60_90": {
       "day_30_止血": [
-        "Fix P0/P1 security findings (0 critical)",
+        "Fix P0/P1 security findings (4 critical)",
         "Add CI/CD pipeline configuration",
         "Run TLA+ model checking on state machine"
       ],
       "day_60_治理": [
-        "Address 224 audit findings by severity",
+        "Address 364 audit findings by severity",
         "Add AI model drift detection",
         "Implement data quality monitoring",
         "Repay tech debt: reduce high-complexity functions"
@@ -334,36 +353,36 @@
         "Chaos engineering drills with fault injection",
         "Performance benchmarks under 10x load",
         "Complete accessibility/WCAG audit",
-        "Estimated tech debt repayment: $15,000"
+        "Estimated tech debt repayment: $45,000"
       ]
     },
-    "roi_analysis": "Investing $15000 now saves $4950/year in carrying cost"
+    "roi_analysis": "Investing $45000 now saves $45000/year in carrying cost"
   },
   "chapter_8_evidence_appendix": {
     "evidence_files": [
       {
         "path": "00_execution_index.md",
-        "sha256": "0de68b2775cda3ac",
+        "sha256": "d583d6f568de73b6",
         "step_id": "root"
       },
       {
         "path": "99_final_report.json",
-        "sha256": "2ec220471a5eb380",
+        "sha256": "a0b4db990e036584",
         "step_id": "root"
       },
       {
         "path": "99_final_report.md",
-        "sha256": "0e906804ff4956e4",
+        "sha256": "3ca1f52198403c0a",
         "step_id": "root"
       },
       {
         "path": "blockers.json",
-        "sha256": "4f53cda18c2baa0c",
+        "sha256": "5e4fe25e3d8028e4",
         "step_id": "root"
       },
       {
         "path": "evidence_manifest.json",
-        "sha256": "2e6379a0db075cbe",
+        "sha256": "4fb4f27717088aab",
         "step_id": "root"
       },
       {
@@ -373,27 +392,27 @@
       },
       {
         "path": "S00/summary.json",
-        "sha256": "8cf331d066f01e44",
+        "sha256": "174d730fa6c713fc",
         "step_id": "S00"
       },
       {
         "path": "S00/raw/env.txt",
-        "sha256": "ea3fee3f449aca69",
+        "sha256": "f887325e131cb35e",
         "step_id": "S00"
       },
       {
         "path": "S10/findings.json",
-        "sha256": "7fdf0b9ea93e5e49",
+        "sha256": "a80001c6ac1d1cb5",
         "step_id": "S10"
       },
       {
         "path": "S10/summary.json",
-        "sha256": "3d747e815b93ac51",
+        "sha256": "c406c0b8a1b83b37",
         "step_id": "S10"
       },
       {
         "path": "S10/raw/static_analysis.log",
-        "sha256": "fdb1fd08d37c48d8",
+        "sha256": "40b296d4c87c8249",
         "step_id": "S10"
       },
       {
@@ -403,112 +422,132 @@
       },
       {
         "path": "S20/summary.json",
-        "sha256": "f70464e90d7a1cba",
+        "sha256": "f2c3b4c5ea103dd0",
         "step_id": "S20"
       },
       {
         "path": "S20/raw/test_run.log",
-        "sha256": "95a5b9a874fc59fd",
+        "sha256": "9c2de9b94b2acdd0",
         "step_id": "S20"
       },
       {
         "path": "S30/findings.json",
-        "sha256": "6352a85dca5909b2",
+        "sha256": "27c032cfde47b1ad",
         "step_id": "S30"
       },
       {
         "path": "S30/summary.json",
-        "sha256": "12dbce9fe331de07",
+        "sha256": "ebfcf5c3a7a2cc38",
         "step_id": "S30"
       },
       {
         "path": "S30/raw/sast.log",
-        "sha256": "585cc35bad434dd8",
+        "sha256": "8b367d4025640015",
         "step_id": "S30"
       },
       {
         "path": "S30/raw/secret_scan.log",
-        "sha256": "33d45d012f77da2d",
+        "sha256": "54192bb76b1b9436",
         "step_id": "S30"
       },
       {
         "path": "S40/findings.json",
-        "sha256": "dbb5e790cb0b73d5",
+        "sha256": "bc971f2692dd86b4",
         "step_id": "S40"
       },
       {
         "path": "S40/summary.json",
-        "sha256": "6322ffb6ecd387d9",
+        "sha256": "493ac8c425886e4c",
         "step_id": "S40"
       },
       {
         "path": "S40/raw/schema_check.log",
-        "sha256": "1ddb790a212365c3",
+        "sha256": "d2ef75b816c58e3d",
         "step_id": "S40"
       },
       {
         "path": "S50/findings.json",
-        "sha256": "cc65d041a1575a17",
+        "sha256": "2f084193dc0d70a7",
         "step_id": "S50"
       },
       {
         "path": "S50/summary.json",
-        "sha256": "1f5f50b2a7873c9b",
+        "sha256": "0ff89536e9fef60b",
         "step_id": "S50"
       },
       {
         "path": "S50/raw/delivery_check.log",
-        "sha256": "a6e87fb7809f39a9",
+        "sha256": "e44cbc8056a6224e",
         "step_id": "S50"
       },
       {
         "path": "S60/consistency_matrix.json",
-        "sha256": "70b772870ce6633f",
+        "sha256": "cc27382037467af0",
         "step_id": "S60"
       },
       {
         "path": "S60/summary.json",
-        "sha256": "9af5ea8f286b8ebd",
+        "sha256": "0ef830dde4fdaaa9",
         "step_id": "S60"
       },
       {
+        "path": "S65/findings.json",
+        "sha256": "547d3a5fcf8b18df",
+        "step_id": "S65"
+      },
+      {
         "path": "S65/summary.json",
-        "sha256": "cbbce0e17da2e02d",
+        "sha256": "781921dc7c738761",
         "step_id": "S65"
       },
       {
         "path": "S70/roadmap.json",
-        "sha256": "d5aa62aa7f4680a4",
+        "sha256": "ac2e2bd96520ffb5",
         "step_id": "S70"
       },
       {
         "path": "S70/scoring.json",
-        "sha256": "a59e17a9ebda494d",
+        "sha256": "251812f398c692cf",
         "step_id": "S70"
       },
       {
         "path": "S70/summary.json",
-        "sha256": "d531a078a13d8b1c",
+        "sha256": "4cec452785c4887a",
         "step_id": "S70"
       },
       {
         "path": "S70/tech_debt.json",
-        "sha256": "f624ddb957fbbedb",
+        "sha256": "2108a4da6e4c24aa",
         "step_id": "S70"
       },
       {
         "path": "S80/findings.json",
-        "sha256": "9215cc496446be9e",
+        "sha256": "c1bb20addccf1d78",
         "step_id": "S80"
       },
       {
         "path": "S80/summary.json",
-        "sha256": "adbcea6ca8655bdd",
+        "sha256": "97b79e86ea76e1b4",
         "step_id": "S80"
       },
       {
+        "path": "S85/findings.json",
+        "sha256": "8cd3785946f32e6d",
+        "step_id": "S85"
+      },
+      {
+        "path": "S85/summary.json",
+        "sha256": "92d4ebdec4eddc1d",
+        "step_id": "S85"
+      },
+      {
+        "path": "S85/raw/audit.log",
+        "sha256": "d73e600b761afbef",
+        "step_id": "S85"
+      },
+      {
         "path": "S90/summary.json",
-        "sha256": "31d66487ed0b2199",
+        "sha256": "4e5cabde36713ed2",
         "step_id": "S90"
       }
     ]

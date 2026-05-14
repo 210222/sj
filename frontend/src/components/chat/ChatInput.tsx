@@ -49,6 +49,8 @@ export function ChatInput({ inputMode = 'suggest_only', onSend, disabled }: Chat
       }}
     >
       <textarea
+        id="chat-message-input"
+        name="message"
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}

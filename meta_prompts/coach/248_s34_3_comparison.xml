@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S34.3 -- LLM vs 规则 comparison</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>34</phase>
+  <sub_stage>S34.3</sub_stage>
+  <sub_stage_name>rules baseline 与 LLM snapshot 并列对照</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责产出规则引擎 baseline 与 LLM 快照的正式 comparison。
+    你的职责不是替换 baseline，而是做并列对照，并解释差异来源。
+  </role>
+
+  <context>
+    Phase 32 baseline_run_id 已存在且不能被替代。
+    本阶段要比较的是：
+    - rules baseline（Phase 32 / 33 既有 baseline_run_id）
+    - LLM snapshot（S34.2 新 run）
+
+    comparison 的核心不是证明 LLM 一定更高分，而是解释：
+    - 分数差异
+    - failure_cases 差异
+    - breakpoint 差异
+    - llm_generated 命中差异
+  </context>
+
+  <risk_analysis>
+    1. 若把 comparison 写成“替代 baseline”，会破坏 Phase 32 baseline 语义；
+    2. 若不解释 llm_generated 命中情况，无法证明新 run 真的走了 LLM；
+    3. 若分数变化不说明原因，会被误读为评分漂移或产品退化。
+  </risk_analysis>
+
+  <task>
+    1. 产出 `reports/experience_audit/llm_vs_rule_comparison.json`；
+    2. 对比以下维度：
+       - overall score
+       - 各维度差异
+       - failure_cases 差异
+       - breakpoint 命中差异
+       - llm_generated 命中情况
+    3. comparison 中必须同时保存 baseline_run_id 与 current_run_id；
+    4. 明确写出：这是 rules baseline vs LLM snapshot，不替代 baseline_run_id。
+  </task>
+
+  <side_effects>
+    1. 分数可能显著变化；
+    2. LLM 波动导致单次 comparison 不稳定；
+    3. 文档中必须解释差异，不可简单说“更高/更低”。
+  </side_effects>
+
+  <quality_gates>
+    <gate>llm_vs_rule_comparison.json 成功落盘</gate>
+    <gate>comparison 可读且 baseline 语义不漂移</gate>
+    <gate>明确包含 llm_generated 命中信息</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>comparison 正式产出</item>
+    <item>rules baseline 仍保持锚点语义</item>
+    <item>新旧 run 差异可解释</item>
+  </success_criteria>
+</prompt>

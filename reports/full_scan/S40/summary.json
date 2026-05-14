@@ -1,16 +1,16 @@
 {
   "step": "S40",
   "status": "GO",
-  "executed_at_utc": "2026-05-04T07:26:06.439Z",
+  "executed_at_utc": "2026-05-12T06:00:50.421Z",
   "layer": "D — Data Metabolism",
   "data_lineage": {
-    "sources": 515,
-    "sinks": 69,
+    "sources": 1150,
+    "sinks": 162,
     "transforms": 0
   },
   "ai_audit": {
     "models": {
-      "bkt": 2,
+      "bkt": 6,
       "flow": 3,
       "ttm": 3,
       "sdt": 3,
@@ -24,8 +24,8 @@
     }
   },
   "contracts": {
-    "total": 11,
-    "frozen": 11,
+    "total": 13,
+    "frozen": 13,
     "issues": 0
   },
   "schema_drift": {

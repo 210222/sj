@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 26 -- S26.3 验证 (修订)</name>
+  <version>1.1.0</version>
+  <track>COACH</track>
+  <phase>26</phase>
+  <sub_stage>S26.3</sub_stage>
+  <sub_stage_name>测试 progress_summary 触发和注入</sub_stage_name>
+
+  <role>
+    验证 init 中变量初始化、act() 后不崩溃、rate limit 变量存在。
+  </role>
+
+  <context>
+    约束:
+    - 新建 tests/test_phase26.py
+    - pytest 风格
+    - 不需要 DEEPSEEK_API_KEY
+  </context>
+
+  <task>
+
+    新建 tests/test_phase26.py:
+
+    from src.coach.agent import CoachAgent
+
+
+    class TestProgressSummary:
+
+        def test_init_variables_exist(self):
+            """__init__ 中初始化了 progress 相关变量。"""
+            a = CoachAgent()
+            assert hasattr(a, '_progress_summary')
+            assert hasattr(a, '_last_progress_ts')
+            assert hasattr(a, '_last_mastery')
+
+        def test_act_does_not_crash(self):
+            """act() 调用不崩溃, 返回有效结果。"""
+            a = CoachAgent()
+            r = a.act("test")
+            assert "action_type" in r
+
+        def test_rate_limit_is_float(self):
+            """_last_progress_ts 是 float。"""
+            a = CoachAgent()
+            assert isinstance(a._last_progress_ts, float)
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/test_phase26.py -v 全绿</item>
+    <item>python -m pytest tests/ -q 全绿</item>
+  </success_criteria>
+</prompt>

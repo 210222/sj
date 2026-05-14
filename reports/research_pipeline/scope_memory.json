@@ -1,0 +1,280 @@
+{
+  "runs": [
+    {
+      "run_time": "2026-05-09T08:10:13.509455+00:00",
+      "agent_stats": {
+        "agent1": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 2,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent2": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 2,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent3": {
+          "total_findings": 15,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent4": {
+          "total_findings": 0,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent5": {
+          "total_findings": 25,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent6": {
+          "total_findings": 24,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent7": {
+          "total_findings": 40,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        }
+      },
+      "optimization": "none_needed"
+    },
+    {
+      "run_time": "2026-05-09T08:21:02.153099+00:00",
+      "agent_stats": {
+        "agent1": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 2,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent2": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 2,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent3": {
+          "total_findings": 15,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent4": {
+          "total_findings": 0,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent5": {
+          "total_findings": 23,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent6": {
+          "total_findings": 6,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent7": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        }
+      },
+      "optimization": "none_needed"
+    },
+    {
+      "run_time": "2026-05-10T04:25:23.065047+00:00",
+      "agent_stats": {
+        "agent1": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 2,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent2": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 2,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent3": {
+          "total_findings": 0,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent4": {
+          "total_findings": 18,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent5": {
+          "total_findings": 8,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        }
+      },
+      "optimization": "none_needed"
+    },
+    {
+      "run_time": "2026-05-10T04:37:19.059142+00:00",
+      "agent_stats": {
+        "agent1": {
+          "total_findings": 5,
+          "revised_count": 0,
+          "debated_count": 2,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent2": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 2,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent3": {
+          "total_findings": 12,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent4": {
+          "total_findings": 20,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent5": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        }
+      },
+      "optimization": "none_needed"
+    },
+    {
+      "run_time": "2026-05-10T04:49:27.238448+00:00",
+      "agent_stats": {
+        "agent1": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 2,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent2": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 2,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent3": {
+          "total_findings": 8,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent4": {
+          "total_findings": 25,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent5": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        }
+      },
+      "optimization": "none_needed"
+    },
+    {
+      "run_time": "2026-05-10T05:00:24.153801+00:00",
+      "agent_stats": {
+        "agent1": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 2,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent2": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 2,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent3": {
+          "total_findings": 8,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent4": {
+          "total_findings": 28,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        },
+        "agent5": {
+          "total_findings": 10,
+          "revised_count": 0,
+          "debated_count": 0,
+          "in_roadmap_count": 0,
+          "low_confidence_count": 0
+        }
+      },
+      "optimization": "none_needed"
+    }
+  ],
+  "cross_task_guidelines": [],
+  "agent_lessons": {}
+}

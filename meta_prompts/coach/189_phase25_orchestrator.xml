@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 25 -- 教学自评 + 策略切换</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>25</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>让系统能评估自己教得怎么样, 不好时主动换方法</sub_stage_name>
+
+  <role>
+    Level 4.0 的系统会讲、会测、会记、会复习, 但不知道自己教得怎么样。
+    Phase 25 新增教学自评: 如果连续 N 轮 mastery 不提升 -> 切换 action_type。
+    不是降难度, 是换方法 -- 从 scaffold 切到 probe, 从 challenge 切到 scaffold。
+  </role>
+
+  <context>
+    Standard 5 (Self-Evaluation of Teaching) 一直是评审中的 critical 缺口。
+    agent.py 已有 _interaction_history, diagnostic_engine, sdt_profile 等数据。
+    只需要新增: 评估当前策略是否有效 + 无效时切换的逻辑。
+
+    约束:
+    - 不修改 contracts/ 内圈/中圈/外圈
+    - 不修改 ttm.py sdt.py flow.py
+    - 全量回归 1294+ 必须通过
+  </context>
+
+  <execution_order>
+    <step>S25.1 (agent.py 自评) -> S25.2 (composer.py 切换) -> S25.3 (测试)</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s25_1" name="教学自评" priority="P0">
+      <description>agent.act() 每轮结束时生成 self_eval 信号</description>
+      <meta_prompt>189_s25_1_self_eval.xml</meta_prompt>
+    </stage>
+    <stage id="s25_2" name="策略切换" priority="P0">
+      <description>composer.compose() 接收 self_eval, 策略失效时切换 action_type</description>
+      <meta_prompt>190_s25_2_strategy_switch.xml</meta_prompt>
+    </stage>
+    <stage id="s25_3" name="验证" priority="P1">
+      <description>测试切换逻辑</description>
+      <meta_prompt>191_s25_3_verification.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+</prompt>

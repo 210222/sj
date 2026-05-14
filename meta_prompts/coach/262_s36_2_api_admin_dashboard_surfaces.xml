@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S36.2 — API / Admin / Dashboard Surfaces</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>36</phase>
+  <sub_stage>S36.2</sub_stage>
+  <sub_stage_name>Expose runtime observability to HTTP / WS / admin / dashboard</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责将 S36.1 产出的 runtime evidence 暴露到对外 API 和内部运维面。
+    你的职责不是重新设计 API 契约，而是在现有 endpoint 和 WebSocket event 中附加统一的 observability 对象。
+  </role>
+
+  <task>
+    1. 在 ChatMessageResponse 中新增可选 llm_observability 字段；
+    2. 在 WebSocket coach_stream_end event 中附加同一套 llm_observability；
+    3. 在 dashboard aggregator 中汇总 llm_observability 统计；
+    4. 在 admin router 中暴露 LLM runtime 汇总端点；
+    5. 保持旧字段（llm_generated / llm_model / llm_tokens）向后兼容。
+  </task>
+
+  <primary_modification_surfaces>
+    <item>api/models/schemas.py — ChatMessageResponse 扩展 llm_observability</item>
+    <item>api/models/websocket.py — coach_stream_end event schema 扩展</item>
+    <item>api/routers/chat.py — POST /api/v1/chat 返回 llm_observability</item>
+    <item>api/services/coach_bridge.py — chat_stream() stream_end event 附加 llm_observability</item>
+    <item>api/services/dashboard_aggregator.py — 汇总 llm_observability 统计</item>
+    <item>api/routers/dashboard.py — dashboard 端点暴露聚合数据</item>
+    <item>api/routers/admin.py — admin 端点暴露 LLM runtime 汇总</item>
+  </primary_modification_surfaces>
+
+  <design_requirements>
+    <item>统一嵌套对象命名为 llm_observability，包含 cache / runtime / retention 三组字段</item>
+    <item>HTTP POST /api/v1/chat 响应中，llm_observability 作为顶层可选字段</item>
+    <item>WS coach_stream_end event 中，llm_observability 与 payload / safety 平级</item>
+    <item>dashboard / admin 只暴露聚合统计（mean/min/max/std/rate），不暴露全量原始 trace</item>
+    <item>旧消费者不因新增字段而破坏兼容性（新增字段均为 optional）</item>
+  </design_requirements>
+
+  <dashboard_admin_aggregates>
+    <item>cache_eligible_rate — cache_eligible=true 的比例</item>
+    <item>avg_latency_ms — 平均延迟</item>
+    <item>avg_tokens_total — 平均 token 消耗</item>
+    <item>avg_stable_prefix_share — 稳定前缀占比</item>
+    <item>prefix_hash_stability — 同结构下 prefix hash 是否一致</item>
+    <item>path_distribution — sync vs stream 调用比例</item>
+    <item>transport_status_distribution — ok/retry/error/fallback 分布</item>
+  </dashboard_admin_aggregates>
+
+  <forbidden_actions>
+    <item>禁止删除或重命名现有 ChatMessageResponse 字段</item>
+    <item>禁止在 dashboard / admin 中暴露完整用户对话内容</item>
+    <item>禁止修改 contracts/**、src/inner/**、src/middle/**、src/outer/**</item>
+  </forbidden_actions>
+
+  <quality_gates>
+    <gate>HTTP 与 WS end-event 可见统一 llm_observability 核心字段</gate>
+    <gate>admin / dashboard 能汇总 LLM runtime 行为</gate>
+    <gate>旧消费者不因新增字段破坏兼容性</gate>
+    <gate>已有测试不因 schema 扩展而破坏</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>外部 API 与内部运维面共享同一套 observability 语义</item>
+    <item>运维人员可通过 admin 端点快速判断 LLM 路径健康状态</item>
+  </success_criteria>
+</prompt>

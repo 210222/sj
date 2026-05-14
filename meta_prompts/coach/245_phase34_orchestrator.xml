@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 34 -- LLM 接入后的真实体验审计</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>34</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>LLM capability snapshot / rules vs LLM comparison / baseline 语义锁定</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 34 的总控执行。
+    你的职责不是迁移 provider，不是重定义 baseline，而是基于 Phase 32/33 已存在的体验审计管道，
+    在运行时安全注入 DeepSeek key，跑出第一份真实 LLM 审计快照，并与规则引擎 baseline 做并列 comparison。
+  </role>
+
+  <context>
+    Phase 32 baseline 已存在且不可替代。Phase 33 已清空 deferred backlog。
+    当前规则引擎 baseline 为 12.31/20，且引用性长期为 0.0。
+    用户已提供可用的 DeepSeek key，并已验证可调通 DeepSeek 兼容接口。
+
+    本轮只做 LLM capability snapshot，不改 provider / model / base_url，
+    不修改体验审计管道的评分维度、failure_cases 标签、breakpoint probes。
+
+    本阶段的关键不是“接上 API”，而是“在不破坏 Phase 32 baseline 语义的前提下，增加一份真实 LLM 审计快照”。
+  </context>
+
+  <global_constraints>
+    1. 禁止修改 contracts/**；
+    2. 禁止修改 src/inner/**；
+    3. 禁止修改 src/middle/**；
+    4. 禁止修改 src/outer/**；
+    5. 不修改 src/coach/agent.py / composer.py / prompts.py；
+    6. 不修改 config/coach_defaults.yaml 的 provider / base_url / model；
+    7. key 不落盘、不入日志、不进文档；
+    8. 不新增评分维度、不新增 breakpoint probe、不新增 failure_cases 标签；
+    9. 全量回归必须通过。
+  </global_constraints>
+
+  <execution_order>
+    <step>S34.1 -&gt; S34.2 -&gt; S34.3 -&gt; S34.4</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s34_1" name="环境验证">
+      <meta_prompt>246_s34_1_env_check.xml</meta_prompt>
+    </stage>
+    <stage id="s34_2" name="LLM 审计运行">
+      <meta_prompt>247_s34_2_llm_audit.xml</meta_prompt>
+    </stage>
+    <stage id="s34_3" name="LLM vs 规则 comparison">
+      <meta_prompt>248_s34_3_comparison.xml</meta_prompt>
+    </stage>
+    <stage id="s34_4" name="验证与收口">
+      <meta_prompt>249_s34_4_verify.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+
+  <go_gate_policy>
+    <gate>GO_S34.1: DeepSeek key 可调通，且不落盘。</gate>
+    <gate>GO_S34.2: 体验审计管道在 LLM 模式下成功产出完整 run。</gate>
+    <gate>GO_S34.3: comparison.json 成功输出，且明确区分 rules baseline / LLM snapshot。</gate>
+    <gate>GO_S34.4: 全量回归通过，completion 文档落盘，无冻结层越界。</gate>
+  </go_gate_policy>
+
+  <required_outputs>
+    <item>最新一次 LLM run 目录</item>
+    <item>reports/experience_audit/llm_vs_rule_comparison.json</item>
+    <item>reports/phase34_llm_baseline_completion.md</item>
+  </required_outputs>
+
+  <risk_analysis>
+    1. 若直接把本轮称为“LLM baseline”，会覆盖 Phase 32 baseline 的锚点语义；
+    2. 若 key 调不通 DeepSeek，就会把 provider 迁移问题误引入本阶段；
+    3. 若为 LLM 表现调整评分规则，会破坏 comparison 连续性；
+    4. 若将 key 写进文件，是严重安全偏离。
+  </risk_analysis>
+
+  <quality_gates>
+    <gate>llm_vs_rule_comparison.json 存在且可读</gate>
+    <gate>comparison 明确标注 baseline_run_id 与 current_run_id</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+    <gate>无冻结层越界改动</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>Phase 32 baseline 语义未被覆盖</item>
+    <item>成功产出真实 LLM 审计快照</item>
+    <item>rules vs LLM comparison 可解释</item>
+    <item>key 未写入任何仓库文件</item>
+    <item>全量回归通过</item>
+  </success_criteria>
+</prompt>

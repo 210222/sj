@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S33.2 -- 评分算法纠偏</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>33</phase>
+  <sub_stage>S33.2</sub_stage>
+  <sub_stage_name>引用性短中文匹配 / 推进感教学特征检测</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责对 run_experience_audit.py 的 score_turn() 做定向纠偏。
+    本阶段只修算法定义，不新增评分维度，不改 failure_cases / comparison / scoring.json 的外部 schema。
+  </role>
+
+  <context>
+    Phase 32 scoring 数据暴露了两个算法偏差：
+
+    1. 引用性：
+       - 当前使用 CJK bi-gram / tri-gram 分词
+       - 对短中文输入（≤2 字符）无法生成 bi-gram，直接产出空 token 集
+       - 所有 5 画像的引用性维度均为 0.0
+       - 输入 "好"、"嗯"、"可以" 等 CONFIRM_WORDS 时尤其明显
+
+    2. 推进感：
+       - 当前只看 `len(stmt) > prev_len + 10` 判定推进
+       - 对"长度未显著增长但教学内容推进"的场景无感知
+       - novice_confirm 画像的推进感仅 1.1，和真实体验不符
+
+    本阶段目标是让评分算法对中文和教学特征更可信，不扩展能力。
+  </context>
+
+  <risk_analysis>
+    1. 阈值调整会让旧 baseline 数字不可裸比；
+    2. 必须在 completion 文档中说明"评分口径变化"；
+    3. 纠偏后仍然可能低分，因为无 API key 时规则引擎不生成真实承接；
+    4. 若算法改动过大，会引入与 breakpoint probe 的耦合。
+  </risk_analysis>
+
+  <task>
+    1. 引用性纠偏：
+       - 保留原 CJK n-gram 思路
+       - 对 CJK 文本若 `len(text.strip()) <= 8`，把原文整句也加入 token 集
+       - 对英文文本若原文非 CONFIRM_WORDS，把 `text.strip().lower()` 加入 token 集
+       - 保持 ref_score 公式 `min(4, matches + 1)` 不变
+    2. 推进感纠偏：
+       - 在 CONFIRM_WORDS 判定分支中增加教学特征检测：
+         `has_new_content = any(kw in stmt for kw in [步骤,第1,首先,例如,示例,代码,接下来,下一个,step,Step,第一,其次,然后,另外,还有])`
+       - 规则：`has_new_content or len(stmt) > prev_len + 20` → 3 分
+       - `len(stmt) > prev_len + 5` → 2 分
+       - 其他 → 1 分
+       - 非 CONFIRM_WORDS 分支保持 3 分
+    3. 不新增维度，不改 worst_turns schema
+    4. 不改 scoring.json / failure_cases.json / comparison.json 的外部 schema
+    5. 不改 breakpoint probe 评分逻辑
+  </task>
+
+  <side_effects>
+    1. 算法纠偏后，旧 run 与新 run 的数值不可裸比；
+    2. 无 LLM key 场景下，引用性可能仍然偏低，这是规则引擎产物问题，不是评分问题；
+    3. 推进感分布会更平均，novice_confirm 的 1.1 分可能提升到 2.x；
+    4. 下一轮 comparison 中旧 baseline 数字仍保留，但解释口径需更新。
+  </side_effects>
+
+  <quality_gates>
+    <gate>python -m pytest tests/test_experience_audit.py -q 通过</gate>
+    <gate>scoring.json / failure_cases.json 外部 schema 不变</gate>
+    <gate>breakpoint probe 评分不变</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>评分对短中文输入能返回非零引用性（当 payload 有承接时）</item>
+    <item>推进感对带教学特征的回复给出合理分数</item>
+    <item>scoring 外部 schema 保持兼容</item>
+    <item>audit tests 全部通过</item>
+  </success_criteria>
+</prompt>

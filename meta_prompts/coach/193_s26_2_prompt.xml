@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 26 -- S26.2 注入进步报告到 LLM prompt</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>26</phase>
+  <sub_stage>S26.2</sub_stage>
+  <sub_stage_name>在 agent.py 中 build_coach_context() 之后追加 progress_summary</sub_stage_name>
+
+  <role>
+    不需要修改 prompts.py。在 agent.py 中 build_coach_context() 返回后, 如果 progress_summary 非 None, 直接追加到 system prompt。
+  </role>
+
+  <context>
+    错误思路: 改 prompts.py 的 build_coach_context() 签名 -> 增加调用者风险
+    正确做法: 在 agent.py 的 LLM 调用代码中追加
+
+    在 agent.py 约第 613 行, build_coach_context() 调用之后:
+
+    ctx = build_coach_context(...)
+    # Phase 26: 追加进步报告
+    if self._progress_summary:
+        ctx["system"] += "\n\n" + self._progress_summary
+
+    这样不需要修改 prompts.py, 不需要改函数签名, 不影响其他调用者。
+
+    约束:
+    - 只修改 src/coach/agent.py (不移 prompt.py)
+    - progress_summary 为 None 时不影响已有 prompt
+    - 全量回归 1299+ 必须通过
+  </context>
+
+  <task>
+
+    在 agent.py 的 LLM 调用区域 (约第 613 行, build_coach_context() 之后):
+
+    ctx = build_coach_context(
+        intent=intent,
+        action_type=action.get("action_type", "suggest"),
+        ttm_stage=ttm_stage,
+        sdt_profile=sdt_profile,
+        user_message=user_input,
+        history=[...],
+        memory_snippets=_memory_snippets,
+        covered_topics=_covered_topics,
+        difficulty=_llm_difficulty,
+    )
+    # Phase 26: 追加进步报告
+    if self._progress_summary:
+        ctx["system"] += "\n\n" + str(self._progress_summary)
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>_progress_summary 为 None 时 prompt 不变</item>
+    <item>_progress_summary 非 None 时追加到 system prompt</item>
+  </success_criteria>
+</prompt>

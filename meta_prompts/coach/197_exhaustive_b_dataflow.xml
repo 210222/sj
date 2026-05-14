@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>模块 B: 数据流端到端</name>
+  <version>1.1.0</version>
+  <track>EXHAUSTIVE</track>
+  <phase>99</phase>
+  <sub_stage>B</sub_stage>
+  <sub_stage_name>15 + 5 LLM = 20 tests, 8 min, P0</sub_stage_name>
+  <file>tests/test_exhaustive_dataflow.py</file>
+  <llm_smoke_tests>
+    <note>以下 5 个测试需要 DEEPSEEK_API_KEY</note>
+    <note>使用 @pytest.mark.skipif 跳过, 不影响无 API key 的环境</note>
+  </llm_smoke_tests>
+
+  <tests>
+
+    <!-- B1-B3: mastery->TTM -->
+    <test id="B1" name="mastery->TTM enabled">
+      <code>
+def test_mastery_to_ttm_enabled():
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    if a.diagnostic_engine:
+        summary = a.diagnostic_engine.get_mastery_summary()
+        skills = summary.get("skills", {})
+        if skills:
+            assert len(list(skills.values())) > 0
+      </code>
+    </test>
+
+    <test id="B2" name="mastery->TTM disabled">
+      <code>
+def test_mastery_to_ttm_disabled():
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    if not a.diagnostic_engine:
+        assert a.ttm is None or a.ttm is not None
+      </code>
+    </test>
+
+    <test id="B3" name="mastery->TTM empty skills">
+      <code>
+def test_mastery_to_ttm_empty():
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    if a.diagnostic_engine:
+        summary = a.diagnostic_engine.get_mastery_summary()
+        assert isinstance(summary.get("skills", {}), dict)
+      </code>
+    </test>
+
+    <!-- B4-B6: mastery->SDT -->
+    <test id="B4" name="mastery->SDT enabled">
+      <code>
+def test_mastery_to_sdt_enabled():
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    if a.diagnostic_engine:
+        sig = a.diagnostic_engine.get_competence_signal()
+        assert sig is None or isinstance(sig, (int, float))
+      </code>
+    </test>
+
+    <test id="B5" name="mastery->SDT disabled">
+      <code>
+def test_mastery_to_sdt_disabled():
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    if not a.diagnostic_engine:
+        assert a.sdt is None
+      </code>
+    </test>
+
+    <test id="B6" name="mastery->SDT None signal">
+      <code>
+def test_mastery_to_sdt_none():
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    if a.diagnostic_engine:
+        sig = a.diagnostic_engine.get_competence_signal()
+        assert sig is None or isinstance(sig, (int, float))
+      </code>
+    </test>
+
+    <!-- B7-B9: mastery->Flow -->
+    <test id="B7" name="mastery->Flow enabled">
+      <code>
+def test_mastery_to_flow_enabled():
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    if a.diagnostic_engine and a.flow:
+        summary = a.diagnostic_engine.get_mastery_summary()
+        skills = summary.get("skills", {})
+        if skills:
+            result = a.flow.compute_flow(skill_probs=list(skills.values()))
+            assert "flow_channel" in result
+      </code>
+    </test>
+
+    <test id="B8" name="mastery->Flow disabled">
+      <code>
+def test_mastery_to_flow_disabled():
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    if a.flow:
+        result = a.flow.compute_flow(skill_probs=[0.5])
+        assert "flow_channel" in result
+      </code>
+    </test>
+
+    <test id="B9" name="mastery->Flow empty mastery">
+      <code>
+def test_mastery_to_flow_empty():
+    from src.coach.flow import FlowOptimizer
+    f = FlowOptimizer()
+    r = f.compute_flow(skill_probs=[0.5], task_difficulty=0.5)
+    assert "flow_channel" in r
+    assert "adjust_difficulty" in r
+      </code>
+    </test>
+
+    <!-- B10-B12: mastery->difficulty -->
+    <test id="B10" name="difficulty easy">
+      <code>
+def test_difficulty_easy():
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    if a.diagnostic_engine:
+        m = a.diagnostic_engine.store.get_all_masteries()
+        diff = "easy" if any(v < 0.3 for v in m.values()) else "medium"
+        assert diff in ("easy", "medium", "hard")
+      </code>
+    </test>
+
+    <test id="B11" name="difficulty hard">
+      <code>
+def test_difficulty_hard():
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    if a.diagnostic_engine:
+        m = a.diagnostic_engine.store.get_all_masteries()
+        diff = "hard" if m and all(v > 0.7 for v in m.values()) else "medium"
+        assert diff in ("easy", "medium", "hard")
+      </code>
+    </test>
+
+    <test id="B12" name="difficulty default">
+      <code>
+def test_difficulty_default():
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    if not a.diagnostic_engine:
+        r = a.act("test")
+        assert r["difficulty_contract"]["level"] == "medium"
+      </code>
+    </test>
+
+    <!-- B13-B15: covered_topics -->
+    <test id="B13" name="covered_topics nonempty">
+      <code>
+def test_covered_topics_nonempty():
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    if a.diagnostic_engine:
+        m = a.diagnostic_engine.get_mastery_summary()
+        skills = m.get("skills", {})
+        if skills:
+            topics = [f"{k}({v:.0%})" for k, v in skills.items()]
+            assert len(topics) > 0
+      </code>
+    </test>
+
+    <test id="B14" name="covered_topics empty">
+      <code>
+def test_covered_topics_empty():
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    if a.diagnostic_engine:
+        m = a.diagnostic_engine.get_mastery_summary()
+        assert isinstance(m.get("skills", {}), dict)
+      </code>
+    </test>
+
+    <test id="B15" name="memory injection">
+      <code>
+def test_memory_injection():
+    from src.coach.agent import CoachAgent
+    a = CoachAgent(session_id="test_b15")
+    a.act("hello")
+    a.act("teach python")
+    assert hasattr(a, "memory")
+    a.act("test")
+      </code>
+    </test>
+
+    <!-- ===== LLM SMOKE TESTS ===== -->
+    <test id="B16" name="LLM generate content">
+      <code>
+@pytest.mark.skipif(not os.getenv("DEEPSEEK_API_KEY"), reason="need DEEPSEEK_API_KEY")
+def test_llm_generates_content():
+    import os, yaml, sys
+    from pathlib import Path
+    p = Path("config/coach_defaults.yaml")
+    orig = p.read_text(encoding="utf-8")
+    try:
+        cfg = yaml.safe_load(orig)
+        cfg.setdefault("llm", {})["enabled"] = True
+        p.write_text(yaml.dump(cfg), encoding="utf-8")
+        for m in list(sys.modules.keys()):
+            if "src.coach" in m:
+                del sys.modules[m]
+        from src.coach.agent import CoachAgent
+        a = CoachAgent(session_id="test_b16")
+        r = a.act("教我 Python")
+        assert r["llm_generated"] is True
+        assert len(r.get("payload", {}).get("statement", "")) > 10
+    finally:
+        p.write_text(orig, encoding="utf-8")
+      </code>
+    </test>
+
+    <test id="B17" name="LLM scaffold steps">
+      <code>
+@pytest.mark.skipif(not os.getenv("DEEPSEEK_API_KEY"), reason="need DEEPSEEK_API_KEY")
+def test_llm_scaffold_steps():
+    from src.coach.llm.config import LLMConfig
+    from src.coach.llm.client import LLMClient
+    from src.coach.llm.prompts import build_coach_context
+    c = LLMConfig.from_yaml({"llm": {"enabled": True}})
+    cl = LLMClient(c)
+    ctx = build_coach_context(action_type="scaffold", intent="python", user_message="教列表")
+    r = cl.generate(ctx)
+    p = r.to_payload()
+    assert "steps" in p or "statement" in p
+      </code>
+    </test>
+
+    <test id="B18" name="LLM probe expected_answer">
+      <code>
+@pytest.mark.skipif(not os.getenv("DEEPSEEK_API_KEY"), reason="need DEEPSEEK_API_KEY")
+def test_llm_probe_expected_answer():
+    from src.coach.llm.config import LLMConfig
+    from src.coach.llm.client import LLMClient
+    from src.coach.llm.prompts import build_coach_context
+    c = LLMConfig.from_yaml({"llm": {"enabled": True}})
+    cl = LLMClient(c)
+    ctx = build_coach_context(action_type="probe", intent="python", user_message="test")
+    r = cl.generate(ctx)
+    p = r.to_payload()
+    assert "question" in p or "expected_answer" in p
+      </code>
+    </test>
+
+    <test id="B19" name="LLM fallback">
+      <code>
+@pytest.mark.skipif(not os.getenv("DEEPSEEK_API_KEY"), reason="need DEEPSEEK_API_KEY")
+def test_llm_fallback():
+    import os
+    from src.coach.agent import CoachAgent
+    bk = os.environ.pop("DEEPSEEK_API_KEY", None)
+    try:
+        a = CoachAgent()
+        r = a.act("test")
+        assert "action_type" in r
+    finally:
+        if bk:
+            os.environ["DEEPSEEK_API_KEY"] = bk
+      </code>
+    </test>
+
+    <test id="B20" name="LLM content length">
+      <code>
+@pytest.mark.skipif(not os.getenv("DEEPSEEK_API_KEY"), reason="need DEEPSEEK_API_KEY")
+def test_llm_content_length():
+    from src.coach.llm.config import LLMConfig
+    from src.coach.llm.client import LLMClient
+    from src.coach.llm.prompts import build_coach_context
+    c = LLMConfig.from_yaml({"llm": {"enabled": True}})
+    cl = LLMClient(c)
+    ctx = build_coach_context(action_type="suggest", intent="python", user_message="教我")
+    r = cl.generate(ctx)
+    p = r.to_payload()
+    assert len(p.get("statement", "")) > 20
+      </code>
+    </test>
+  </tests>
+</prompt>

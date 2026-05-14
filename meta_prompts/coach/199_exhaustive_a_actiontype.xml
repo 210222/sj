@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>模块 A: Action-Type 8 路穷尽</name>
+  <version>1.0.0</version>
+  <track>EXHAUSTIVE</track>
+  <phase>99</phase>
+  <sub_stage>A</sub_stage>
+  <sub_stage_name>30 tests, 8 min — prompt 差异化 + 字段校验穷尽 + compose 输出覆盖</sub_stage_name>
+  <file>tests/test_exhaustive_actiontype.py</file>
+
+  <tests>
+    <!-- A.1: prompt 差异化 -- 8 tests -->
+
+    <test id="A1" name="probe 不含其他类型关键词">
+      <code>
+def test_prompt_probe_exclusive():
+    """probe prompt 不含 scaffold/challenge/suggest/reflect 的关键词。"""
+    from src.coach.llm.prompts import build_coach_context
+    ctx = build_coach_context(action_type="probe", intent="python")
+    p = ctx["system"]
+    # probe 应有自己的关键词
+    assert "expected_answer" in p or "探测" in p
+      </code>
+    </test>
+
+    <test id="A2" name="scaffold 不含其他类型关键词">
+      <code>
+def test_prompt_scaffold_exclusive():
+    """scaffold prompt 不含 probe/challenge 的关键词。"""
+    from src.coach.llm.prompts import build_coach_context
+    ctx = build_coach_context(action_type="scaffold", intent="python")
+    p = ctx["system"]
+    assert "steps" in p or "step_count" in p
+      </code>
+    </test>
+
+    <test id="A3" name="challenge 不含其他类型关键词">
+      <code>
+def test_prompt_challenge_exclusive():
+    """challenge prompt 不含 scaffold/probe 的关键词。"""
+    from src.coach.llm.prompts import build_coach_context
+    ctx = build_coach_context(action_type="challenge", intent="python")
+    p = ctx["system"]
+    assert "objective" in p or "hints_allowed" in p
+      </code>
+    </test>
+
+    <test id="A4" name="suggest 不含其他类型关键词">
+      <code>
+def test_prompt_suggest_exclusive():
+    from src.coach.llm.prompts import build_coach_context
+    ctx = build_coach_context(action_type="suggest", intent="python")
+    p = ctx["system"]
+    assert "options" in p or "alternatives" in p
+      </code>
+    </test>
+
+    <test id="A5" name="reflect 不含其他类型关键词">
+      <code>
+def test_prompt_reflect_exclusive():
+    from src.coach.llm.prompts import build_coach_context
+    ctx = build_coach_context(action_type="reflect", intent="python")
+    p = ctx["system"]
+    assert "reflection_prompts" in p or "context_ids" in p
+      </code>
+    </test>
+
+    <test id="A6" name="defer 不含其他类型关键词">
+      <code>
+def test_prompt_defer_exclusive():
+    from src.coach.llm.prompts import build_coach_context
+    ctx = build_coach_context(action_type="defer", intent="python")
+    p = ctx["system"]
+    assert "resume_condition" in p or "fallback_intensity" in p
+      </code>
+    </test>
+
+    <test id="A7" name="pulse 不含其他类型关键词">
+      <code>
+def test_prompt_pulse_exclusive():
+    from src.coach.llm.prompts import build_coach_context
+    ctx = build_coach_context(action_type="pulse", intent="python")
+    p = ctx["system"]
+    assert "accept_label" in p or "rewrite_label" in p
+      </code>
+    </test>
+
+    <test id="A8" name="excursion 不含其他类型关键词">
+      <code>
+def test_prompt_excursion_exclusive():
+    from src.coach.llm.prompts import build_coach_context
+    ctx = build_coach_context(action_type="excursion", intent="python")
+    p = ctx["system"]
+    assert "bias_disabled" in p or "theme" in p
+      </code>
+    </test>
+
+    <!-- A.2: 字段校验穷尽 -- 8 types x 2 scenarios = 16 tests -->
+
+    <test id="A9" name="validate suggest">
+      <code>
+def test_validate_suggest_missing_fails():
+    from src.coach.llm.schemas import LLMOutputValidator
+    v, e = LLMOutputValidator.validate_with_type({"statement":"test"}, "suggest")
+    assert not v  # missing options
+def test_validate_suggest_with_options_passes():
+    v, e = LLMOutputValidator.validate_with_type({"statement":"test","options":[]}, "suggest")
+    assert v
+      </code>
+    </test>
+
+    <test id="A10" name="validate reflect">
+      <code>
+def test_validate_reflect_missing_fails():
+    from src.coach.llm.schemas import LLMOutputValidator
+    v, e = LLMOutputValidator.validate_with_type({"statement":"test"}, "reflect")
+    assert not v
+def test_validate_reflect_with_question_passes():
+    v, e = LLMOutputValidator.validate_with_type({"statement":"test","question":"?"}, "reflect")
+    assert v
+      </code>
+    </test>
+
+    <test id="A11" name="validate defer">
+      <code>
+def test_validate_defer_missing_fails():
+    from src.coach.llm.schemas import LLMOutputValidator
+    v, e = LLMOutputValidator.validate_with_type({"statement":"test"}, "defer")
+    assert not v
+def test_validate_defer_with_resume_passes():
+    v, e = LLMOutputValidator.validate_with_type({"statement":"test","resume_condition":"later"}, "defer")
+    assert v
+      </code>
+    </test>
+
+    <test id="A12" name="validate pulse">
+      <code>
+def test_validate_pulse_missing_fails():
+    from src.coach.llm.schemas import LLMOutputValidator
+    v, e = LLMOutputValidator.validate_with_type({"statement":"test"}, "pulse")
+    assert not v
+def test_validate_pulse_with_labels_passes():
+    v, e = LLMOutputValidator.validate_with_type({"statement":"test","accept_label":"ok","rewrite_label":"no"}, "pulse")
+    assert v
+      </code>
+    </test>
+
+    <test id="A13" name="validate excursion">
+      <code>
+def test_validate_excursion_missing_fails():
+    from src.coach.llm.schemas import LLMOutputValidator
+    v, e = LLMOutputValidator.validate_with_type({"statement":"test"}, "excursion")
+    assert not v
+def test_validate_excursion_with_bias_passes():
+    v, e = LLMOutputValidator.validate_with_type({"statement":"test","bias_disabled":True}, "excursion")
+    assert v
+      </code>
+    </test>
+
+    <!-- A.3: compose 输出覆盖 -- 8 types -->
+
+    <test id="A14" name="compose probe">
+      <code>
+def test_compose_probe():
+    from src.coach.composer import PolicyComposer
+    c = PolicyComposer()
+    r = c.compose(intent="test", ttm_strategy={"recommended_action_types":["probe"]})
+    assert r["action_type"] == "probe"
+      </code>
+    </test>
+
+    <test id="A15" name="compose scaffold">
+      <code>
+def test_compose_scaffold():
+    from src.coach.composer import PolicyComposer
+    c = PolicyComposer()
+    r = c.compose(intent="test", ttm_strategy={"recommended_action_types":["scaffold"]})
+    assert r["action_type"] == "scaffold"
+      </code>
+    </test>
+
+    <test id="A16" name="compose challenge">
+      <code>
+def test_compose_challenge():
+    from src.coach.composer import PolicyComposer
+    c = PolicyComposer()
+    r = c.compose(intent="test", ttm_strategy={"recommended_action_types":["challenge"]})
+    assert r["action_type"] == "challenge"
+      </code>
+    </test>
+
+    <test id="A17" name="compose reflect">
+      <code>
+def test_compose_reflect():
+    from src.coach.composer import PolicyComposer
+    c = PolicyComposer()
+    r = c.compose(intent="test", ttm_strategy={"recommended_action_types":["reflect"]})
+    assert r["action_type"] == "reflect"
+      </code>
+    </test>
+
+    <test id="A18" name="compose defer">
+      <code>
+def test_compose_defer():
+    from src.coach.composer import PolicyComposer
+    c = PolicyComposer()
+    r = c.compose(intent="test", ttm_strategy={"recommended_action_types":["defer"]})
+    assert r["action_type"] == "defer"
+      </code>
+    </test>
+
+    <test id="A19" name="compose pulse">
+      <code>
+def test_compose_pulse():
+    from src.coach.composer import PolicyComposer
+    c = PolicyComposer()
+    r = c.compose(intent="test", ttm_strategy={"recommended_action_types":["pulse"]})
+    assert r["action_type"] == "pulse"
+      </code>
+    </test>
+
+    <test id="A20" name="compose excursion">
+      <code>
+def test_compose_excursion():
+    from src.coach.composer import PolicyComposer
+    c = PolicyComposer()
+    r = c.compose(intent="test", excursion_mode=True)
+    assert r["action_type"] == "excursion"
+      </code>
+    </test>
+  </tests>
+</prompt>

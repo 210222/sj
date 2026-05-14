@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<exhaustive_test_execution description="对 Coherence 教练系统全部 256 种配置组合进行穷举质量测试 — 给 AI 执行者的完整指令">
+
+  <metadata>
+    <test_script>tests/test_exhaustive_all_configs.py</test_script>
+    <total_combos>256</total_combos>
+    <total_dialogues>52</total_dialogues>
+    <total_turns>~1500</total_turns>
+    <estimated_time>45-65 分钟</estimated_time>
+    <quality_dimensions>6 (relevance/clarity/interactive/structure/personalization/encouragement)</quality_dimensions>
+    <max_score>24/24</max_score>
+    <api_key_env>DEEPSEEK_API_KEY</api_key_env>
+    <api_key_value>YOUR_DEEPSEEK_API_KEY</api_key_value>
+    <project_root>/d/Claudedaoy/coherence</project_root>
+  </metadata>
+
+  <prerequisites>
+    <item>Python 3.10+ 已安装</item>
+    <item>pyyaml 已安装 (pip install pyyaml)</item>
+    <item>DEEPSEEK_API_KEY 环境变量已设置 (值: YOUR_DEEPSEEK_API_KEY)</item>
+    <item>当前工作目录为 /d/Claudedaoy/coherence</item>
+  </prerequisites>
+
+  <files>
+    <test_script>tests/test_exhaustive_all_configs.py — 主测试脚本 (1124 行, 已修复 GBK 编码和 JSON 布尔序列化问题)</test_script>
+    <config>config/coach_defaults.yaml — 运行中会临时修改, 运行结束自动恢复</config>
+    <output_log>reports/exhaustive_all_configs_test.log — 实时文本日志</output_log>
+    <output_report>reports/exhaustive_all_configs_report.json — 最终结构化报告</output_report>
+    <output_progress>reports/exhaustive_all_configs_progress.json — 中间 checkpoint (每 16 组合保存)</output_progress>
+    <used_topics>reports/exhaustive_used_topics.json — 已用话题追踪 (已清空, 本轮全新)</used_topics>
+    <execution_plan>reports/exhaustive_test_execution_plan.xml — 本文档</execution_plan>
+  </files>
+
+  <test_design>
+
+    <config_switches>
+      <switch abbrev="L" key="llm.enabled" description="LLM 引擎 (DeepSeek)"/>
+      <switch abbrev="T" key="ttm.enabled" description="阶段变化理论"/>
+      <switch abbrev="S" key="sdt.enabled" description="自决理论"/>
+      <switch abbrev="F" key="flow.enabled" description="心流互信息"/>
+      <switch abbrev="D" key="diagnostic_engine.enabled" description="自适应诊断探测引擎"/>
+      <switch abbrev="P" key="sovereignty_pulse.enabled" description="认知主权脉冲"/>
+      <switch abbrev="E" key="excursion.enabled" description="越狱防护巡检"/>
+      <switch abbrev="R" key="relational_safety.enabled" description="关系安全性"/>
+      <note>共 2^8 = 256 种组合, 每种在隔离子进程中运行</note>
+    </config_switches>
+
+    <dialogue_domains>
+      <domain name="Python 基础" scripts="12"/>
+      <domain name="JavaScript/Web" scripts="10"/>
+      <domain name="数据结构" scripts="8"/>
+      <domain name="算法" scripts="6"/>
+      <domain name="数据库" scripts="5"/>
+      <domain name="工具链" scripts="6"/>
+      <domain name="计算机基础" scripts="5"/>
+      <note>每个脚本 5-7 轮连续对话, 模拟真实学习场景</note>
+    </dialogue_domains>
+
+    <quality_scoring>
+      <dimension name="relevance" range="0-4" criteria="回复长度: <30字=0, 30-60=2, 60-100=3, >100=4"/>
+      <dimension name="clarity" range="0-4" criteria="比喻/举例数量: ≥2个比喻+长文=4, 有1个比喻=3, 长文=3"/>
+      <dimension name="interactive" range="0-4" criteria="追问/选项/步骤/提示每项+1, 长文额外+1"/>
+      <dimension name="structure" range="0-4" criteria="steps数组长度: ≥3步=4, ≥2步=3, 有'第一步'等=2"/>
+      <dimension name="personalization" range="0-4" criteria="引用用户: 引用+确认=4, 仅引用=3, 有确认=2"/>
+      <dimension name="encouragement" range="0-4" criteria="鼓励词数量: ≥3个=4, ≥2个=3, ≥1个=2"/>
+      <total>24 分满分</total>
+    </quality_scoring>
+
+  </test_design>
+
+  <execution_steps>
+
+    <step number="1" name="确认环境">
+      <command>echo $DEEPSEEK_API_KEY</command>
+      <expected>输出应包含 YOUR_DEEPSEEK_API_KEY</expected>
+      <fallback>export DEEPSEEK_API_KEY="YOUR_DEEPSEEK_API_KEY"</fallback>
+    </step>
+
+    <step number="2" name="确认路径">
+      <command>cd /d/Claudedaoy/coherence && pwd</command>
+      <expected>/d/Claudedaoy/coherence</expected>
+    </step>
+
+    <step number="3" name="清理旧进度">
+      <note>进度文件已清空。如需手动清理:</note>
+      <command>rm -f reports/exhaustive_all_configs_progress.json reports/exhaustive_used_topics.json reports/exhaustive_all_configs_test.log reports/exhaustive_all_configs_report.json</command>
+    </step>
+
+    <step number="4" name="启动测试">
+      <command>python tests/test_exhaustive_all_configs.py</command>
+      <expected_output>
+        ======================================================================
+        EXHAUSTIVE ALL-CONFIG QUALITY TEST
+        Total combos: 256
+        Total topics: 53
+        ======================================================================
+
+        --- [1/256] ...
+      </expected_output>
+      <note>此命令需要持续运行约 45-65 分钟。建议用后台任务执行。</note>
+      <background_command>nohup python tests/test_exhaustive_all_configs.py &gt; reports/exhaustive_run.log 2&gt;&amp;1 &amp;</background_command>
+    </step>
+
+  </execution_steps>
+
+  <monitoring>
+
+    <check_progress>
+      <command>tail -20 reports/exhaustive_all_configs_test.log</command>
+      <expected_format>
+        --- [N/256] LABEL ---
+        Config: [...]
+        Topic: xxx (5 turns)
+        N/N ok | avg quality: XX.X/24 | llm: N/N
+        steps: N/N | questions: N/N
+        ...
+        time: Xs | total: Xs
+      </expected_format>
+    </check_progress>
+
+    <check_completion_count>
+      <command>grep -c "ok |" reports/exhaustive_all_configs_test.log</command>
+      <expected>成功后显示 256</expected>
+    </check_completion_count>
+
+    <check_failures>
+      <command>grep -c "FAILED" reports/exhaustive_all_configs_test.log</command>
+      <expected>期望 0</expected>
+    </check_failures>
+
+    <check_llm_on_avg>
+      <command>grep "ok |" reports/exhaustive_all_configs_test.log | grep "llm: [1-9]" | grep -oP 'avg quality: \K[0-9.]+' | python -c "import sys; vals=[float(l) for l in sys.stdin]; print(f'avg={sum(vals)/len(vals):.1f}/24 (n={len(vals)})' if vals else 'none')"</command>
+    </check_llm_on_avg>
+
+    <check_llm_off_avg>
+      <command>grep "ok |" reports/exhaustive_all_configs_test.log | grep "llm: 0/" | grep -oP 'avg quality: \K[0-9.]+' | python -c "import sys; vals=[float(l) for l in sys.stdin]; print(f'avg={sum(vals)/len(vals):.1f}/24 (n={len(vals)})' if vals else 'none')"</command>
+    </check_llm_off_avg>
+
+    <check_top_10>
+      <command>grep -A2 "^--- Top 10 ---" reports/exhaustive_all_configs_test.log | head -15</command>
+    </check_top_10>
+
+  </monitoring>
+
+  <estimated_time_breakdown>
+    <combo_type name="LLM ON (L=true)" count="~128" per_combo="20-30 秒" subtotal="42-64 分钟"/>
+    <combo_type name="LLM OFF (L=false)" count="~128" per_combo="&lt;1 秒" subtotal="~1 分钟"/>
+    <total>45-65 分钟</total>
+  </estimated_time_breakdown>
+
+  <error_handling>
+
+    <error id="gbk_decode" symptom="'NoneType' object has no attribute 'strip'">
+      <cause>Windows 下 subprocess 默认 GBK 编码无法解码 LLM 输出的 UTF-8 内容</cause>
+      <fix_state>已修复 — subprocess.run() 已设 encoding='utf-8'</fix_state>
+      <verify>
+        grep "encoding" tests/test_exhaustive_all_configs.py | grep subprocess
+        # 应显示: capture_output=True, text=True, encoding="utf-8", timeout=120,
+      </verify>
+    </error>
+
+    <error id="json_bool" symptom="NameError: name 'true' is not defined">
+      <cause>json.dumps() 输出 JSON 布尔值 (true/false) 在 Python 代码中无法识别</cause>
+      <fix_state>已修复 — 改用 json.loads() 传递配置</fix_state>
+      <verify>
+        grep "json.loads" tests/test_exhaustive_all_configs.py
+        # 应显示 combo = json.loads(...) 和 dialogue = json.loads(...)
+      </verify>
+    </error>
+
+    <error id="timeout" symptom="FAILED: timeout (120s)">
+      <cause>单个组合超时 120 秒 (通常是 LLM API 响应慢)</cause>
+      <action>自动跳过, 进度已保存。可稍后重试。</action>
+    </error>
+
+    <error id="api_key" symptom="LLM 始终 0/5 但配置 L=true">
+      <cause>DEEPSEEK_API_KEY 未设置或无效</cause>
+      <action>检查 echo $DEEPSEEK_API_KEY, 重新 export</action>
+    </error>
+
+    <error id="mass_failure" symptom="大量组合连续 FAILED">
+      <cause>可能 coach_defaults.yaml 被损坏或模块导入错误</cause>
+      <action>检查第一个失败的完整 traceback, 修复后重跑</action>
+    </error>
+
+    <retry_procedure>
+      <note>失败组合不会自动重试。如需重新运行特定组合:</note>
+      <steps>
+        <step>1. 删除 reports/exhaustive_all_configs_progress.json</step>
+        <step>2. 保留 reports/exhaustive_used_topics.json (保持话题去重)</step>
+        <step>3. 重新运行 python tests/test_exhaustive_all_configs.py</step>
+      </steps>
+    </retry_procedure>
+
+  </error_handling>
+
+  <output_analysis>
+
+    <after_completion_tasks>
+      <task>1. 读取 reports/exhaustive_all_configs_test.log 末尾的 FINAL REPORT 部分</task>
+      <task>2. 读取 reports/exhaustive_all_configs_report.json 获取结构化数据</task>
+    </after_completion_tasks>
+
+    <key_metrics_to_report>
+      <metric>总体平均质量 (overall_avg_quality) — 期望 16-18/24</metric>
+      <metric>6 维度各自平均分 — 找出最弱维度</metric>
+      <metric>LLM ON vs OFF 差距 — 期望 5+ 分差异</metric>
+      <metric>TTM ON vs OFF 差距 — 期望 1-3 分差异</metric>
+      <metric>Top 10 配置组合 — 找出最优配置</metric>
+      <metric>Bottom 10 配置组合 — 找出最差配置</metric>
+      <metric>失败数量 — 期望 0</metric>
+    </key_metrics_to_report>
+
+    <comparison_baseline>
+      <source>Phase 11 优化前 12 组合 × 10 轮测试数据</source>
+      <baseline_overall>16.4/24</baseline_overall>
+      <baseline_structure>2.12/4</baseline_structure>
+      <baseline_personalization>2.77/4</baseline_personalization>
+      <baseline_relevance>2.42/4</baseline_relevance>
+    </comparison_baseline>
+
+  </output_analysis>
+
+  <script_architecture>
+    <note>以下为测试脚本内部逻辑, 帮助排错时理解</note>
+
+    <call_chain>
+      main()
+      ├── generate_all_combos()        → 256 (label, combo)
+      ├── build_dialogue_pool()        → 52 topic→script
+      ├── [loop 256 combos]
+      │   ├── run_combo_subprocess()   → 子进程
+      │   │   ├── 写 combo 到 coach_defaults.yaml
+      │   │   ├── importlib.reload(agent_mod)
+      │   │   ├── CoachAgent.act() × 5-7 turns
+      │   │   ├── 内联 6 维质量评分
+      │   │   └── print JSON results
+      │   ├── 汇总统计 (avg_quality, dimensions, actions...)
+      │   └── 每 16 combo → _save_progress()
+      └── _write_final_report()
+          ├── 总体平均 / 维度平均
+          ├── 按特征分组 (LLM/Behavior/Safety/Diagnostic)
+          └── Top 10 / Bottom 10 排名
+    </call_chain>
+
+    <design_decisions>
+      <decision name="子进程隔离" reason="CoachAgent 模块级 _coach_cfg 缓存, 修改 YAML 后 importlib.reload() 才能生效"/>
+      <decision name="话题循环分配" reason="256 组合 ÷ 53 话题 ≈ 5 轮复用, idx % len(topics) 分配"/>
+      <decision name="进度持久化" reason="每 16 组合写 checkpoint, 支持中断后恢复"/>
+      <decision name="配置自动恢复" reason="运行结束恢复 coach_defaults.yaml 原文, 不污染系统状态"/>
+      <decision name="随机执行顺序" reason="random.shuffle(combos) 避免系统性偏差 (如前 128 个全是 LLM ON)"/>
+    </design_decisions>
+
+  </script_architecture>
+
+  <verification>
+    <gate id="files_exist">
+      <check>ls tests/test_exhaustive_all_configs.py</check>
+    </gate>
+    <gate id="api_key">
+      <check>echo $DEEPSEEK_API_KEY | head -c 10</check>
+      <expected>sk-bb5f42...</expected>
+    </gate>
+    <gate id="no_old_progress">
+      <check>ls reports/exhaustive_all_configs_progress.json 2>/dev/null && echo "存在旧进度!" || echo "无旧进度 ✓"</check>
+    </gate>
+    <gate id="yaml_import">
+      <check>python -c "import yaml; print('yaml OK')"</check>
+    </gate>
+    <gate id="agent_import">
+      <check>python -c "import sys; sys.path.insert(0,'.'); from src.coach.agent import CoachAgent; print('agent OK')"</check>
+    </gate>
+  </verification>
+
+  <estimated_completion>
+    <progress_50>~30 分钟后: grep -c "ok |" reports/exhaustive_all_configs_test.log → 约 128</progress_50>
+    <progress_100>~60 分钟后: grep -c "ok |" reports/exhaustive_all_configs_test.log → 256</progress_100>
+    <final_notification>完成后在 reports/exhaustive_all_configs_test.log 尾部可见 FINAL REPORT</final_notification>
+  </estimated_completion>
+
+</exhaustive_test_execution>

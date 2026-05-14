@@ -1,11 +1,11 @@
 {
   "step": "S80",
   "status": "FAIL",
-  "executed_at_utc": "2026-05-04T07:26:40.502Z",
+  "executed_at_utc": "2026-05-12T06:00:58.224Z",
   "layer": "Stage Governance",
   "b_stage_evidence_missing": 0,
   "b_678_go": true,
   "c_all_go": true,
   "forbidden_changes": true,
-  "governance_findings": 2
+  "governance_findings": 19
 }

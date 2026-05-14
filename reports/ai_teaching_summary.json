@@ -1,0 +1,18 @@
+{
+  "test_time": "2026-05-06T04:30:34.927787+00:00",
+  "total": 28,
+  "passed": 18,
+  "failed": 10,
+  "pass_rate": 64.3,
+  "action_distribution": {
+    "scaffold": 4,
+    "suggest": 19,
+    "challenge": 1,
+    "probe": 2,
+    "reflect": 1,
+    "defer": 1
+  },
+  "avg_tokens": 409.0,
+  "avg_seconds": 2.0,
+  "model": "deepseek-v4-flash"
+}

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>模块 C: 边界系统化</name>
+  <version>1.0.0</version>
+  <track>EXHAUSTIVE</track>
+  <phase>99</phase>
+  <sub_stage>C</sub_stage>
+  <sub_stage_name>10 tests, 3 min — diagnostic_engine + persistence + LLM 降级路径空安全</sub_stage_name>
+  <file>tests/test_exhaustive_boundary.py</file>
+
+  <tests>
+
+    <test id="C1" name="diag engine empty masteries">
+      <code>
+def test_diag_empty_masteries():
+    """diagnostic_engine enabled 但 get_all_masteries()={} -> 不崩溃。"""
+    from src.coach.diagnostic_engine import DiagnosticEngine
+    de = DiagnosticEngine({"enabled": True})
+    masteries = de.store.get_all_masteries()
+    assert isinstance(masteries, dict)
+    summary = de.get_mastery_summary()
+    assert isinstance(summary.get("skills"), dict)
+      </code>
+    </test>
+
+    <test id="C2" name="process_turn no pending">
+      <code>
+def test_process_turn_no_pending():
+    """process_turn() 无 pending probe -> 返回 None。"""
+    from src.coach.diagnostic_engine import DiagnosticEngine
+    de = DiagnosticEngine({"enabled": True})
+    result = de.process_turn(user_input="test", turn_count=1)
+    assert result is None
+      </code>
+    </test>
+
+    <test id="C3" name="should_and_generate max probes">
+      <code>
+def test_should_and_generate_max_probes():
+    """should_and_generate() 超 max_probes -> 返回 None。"""
+    from src.coach.diagnostic_engine import DiagnosticEngine
+    de = DiagnosticEngine({"enabled": True, "max_probes_per_session": 1})
+    de._probe_count = 1  # simulate max reached
+    result = de.should_and_generate(turn_count=99, intent="test")
+    assert result is None
+      </code>
+    </test>
+
+    <test id="C4" name="diag enabled no crash">
+      <code>
+def test_diag_enabled_no_crash():
+    """diagnostic_engine 全路径空安全。"""
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    if a.diagnostic_engine:
+        a.diagnostic_engine.process_turn("test", 1)
+        a.diagnostic_engine.should_and_generate(1, intent="test")
+    # 不崩溃即通过
+      </code>
+    </test>
+
+    <test id="C5" name="persistence empty profile">
+      <code>
+def test_persistence_empty_profile():
+    """get_profile() 无行 -> 返回空 dict。"""
+    from src.coach.persistence import SessionPersistence
+    p = SessionPersistence("nonexistent_session_xyz")
+    profile = p.get_profile()
+    assert isinstance(profile, dict)
+    # 无数据时不抛异常
+      </code>
+    </test>
+
+    <test id="C6" name="persistence empty trend">
+      <code>
+def test_persistence_empty_trend():
+    """get_mastery_trend() 无数据 -> 返回 []. """
+    from src.coach.persistence import SessionPersistence
+    p = SessionPersistence("nonexistent_session_xyz")
+    trend = p.get_mastery_trend("ttm_stage", days=30)
+    assert isinstance(trend, list)
+    assert len(trend) == 0
+      </code>
+    </test>
+
+    <test id="C7" name="persistence empty skills">
+      <code>
+def test_persistence_empty_skills():
+    """get_skills_with_recency() skill_masteries={} -> 返回 {} 。"""
+    from src.coach.persistence import SessionPersistence
+    p = SessionPersistence("nonexistent_session_xyz")
+    skills = p.get_skills_with_recency()
+    assert isinstance(skills, dict)
+      </code>
+    </test>
+
+    <test id="C8" name="LLM disabled no crash">
+      <code>
+def test_llm_disabled_no_crash():
+    """LLMConfig.from_yaml(enabled=false) -> 规则引擎保底。"""
+    from src.coach.llm.config import LLMConfig
+    cfg = LLMConfig.from_yaml({"llm": {"enabled": False}})
+    assert cfg.enabled is False
+    assert cfg.api_key == ""  # no key loaded
+      </code>
+    </test>
+
+    <test id="C9" name="LLM validation fail fallback">
+      <code>
+def test_llm_validation_fail_fallback():
+    """LLM output 校验失败 -> llm_generated=False。"""
+    from src.coach.llm.schemas import LLMOutputValidator
+    # invalid payload: missing statement
+    valid, errors = LLMOutputValidator.validate({"question": "?"})
+    assert not valid
+    assert len(errors) > 0
+    # valid payload
+    valid2, errors2 = LLMOutputValidator.validate({"statement": "hello"})
+    assert valid2
+      </code>
+    </test>
+
+    <test id="C10" name="LLM error no crash">
+      <code>
+def test_llm_error_no_crash():
+    """LLMConfig with bad key -> from_yaml raises LLMConfigError。"""
+    from src.coach.llm.config import LLMConfig, LLMConfigError
+    import os
+    # Set a known-bad env var and verify graceful handling
+    os.environ["_TEST_BAD_KEY"] = ""
+    try:
+        cfg = LLMConfig.from_yaml({"llm": {"enabled": True, "api_key_env": "_TEST_BAD_KEY"}})
+        assert cfg.api_key == ""  # empty key
+    except LLMConfigError:
+        pass  # exception is also acceptable
+    finally:
+        os.environ.pop("_TEST_BAD_KEY", None)
+      </code>
+    </test>
+  </tests>
+</prompt>

@@ -1,0 +1,355 @@
+{
+  "test_time": "2026-05-06T05:02:38.579892+00:00",
+  "configs_tested": 12,
+  "total_turns": 120,
+  "passed": 120,
+  "crashed": 0,
+  "overall_avg_quality": 16.4,
+  "ranking": [
+    [
+      "rules_diag",
+      17.9,
+      "10/10",
+      4056
+    ],
+    [
+      "baseline_rules",
+      17.6,
+      "10/10",
+      4052
+    ],
+    [
+      "behavior_safety",
+      17.4,
+      "10/10",
+      3989
+    ],
+    [
+      "full_stack",
+      17.2,
+      "10/10",
+      4078
+    ],
+    [
+      "llm_ttm",
+      16.6,
+      "10/10",
+      4039
+    ],
+    [
+      "llm_only",
+      16.1,
+      "10/10",
+      3873
+    ],
+    [
+      "all_behavior",
+      15.9,
+      "10/10",
+      3836
+    ],
+    [
+      "llm_ttm_diag",
+      15.9,
+      "10/10",
+      3973
+    ],
+    [
+      "all_off",
+      15.9,
+      "10/10",
+      3959
+    ],
+    [
+      "llm_ttm_sdt",
+      15.4,
+      "10/10",
+      3939
+    ],
+    [
+      "llm_diag",
+      15.3,
+      "10/10",
+      3920
+    ],
+    [
+      "safety_full",
+      15.2,
+      "10/10",
+      3869
+    ]
+  ],
+  "dimension_averages": {
+    "relevance": 2.42,
+    "clarity": 3.02,
+    "interactive": 3.38,
+    "structure": 2.12,
+    "personalization": 2.77,
+    "encouragement": 2.67
+  },
+  "per_combo": {
+    "baseline_rules": {
+      "config": {
+        "llm.enabled": false,
+        "ttm.enabled": false,
+        "sdt.enabled": false,
+        "flow.enabled": false,
+        "diagnostic_engine.enabled": false
+      },
+      "turns": 10,
+      "ok": 10,
+      "llm_rate": "10/10",
+      "avg_quality": 17.6,
+      "action_types": {
+        "scaffold": 3,
+        "reflect": 1,
+        "suggest": 5,
+        "probe": 1
+      },
+      "ttm_stages": {},
+      "total_tokens": 4052,
+      "total_time_s": 23.2
+    },
+    "llm_only": {
+      "config": {
+        "llm.enabled": true,
+        "ttm.enabled": false,
+        "sdt.enabled": false,
+        "flow.enabled": false,
+        "diagnostic_engine.enabled": false
+      },
+      "turns": 10,
+      "ok": 10,
+      "llm_rate": "10/10",
+      "avg_quality": 16.1,
+      "action_types": {
+        "scaffold": 3,
+        "reflect": 1,
+        "suggest": 5,
+        "probe": 1
+      },
+      "ttm_stages": {},
+      "total_tokens": 3873,
+      "total_time_s": 17.8
+    },
+    "llm_ttm": {
+      "config": {
+        "llm.enabled": true,
+        "ttm.enabled": true,
+        "sdt.enabled": false,
+        "flow.enabled": false,
+        "diagnostic_engine.enabled": false
+      },
+      "turns": 10,
+      "ok": 10,
+      "llm_rate": "10/10",
+      "avg_quality": 16.6,
+      "action_types": {
+        "scaffold": 3,
+        "reflect": 1,
+        "suggest": 5,
+        "probe": 1
+      },
+      "ttm_stages": {},
+      "total_tokens": 4039,
+      "total_time_s": 19.9
+    },
+    "llm_ttm_sdt": {
+      "config": {
+        "llm.enabled": true,
+        "ttm.enabled": true,
+        "sdt.enabled": true,
+        "flow.enabled": false,
+        "diagnostic_engine.enabled": false
+      },
+      "turns": 10,
+      "ok": 10,
+      "llm_rate": "10/10",
+      "avg_quality": 15.4,
+      "action_types": {
+        "scaffold": 3,
+        "reflect": 1,
+        "suggest": 5,
+        "probe": 1
+      },
+      "ttm_stages": {},
+      "total_tokens": 3939,
+      "total_time_s": 18.8
+    },
+    "all_behavior": {
+      "config": {
+        "llm.enabled": true,
+        "ttm.enabled": true,
+        "sdt.enabled": true,
+        "flow.enabled": true,
+        "diagnostic_engine.enabled": false
+      },
+      "turns": 10,
+      "ok": 10,
+      "llm_rate": "10/10",
+      "avg_quality": 15.9,
+      "action_types": {
+        "scaffold": 3,
+        "reflect": 1,
+        "suggest": 5,
+        "probe": 1
+      },
+      "ttm_stages": {},
+      "total_tokens": 3836,
+      "total_time_s": 18.2
+    },
+    "full_stack": {
+      "config": {
+        "llm.enabled": true,
+        "ttm.enabled": true,
+        "sdt.enabled": true,
+        "flow.enabled": true,
+        "diagnostic_engine.enabled": true
+      },
+      "turns": 10,
+      "ok": 10,
+      "llm_rate": "10/10",
+      "avg_quality": 17.2,
+      "action_types": {
+        "scaffold": 3,
+        "reflect": 1,
+        "suggest": 5,
+        "probe": 1
+      },
+      "ttm_stages": {},
+      "total_tokens": 4078,
+      "total_time_s": 20.7
+    },
+    "llm_diag": {
+      "config": {
+        "llm.enabled": true,
+        "ttm.enabled": false,
+        "sdt.enabled": false,
+        "flow.enabled": false,
+        "diagnostic_engine.enabled": true
+      },
+      "turns": 10,
+      "ok": 10,
+      "llm_rate": "10/10",
+      "avg_quality": 15.3,
+      "action_types": {
+        "scaffold": 3,
+        "reflect": 1,
+        "suggest": 5,
+        "probe": 1
+      },
+      "ttm_stages": {},
+      "total_tokens": 3920,
+      "total_time_s": 20.5
+    },
+    "llm_ttm_diag": {
+      "config": {
+        "llm.enabled": true,
+        "ttm.enabled": true,
+        "sdt.enabled": false,
+        "flow.enabled": false,
+        "diagnostic_engine.enabled": true
+      },
+      "turns": 10,
+      "ok": 10,
+      "llm_rate": "10/10",
+      "avg_quality": 15.9,
+      "action_types": {
+        "scaffold": 3,
+        "reflect": 1,
+        "suggest": 5,
+        "probe": 1
+      },
+      "ttm_stages": {},
+      "total_tokens": 3973,
+      "total_time_s": 20.0
+    },
+    "safety_full": {
+      "config": {
+        "llm.enabled": true,
+        "sovereignty_pulse.enabled": true,
+        "excursion.enabled": true,
+        "relational_safety.enabled": true
+      },
+      "turns": 10,
+      "ok": 10,
+      "llm_rate": "10/10",
+      "avg_quality": 15.2,
+      "action_types": {
+        "scaffold": 3,
+        "reflect": 1,
+        "suggest": 5,
+        "probe": 1
+      },
+      "ttm_stages": {},
+      "total_tokens": 3869,
+      "total_time_s": 18.3
+    },
+    "behavior_safety": {
+      "config": {
+        "llm.enabled": true,
+        "ttm.enabled": true,
+        "sdt.enabled": true,
+        "sovereignty_pulse.enabled": true,
+        "relational_safety.enabled": true
+      },
+      "turns": 10,
+      "ok": 10,
+      "llm_rate": "10/10",
+      "avg_quality": 17.4,
+      "action_types": {
+        "scaffold": 3,
+        "reflect": 1,
+        "suggest": 5,
+        "probe": 1
+      },
+      "ttm_stages": {},
+      "total_tokens": 3989,
+      "total_time_s": 19.5
+    },
+    "rules_diag": {
+      "config": {
+        "llm.enabled": false,
+        "diagnostic_engine.enabled": true
+      },
+      "turns": 10,
+      "ok": 10,
+      "llm_rate": "10/10",
+      "avg_quality": 17.9,
+      "action_types": {
+        "scaffold": 3,
+        "reflect": 1,
+        "suggest": 5,
+        "probe": 1
+      },
+      "ttm_stages": {},
+      "total_tokens": 4056,
+      "total_time_s": 20.6
+    },
+    "all_off": {
+      "config": {
+        "llm.enabled": false,
+        "ttm.enabled": false,
+        "sdt.enabled": false,
+        "flow.enabled": false,
+        "diagnostic_engine.enabled": false,
+        "sovereignty_pulse.enabled": false,
+        "excursion.enabled": false,
+        "relational_safety.enabled": false
+      },
+      "turns": 10,
+      "ok": 10,
+      "llm_rate": "10/10",
+      "avg_quality": 15.9,
+      "action_types": {
+        "scaffold": 3,
+        "reflect": 1,
+        "suggest": 5,
+        "probe": 1
+      },
+      "ttm_stages": {},
+      "total_tokens": 3959,
+      "total_time_s": 20.1
+    }
+  }
+}

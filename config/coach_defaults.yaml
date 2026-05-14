@@ -155,7 +155,7 @@ counterfactual:
 default_domain_passport: medium
 default_intent: general
 diagnostic_engine:
-  enabled: true
+  enabled: false
 diagnostics:
   balance_check:
     smd_threshold: 0.25
@@ -179,7 +179,7 @@ flow:
     learn: 0.2
     prior: 0.3
     slip: 0.1
-  enabled: true
+  enabled: false
   flow_zone:
     anxiety_threshold: 0.8
     boredom_threshold: 0.2
@@ -253,7 +253,7 @@ relational_safety:
   sovereignty_interval_turns: 10
   sovereignty_statement: 你可以拒绝、改写或退出当前画像——这是你的认知主权。
 sdt:
-  enabled: true
+  enabled: false
   signal_decay: 0.9
   thresholds:
     autonomy_low: 0.3
@@ -272,7 +272,7 @@ ttm:
   detect:
     confidence_threshold: 0.6
     min_interactions: 3
-  enabled: true
+  enabled: false
   transition:
     action_to_maintenance_turns: 10
     allow_forward_jump: false

@@ -1,0 +1,22 @@
+[
+  {
+    "severity": "P2",
+    "type": "integration_test_failure",
+    "detail": "集成测试未通过:\n\n=================================== ERRORS ====================================\n_____________ ERROR collecting tests/test_s6_mapek_integration.py _____________\ntests\\test_s6_mapek_integration.py:4: in <module>\n    from src.coach import CoachAgent\nsrc\\coach\\__init__.py:3: in <module>\n    from src.co"
+  },
+  {
+    "severity": "P2",
+    "type": "test_count_parse_error",
+    "detail": "无法解析测试输出:\n\n=========================== short test summary info ===========================\nERROR tests/test_ai_teaching_quality.py - AttributeError: 'NoneType' object h...\nERROR tests/test_coach_agent.py - Attr"
+  },
+  {
+    "severity": "P1",
+    "type": "runtime_wiring_failure",
+    "detail": "运行时接线验证失败: 'NoneType' object has no attribute 'get'"
+  },
+  {
+    "severity": "P2",
+    "type": "composer_fallback_failure",
+    "detail": "compose_with_ceo 无策略回退失败: local variable 'PolicyComposer' referenced before assignment"
+  }
+]

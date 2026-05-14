@@ -1,0 +1,120 @@
+{
+  "manifest_version": "1.0.0",
+  "phase": "34.5",
+  "track": "EXPERIENCE",
+  "created_utc": "2026-05-14T00:00:00Z",
+  "purpose": "pre-refactor LLM baseline anchor for Phase 35 context path refactoring",
+
+  "baseline_definition": {
+    "name": "LLM Baseline (Pre-Refactor)",
+    "semantic_role": "Phase 35 before-state anchor — the frozen reference point against which all Phase 35 context path changes will be compared",
+    "canonical_anchor_run": "run_20260513_125812_2f41dbf7",
+    "note": "This baseline IS NOT a single-run absolute truth. The band (S34.5.2) will define its normal fluctuation range."
+  },
+
+  "baseline_is": [
+    "a frozen before-state of the current LLM coaching pipeline",
+    "a regression anchor — any Phase 35 change must not degrade below this band",
+    "a structural snapshot of prompt/context path as it exists today",
+    "a companion to the rules baseline, not a replacement"
+  ],
+
+  "baseline_is_not": [
+    "a replacement for Phase 32 rules baseline (which remains the stability anchor)",
+    "a claim of optimal LLM behavior",
+    "a production readiness certification",
+    "a provider migration or model upgrade",
+    "an exhaustive LLM evaluation"
+  ],
+
+  "relationship_to_rules_baseline": {
+    "rules_baseline_run_id": "run_20260513_080304_0d62cb26",
+    "rules_baseline_role": "stability anchor — pure rule-engine performance floor",
+    "llm_baseline_role": "pre-refactor anchor — LLM-augmented coaching snapshot before Phase 35",
+    "comparison_note": "These two baselines are side-by-side references with different purposes. Rules baseline measures the rule-engine floor. LLM baseline measures the current LLM-augmented state. They are not competitors — they anchor different questions.",
+    "rules_baseline_overall": 12.31,
+    "llm_snapshot_overall": 14.60,
+    "delta": 2.29
+  },
+
+  "fixed_configuration": {
+    "provider": "openai",
+    "model": "deepseek-chat",
+    "base_url": "https://api.deepseek.com/v1",
+    "mode": "quick",
+    "use_http": true,
+    "profiles": ["novice_confirm", "novice_jump", "tester"],
+    "turns_per_profile": 20,
+    "max_turns_per_profile_effective": 5,
+    "scoring": {
+      "source": "run_experience_audit.py::score_turn()",
+      "dimensions": ["引用性", "连续性", "无空转", "稳定性", "推进感"],
+      "breakpoint_probes": [
+        "pulse_next_action",
+        "dashboard_errors",
+        "aggregator_shape",
+        "payload_extraction",
+        "ws_status"
+      ]
+    },
+    "config_file": "config/coach_defaults.yaml",
+    "config_lines": {
+      "base_url": 190,
+      "model": 195,
+      "provider": 196
+    }
+  },
+
+  "immutable_constraints": {
+    "no_modify_contracts": true,
+    "no_modify_src_inner": true,
+    "no_modify_src_middle": true,
+    "no_modify_src_outer": true,
+    "no_modify_provider": true,
+    "no_modify_model": true,
+    "no_modify_base_url": true,
+    "no_modify_scoring_dimensions": true,
+    "no_modify_breakpoint_probes": true,
+    "no_modify_mainline_code": [
+      "src/coach/agent.py",
+      "src/coach/llm/prompts.py",
+      "src/coach/llm/memory_context.py"
+    ]
+  },
+
+  "phase_34_anchor_snapshot": {
+    "run_id": "run_20260513_125812_2f41dbf7",
+    "overall_score": 14.60,
+    "dimensions": {
+      "引用性": 0.53,
+      "连续性": 3.53,
+      "无空转": 4.00,
+      "稳定性": 3.53,
+      "推进感": 3.00
+    },
+    "llm_generated_rate": 1.0,
+    "breakpoint_probes_all_passed": true,
+    "profiles": {
+      "novice_confirm": 15.00,
+      "novice_jump": 15.40,
+      "tester": 13.40
+    }
+  },
+
+  "phase_35_input": {
+    "what_phase_35_will_change": "LLM context path refactoring (stable prefix / retention layers / mainline wiring / stream parity)",
+    "what_this_baseline_provides": "A before-state with: (1) overall score band, (2) per-dimension band, (3) context path structural fingerprint, (4) immutable config snapshot",
+    "comparison_method": "Phase 35 after-state scores compared against this baseline's mean ± band. A successful refactor stays within or above the band on all key dimensions."
+  },
+
+  "existing_runs": [
+    "run_20260513_080304_0d62cb26",
+    "run_20260513_081509_40dda9ee",
+    "run_20260513_093620_5e529bc1",
+    "run_20260513_100614_b3a6134a",
+    "run_20260513_122047_4c1268bb",
+    "run_20260513_125812_2f41dbf7"
+  ],
+
+  "next_stage": "S34.5.2 — baseline band confirmation (3-5 repeated runs)"
+}

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S36.1 — Runtime Instrumentation</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>36</phase>
+  <sub_stage>S36.1</sub_stage>
+  <sub_stage_name>LLM runtime evidence per call (sync + stream)</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责为每次 sync / stream LLM 调用记录统一的 runtime evidence。
+    你的职责不是改变产品行为，不是改 prompt 结构，而是在每次 LLM 调用成功后附加一份结构化 observability 记录。
+  </role>
+
+  <task>
+    1. 在 LLMClient.generate() 和 generate_stream() 中附加 runtime observability；
+    2. 在 build_coach_context() 的 context_meta 中扩展 cache-eligibility 字段；
+    3. 在 build_retention_bundle() 中附加 retention observability；
+    4. 在 CoachAgent.act() 和 CoachBridge.chat_stream() 中统一收集并暴露 observability；
+    5. 所有字段不得落盘到日志文件或数据库中的明文 key。
+  </task>
+
+  <primary_modification_surfaces>
+    <item>src/coach/llm/client.py — LLMClient.generate() / generate_stream() 附加 runtime 证据</item>
+    <item>src/coach/llm/schemas.py — LLMResponse 扩展 observability 字段</item>
+    <item>src/coach/llm/prompts.py — context_meta 扩展 cache-eligibility 字段</item>
+    <item>src/coach/agent.py — _build_llm_context_bundle() 收集并传递 observability</item>
+    <item>src/coach/llm/memory_context.py — build_retention_bundle() 附加 retention 指标</item>
+    <item>api/services/coach_bridge.py — chat_stream() 收集并暴露 observability</item>
+  </primary_modification_surfaces>
+
+  <required_observability_fields>
+    <group name="cache_eligibility">
+      <field>cache_eligible (bool)</field>
+      <field>cache_eligibility_reason (str)</field>
+      <field>stable_prefix_hash (str — SHA-256 of stable prefix only)</field>
+      <field>stable_prefix_chars (int)</field>
+      <field>stable_prefix_lines (int)</field>
+      <field>stable_prefix_share (float — stable_prefix_chars / total_system_chars)</field>
+      <field>action_contract_hash (str)</field>
+      <field>policy_layer_hash (str)</field>
+      <field>context_layer_hash (str)</field>
+      <field>context_fingerprint (str — hash of full assembled system prompt)</field>
+      <field>prefix_shape_version (str — "1.0.0")</field>
+    </group>
+    <group name="runtime_call">
+      <field>path (str — "http_sync" | "ws_stream")</field>
+      <field>streaming (bool)</field>
+      <field>request_started_at_utc (ISO-8601)</field>
+      <field>latency_ms (float — total round-trip for sync, stream duration for stream)</field>
+      <field>first_chunk_latency_ms (float | None — only for streaming)</field>
+      <field>stream_duration_ms (float | None — only for streaming)</field>
+      <field>finish_reason (str)</field>
+      <field>response_model (str)</field>
+      <field>tokens_total (int)</field>
+      <field>tokens_prompt (int | None)</field>
+      <field>tokens_completion (int | None)</field>
+      <field>token_usage_available (bool)</field>
+      <field>retry_count (int)</field>
+      <field>timeout_s (float)</field>
+      <field>transport_status (str — "ok" | "retry" | "error" | "fallback")</field>
+    </group>
+    <group name="retention_observability">
+      <field>retention_history_hits (int)</field>
+      <field>retention_memory_hits (int)</field>
+      <field>retention_duplicate_dropped (int)</field>
+      <field>retention_budget_history_limit (int)</field>
+      <field>retention_budget_memory_limit (int)</field>
+      <field>retention_progress_included (bool)</field>
+      <field>retention_context_summary_included (bool)</field>
+      <field>session_scoped (bool)</field>
+    </group>
+  </required_observability_fields>
+
+  <design_principles>
+    <item>stable_prefix_hash 只 hash 稳定前缀，不 hash 全 prompt</item>
+    <item>context_fingerprint 才代表整次 prompt assembly</item>
+    <item>若 provider 未返回 prompt/completion token split，允许字段为 None，但必须标记 token_usage_available=false</item>
+    <item>observability 是附加产出，不得影响主路径的错误处理与回退逻辑</item>
+    <item>stream path 的 observability 必须在 stream_end event 中完整返回</item>
+  </design_principles>
+
+  <forbidden_actions>
+    <item>禁止修改 provider / model / base_url</item>
+    <item>禁止修改 scoring 维度与 breakpoint probes</item>
+    <item>禁止将 observability 数据写入明文日志文件</item>
+    <item>禁止在 observability 中泄露 api_key 或完整用户对话</item>
+  </forbidden_actions>
+
+  <quality_gates>
+    <gate>sync path 每次成功调用都返回 observability 核心字段</gate>
+    <gate>stream path 在 stream_end 时返回同一套核心字段</gate>
+    <gate>hash/latency/token 逻辑在语义上成立且稳定</gate>
+    <gate>已有测试不因新增字段而破坏</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>每次 LLM 调用都有结构化 runtime 证据</item>
+    <item>sync 与 stream 的 observability 字段语义一致</item>
+    <item>cache-eligibility 可从结构证据中判定</item>
+  </success_criteria>
+</prompt>

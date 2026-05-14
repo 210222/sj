@@ -1,0 +1,245 @@
+{
+  "novice_confirm": [
+    {
+      "turn": 1,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才提到了'好'，这个简单的字背后其实隐藏着认知主权保护的一个关键习惯：停下来。当你看到那条夸张标题的新闻时，你的第一反应可能是'好，点进去看看'——这就是需要打断的自动反应。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "2a035b59-403e-4b83-b243-fc5760c8d8b9",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "嗯",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说的'嗯'，听起来你接受了这个观点，但可能还不确定具体怎么操作。接下来我们拆解'停下来'这个习惯，分为三个步骤。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "27892bc8-edc5-46ae-affe-11ebaf14fd01",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "继续",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说的'好'，看来你准备好继续了。在拆解'停下来'这个习惯之前，我们先确认一下你对这个概念的理解。你之前提到'嗯'，表示接受了这个观点，但可能还不确定具体操作。那么，你能用自己的话简单说说，你认为'停下来'在信息消费中指的是什么吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "9cbecfe2-8f6d-411e-8d2d-cf857cef1105",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "可以",
+      "action_type": "defer",
+      "payload_statement": "系统暂时繁忙，请稍后再试。",
+      "llm_generated": null,
+      "difficulty": null,
+      "trace_id": "ef2c3037-bc93-4e43-ae9f-c77266343ce5",
+      "intent": "error_fallback",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": null
+    },
+    {
+      "turn": 5,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说'好'，那我们继续。'停下来'这个习惯，我把它拆成三个步骤，帮你一步步建立。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "4bc1093b-7cb8-45ea-820f-416f241c5b17",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "novice_jump": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了字典，现在我们来看函数。函数是一段可重复使用的代码块，用来完成特定任务。我帮你拆解成几步来学。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "a89a892f-8aec-4a5b-965e-30605566d3c4",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "讲列表",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了函数，现在我们来看列表。列表是一种有序的可变集合，用来存储多个元素。我帮你拆解成几步来学。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "dd82f0a7-4e1d-462e-b380-13eb24056ba9",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "循环是什么",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了列表，现在我们来理解循环。循环是让计算机重复执行某段代码的结构，比如遍历列表中的每个元素。我帮你拆解成几步来学。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "28232321-fb98-4796-b893-62e127fe0b50",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "字典怎么用",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了循环，现在我们来理解字典。字典是另一种数据结构，它用键值对来存储数据，就像查字典一样通过键找到值。我帮你拆解成几步来学。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "3c18d80c-9f2e-4ddc-a59e-08797e33c291",
+      "intent": "怎么",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "学函数",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才提到了字典，现在我们来看函数。函数是组织好的、可重复使用的代码块，用来执行特定任务。我帮你拆解成几步来学。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "0899bbd7-2306-4475-b397-18d923441019",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "tester": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才问了列表元素的访问方式，现在我们来学习循环，它是重复执行代码的核心工具。循环让你能高效处理列表中的每个元素，而不用手动写重复代码。我们先拆解循环的概念，分两步来理解。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "325245be-b546-4b93-8b82-f469512ed65d",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "好，你刚才学了循环的基本概念，现在我来考考你对列表循环的理解。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "0345790a-280d-4f8a-aa20-a690afa90826",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "教列表",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了循环的基本概念，现在我们来深入列表循环。列表循环是遍历列表中每个元素并对其执行操作的过程。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "799773da-e5b0-411d-a3f4-eceb00fd919e",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "好的，你刚才学了循环的基本概念，现在我们来深入列表循环。列表循环是遍历列表中每个元素并对其执行操作的过程。来检测一下你的理解：",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "31ea5fd4-f666-4709-9ad3-a3adad828496",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说想学循环，那我们先从最基础的 for 循环开始。for 循环可以让你依次处理列表中的每个元素，比如有一个列表 `[1, 2, 3]`，用 for 循环就能逐个打印出来。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "0a2d2c91-3efd-4c6c-a4aa-4c3599cd8033",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ]
+}

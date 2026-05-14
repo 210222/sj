@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>修复 current_topic 从未写入, "继续当前教学" 重置</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>29</phase>
+  <sub_stage>FIX_C</sub_stage>
+  <sub_stage_name>Phase 20 S20.3 的 save_current_topic() 写好了但没调</sub_stage_name>
+
+  <context>
+    Phase 20 S20.3 在 persistence.py 加了:
+      save_current_topic(topic)
+      save_learning_goal(goal)
+
+    但 agent.py 从未调用它们。current_topic 永远为空字符串。
+    Fix B 的"继续当前教学"选项读到空的 current_topic, 只能让 LLM 从头讲。
+
+    根因: 接线写完但没装开关。
+  </context>
+
+  <side_effects>
+    - 每轮都写 topic 可能写入噪音 (用户随意说的话被当成 topic)
+    - 缓解: 仅在 LLM 生成回复后写一次 (有实际教学内容的回合)
+    - 缓解: 重复 topic 不覆盖 (if old == new: skip)
+  </side_effects>
+
+  <task>
+
+    改动 1 处: src/coach/agent.py, act() 中 return 之前 (约第 880 行附近)
+
+    插入:
+
+    # Phase 29: 持久化当前教学话题
+    try:
+        if self._persistence:
+            # 从 intent 推断 topic (非 general 时比较可信)
+            if intent and intent != "general" and intent != "suggest_options":
+                old = self._persistence.load_learning_goal()
+                if not old:
+                    self._persistence.save_learning_goal(intent)
+            # 每轮保存 current_topic (非 suggest_options 时)
+            if intent != "suggest_options":
+                self._persistence.save_current_topic(intent or "general")
+    except Exception:
+        pass
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>1 轮对话后 persistence.get_profile().current_topic 非空</item>
+    <item>Fix B 的 "继续当前教学" 选项显示 "继续: {intent}"</item>
+    <item>suggest_options 不覆盖 current_topic</item>
+  </success_criteria>
+</prompt>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S35.1 -- Stable Prefix 重构</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>35</phase>
+  <sub_stage>S35.1</sub_stage>
+  <sub_stage_name>固定前缀 / 漂移后缀 拆分</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责将当前 monolithic system prompt 重构为固定前缀与漂移后缀，
+    优先利用 DeepSeek API 自动 Context Caching。
+  </role>
+
+  <context>
+    当前 SYSTEM_PROMPT 将稳定规范与高漂移变量混在一起。
+    这会使不同请求间的前缀不稳定，直接削弱 DeepSeek 自动前缀缓存的收益。
+    本阶段不是做 provider 改造，而是做 prompt 结构重构。
+  </context>
+
+  <task>
+    1. 将 build_coach_context() 拆为稳定前缀与可变后缀的组装流程；
+    2. 将稳定规范性文本尽量前置；
+    3. 将高漂移内容后置；
+    4. 提供 prompt 分层元数据，便于验证缓存策略；
+    5. 保持 output schema、provider、model、base_url 不变。
+  </task>
+
+  <fixed_prefix_guidance>
+    <item>系统身份与使命</item>
+    <item>输出要求 1-8</item>
+    <item>结构化教学协议</item>
+    <item>追问处理规则</item>
+    <item>通用个性化指令</item>
+    <item>按 action_type 固定的 schema 约束文本</item>
+  </fixed_prefix_guidance>
+
+  <variable_suffix_guidance>
+    <item>当前 action_type / strategy</item>
+    <item>TTM / SDT / difficulty 运行时状态</item>
+    <item>context summary</item>
+    <item>retained memory</item>
+    <item>covered topics</item>
+    <item>当前用户消息</item>
+  </variable_suffix_guidance>
+
+  <risk_analysis>
+    1. 将漂移变量错误放入前缀中段；
+    2. 为了缓存而破坏当前输出 contract；
+    3. 只做字符串拆分，没有建立稳定层次顺序。
+  </risk_analysis>
+
+  <quality_gates>
+    <gate>固定前缀与变化后缀边界清晰</gate>
+    <gate>同一 action_type 下前缀主体稳定</gate>
+    <gate>无 provider / model / base_url 改动</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>DeepSeek 自动前缀缓存具备真实命中条件</item>
+    <item>system prompt 不再是单块高漂移字符串</item>
+  </success_criteria>
+</prompt>

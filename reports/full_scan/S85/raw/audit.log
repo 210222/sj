@@ -1,0 +1,26 @@
+S85 Layer G — Flutter Mobile Code Quality | 2026-05-05T10:54:44.465Z
+Status: WARN
+Flutter SDK: not found
+Static Checks: 6 findings
+Flutter Analyze: 0 issues
+Flutter Test: 0 passed / 0 failed / 0 total
+
+Findings:
+  [P1] missing_time_window mobile/lib/providers/pulse_provider.dart
+    PulseProvider has pure count-based logic — once soft, never recovers to hard. Missing 10-minute window expiry matching backend PulseService behavior
+  [P2] auth_not_persisted mobile/lib/providers/auth_provider.dart
+    AuthProvider role not persisted — app restart resets to user role. Inconsistent with Web frontend sessionStorage behavior
+  [P3] hardcoded_route_path mobile/lib/api/chat_api.dart
+    Hardcoded route paths: chat — consider centralized route constants
+  [P3] hardcoded_route_path mobile/lib/api/session_api.dart
+    Hardcoded route paths: session — consider centralized route constants
+  [P3] unused_field_safety_allowed mobile/lib/models/chat_response.dart
+    safetyAllowed field parsed in model but never displayed in chat UI — safety intercept status not shown to user
+  [P4] flutter_sdk_not_found 
+    Flutter SDK not found in PATH or common locations — automated analyze/test skipped
+
+By severity:
+  P1: 1
+  P2: 1
+  P3: 3
+  P4: 1

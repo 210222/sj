@@ -1,0 +1,250 @@
+{
+  "fingerprint_version": "1.0.0",
+  "phase": "34.5",
+  "sub_stage": "S34.5.3",
+  "created_utc": "2026-05-14T06:50:00Z",
+  "purpose": "Phase 35 before-state: frozen structural snapshot of LLM context path as it exists today",
+  "scope_note": "Describes what IS, not what SHOULD BE. This is the target for Phase 35 refactoring comparison.",
+
+  "system_prompt": {
+    "structure": "monolithic",
+    "description": "Single SYSTEM_PROMPT f-string template in src/coach/llm/prompts.py. All sections (coach role, TTM stage, SDT scores, history, covered_topics, memory, difficulty, behavior_signals, action_type_instruction) are format()-injected into one continuous text block.",
+    "size_estimate": "~3000-4000 chars after all substitutions",
+    "template_location": "src/coach/llm/prompts.py:8-58",
+    "dynamic_sections": [
+      "action_type_strategy (from ACTION_STRATEGIES dict)",
+      "TTM stage + explanation (from TTM_EXPLANATIONS dict)",
+      "SDT autonomy/competence/relatedness scores",
+      "behavior_signals (from _build_behavior_signals())",
+      "ttm_strategy_signal (from _ttm_strategy_signal())",
+      "history text (from format_history_for_prompt())",
+      "covered_topics text",
+      "memory text (from format_memory_for_prompt())",
+      "difficulty level",
+      "action_type_instruction (appended after system prompt, from _ACTION_TYPE_INSTRUCTIONS)"
+    ]
+  },
+
+  "context_assembly_flow": {
+    "sync_path": {
+      "entry": "CoachAgent.act() → line 839",
+      "steps": [
+        {
+          "step": 1,
+          "action": "build_coach_context() called with history=[]",
+          "note": "Phase 27: history param is always empty list. Raw interaction labels not injected into prompt.",
+          "source": "agent.py:839-849"
+        },
+        {
+          "step": 2,
+          "action": "progress_summary appended to ctx['system'] if non-None",
+          "note": "Generated every 3600s based on mastery deltas + BKT retention gaps. Appended as raw string.",
+          "source": "agent.py:851-852"
+        },
+        {
+          "step": 3,
+          "action": "_build_context_summary() result appended to ctx['system']",
+          "note": "5-block structured summary: 对话历史 + 技能快照 + 学习目标 + 策略连续性 + 上一轮教学内容. Appended under '## 对话上下文' header.",
+          "source": "agent.py:854-857"
+        },
+        {
+          "step": 4,
+          "action": "LLMClient.generate(ctx) — sync API call",
+          "note": "Single request/response. Uses response_format: json_object. Max 2 retries with exponential backoff.",
+          "source": "client.py:38-79"
+        }
+      ],
+      "key_params": {
+        "history_in_build_coach_context": "[] (empty, Phase 27)",
+        "progress_summary_injection": "post-build, pre-LLM-call",
+        "context_summary_injection": "post-build, post-progress, pre-LLM-call",
+        "memory_snippets_source": "extract_memory_snippets(self.memory, self.session_id)",
+        "covered_topics_source": "diagnostic_engine.get_mastery_summary() + learning_path.extract_topics_from_text()",
+        "difficulty_source": "BKT mastery-based: any<0.3→easy, all>0.7→hard, else→medium"
+      }
+    },
+    "stream_path": {
+      "entry": "CoachBridge.chat_stream() → api/services/coach_bridge.py:159",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Dry-run agent.act() to get rule_action_type, ttm_stage, sdt_profile",
+          "note": "This is a full act() call whose only purpose is extracting metadata for context building. The rule result is discarded.",
+          "source": "coach_bridge.py:184-193"
+        },
+        {
+          "step": 2,
+          "action": "build_coach_context() called with history=agent.memory.recall(rule_action_type, None)[:5]",
+          "note": "Streaming path passes RAW memory objects as history, NOT empty list. This is a structural divergence from sync path.",
+          "source": "coach_bridge.py:212-222"
+        },
+        {
+          "step": 3,
+          "action": "NO _build_context_summary() called",
+          "note": "Streaming path does NOT inject the 5-block structured summary. Missing Block 1-5.",
+          "source": "coach_bridge.py:212-222"
+        },
+        {
+          "step": 4,
+          "action": "NO progress_summary injected",
+          "note": "Streaming path does not check or append progress_summary.",
+          "source": "coach_bridge.py:212-222"
+        },
+        {
+          "step": 5,
+          "action": "NO memory_snippets injected",
+          "note": "memory_snippets param is hardcoded to None.",
+          "source": "coach_bridge.py:220"
+        },
+        {
+          "step": 6,
+          "action": "NO covered_topics injected",
+          "note": "covered_topics param is hardcoded to None.",
+          "source": "coach_bridge.py:221"
+        },
+        {
+          "step": 7,
+          "action": "LLMClient.generate_stream(ctx) — streaming API call",
+          "note": "SSE stream. stream: True. No response_format. No retries.",
+          "source": "client.py:132-201"
+        }
+      ],
+      "key_params": {
+        "history_in_build_coach_context": "agent.memory.recall()[:5] raw memory objects",
+        "context_summary_injection": "NOT INJECTED",
+        "memory_snippets_source": "None (hardcoded)",
+        "covered_topics_source": "None (hardcoded)",
+        "difficulty_source": "duplicated BKT logic (same as sync)"
+      }
+    }
+  },
+
+  "history_injection": {
+    "sync_path": {
+      "method": "indirect via _build_context_summary()",
+      "format": "5-block text: 对话历史(recall-based, last 10, 3 tiers: 最近/近轮/早期) + 技能快照 + 学习目标 + 策略连续性 + 上一轮教学内容",
+      "source_function": "agent.py:_build_context_summary() lines 356-475",
+      "raw_history_in_prompt": false,
+      "note": "Phase 27 explicitly passes history=[] to build_coach_context(). All historical context comes through _build_context_summary() which reads from memory.recall()."
+    },
+    "stream_path": {
+      "method": "direct via agent.memory.recall()[:5]",
+      "format": "raw memory dicts passed as 'history' param to build_coach_context() → format_history_for_prompt() renders them",
+      "source_function": "coach_bridge.py:218 + memory_context.py:98-112",
+      "raw_history_in_prompt": true,
+      "note": "Streaming path still uses the old direct-injection pattern. The history objects contain user_input, intent, action_type fields."
+    }
+  },
+
+  "progress_summary": {
+    "generation": {
+      "trigger": "time-based, every 3600 seconds (1 hour)",
+      "logic": "Mastery delta > 0.1 → record improvement. Mastery crossing 0.7 threshold → record milestone. BKT retention < 0.6 → suggest review.",
+      "format": "学习进展: reason1; reason2; reason3 (max 3 reasons)",
+      "source": "agent.py:1164-1195"
+    },
+    "injection": {
+      "sync_path": "appended to ctx['system'] after build_coach_context(), before _build_context_summary()",
+      "stream_path": "NOT INJECTED",
+      "format": "raw string appended with double newline separator"
+    }
+  },
+
+  "memory_snippets": {
+    "extraction": {
+      "function": "extract_memory_snippets() in memory_context.py:52-95",
+      "source": "session_memory.recall() — SQLite FTS5 full-text search",
+      "limit": 3,
+      "max_chars": 200,
+      "fallback": "LIKE search if FTS5 returns empty"
+    },
+    "usage": {
+      "sync_path": "injected as {memory} placeholder in SYSTEM_PROMPT",
+      "stream_path": "NOT INJECTED (hardcoded None)"
+    }
+  },
+
+  "covered_topics": {
+    "source": "dual: diagnostic_engine.get_mastery_summary() skills dict + LearningPathTracker.extract_topics_from_text()",
+    "format_in_prompt": "comma-separated skill names with mastery percentages, or '（新用户，无历史学习记录）'",
+    "usage": {
+      "sync_path": "injected as {covered_topics} placeholder in SYSTEM_PROMPT",
+      "stream_path": "NOT INJECTED (hardcoded None)"
+    }
+  },
+
+  "ai_response_truncation": {
+    "save_length": 200,
+    "location": "agent.py:1043 — self.memory.store() call",
+    "extraction": "From action['payload']: statement > option > prompt > step > question > objective (first non-empty)",
+    "note": "Truncation happens at memory store time, not at context building time. In _build_context_summary(), ai_response is truncated to 80 chars for display."
+  },
+
+  "extract_recent_history_params": {
+    "function": "memory_context.py:12-49",
+    "limit": 5,
+    "max_chars": 400,
+    "usage": "NOT used in sync path since Phase 27 (history=[]). NOT used in stream path (stream passes memory.recall() directly). This function exists but is effectively unused in the main LLM path."
+  },
+
+  "extract_memory_snippets_params": {
+    "function": "memory_context.py:52-95",
+    "limit": 3,
+    "max_chars": 200,
+    "usage": "Used in sync path only (agent.py:825-827). Not used in stream path."
+  },
+
+  "difficulty": {
+    "sync_path": {
+      "source": "BKT mastery-based (agent.py:799-812)",
+      "logic": "any mastery < 0.3 → easy | all mastery > 0.7 → hard | else → medium",
+      "data_source": "diagnostic_engine.store.get_all_masteries()"
+    },
+    "stream_path": {
+      "source": "duplicated BKT logic (coach_bridge.py:201-211)",
+      "logic": "identical to sync path",
+      "data_source": "agent.diagnostic_engine.store.get_all_masteries()"
+    },
+    "same_source": true,
+    "note": "Both paths use the same BKT mastery-based logic, but the stream path has a copy of the code rather than sharing the same function."
+  },
+
+  "small_window_conservative_limits": {
+    "config_file": "config/coach_defaults.yaml",
+    "placebo_window": {
+      "window_hours_before": 2,
+      "description": "Placebo effect window — actions within 2h of a previous similar action are considered possible placebo"
+    },
+    "memory_recall_limit": 5,
+    "dedup_window_s": 5,
+    "dashboard_window_hours": 24,
+    "llm_config": {
+      "timeout_s": 30.0,
+      "max_retries": 2,
+      "temperature": 0.7,
+      "max_tokens": 2000
+    },
+    "note": "No explicit 'small window' context limit exists. The system relies on DeepSeek's 1M token context window and does not implement token counting or truncation at the context assembly level. Limits are applied at data extraction (limit, max_chars params) rather than at context injection."
+  },
+
+  "sync_vs_stream_divergence_summary": {
+    "shared": [
+      "Same SYSTEM_PROMPT template",
+      "Same build_coach_context() function",
+      "Same LLMConfig / provider / model / base_url",
+      "Same difficulty computation logic (duplicated code)",
+      "Same LLMClient but different methods (generate vs generate_stream)",
+      "Same safety pipeline (LLMDSLAligner + LLMSafetyFilter + LLMOutputValidator)"
+    ],
+    "divergent": [
+      "history: sync=[] (indirect via context_summary), stream=memory.recall()[:5] (direct raw objects)",
+      "context_summary: sync=5-block structured text, stream=NOT INJECTED",
+      "progress_summary: sync=appended (hourly), stream=NOT INJECTED",
+      "memory_snippets: sync=extract_memory_snippets(), stream=None",
+      "covered_topics: sync=mastery+learning_path, stream=None",
+      "api_call: sync=generate() with retries+json_object, stream=generate_stream() no retries+SSE",
+      "dry_run: stream path calls agent.act() first just to extract action_type/ttm/sdt — wasteful"
+    ],
+    "impact": "Streaming path receives significantly less context than sync path. Missing: 5-block summary, progress feedback, memory snippets, covered topics. Uses raw memory objects for history which may include outdated or irrelevant entries."
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "run_id": "run_20260513_081509_40dda9ee",
+  "start_time": "2026-05-13T08:15:36.219276+00:00",
+  "probes": {
+    "payload_extraction": {
+      "passed": true,
+      "detail": "All 9 payload shapes extracted correctly",
+      "timestamp_utc": "2026-05-13T08:15:36.219276+00:00"
+    },
+    "ws_status": {
+      "passed": true,
+      "detail": "WS hook structure OK",
+      "timestamp_utc": "2026-05-13T08:15:36.219276+00:00"
+    }
+  },
+  "breakpoints_detected": []
+}

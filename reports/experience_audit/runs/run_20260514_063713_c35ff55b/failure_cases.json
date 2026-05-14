@@ -1,0 +1,11 @@
+{
+  "novice_confirm": [
+    {
+      "turn": 4,
+      "score": 9,
+      "user": "可以",
+      "action_type": "defer",
+      "statement": "系统暂时繁忙，请稍后再试。"
+    }
+  ]
+}

@@ -1,0 +1,245 @@
+{
+  "novice_confirm": [
+    {
+      "turn": 1,
+      "user": "好",
+      "action_type": "defer",
+      "payload_statement": "系统暂时繁忙，请稍后再试。",
+      "llm_generated": null,
+      "difficulty": null,
+      "trace_id": "55360dab-6773-4e1a-b54b-085c86fe3518",
+      "intent": "error_fallback",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": null
+    },
+    {
+      "turn": 2,
+      "user": "嗯",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说'好'，愿意尝试第一步。那我们来看第二步——'审视'。这一步是在暂停之后，问自己三个问题：1) 这条信息的来源可靠吗？2) 它想让我产生什么情绪？3) 它是否在利用我的认知偏见？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "89fa3748-dd56-4471-a5bc-3e1de0a59502",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "继续",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说'继续'，那我们接着看第三步——'选择'。这一步是前两步的结果：暂停给了你空间，审视给了你信息，现在你需要主动选择如何回应。你可以选择：相信但保留质疑、忽略它、或者进一步查证。关键在于，这个选择是你有意识的决定，而不是被情绪或算法推动的自动反应。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "0e65e124-552a-4af3-adbb-853677b6db46",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "可以",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说'可以'，那我们就把第三步'选择'再拆细一点。选择不是非黑即白的，它其实包含两个小步骤：先明确你的选项，再做出有意识的决定。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "b6d77c40-1120-4092-9a92-6c57a24ead5c",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说'好'，那我们继续。选择的第一步是明确你的选项。很多时候我们觉得没得选，其实是因为没有把选项写出来。你能想到现在手头有哪些可能的选项吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "ccf3cd29-6923-45c1-866e-fc7a92646fd4",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "novice_jump": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了函数的基本概念，现在我们来深入理解函数的定义和调用。函数用`def`关键字定义，后面跟函数名和参数列表。比如`def add(a, b): return a + b`定义了一个加法函数，调用时写`add(3, 5)`就会返回8。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "c24bc63a-39f1-4eda-a41f-75c94b302c15",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "讲列表",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了函数的基本概念，现在我们来学习Python中另一个核心数据结构——列表。列表用方括号`[]`表示，可以存储多个元素，比如`fruits = ['apple', 'banana', 'cherry']`。我们把它拆解成几个步骤来理解。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "01364393-34ca-4a98-b8d8-b6aacc9942d7",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "循环是什么",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了列表的基本概念，现在我们来学习循环。循环是一种重复执行某段代码的结构，比如遍历列表中的每个元素。我们把它拆解成几个步骤来理解。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "f0662e7b-b12e-4b09-91be-dc7d38a68ed6",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "字典怎么用",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了循环，现在我们来看字典。字典是一种用键值对存储数据的方式，比如用名字查年龄。我帮你拆解成几步来学。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "9097a369-62b2-40cb-a56f-00ddc388ee50",
+      "intent": "怎么",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "学函数",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了字典，现在我们来看函数。函数是一段可重复使用的代码块，用来完成特定任务。我帮你拆解成几步来学。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "d88007f4-c25d-4807-ba75-81ed2d8f558f",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "tester": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学习了列表，现在我们来认识循环。循环能让你重复执行代码，比如遍历列表中的每个元素。我们先从 for 循环开始。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "bc99b3cd-e84e-4579-b88b-d60f207ac7e6",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "你刚才说想考考你，那我们就来检测一下你对循环的理解吧。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "867d3f4f-dc5a-4f6c-8014-7ced855a7ae4",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "教列表",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说想考考你，那我们接下来学习列表。列表是Python中用来存储多个数据的有序容器，比如你可以把一周七天的名字都放在一个列表里。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "b00ae31d-94e1-47fe-a68d-712d607d8b0b",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "你刚才说想考考你，那我们先来简单检测一下。列表是有序容器，那你知道列表中的元素可以通过什么方式来访问吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "72dfc046-1973-47f3-9886-917a2111a161",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才问了列表元素的访问方式，现在我们来学习循环，它是重复执行代码的核心工具。循环让你能高效处理列表中的每个元素，而不用手动写重复代码。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "e0f77144-67dd-42ef-8295-27d41381e798",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ]
+}

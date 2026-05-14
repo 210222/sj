@@ -81,6 +81,8 @@ export interface UserDashboardResponse {
   ttm_radar: TTMRadarData;
   sdt_rings: SDTRingsData;
   progress: ProgressData;
+  mastery_snapshot?: Record<string, unknown> | null;
+  review_queue?: Array<Record<string, unknown>> | null;
 }
 
 export interface GateStatusItem {

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 35 -- LLM 上下文路径重构</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>35</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>DeepSeek Context Caching / 分层注入 / 重要性保留</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 35 的总控执行。
+    你的职责不是扩展产品功能，不是迁移 provider，也不是重定义体验评分，
+    而是将当前已存在但未闭环的 LLM 上下文能力，收口成一条可缓存、可分层、可按重要性保留、可回归验证的稳定主链。
+    你必须严格按子阶段串行推进，任何阶段未 GO，禁止进入下一阶段。
+  </role>
+
+  <context>
+    Phase 34.5 已完成 LLM baseline 正式收口，并提供了 before-state：
+    - 数值锚点：14.59 ± 0.26
+    - 结构锚点：monolithic prompt / sync-stream 7 项差异 / 5-block context_summary
+    - 已知待修项：stream context 缺失、dry-run agent.act()、difficulty 双路径重复、system prompt monolithic
+
+    当前 Phase 35 的目标不是继续做体验审计，而是重构 LLM 上下文路径。
+    本阶段所说 Context Caching 指的是 DeepSeek API 自动前缀缓存。
+    不是 MLA，也不是调用方可控的 KV cache 压缩。
+  </context>
+
+  <global_constraints>
+    1. 禁止修改 contracts/**；
+    2. 禁止修改 src/inner/**；
+    3. 禁止修改 src/middle/**；
+    4. 禁止修改 src/outer/**；
+    5. 禁止修改 provider / model / base_url；
+    6. 禁止修改 Phase 32 scoring 维度与 breakpoint probes；
+    7. 禁止把本阶段扩展成 memory 架构重写；
+    8. 所有改动必须可由 targeted tests + full regression 验证；
+    9. 子阶段严格串行，未 GO 不得进入下一阶段。
+  </global_constraints>
+
+  <execution_order>
+    <step>S35.1 -&gt; S35.2 -&gt; S35.3 -&gt; S35.4</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s35_1" name="Stable Prefix 重构">
+      <meta_prompt>256_s35_1_stable_prefix.xml</meta_prompt>
+    </stage>
+    <stage id="s35_2" name="重要性保留与层化后缀">
+      <meta_prompt>257_s35_2_retention_layers.xml</meta_prompt>
+    </stage>
+    <stage id="s35_3" name="主路径接线与 1M 窗口重标定">
+      <meta_prompt>258_s35_3_mainline_wiring.xml</meta_prompt>
+    </stage>
+    <stage id="s35_4" name="Streaming 对齐与最终门禁">
+      <meta_prompt>259_s35_4_stream_parity_verify.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+
+  <required_outputs>
+    <item>新的 layered prompt 结构</item>
+    <item>新的 retained context 逻辑</item>
+    <item>stream / non-stream context strategy 对齐结果</item>
+    <item>Phase 35 targeted tests</item>
+    <item>reports/phase35_context_engine_execution_plan.md</item>
+    <item>reports/phase35_context_engine_completion.md</item>
+  </required_outputs>
+
+  <risk_analysis>
+    1. 将 Context Caching 误写为 MLA 或本地 KV cache 控制；
+    2. 将高漂移内容塞进前缀中段，导致 DeepSeek 自动缓存命不中；
+    3. 在 1M 窗口下继续沿用过度压缩策略，损失连续性；
+    4. stream 路径与主路径继续分叉；
+    5. importance retention 只做“加更多历史”，没有做优先级与去重；
+    6. 为了解决上下文问题而越界触碰冻结层。
+  </risk_analysis>
+
+  <go_gate_policy>
+    <gate>GO_S35.1: 稳定前缀与变化后缀边界明确，前缀主体稳定。</gate>
+    <gate>GO_S35.2: 重要性保留生效，上一轮教学内容可被下一轮稳定恢复。</gate>
+    <gate>GO_S35.3: 主 LLM 路径完成新结构接线，difficulty 与 runtime contract 同源。</gate>
+    <gate>GO_S35.4: stream parity 达标或差异被明确治理，全量回归通过。</gate>
+  </go_gate_policy>
+
+  <quality_gates>
+    <gate>不得修改 contracts/**、src/inner/**、src/middle/**、src/outer/**</gate>
+    <gate>不得修改 provider / model / base_url</gate>
+    <gate>targeted tests 全绿</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+    <gate>无 scoring drift / probe drift</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>DeepSeek 自动前缀缓存具备真实命中条件</item>
+    <item>固定层与变化层分离清晰</item>
+    <item>变化层具备重要性保留与去重机制</item>
+    <item>同步路径与流式路径上下文策略一致或差异有治理说明</item>
+    <item>全量回归通过</item>
+  </success_criteria>
+</prompt>

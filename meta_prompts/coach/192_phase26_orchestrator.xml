@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 26 -- 主动进步反馈</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>26</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>让系统主动告诉用户进步了多少</sub_stage_name>
+
+  <role>
+    Level 4.3 的系统有完整的历史数据, 但从不主动展示给用户。
+    Standard 9 (Evidence-Based Progress Feedback) 要求系统能用数据驱动的方式告诉用户学习进展。
+  </role>
+
+  <context>
+    触发条件 (事件驱动):
+    1. BKT mastery 变化 > 0.1
+    2. mastery 首次跨过 0.7
+    3. retention < 0.6
+    4. 距上次反馈 > 1 小时 (rate limit)
+
+    约束:
+    - 不修改 contracts/ 内圈/中圈/外圈
+    - 全量回归 1299+ 必须通过
+  </context>
+
+  <execution_order>
+    <step>S26.1 (agent.py progress_summary) -> S26.2 (prompts.py 注入) -> S26.3 (测试)</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s26_1" name="progress_summary 生成" priority="P0">
+      <description>agent.py 每轮检查 4 条件, 生成 progress_summary</description>
+      <meta_prompt>192_s26_1_progress.xml</meta_prompt>
+    </stage>
+    <stage id="s26_2" name="prompt 注入" priority="P0">
+      <description>build_coach_context() 追加进步报告区块</description>
+      <meta_prompt>193_s26_2_prompt.xml</meta_prompt>
+    </stage>
+    <stage id="s26_3" name="验证" priority="P1">
+      <description>测试触发条件和 prompt 注入</description>
+      <meta_prompt>194_s26_3_verification.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+</prompt>

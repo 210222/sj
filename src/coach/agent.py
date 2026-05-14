@@ -175,6 +175,93 @@ class CoachAgent:
             return {"level": "hard", "reason": "bkt_mastery"}
         return {"level": "medium", "reason": "bkt_mastery"}
 
+    def _determine_llm_difficulty(self) -> str:
+        """统一计算 LLM prompt 与 runtime contract 使用的 difficulty。"""
+        difficulty = "medium"
+        try:
+            if self.diagnostic_engine:
+                masteries = self.diagnostic_engine.store.get_all_masteries()
+                if masteries:
+                    if any(m < 0.3 for m in masteries.values()):
+                        difficulty = "easy"
+                    elif all(m > 0.7 for m in masteries.values()):
+                        difficulty = "hard"
+        except Exception:
+            pass
+        return difficulty
+
+    def _build_llm_context_bundle(
+        self,
+        *,
+        intent: str,
+        action_type: str,
+        ttm_stage: str | None,
+        sdt_profile: dict | None,
+        user_input: str,
+        user_state: dict,
+    ) -> tuple[dict, dict, str]:
+        """统一准备主路径的 LLM context，避免后补式注入与双路径漂移。"""
+        llm_difficulty = self._determine_llm_difficulty()
+        covered_topics = None
+        try:
+            if self.diagnostic_engine:
+                mastery = self.diagnostic_engine.get_mastery_summary()
+                skills = mastery.get("skills", {})
+                if skills:
+                    covered_topics = [
+                        f"{k}(掌握度:{v:.0%})" for k, v in skills.items()
+                    ][:10]
+        except Exception:
+            pass
+        try:
+            from src.coach.llm.learning_path import LearningPathTracker
+            lp = LearningPathTracker()
+            topics_from_text = lp.extract_topics_from_text(user_input)[:5]
+            if topics_from_text:
+                covered_topics = list(set(covered_topics or []) | set(topics_from_text))
+        except Exception:
+            pass
+
+        s4_history_raw = self.memory.recall(intent=intent, user_state=user_state, limit=12)
+        s4_history = [
+            h for h in (s4_history_raw or [])
+            if h.get("data", {}).get("session_id") == self.session_id
+        ]
+        ctx_summary = self._build_context_summary(this_action_type=action_type)
+        history_limit = 6 if action_type == "scaffold" else 12
+        memory_limit = 4 if action_type == "scaffold" else 6
+        progress_summary = self._progress_summary
+        if action_type == "scaffold" and progress_summary:
+            progress_summary = str(progress_summary)[:160]
+        if action_type == "scaffold" and ctx_summary:
+            ctx_summary = str(ctx_summary)[:320]
+
+        from src.coach.llm.memory_context import build_retention_bundle
+        retention = build_retention_bundle(
+            session_memory=self.memory,
+            session_id=self.session_id,
+            user_query=user_input,
+            history=s4_history,
+            progress_summary=progress_summary,
+            context_summary=ctx_summary,
+            limit_history=history_limit,
+            limit_memory=memory_limit,
+        )
+        ctx = build_coach_context(
+            intent=intent,
+            action_type=action_type,
+            ttm_stage=ttm_stage,
+            sdt_profile=sdt_profile,
+            user_message=user_input,
+            history=retention.get("history") or [],
+            memory_snippets=retention.get("memory_snippets") or [],
+            covered_topics=covered_topics,
+            difficulty=llm_difficulty,
+            progress_summary=retention.get("progress_summary") or None,
+            context_summary=retention.get("context_summary") or None,
+        )
+        return ctx, retention, llm_difficulty
+
     # ── Phase 4 延迟加载 ────────────────────────────────────────
 
     @property
@@ -353,11 +440,15 @@ class CoachAgent:
 
     # ── Phase 27: 上下文引擎 ──────────────────────────────────
 
-    def _build_context_summary(self) -> str:
+    def _build_context_summary(self, this_action_type: str = "") -> str:
         """构建结构化上下文摘要 (5块).
 
         DeepSeek 1M 上下文窗口, 2000 tokens 无压力。
         基于 Adaptive Focus Memory: FULL/COMPRESS/PLACEHOLDER 三级。
+
+        Args:
+            this_action_type: 本轮最终 action_type（在所有 override 之后），用于策略连续性块。
+                             为空时回退到 self._current_atype。
         """
         lines: list[str] = []
         raw = self.memory.recall("general", None, limit=10)
@@ -373,8 +464,12 @@ class CoachAgent:
             d0 = r0.get("data", {})
             msg0 = d0.get("user_input", "")
             at0 = d0.get("action_type", "")
+            taught = d0.get("ai_response", "")[:80]
             if msg0:
-                lines.append(f"[最近] 用户: {msg0[:120]} | 教练: {at0}")
+                if taught:
+                    lines.append(f"[最近] 用户: {msg0[:80]} | 教练[{at0}]: {taught}")
+                else:
+                    lines.append(f"[最近] 用户: {msg0[:120]} | 教练: {at0}")
             mid = recent[1:4]  # 第2-4新的
             if mid:
                 items = []
@@ -436,8 +531,8 @@ class CoachAgent:
         except Exception:
             pass
 
-        # Block 4: 策略连续性 (recent[0]=最新, recent[1]=上一轮)
-        cur = getattr(self, "_current_atype", "suggest")
+        # Block 4: 策略连续性 (recent[0]=最新即上一轮, recent[1]=再上一轮)
+        cur = this_action_type or getattr(self, "_current_atype", "suggest")
         if len(recent) >= 2:
             prev_data = recent[1].get("data", {})
             prev_a = prev_data.get("action_type", "?")
@@ -783,69 +878,27 @@ class CoachAgent:
         llm_generated = False
         llm_model = ""
         llm_tokens_used = 0
+        llm_observability: dict | None = None
+        memory_status = {"status": "not_used", "hits": 0}
+        current_difficulty = "medium"
+        s4_history = []
+        s4_memory_list = []
         llm_cfg = self._cfg()
         if llm_cfg.get("llm", {}).get("enabled", False):
             try:
                 llm_config = LLMConfig.from_yaml(llm_cfg)
                 client = LLMClient(llm_config)
-                # S19.2: 用 BKT mastery 动态计算 difficulty
-                _llm_difficulty = "medium"
-                try:
-                    if self.diagnostic_engine:
-                        masteries = self.diagnostic_engine.store.get_all_masteries()
-                        if masteries:
-                            if any(m < 0.3 for m in masteries.values()):
-                                _llm_difficulty = "easy"
-                            elif all(m > 0.7 for m in masteries.values()):
-                                _llm_difficulty = "hard"
-                            else:
-                                _llm_difficulty = "medium"
-                except Exception:
-                    pass
-                # Phase 21 S21.1: 填充记忆和掌握度数据
-                _memory_snippets = None
-                _covered_topics = None
-                try:
-                    if self.diagnostic_engine:
-                        mastery = self.diagnostic_engine.get_mastery_summary()
-                        skills = mastery.get("skills", {})
-                        if skills:
-                            _covered_topics = [
-                                f"{k}(掌握度:{v:.0%})" for k, v in skills.items()
-                            ][:10]
-                    from src.coach.llm.memory_context import extract_memory_snippets
-                    _mem_list, _mem_status = extract_memory_snippets(self.memory, self.session_id)
-                    if _mem_list:
-                        _memory_snippets = _mem_list[:3]
-                except Exception:
-                    pass
-                # Phase 29: learning_path 提取主题
-                try:
-                    from src.coach.llm.learning_path import LearningPathTracker
-                    lp = LearningPathTracker()
-                    topics_from_text = lp.extract_topics_from_text(user_input)[:5]
-                    if topics_from_text:
-                        _covered_topics = list(set(_covered_topics or []) | set(topics_from_text))
-                except Exception:
-                    pass
-                ctx = build_coach_context(
+                ctx, retention, current_difficulty = self._build_llm_context_bundle(
                     intent=intent,
                     action_type=action.get("action_type", "suggest"),
                     ttm_stage=ttm_stage,
                     sdt_profile=sdt_profile,
-                    user_message=user_input,
-                    history=[],  # Phase 27: 不传原始标签, 改用结构化上下文摘要
-                    memory_snippets=_memory_snippets,
-                    covered_topics=_covered_topics,
-                    difficulty=_llm_difficulty,
+                    user_input=user_input,
+                    user_state=user_state,
                 )
-                # Phase 26: 追加进步报告
-                if self._progress_summary:
-                    ctx["system"] += "\n\n" + str(self._progress_summary)
-                # Phase 27: 注入结构化上下文摘要
-                ctx_summary = self._build_context_summary()
-                if ctx_summary:
-                    ctx["system"] += "\n\n## 对话上下文\n你必须引用用户上一条消息中提到的具体内容。\n从上一轮的 [教] 内容继续教学, 不要从零开始。\n" + ctx_summary
+                s4_history = retention.get("history") or []
+                s4_memory_list = retention.get("memory_snippets") or []
+                memory_status = retention.get("memory_status") or memory_status
                 llm_response = client.generate(ctx)
                 payload = llm_response.to_payload()
                 aligned_payload, align_report = LLMDSLAligner.align(
@@ -861,6 +914,12 @@ class CoachAgent:
                     llm_generated = True
                     llm_model = llm_config.model
                     llm_tokens_used = llm_response.tokens_used
+                    # Phase 36: collect runtime observability (cache + runtime + retention)
+                    if llm_response.observability:
+                        retention_obs = retention.get("retention_observability", {})
+                        llm_obs = llm_response.observability.to_dict()
+                        llm_obs["retention"] = retention_obs
+                        llm_observability = llm_obs
                 else:
                     _logger.warning("LLM output validation failed: %s; using rule fallback", errors)
             except LLMError as e:
@@ -871,7 +930,7 @@ class CoachAgent:
         # Phase 31: 记录本轮教学内容供下轮上下文引用
         try:
             payload = action.get("payload", dict())
-            stmt = payload.get("statement", "") or payload.get("option", "") or payload.get("prompt", "")
+            stmt = payload.get("statement", "") or payload.get("option", "") or payload.get("prompt", "") or payload.get("step", "") or payload.get("question", "") or payload.get("objective", "")
             atype = action.get("action_type", "")
             if stmt and len(stmt) > 3:
                 self._prev_teaching = f"[教] {atype}: {stmt[:120]}"
@@ -946,16 +1005,8 @@ class CoachAgent:
             },
         )
 
-        # 8. 存入会话记忆
+        # 8. 追踪更新
         sr = pipeline_result["safety_result"]
-        self.memory.store(self.session_id, {
-            "user_input": user_input,
-            "intent": packet.get("intent", intent),
-            "action_type": packet["action_type"],
-            "safety_allowed": sr["allowed"],
-        })
-
-        # 9. 追踪更新
         if not self._should_insert_pulse(action):
             self._turns_since_last_pulse = min(self._turns_since_last_pulse + 1, 999)
         self._record_pulse_if_injected(packet, sr)
@@ -967,21 +1018,6 @@ class CoachAgent:
         # 9.6 S3.4: V18.8 关系安全层
         self._turn_count += 1
         self._monitor_compliance_signals(packet)
-
-        # Phase 19 S19.2: 填充学习历史和记忆（供 personalization_evidence 和 LLM prompt 使用）
-        s4_history_raw = self.memory.recall(intent=intent, user_state=user_state, limit=5)
-        # Filter to current session only (recall is cross-session)
-        s4_history = [
-            h for h in (s4_history_raw or [])
-            if h.get("data", {}).get("session_id") == self.session_id
-        ][:5]
-        try:
-            from src.coach.llm.memory_context import extract_memory_snippets
-            s4_memory_list, memory_status = extract_memory_snippets(self.memory, self.session_id)
-        except Exception:
-            s4_memory_list = []
-            memory_status = {"status": "error", "hits": 0, "errors": 1}
-        current_difficulty = "medium"
 
         # 10. 返回增强的 DSL 包
         result = {
@@ -1007,6 +1043,7 @@ class CoachAgent:
             "llm_generated": llm_generated,
             "llm_model": llm_model,
             "llm_tokens": llm_tokens_used,
+            "llm_observability": llm_observability,
             # Phase 13: 诊断引擎可见结果
             "diagnostic_result": diagnostic_result,
             "diagnostic_probe": diagnostic_probe,
@@ -1026,6 +1063,21 @@ class CoachAgent:
             "memory_status": memory_status,
             "difficulty_contract": self._compute_difficulty_contract(current_difficulty),
         }
+
+        # 9. 存入会话记忆（必须在 result 构造之后，从 action.payload 提取最终教学文本）
+        ai_stmt = ""
+        try:
+            payload = action.get("payload", {})
+            ai_stmt = payload.get("statement", "") or payload.get("option", "") or payload.get("prompt", "") or payload.get("step", "") or payload.get("question", "") or payload.get("objective", "") or ""
+        except Exception:
+            pass
+        self.memory.store(self.session_id, {
+            "user_input": user_input,
+            "intent": packet.get("intent", intent),
+            "action_type": packet["action_type"],
+            "safety_allowed": sr["allowed"],
+            "ai_response": str(ai_stmt)[:200],
+        })
 
         # Phase 6: Execute + Memory 归档（仅在 MAPE-K 激活时）
         if mapek_active and self._execute:
@@ -1709,7 +1761,11 @@ class CoachAgent:
 
     @staticmethod
     def _update_config(key: str, enabled: bool) -> None:
-        """修改 coach_defaults.yaml 中模块的 enabled 状态."""
+        """修改 coach_defaults.yaml 中模块的 enabled 状态.
+
+        与 api/routers/config_router._write_config() 保持写入语义一致:
+        safe_dump + 模块缓存失效 + API 侧配置缓存失效。
+        """
         from pathlib import Path
         import yaml
         cfg_path = Path(__file__).resolve().parent.parent.parent / "config" / "coach_defaults.yaml"
@@ -1727,7 +1783,17 @@ class CoachAgent:
                         cfg[affect] = {}
                     cfg[affect]["enabled"] = True
             with open(cfg_path, "w", encoding="utf-8") as f:
-                yaml.dump(cfg, f, allow_unicode=True, default_flow_style=False)
+                yaml.safe_dump(cfg, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+            # 统一缓存失效（与 config_router._write_config 一致）
+            import sys
+            for mod in list(sys.modules.keys()):
+                if mod.startswith("src.coach"):
+                    del sys.modules[mod]
+            try:
+                from api.services.dashboard_aggregator import _invalidate_cache
+                _invalidate_cache()
+            except Exception:
+                pass
         except Exception as e:
             _logger.warning("Config update failed: %s", e)
 

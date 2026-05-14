@@ -1,41 +1,41 @@
 {
   "step": "S20",
-  "status": "GO",
-  "executed_at_utc": "2026-05-04T07:24:29.721Z",
+  "status": "NO-GO",
+  "executed_at_utc": "2026-05-12T05:58:44.850Z",
   "layer": "B — Runtime Physiology",
   "test_results": {
-    "total_passed": 1070,
-    "total_failed": 0,
-    "total_tests": 1070,
+    "total_passed": 818,
+    "total_failed": 17,
+    "total_tests": 835,
     "by_module": {
       "coach": {
         "test_files": 4,
-        "passed": 80,
+        "passed": 0,
         "failed": 0
       },
       "coach_composer": {
         "test_files": 1,
-        "passed": 8,
+        "passed": 0,
         "failed": 0
       },
       "coach_flow": {
         "test_files": 1,
-        "passed": 14,
+        "passed": 0,
         "failed": 0
       },
       "coach_phase5": {
         "test_files": 5,
-        "passed": 35,
+        "passed": 0,
         "failed": 0
       },
       "coach_sdt": {
         "test_files": 1,
-        "passed": 8,
+        "passed": 0,
         "failed": 0
       },
       "coach_ttm": {
         "test_files": 1,
-        "passed": 12,
+        "passed": 0,
         "failed": 0
       },
       "inner": {
@@ -49,9 +49,9 @@
         "failed": 0
       },
       "other": {
-        "test_files": 24,
-        "passed": 386,
-        "failed": 0
+        "test_files": 61,
+        "passed": 291,
+        "failed": 17
       },
       "outer": {
         "test_files": 3,
@@ -64,9 +64,9 @@
     "findings": 1
   },
   "cognitive_load": {
-    "comment_ratio": 0.0727,
-    "long_lines": 70,
-    "max_line_length": 190,
+    "comment_ratio": 0.0749,
+    "long_lines": 222,
+    "max_line_length": 259,
     "cognitive_load_score": 10,
     "assessment": "Healthy"
   },

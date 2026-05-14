@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S32.4 -- 修复方案生成（两轮模型）</name>
+  <version>2.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>32</phase>
+  <sub_stage>S32.4</sub_stage>
+  <sub_stage_name>ROUND1 用户可见断链 / ROUND2 长轮弱点与评分口径</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <task_definition>
+    | 字段 | 内容 |
+    |------|------|
+    | Name | Fix Suggestion |
+    | Input | S32.3 输出的 ROOT-xxx 根因清单 |
+    | Output | FIX-xxx 结构化修复建议 |
+    | Tools | 读文件（允许修改面优先），不默认指向冻结层 |
+  </task_definition>
+
+  <role>
+    你是体验修复方案设计师。
+    你的职责是将 ROOT-xxx 问题转成可实施、可验证、符合边界的 FIX-xxx 方案。
+    你必须优先在允许修改面给出修复方案；若需要冻结层才能解决，必须明确标记为 deferred。
+  </role>
+
+  <context>
+    当前 Phase 32 不允许默认将修复指向 agent.py / composer.py / prompts.py / contracts。
+    第一轮修复优先级不是“抬高平均分”，而是先解决用户直接感知到的断链。
+
+    允许优先修改的文件面包括：
+    - frontend/src/App.tsx
+    - frontend/src/hooks/useWebSocket.ts
+    - frontend/src/api/client.ts
+    - frontend/src/types/api.ts
+    - frontend/src/components/chat/ChatBubble.tsx
+    - api/routers/pulse.py
+    - api/routers/dashboard.py
+    - api/services/dashboard_aggregator.py
+    - run_experience_audit.py
+  </context>
+
+  <priority_policy>
+    ROUND1（用户可见断链）优先级：
+    - P0: pulse next_action 断链
+    - P0: connected / 实时误感知
+    - P1: dashboard 失败显式化
+    - P1: payload masking 降低伪正常展示
+    - P2: aggregator 降级 shape 明确化
+
+    ROUND2（长轮弱点与评分口径）优先级：
+    - 评分定义与实现不一致
+    - failure taxonomy 颗粒度不足
+    - 长轮重复 / 空转 / 推进不足
+    - comparison 可解释性不足
+  </priority_policy>
+
+  <task>
+    1. 对每个 ROOT 生成一个 FIX 条目；
+    2. 每个 FIX 必须包含：
+       - FIX-id
+       - maps_to: ROOT-id
+       - round: ROUND1 或 ROUND2
+       - priority: P0 / P1 / P2
+       - target_files
+       - locator（函数名 / 组件名 / 路由名 / 产物名）
+       - change_goal（行为目标）
+       - before
+       - after
+       - expected_metric_delta
+       - verification
+       - rollback_concern
+       - status（forward / deferred）
+    3. 任何需要触达冻结层的修复，一律标记为 deferred，不得作为本轮主方案；
+    4. ROUND1 必须全部落在允许修改面；
+    5. ROUND2 允许围绕审计脚本、评分口径、前端展示层继续收口，但仍不得越界；
+    6. 输出必须是正式修复计划，不是泛泛建议。
+  </task>
+
+  <output_format>
+    FIX-001 | maps_to: ROOT-001 | round: ROUND1 | priority: P0
+    目标文件: frontend/src/App.tsx
+    定位: handlePulseAccept / handlePulseRewrite
+    修复目标: 在 pulse respond 返回 next_action 后，将其渲染为新的 coach 消息，而不是只关闭面板。
+    改前: 调用 respondPulse(...).finally(() =&gt; setPendingPulse(null))，未消费 next_action
+    改后: 在 promise resolve 阶段读取 next_action，转换为 ChatMessage 并 addMessage，再清 pendingPulse
+    预期改善: dropped_next_action 断点消失；推进感与连续性提升
+    验证: pulse_next_action_probe 通过；tests/test_api_pulse.py + 前端相关新增测试通过
+    回滚关注: 避免重复插入消息；避免 accept/rewrite 路径分支不一致
+    状态: forward
+
+    FIX-002 | maps_to: ROOT-002 | round: ROUND1 | priority: P0
+    目标文件: frontend/src/hooks/useWebSocket.ts, frontend/src/App.tsx
+    定位: connect() / connectionStatus 语义
+    修复目标: WebSocket 禁用时，不再向用户暗示“实时已连接”；区分 session 可用与 realtime 可用。
+    状态: forward
+
+    FIX-003 | maps_to: ROOT-003 | round: ROUND1 | priority: P1
+    目标文件: frontend/src/App.tsx, api/routers/dashboard.py, api/services/dashboard_aggregator.py
+    修复目标: dashboard 失败显式化 + 降级 shape 明确稳定
+    状态: forward
+
+    FIX-004 | maps_to: ROOT-004 | round: ROUND2 | priority: P1
+    目标文件: run_experience_audit.py
+    修复目标: 修正评分定义与 failure taxonomy，使长轮重复与推进不足被正式记录
+    状态: forward
+
+    FIX-005 | maps_to: ROOT-005 | round: ROUND2 | priority: P2
+    目标文件: src/coach/agent.py / prompts.py
+    修复目标: 若证据最终表明必须触及冻结层，记录为 deferred backlog，不在 Phase 32 本轮实施
+    状态: deferred
+  </output_format>
+
+  <rollback_concerns>
+    1. UI 从“静默正常”转向“显式降级”后，需避免信息过载；
+    2. pulse next_action 消费链修复后，需避免重复添加消息；
+    3. 评分口径修正会导致新旧分数不可裸比，需要在 comparison 中解释。
+  </rollback_concerns>
+
+  <verification_hooks>
+    1. 每条 FIX 必须绑定至少一个 probe 或测试文件；
+    2. ROUND1 修复必须能在 breakpoint lane 中观测改善；
+    3. ROUND2 修复必须能在 comparison / failure distribution 中观测改善。
+  </verification_hooks>
+</prompt>

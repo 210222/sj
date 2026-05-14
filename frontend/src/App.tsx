@@ -13,7 +13,8 @@ import { TTMStageCard } from './components/dashboard/TTMStageCard';
 import { SDTEnergyRings } from './components/dashboard/SDTEnergyRings';
 import { GateShieldBadge } from './components/dashboard/GateShieldBadge';
 import { getUserDashboard } from './api/client';
-import type { TTMRadarData, SDTRingsData } from './types/api';
+import type { TTMRadarData, SDTRingsData, UserDashboardResponse } from './types/api';
+import { TeachingStatus } from './components/TeachingStatus';
 import { createSession, sendMessage, respondPulse } from './api/client';
 import { getTTMUI } from './utils/stateMachine';
 import { applyColorAdaptation } from './utils/colorAdapt';
@@ -35,7 +36,7 @@ function extractPayloadText(
   actionType?: string,
 ): string {
   if (!payload || typeof payload !== 'object') return '';
-  const textFields = ['statement', 'question', 'option', 'step', 'problem', 'reason', 'prompt'];
+  const textFields = ['statement', 'question', 'option', 'step', 'problem', 'reason', 'prompt', 'text', 'message', 'content', 'response', 'feedback'];
   for (const field of textFields) {
     const val = payload[field];
     if (typeof val === 'string' && val.trim() && val !== 'general') return val;
@@ -75,13 +76,17 @@ export function App() {
   // Phase 13x: 仪表盘可视化数据
   const [dashTTM, setDashTTM] = useState<TTMRadarData | null>(null);
   const [dashSDT, setDashSDT] = useState<SDTRingsData | null>(null);
+  const [dashFull, setDashFull] = useState<UserDashboardResponse | null>(null);
   // Phase 13x: 侧边栏打开时加载仪表盘数据
   useEffect(() => {
     if (sidebarOpen && state.sessionId) {
       getUserDashboard(state.sessionId).then((d) => {
         setDashTTM(d.ttm_radar);
         setDashSDT(d.sdt_rings);
-      }).catch(() => {});
+        setDashFull(d);
+      }).catch((err) => {
+        console.warn('[Dashboard] Load failed:', err);
+      });
     }
   }, [sidebarOpen, state.sessionId]);
 
@@ -135,6 +140,7 @@ export function App() {
     sessionId: state.sessionId,
     onMessage: handleWSMessage,
     onPulseEvent: handlePulseEvent,
+    onStatusChange: setConnectionStatus,
   });
 
   const handleSendMessage = useCallback(async (text: string) => {
@@ -209,18 +215,46 @@ export function App() {
   const handlePulseAccept = useCallback(() => {
     if (!pendingPulse) return;
     recordPulse();
-    respondPulse(state.sessionId, pendingPulse.pulse_id, 'accept').finally(() => {
+    respondPulse(state.sessionId, pendingPulse.pulse_id, 'accept').then((res) => {
+      if (res.next_action) {
+        const na = res.next_action as Record<string, unknown>;
+        addMessage({
+          id: nextMsgId(),
+          role: 'coach',
+          content: extractPayloadText(
+            na.payload as Record<string, unknown> | undefined,
+            na.action_type as string,
+          ),
+          actionType: na.action_type as ChatMessage['actionType'],
+          timestamp: new Date().toISOString(),
+        });
+      }
+    }).finally(() => {
       setPendingPulse(null);
     });
-  }, [state.sessionId, pendingPulse, recordPulse]);
+  }, [state.sessionId, pendingPulse, recordPulse, addMessage]);
 
   const handlePulseRewrite = useCallback((content: string) => {
     if (!pendingPulse) return;
     recordPulse();
-    respondPulse(state.sessionId, pendingPulse.pulse_id, 'rewrite', content).finally(() => {
+    respondPulse(state.sessionId, pendingPulse.pulse_id, 'rewrite', content).then((res) => {
+      if (res.next_action) {
+        const na = res.next_action as Record<string, unknown>;
+        addMessage({
+          id: nextMsgId(),
+          role: 'coach',
+          content: extractPayloadText(
+            na.payload as Record<string, unknown> | undefined,
+            na.action_type as string,
+          ),
+          actionType: na.action_type as ChatMessage['actionType'],
+          timestamp: new Date().toISOString(),
+        });
+      }
+    }).finally(() => {
       setPendingPulse(null);
     });
-  }, [state.sessionId, pendingPulse, recordPulse]);
+  }, [state.sessionId, pendingPulse, recordPulse, addMessage]);
 
   const ttmUI = getTTMUI(state.ttmStage);
 
@@ -256,6 +290,7 @@ export function App() {
             {dashTTM && <TTMStageCard data={dashTTM} />}
             <div style={{ height: 'var(--space-md)' }} />
             {dashSDT && <SDTEnergyRings data={dashSDT} />}
+            {dashFull && <TeachingStatus dashboard={dashFull} />}
             <div style={{ height: 'var(--space-lg)' }} />
             <SettingsPanel />
           </div>

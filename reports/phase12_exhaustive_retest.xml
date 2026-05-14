@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phase12_exhaustive_retest description="Phase 12 全量穷举重测 — 验证规则引擎从 2.8/24 → 目标 12+/24">
+
+  <metadata>
+    <phase>12</phase>
+    <sub_stage>S12.V</sub_stage>
+    <name>全量穷举重测 — 对比 Phase 12 修复前后</name>
+    <test_script>tests/test_exhaustive_all_configs.py</test_script>
+    <project_root>/d/Claudedaoy/coherence</project_root>
+    <api_key>YOUR_DEEPSEEK_API_KEY</api_key>
+    <baseline_before_phase12>
+      <llm_off_avg>2.8/24</llm_off_avg>
+      <llm_on_avg>16.6/24</llm_on_avg>
+      <dimensions>
+        <relevance>0.05/4</relevance>
+        <clarity>1.00/4</clarity>
+        <interactive>0.95/4</interactive>
+        <structure>0.73/4</structure>
+        <personalization>0.05/4</personalization>
+        <encouragement>0.00/4</encouragement>
+      </dimensions>
+    </baseline_before_phase12>
+    <target_after_phase12>
+      <llm_off_avg>12+/24</llm_off_avg>
+      <llm_on_avg>17+/24</llm_on_avg>
+      <encouragement_target>2.0+/4</encouragement_target>
+      <personalization_target>1.5+/4</personalization_target>
+    </target_after_phase12>
+  </metadata>
+
+  <overview>
+    Phase 12 实现了 FallbackEngine 教学模板库、上下文感知、鼓励性个性化注入、诊断题修复。
+    现在需要通过完整的 256 组合穷举测试来量化验证改进效果。
+    本轮测试分两阶段：
+    - 阶段 A：快速验证（20 组合样本，仅 LLM OFF）— 确保无严重退化
+    - 阶段 B：全量穷举（256 组合完整运行）— 最终量化报告
+  </overview>
+
+  <preparation>
+
+    <step name="1. 清理旧进度文件">
+      <description>确保测试从全新状态开始，不混入旧数据</description>
+      <command>
+        rm -f /d/Claudedaoy/coherence/reports/exhaustive_all_configs_progress.json
+        rm -f /d/Claudedaoy/coherence/reports/exhaustive_used_topics.json
+        rm -f /d/Claudedaoy/coherence/reports/exhaustive_all_configs_test.log
+        rm -f /d/Claudedaoy/coherence/reports/exhaustive_all_configs_report.json
+      </command>
+    </step>
+
+    <step name="2. 确认 API Key 已设置">
+      <command>echo $DEEPSEEK_API_KEY | head -c 10</command>
+      <expected>sk-bb5f42...</expected>
+      <fallback>export DEEPSEEK_API_KEY="YOUR_DEEPSEEK_API_KEY"</fallback>
+    </step>
+
+    <step name="3. 确认文件完整性">
+      <description>确认 FallbackEngine 代码和测试脚本就绪</description>
+      <commands>
+        ls -la /d/Claudedaoy/coherence/src/coach/fallback.py
+        ls -la /d/Claudedaoy/coherence/tests/test_exhaustive_all_configs.py
+        python -c "from src.coach.fallback import FallbackEngine; print('FallbackEngine OK')"
+      </commands>
+    </step>
+
+    <step name="4. 确认测试话题池">
+      <command>python -c "
+from tests.test_exhaustive_all_configs import build_dialogue_pool
+pool = build_dialogue_pool()
+print(f'Dialogue pool: {len(pool)} topics')
+for k in list(pool.keys())[:5]:
+    print(f'  {k}: {len(pool[k])} turns')
+"</command>
+    </step>
+
+  </preparation>
+
+  <phase_a_quick_validation label="阶段 A: 快速验证 (20 LLM OFF 组合样本)">
+
+    <description>
+      只运行 LLM OFF 的 20 个组合样本（快速，约 30 秒），
+      确认 FallbackEngine 是否生效、无退化。
+    </description>
+
+    <command>
+      python -c "
+import sys, json, random
+sys.path.insert(0, '.')
+from tests.test_exhaustive_all_configs import (
+    generate_all_combos, run_combo_subprocess, build_dialogue_pool
+)
+
+pool = build_dialogue_pool()
+topics = list(pool.keys())
+all_combos = [(l,c) for l,c in generate_all_combos() if not c.get('llm.enabled')]
+random.shuffle(all_combos)
+sample = all_combos[:20]
+
+results = []
+for i, (label, combo) in enumerate(sample):
+    topic = topics[i % len(topics)]
+    r = run_combo_subprocess(label, combo, pool[topic], topic)
+    if r.get('ok'):
+        turns = r['results']
+        scores = [t['total_score'] for t in turns]
+        avg = sum(scores)/len(scores)
+        llm_cnt = sum(1 for t in turns if t.get('llm'))
+        results.append({'label': label, 'topic': topic, 'avg': avg, 'llm': f'{llm_cnt}/{len(turns)}'})
+        print(f'[{i+1}/20] {label:30s} topic={topic:20s} avg={avg:.1f}/24 llm={llm_cnt}/{len(turns)}')
+    else:
+        print(f'[{i+1}/20] {label:30s} FAILED: {r.get(\"error\",\"?\")}')
+
+if results:
+    all_avg = sum(r['avg'] for r in results)/len(results)
+    print(f'\n=== Phase A Result ===')
+    print(f'Sample LLM OFF avg: {all_avg:.1f}/24 (n={len(results)})')
+    print(f'Baseline (before Phase 12): 2.8/24')
+    print(f'Improvement: {all_avg - 2.8:+.1f}/24')
+    with open('reports/phase12_quick_validation.json', 'w') as f:
+        json.dump({'avg': round(all_avg, 1), 'samples': results}, f, ensure_ascii=False, indent=2)
+"
+    </command>
+
+    <expected_outcome>
+      <llm_off_avg_minimum>8.0/24</llm_off_avg_minimum>
+      <llm_off_avg_target>12.0/24</llm_off_avg_target>
+      <llm_generated>0/5 (必须全部为 0，确保 LLM 未参与)</llm_generated>
+    </expected_outcome>
+
+    <gates>
+      <gate id="a1">Phase A 20 组合全部 PASS，无 FAILED</gate>
+      <gate id="a2">LLM OFF avg ≥ 8.0/24（低于此值说明 FallbackEngine 未生效）</gate>
+      <gate id="a3">所有回复的 llm=0/5（确保 LLM 真正关闭）</gate>
+    </gates>
+
+  </phase_a_quick_validation>
+
+  <phase_b_full_exhaustive label="阶段 B: 全量穷举 (256 组合完整运行)">
+
+    <description>
+      运行全部 256 组合，包含 LLM ON 和 LLM OFF 各 128 组合。
+      生成与 Phase 12 前可对比的完整报告。
+      预计耗时 45-65 分钟。
+    </description>
+
+    <command>
+      export DEEPSEEK_API_KEY="YOUR_DEEPSEEK_API_KEY"
+      cd /d/Claudedaoy/coherence
+      python tests/test_exhaustive_all_configs.py
+    </command>
+
+    <estimated_time>
+      <llm_on>~128 combos × 25s = ~53 min</llm_on>
+      <llm_off>~128 combos × 1s = ~2 min</llm_off>
+      <total>~55 min</total>
+    </estimated_time>
+
+    <progress_monitoring>
+      <command>tail -5 /d/Claudedaoy/coherence/reports/exhaustive_all_configs_test.log</command>
+      <check_count>grep -c "ok |" /d/Claudedaoy/coherence/reports/exhaustive_all_configs_test.log</check_count>
+      <check_failures>grep -c "FAILED" /d/Claudedaoy/coherence/reports/exhaustive_all_configs_test.log</check_failures>
+    </progress_monitoring>
+
+    <expected_report_location>
+      reports/exhaustive_all_configs_report.json
+      reports/exhaustive_all_configs_test.log (末尾 FINAL REPORT 段)
+    </expected_report_location>
+
+  </phase_b_full_exhaustive>
+
+  <comparison_analysis label="报告解读 — 对比 Phase 12 前后">
+
+    <metrics_to_collect>
+      <metric name="LLM OFF avg quality" formula="从 JSON report.overall_avg 按 config filter">
+        <command>
+          python -c "
+import json
+r = json.load(open('reports/exhaustive_all_configs_report.json', encoding='utf-8'))
+sc = r.get('summaries_compact', {})
+llm_off = [v['quality'] for k,v in sc.items() if v['quality'] <= 10]
+if llm_off:
+    print(f'LLM OFF avg: {sum(llm_off)/len(llm_off):.1f}/24 (n={len(llm_off)})')
+llm_on = [v['quality'] for k,v in sc.items() if v['quality'] > 10]
+if llm_on:
+    print(f'LLM ON avg:  {sum(llm_on)/len(llm_on):.1f}/24 (n={len(llm_on)})')
+"
+        </command>
+      </metric>
+
+      <metric name="6 维度平均 (LLM OFF)">
+        <command>
+          python -c "
+import json
+r = json.load(open('reports/exhaustive_all_configs_report.json', encoding='utf-8'))
+sc = r.get('summaries_compact', {})
+llm_off = [v for k,v in sc.items() if v['quality'] <= 10]
+if not llm_off: exit()
+dims = {}
+for v in llm_off:
+    for d,s in v['dimensions'].items():
+        dims.setdefault(d, []).append(s)
+print('LLM OFF dimensions:')
+for d in ['relevance','clarity','interactive','structure','personalization','encouragement']:
+    vals = dims.get(d, [0])
+    print(f'  {d}: {sum(vals)/len(vals):.2f}/4')
+"
+        </command>
+      </metric>
+
+      <metric name="Top 10 / Bottom 10 配置">
+        <command>grep -A12 "^--- Top 10 ---" reports/exhaustive_all_configs_test.log</command>
+      </metric>
+    </metrics_to_collect>
+
+    <comparison_table>
+      <baseline name="Phase 12 前 (穷举测试)" date="2026-05-06">
+        <llm_off_avg>2.8/24</llm_off_avg>
+        <llm_on_avg>16.6/24</llm_on_avg>
+      </baseline>
+      <result name="Phase 12 后 (本轮重测)" date="当前">
+        <llm_off_avg>待填写</llm_off_avg>
+        <llm_on_avg>待填写</llm_on_avg>
+      </result>
+    </comparison_table>
+
+    <pass_criteria>
+      <criterion id="c1" weight="P0">LLM OFF avg ≥ 12.0/24（提升 4.3x+）</criterion>
+      <criterion id="c2" weight="P0">encouragement ≥ 2.0/4（从 0.00 起）</criterion>
+      <criterion id="c3" weight="P0">personalization ≥ 1.5/4（从 0.05 起）</criterion>
+      <criterion id="c4" weight="P0">256/256 PASS，0 FAILED</criterion>
+      <criterion id="c5" weight="P1">LLM ON avg 无退化（仍在 16.0+）</criterion>
+      <criterion id="c6" weight="P1">结构 dimension ≥ 2.5/4（从 0.73 起）</criterion>
+    </pass_criteria>
+
+  </comparison_analysis>
+
+  <rollback_if_failed>
+    <condition>LLM OFF avg < 8.0/24 或 失败率 > 5%</condition>
+    <action>
+      1. 检查 src/coach/fallback.py 是否被正确加载
+      2. 检查 agent.py 中 LLM OFF 分支是否调用了 FallbackEngine
+      3. 检查 config/coach_defaults.yaml 中 fallback_templates 段语法
+      4. 运行 python -m pytest tests/test_fallback_engine.py -v 确认单元测试通过
+      5. 修复后重新执行 Phase A
+    </action>
+  </rollback_if_failed>
+
+  <quick_reference_single_command label="一条命令跑完全程 (后台)">
+
+    <full_command>
+      export DEEPSEEK_API_KEY="YOUR_DEEPSEEK_API_KEY"
+      cd /d/Claudedaoy/coherence && \
+      rm -f reports/exhaustive_all_configs_progress.json reports/exhaustive_all_configs_test.log reports/exhaustive_all_configs_report.json && \
+      python tests/test_exhaustive_all_configs.py
+    </full_command>
+
+    <background_command>
+      nohup bash -c 'export DEEPSEEK_API_KEY="YOUR_DEEPSEEK_API_KEY" && cd /d/Claudedaoy/coherence && rm -f reports/exhaustive_all_configs_progress.json reports/exhaustive_all_configs_test.log reports/exhaustive_all_configs_report.json && python tests/test_exhaustive_all_configs.py' > reports/exhaustive_phase12_run.log 2>&1 &
+    </background_command>
+
+    <watch_progress>
+      tail -f /d/Claudedaoy/coherence/reports/exhaustive_all_configs_test.log
+    </watch_progress>
+
+  </quick_reference_single_command>
+
+  <deliverables>
+    <item>reports/exhaustive_all_configs_report.json — 完整结构化报告</item>
+    <item>reports/exhaustive_all_configs_test.log — 末尾 FINAL REPORT 段</item>
+    <item>reports/phase12_quick_validation.json — Phase A 快速验证结果</item>
+    <item>此文档填写的比较表 — Phase 12 前后对比</item>
+  </deliverables>
+
+</phase12_exhaustive_retest>

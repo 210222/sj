@@ -1,0 +1,13 @@
+{
+  "run_id": "run_20260514_110914_101857e3",
+  "timestamp_utc": "2026-05-14T11:10:28.587041+00:00",
+  "git_hash": "615c442",
+  "profiles": [
+    "novice_confirm",
+    "novice_jump",
+    "advanced",
+    "reviewer",
+    "tester"
+  ],
+  "turns_per_profile": 20
+}

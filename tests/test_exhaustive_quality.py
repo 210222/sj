@@ -175,7 +175,7 @@ class TestDataFlowEndToEnd:
         a = CoachAgent(session_id=sid)
         for _ in range(3):
             a.act("msg")
-        prog = DashboardAggregator.get_progress(sid)
+        prog = DashboardAggregator(sid).get_progress()
         assert prog["total_turns"] >= 3, f"got {prog['total_turns']}"
 
     def test_retention_calculation_works(self):
@@ -247,10 +247,11 @@ class TestBoundarySafety:
     def test_dashboard_empty_session_returns_defaults(self):
         """不存在 session 时 Dashboard 返回默认值不崩溃."""
         from api.services.dashboard_aggregator import DashboardAggregator
-        ttm = DashboardAggregator.get_ttm_radar("nonexistent_99999")
-        sdt = DashboardAggregator.get_sdt_rings("nonexistent_99999")
-        prog = DashboardAggregator.get_progress("nonexistent_99999")
-        snap = DashboardAggregator.get_mastery_snapshot("nonexistent_99999")
+        agg = DashboardAggregator("nonexistent_99999")
+        ttm = agg.get_ttm_radar()
+        sdt = agg.get_sdt_rings()
+        prog = agg.get_progress()
+        snap = agg.get_mastery_snapshot()
         assert isinstance(ttm, dict)
         assert isinstance(sdt, dict)
         assert prog["total_turns"] == 0
@@ -322,11 +323,13 @@ class TestActionTypeExhaustive:
                     f"{a1} and {a2} have identical prompts"
 
     def test_system_prompt_template_unchanged(self):
-        """SYSTEM_PROMPT 常量未被修改."""
-        from src.coach.llm.prompts import SYSTEM_PROMPT
-        assert "{action_type_strategy}" in SYSTEM_PROMPT
-        assert "{intent}" in SYSTEM_PROMPT
-        assert "{ttm_stage}" in SYSTEM_PROMPT
+        """稳定前缀与策略层关键片段存在。"""
+        ctx = build_coach_context(action_type="suggest", intent="test")
+        system_prompt = ctx["system"]
+        assert "输出要求:" in system_prompt
+        assert "当前教练策略:" in system_prompt
+        assert "用户意图:" in system_prompt
+        assert "TTM 阶段:" in system_prompt
 
     # ── A.2: 字段校验穷尽 ──
 

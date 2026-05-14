@@ -1,0 +1,17 @@
+{
+  "run_id": "run_20260514_125920_f98e50b6",
+  "sample_size": 15,
+  "path_distribution": {
+    "http_sync": 15
+  },
+  "transport_status_distribution": {
+    "ok": 15
+  },
+  "avg_latency_ms": 3589.4,
+  "min_latency_ms": 1660.3,
+  "max_latency_ms": 5272.3,
+  "std_latency_ms": 889.9,
+  "avg_tokens_total": 1885.2,
+  "total_retention_history_hits": 37,
+  "total_retention_memory_hits": 52
+}

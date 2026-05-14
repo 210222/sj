@@ -79,6 +79,44 @@ class TestFTS5OrFallback:
         assert len(results) == 3
 
 
+class TestAIResponseRoundtrip:
+    """Phase 31: ai_response 端到端闭环."""
+
+    def test_store_and_recall_ai_response(self, db_path):
+        m = SessionMemory(db_path=db_path)
+        m.store("s1", {
+            "intent": "学习Python",
+            "action_type": "scaffold",
+            "user_input": "for循环怎么用",
+            "ai_response": "for循环遍历可迭代对象，每次取一个元素",
+        })
+        results = m.recall("general")
+        assert len(results) >= 1
+        data = results[0]["data"]
+        assert "ai_response" in data
+        assert len(data["ai_response"]) > 10
+
+    def test_ai_response_defaults_empty(self, db_path):
+        m = SessionMemory(db_path=db_path)
+        m.store("s1", {"intent": "test", "user_input": "hello"})
+        results = m.recall("general")
+        data = results[0]["data"]
+        assert data["ai_response"] == ""
+
+    def test_ai_response_new_instance_reads_back(self, db_path):
+        m1 = SessionMemory(db_path=db_path)
+        m1.store("s1", {
+            "intent": "反思",
+            "action_type": "reflect",
+            "user_input": "我不太明白",
+            "ai_response": "让我们换个角度——把这个概念想象成...",
+        })
+        m2 = SessionMemory(db_path=db_path)
+        results = m2.recall("反思")
+        data = results[0]["data"]
+        assert data["ai_response"] == "让我们换个角度——把这个概念想象成..."
+
+
 class TestPromoteToFact:
     def test_promote_creates_fact(self, db_path):
         m = SessionMemory(db_path=db_path)

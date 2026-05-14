@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence Phase 25 -- S25.1 教学自评</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>25</phase>
+  <sub_stage>S25.1</sub_stage>
+  <sub_stage_name>agent.act() 每轮结束后评估策略有效性, 下轮传入 compose()</sub_stage_name>
+
+  <role>
+    教学自评需要跨轮传递: 本轮结束时的评估结果 -> 下轮开始时传给 compose()。
+    不能在 compose() 之后生成再传给它(时序冲突)。
+  </role>
+
+  <context>
+    === 时序约束(关键) ===
+    compose() 在 act() 中的早期调用(约第 418 行)。
+    self_eval 需要在 compose() 被调用之前就存在。
+    所以:
+    1. 第一轮: self._self_eval = None (还没数据)
+    2. 第一轮结束: 评估 -> self._self_eval = {strategy_ineffective: True/False}
+    3. 第二轮开始: 读取 self._self_eval -> 传入 compose()
+    4. 第二轮结束: 重新评估 -> 更新 self._self_eval
+
+    === _interaction_history 现有格式 ===
+    每条: {"intent": "...", "state": "...", "confidence": float}
+    没有 action_type, 没有 mastery 数据。
+    所以不能从历史推断"scaffold 最近 3 轮是否有效"。
+    改用现有可直接访问的数据:
+    - sdt_profile (当前轮 competence/autonomy)
+    - diagnostic_engine.get_mastery_summary() (当前技能掌握度)
+    - flow_result (当前心流状态)
+
+    === 策略无效判断 ===
+    - competence < 0.3 -> 无效 (胜任感低意味着当前方法太难)
+    - flow_result.get("flow_channel") == "anxiety" -> 无效 (用户焦虑)
+    - flow_result.get("flow_channel") == "boredom" -> 可考虑切换 (用户无聊)
+
+    === 约束 ===
+    - 只修改 src/coach/agent.py
+    - try/except 包裹, 异常时不影响主流程
+    - 全量回归 1294+ 必须通过
+  </context>
+
+  <task>
+
+    -- 改动 1: __init__() 中初始化 self._self_eval --
+
+    在 __init__() 中 (约第 95 行, 已有变量初始化区域):
+
+    self._self_eval: dict | None = None  # Phase 25: 教学自评
+
+    -- 改动 2: compose() 调用前读取 self._self_eval (约第 416 行) --
+
+    # Phase 25: 传入上一轮的教学自评
+    self_eval = getattr(self, '_self_eval', None)
+    action = self.composer.compose(
+        user_state=user_state,
+        intent=intent,
+        relevant=relevant,
+        excursion_mode=self._excursion_active,
+        ttm_strategy=ttm_strategy,
+        sdt_profile=sdt_profile,
+        flow_result=flow_result,
+        self_eval=self_eval,
+    )
+
+    -- 改动 3: return result 之前更新 self._self_eval (约第 635 行) --
+
+    # Phase 25: 本轮教学自评(供下轮使用)
+    try:
+        eval_reason = "effective"
+        eval_ineffective = False
+
+        # 检查胜任感
+        if sdt_profile and sdt_profile.get("competence", 0.5) < 0.3:
+            eval_ineffective = True
+            eval_reason = "competence_low"
+
+        # 检查心流
+        if flow_result:
+            channel = flow_result.get("flow_channel", "")
+            if channel == "anxiety":
+                eval_ineffective = True
+                eval_reason = "flow_anxiety"
+
+        self._self_eval = {
+            "strategy_ineffective": eval_ineffective,
+            "reason": eval_reason,
+            "action_type": packet.get("action_type", "suggest"),
+        }
+    except Exception:
+        self._self_eval = None
+  </task>
+
+  <success_criteria>
+    <item>python -m pytest tests/ -q 全绿</item>
+    <item>第一轮 act() 后 self._self_eval 非 None</item>
+    <item>diagnostic_engine disabled 时正常生成(基于 sdt_profile+flow)</item>
+  </success_criteria>
+</prompt>

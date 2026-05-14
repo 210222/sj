@@ -2,12 +2,12 @@
   "contracts_vs_source": {
     "status": "GO",
     "mismatches": 0,
-    "detail": "11 contracts, source imports verified"
+    "detail": "13 contracts, source imports verified"
   },
   "source_vs_tests": {
     "status": "GO",
     "mismatches": 0,
-    "detail": "35/41 source modules have test coverage"
+    "detail": "42/53 source modules have test coverage"
   },
   "tests_vs_runtime": {
     "status": "GO",

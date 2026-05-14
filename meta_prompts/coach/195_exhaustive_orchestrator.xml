@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>穷尽教学质量测试总编排</name>
+  <version>1.0.0</version>
+  <track>EXHAUSTIVE</track>
+  <phase>99</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>4 模块 / ~60 测试 / 不调 LLM</sub_stage_name>
+
+  <context>
+    基线: 1302 tests passed
+    规格源: 37 份元提示词, 139 条验收标准, 7 个维度
+    覆盖缺口: Action-Type (13), 数据流端到端 (26), 边界 (12), Disabled (4)
+
+    全量回归命令:
+      cd D:/Claudedaoy/coherence && python -m pytest tests/ -q
+  </context>
+
+  <execution_order>
+    <step>D (Disabled 零变化, 5 tests) -> B (数据流端到端, 15 tests) -> C (边界, 10 tests) -> A (Action-Type, 30 tests)</step>
+  </execution_order>
+
+  <meta_prompts>
+    <prompt>196_exhaustive_d_disabled.xml — 5 tests, 2 min</prompt>
+    <prompt>197_exhaustive_b_dataflow.xml — 15 tests, 5 min</prompt>
+    <prompt>198_exhaustive_c_boundary.xml — 10 tests, 3 min</prompt>
+    <prompt>199_exhaustive_a_actiontype.xml — 30 tests, 8 min</prompt>
+  </meta_prompts>
+</prompt>

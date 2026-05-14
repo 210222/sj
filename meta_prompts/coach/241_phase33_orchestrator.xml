@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 33 -- 审计驱动教学体验定向优化</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>33</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>清空 Phase 32 deferred backlog + 评分算法纠偏</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 33 的总控执行。
+    你的职责不是扩展产品功能，而是基于 Phase 32 体验审计管道的输出，把 deferred backlog 中的项目
+    和 scoring 算法弱点收口成可验证修复。
+    你必须严格遵守 Phase 32 已建立的边界，不得越界至冻结层或教练内核。
+  </role>
+
+  <context>
+    Phase 32 体验审计管道已正式化并完成。当前基线：
+    - 全量回归: 1408 passed / 0 failed / 5 skipped
+    - 体验总分: 12.31 / 20
+    - 5 个链路断点: 全部 fixed 或 improved
+
+    Phase 32 verify_summary.json 遗留 1 项 deferred：
+    - pulse_accept_hardcoded_next_action_context
+
+    Phase 32 scoring 数据暴露了两个评分算法问题：
+    - 引用性算法使用 n-gram 但对短中文输入失效（不足 3 字符无法生成 trigram）
+    - 推进感算法只看长度差，对教学特征无感知
+
+    本 Phase 33 不新增产品功能，只做定向优化，优化面限定在允许修改面内。
+  </context>
+
+  <global_constraints>
+    1. 禁止修改 contracts/**；
+    2. 禁止修改 src/inner/**；
+    3. 禁止修改 src/middle/**；
+    4. 禁止修改 src/outer/**；
+    5. 不以 src/coach/agent.py / composer.py / prompts.py 为修复主战场；
+    6. 所有改动必须可被体验审计管道重跑验证；
+    7. 全量回归必须通过；
+    8. 本 Phase 33 不是 reports/phase33_landing_plan.md 所描述的前端教学功能展示；
+       那是已经完成的历史 Phase 33，不要与本轮混淆。
+  </global_constraints>
+
+  <execution_order>
+    <step>S33.1 -&gt; S33.2 -&gt; S33.3</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s33_1" name="Pulse Accept 上下文注入">
+      <meta_prompt>242_s33_1_pulse_accept.xml</meta_prompt>
+    </stage>
+    <stage id="s33_2" name="评分算法纠偏">
+      <meta_prompt>243_s33_2_scoring_fix.xml</meta_prompt>
+    </stage>
+    <stage id="s33_3" name="验证与收口">
+      <meta_prompt>244_s33_3_verify.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+
+  <risk_analysis>
+    1. 把 Phase 33 写得像 Phase 32 那么大，但它实际范围更小；
+    2. 把 deferred 项误解为"教学内容内核优化"，越界到 agent.py / composer.py / prompts.py；
+    3. 评分算法纠偏后旧 baseline 数字不可裸比；
+    4. 忽略 phase33_landing_plan.md 与本 Phase 33 的命名冲突。
+  </risk_analysis>
+
+  <go_gate_policy>
+    <gate>GO_S33.1: pulse accept 不再返回硬编码话术，且 pulse 测试通过</gate>
+    <gate>GO_S33.2: 引用性支持短中文输入，推进感包含教学特征检测，audit 测试通过</gate>
+    <gate>GO_S33.3: 体验审计管道重跑成功，全量回归通过，无冻结层越界</gate>
+  </go_gate_policy>
+
+  <required_outputs>
+    <item>修复后的 api/routers/pulse.py</item>
+    <item>修复后的 run_experience_audit.py</item>
+    <item>新一轮体验审计 run（带 comparison）</item>
+    <item>reports/phase33_audit_driven_completion.md</item>
+  </required_outputs>
+
+  <quality_gates>
+    <gate>python -m pytest tests/test_api_pulse.py -q 通过</gate>
+    <gate>python -m pytest tests/test_experience_audit.py -q 通过</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+    <gate>comparison.json verdict == GO</gate>
+    <gate>deferred backlog 中 pulse_accept_hardcoded_next_action_context 已清理</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>deferred backlog 中的 pulse_accept_hardcoded_next_action_context 已处理</item>
+    <item>评分算法对短中文输入和确认型用户更可信</item>
+    <item>Phase 32 baseline 仍有效，未被破坏</item>
+    <item>全量回归通过</item>
+    <item>无冻结层越界</item>
+  </success_criteria>
+</prompt>

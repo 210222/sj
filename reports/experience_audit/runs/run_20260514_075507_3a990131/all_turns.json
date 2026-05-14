@@ -1,0 +1,248 @@
+{
+  "novice_confirm": [
+    {
+      "turn": 1,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说'好'，看来你准备好进行第三步了。这一步叫'天平对比'——把支持'我肯定做不好'的证据和反驳它的证据放在天平两端，看看哪边更重。举个例子，支持'做不好'的证据可能是'上次演讲忘词了'，反驳的证据可能是'那次我准备不充分，今天准备更充分'。现在请你想一个你当前觉得'我肯定做不好'的具体事情。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "62ff22ff-9e3a-4969-a61e-c36c257ddc89",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "嗯",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说'好'，看来你已经准备好进行第三步了。这一步叫'天平对比'——把支持'我肯定做不好'的证据和反驳它的证据放在天平两端，看看哪边更重。举个例子，支持'做不好'的证据可能是'上次演讲忘词了'，反驳的证据可能是'那次我准备不充分，今天准备更充分'。现在请你想一个你当前觉得'我肯定做不好'的具体事情。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "8eb01310-180d-4454-8f2e-5e7ed0c229e5",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "继续",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才提到'嗯'，看来你准备好了。那么让我们开始第三步：天平对比。这一步需要你把支持'我肯定做不好'的证据和反驳它的证据分别列出来，放在天平两端。例如，支持证据可能是'上次演讲忘词了'，反驳证据可能是'但我那周没睡好，今天状态不同'。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "e8a0552d-4189-4a44-b489-f334a46750ae",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "可以",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说'可以'，看来你准备好进行第三步：天平对比了。这一步的核心是把支持'我肯定做不好'的证据和反驳它的证据分别列出来，放在天平两端，看看哪边更重。比如，支持证据可能是'上次演讲忘词了'，反驳证据可能是'但我那周没睡好，今天状态不同'。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "e4c0a582-4ecc-423b-bc24-e23d9678425d",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说'好'，看来你准备好进行第三步：天平对比了。这一步的核心是把支持'我肯定做不好'的证据和反驳它的证据分别列出来，放在天平两端，看看哪边更重。比如，支持证据可能是'上次演讲忘词了'，反驳证据可能是'但我那周没睡好，今天状态不同'。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "8c1b1c87-dcc7-483a-b223-82cad3872326",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "novice_jump": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才问了字典的用法，现在我们继续推进到函数。函数就像一台加工机器：给它输入原料（参数），它就会输出成品（返回值）。第1步，我们先学习如何定义一个简单的函数。例如，定义一个加法函数：def add(a, b): return a + b。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "5f6b5f89-ea23-450c-873b-301cf4672f13",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "讲列表",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才提到了学习Python，现在我们来看看列表这个基础数据结构。列表就像一个有顺序的容器，可以存放多个元素。第1步，我们先学习如何创建一个列表。例如，创建一个包含数字的列表：my_list = [1, 2, 3]。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "7214c7ee-40ca-491b-9ac9-c32dbdc83f6e",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "循环是什么",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才提到了学习列表，现在我们来看看循环这个核心概念。循环就像一条传送带，让你能重复处理列表中的每个元素，而不用手动一个个操作。第1步，我们先学习最常用的 for 循环，它专门用来遍历序列（比如列表）。例如：for item in my_list: print(item) 会打印出列表中的每个元素。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "898d4d84-0872-4729-a0ab-b73483067aa1",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "字典怎么用",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才问了循环的概念，现在我们继续推进到字典。字典就像一本电话簿，通过名字（键）快速找到号码（值）。第1步，我们先学习如何创建一个字典，比如用花括号：my_dict = {'name': 'Alice', 'age': 25}。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "b18156e7-604b-408e-8390-23a2bfef1530",
+      "intent": "怎么",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "学函数",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了字典，现在我们来学习函数。函数就像一台加工机器：给它输入原料（参数），它就会输出成品（返回值）。第1步，我们先学习如何定义一个简单的函数。例如，定义一个加法函数：def add(a, b): return a + b。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "c1c7b001-d443-4cd8-961b-a658db093cc9",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "tester": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说想被考考，很好！我们继续拆解循环。第1步：理解循环的基本结构。循环就像重复执行一段代码，但必须有一个明确的停止条件。例如，Python的for循环可以遍历一个列表，自动逐个处理每个元素。现在，我们来看第2步：掌握for循环的语法。for循环的写法是：for 变量 in 可迭代对象:，然后缩进写要重复的代码。比如：for i in [1,2,3]: print(i) 会依次打印1、2、3。你理解了吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "9c46b713-b528-408e-ada6-bb7fbcfa3ee9",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "你刚才说想被考考，很好！来检测一下你对循环的理解。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "1435822d-53b9-43c7-8777-7bb2f952d327",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "教列表",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才想被考考循环，现在我们转向一个新的主题：列表。列表是Python中最常用的数据结构之一，它就像一个可以装多个东西的盒子。第1步：理解列表的基本概念。列表用方括号[]表示，里面的元素用逗号隔开，比如[1, 2, 3]。列表可以包含不同类型的数据，甚至其他列表。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "f1cfff21-c18d-49b6-ac2f-2f3e2eb8b5b7",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "你刚才想被考考，很好！来检测一下你对列表的理解。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "09825017-1148-4370-9afc-6cb69e7b9bc4",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才提到想被考考循环，很好！我们继续拆解循环的核心概念。第1步：理解循环的基本结构。循环就像重复执行一段代码，但必须有一个明确的停止条件。例如，Python的for循环可以遍历一个列表，自动逐个处理每个元素。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "07217009-4618-40fb-b2c6-bb9f41c5476d",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ]
+}

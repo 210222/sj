@@ -1,0 +1,69 @@
+{
+  "comparison_type": "rules_baseline_vs_llm_snapshot",
+  "baseline_run_id": "run_20260513_080304_0d62cb26",
+  "current_run_id": "run_20260513_125812_2f41dbf7",
+  "note": "LLM snapshot does NOT replace rules baseline. Phase 32 rules baseline remains the anchor.",
+  "overall": {
+    "rules_baseline": 12.31,
+    "llm_snapshot": 14.6,
+    "delta": 2.29
+  },
+  "dimensions": {
+    "引用性": {
+      "rules_baseline": 0.0,
+      "llm_snapshot": 0.53,
+      "delta": 0.53
+    },
+    "连续性": {
+      "rules_baseline": 3.65,
+      "llm_snapshot": 3.53,
+      "delta": -0.12
+    },
+    "无空转": {
+      "rules_baseline": 4.0,
+      "llm_snapshot": 4.0,
+      "delta": 0.0
+    },
+    "稳定性": {
+      "rules_baseline": 2.0,
+      "llm_snapshot": 3.53,
+      "delta": 1.53
+    },
+    "推进感": {
+      "rules_baseline": 2.37,
+      "llm_snapshot": 3.0,
+      "delta": 0.63
+    }
+  },
+  "llm_generated": {
+    "total_turns": 15,
+    "llm_true": 15,
+    "rate": 1.0
+  },
+  "breakpoint_status": {
+    "pulse_next_action": "passed",
+    "dashboard_errors": "passed",
+    "aggregator_shape": "passed",
+    "payload_extraction": "passed",
+    "ws_status": "passed"
+  },
+  "artifacts_complete": true,
+  "interpretation": "LLM snapshot shows significant improvement in referentiality (0.0 -> 0.4-0.8), stability (2.0 -> 3.0-3.8), and overall score (12.3 -> 14.6). This confirms the rules baseline correctly identified real experience gaps now filled by LLM teaching quality.",
+  "profiles": {
+    "novice_confirm": {
+      "rules_baseline": 11.05,
+      "llm_snapshot": 15.0,
+      "delta": 3.95
+    },
+    "novice_jump": {
+      "rules_baseline": 12.95,
+      "llm_snapshot": 15.4,
+      "delta": 2.45
+    },
+    "tester": {
+      "rules_baseline": 12.05,
+      "llm_snapshot": 13.4,
+      "delta": 1.35
+    }
+  }
+}

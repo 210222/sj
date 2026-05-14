@@ -26,10 +26,15 @@ CREATE TABLE IF NOT EXISTS sessions (
     intent          TEXT NOT NULL DEFAULT 'general',
     action_type     TEXT NOT NULL DEFAULT 'suggest',
     user_input      TEXT NOT NULL DEFAULT '',
+    ai_response     TEXT NOT NULL DEFAULT '',
     safety_allowed  INTEGER NOT NULL DEFAULT 1,
     created_at_utc  TEXT NOT NULL,
     UNIQUE(session_id, turn_index)
 );
+"""
+
+SESSIONS_MIGRATE_AI_RESPONSE = """
+ALTER TABLE sessions ADD COLUMN ai_response TEXT NOT NULL DEFAULT ''
 """
 
 SESSIONS_FTS_SQL = """
@@ -64,6 +69,11 @@ class SessionMemory:
         try:
             conn.execute("PRAGMA journal_mode=WAL")
             conn.executescript(SESSIONS_TABLE_SQL)
+            # 幂等迁移: 旧库可能尚无 ai_response 列
+            try:
+                conn.executescript(SESSIONS_MIGRATE_AI_RESPONSE)
+            except sqlite3.OperationalError:
+                pass  # 列已存在
             try:
                 conn.executescript(SESSIONS_FTS_SQL)
             except sqlite3.OperationalError:
@@ -94,14 +104,15 @@ class SessionMemory:
 
             conn.execute(
                 """INSERT INTO sessions
-                   (session_id, turn_index, intent, action_type, user_input, safety_allowed, created_at_utc)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                   (session_id, turn_index, intent, action_type, user_input, ai_response, safety_allowed, created_at_utc)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     session_id,
                     turn_index,
                     turn_data.get("intent", "general"),
                     turn_data.get("action_type", "suggest"),
                     turn_data.get("user_input", ""),
+                    turn_data.get("ai_response", ""),
                     1 if turn_data.get("safety_allowed", True) else 0,
                     _utc_now(),
                 ),
@@ -127,7 +138,7 @@ class SessionMemory:
             if not intent or intent.lower() == "general":
                 rows = conn.execute(
                     """SELECT session_id, turn_index, intent, action_type, user_input,
-                              safety_allowed, created_at_utc
+                              ai_response, safety_allowed, created_at_utc
                        FROM sessions
                        ORDER BY created_at_utc DESC LIMIT ?""",
                     (limit,),
@@ -139,7 +150,7 @@ class SessionMemory:
                 try:
                     rows_fts = conn.execute(
                         """SELECT s.session_id, s.turn_index, s.intent, s.action_type,
-                                  s.user_input, s.safety_allowed, s.created_at_utc
+                                  s.user_input, s.ai_response, s.safety_allowed, s.created_at_utc
                            FROM sessions s
                            JOIN sessions_fts sf ON s.rowid = sf.rowid
                            WHERE sessions_fts MATCH ?
@@ -156,7 +167,7 @@ class SessionMemory:
                 if not fts_ok or not rows:
                     rows = conn.execute(
                         """SELECT session_id, turn_index, intent, action_type,
-                                  user_input, safety_allowed, created_at_utc
+                                  user_input, ai_response, safety_allowed, created_at_utc
                            FROM sessions
                            WHERE intent LIKE ? OR user_input LIKE ?
                            ORDER BY created_at_utc DESC LIMIT ?""",
@@ -171,6 +182,7 @@ class SessionMemory:
                     "data": {
                         "action_type": d.get("action_type", "suggest"),
                         "user_input": d.get("user_input", ""),
+                        "ai_response": d.get("ai_response", ""),
                         "safety_allowed": bool(d.get("safety_allowed", 1)),
                         "turn_index": d.get("turn_index"),
                         "session_id": d.get("session_id"),

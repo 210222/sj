@@ -1,0 +1,55 @@
+# Fresh Diverse Quality Test — 2026-05-06T05:53:15.420430+00:00
+
+============================================================
+FRESH DIVERSE QUALITY TEST: 8 Configs x 15 Unique Turns Each
+Total unique dialogs: 120
+============================================================
+
+--- all_off (topic: 我想学 JavaScript，完全零基础从哪开始...) ---
+  Quality: 6.7/24 | Steps: 0/15 turns (0 total) | actions: {'suggest': 10, 'reflect': 1, 'scaffold': 4} | ttm: {}
+  Dims: {"relevance": 1.0, "clarity": 1.0, "interactive": 0.73, "structure": 1.0, "personalization": 2.0, "encouragement": 1.0} | time: 1s
+
+--- llm_only (topic: 我想学 JavaScript，完全零基础从哪开始...) ---
+  Quality: 19.5/24 | Steps: 15/15 turns (47 total) | actions: {'suggest': 10, 'reflect': 1, 'scaffold': 4} | ttm: {}
+  Dims: {"relevance": 3.6, "clarity": 2.8, "interactive": 3.07, "structure": 4.0, "personalization": 3.93, "encouragement": 2.13} | time: 73s
+
+--- llm_ttm (topic: 我学过基本编程，现在想学数据结构，从哪开始...) ---
+  Quality: 20.1/24 | Steps: 15/15 turns (52 total) | actions: {'scaffold': 3, 'challenge': 12} | ttm: {'action': 15}
+  Dims: {"relevance": 3.6, "clarity": 2.67, "interactive": 3.2, "structure": 4.0, "personalization": 4.0, "encouragement": 2.67} | time: 82s
+
+--- llm_ttm_sdt (topic: 我想学算法，但每次看到时间复杂度就头疼...) ---
+  Quality: 20.0/24 | Steps: 15/15 turns (49 total) | actions: {'reflect': 1, 'challenge': 14} | ttm: {'action': 15}
+  Dims: {"relevance": 3.53, "clarity": 2.87, "interactive": 3.33, "structure": 4.0, "personalization": 4.0, "encouragement": 2.27} | time: 80s
+
+--- full_behavior (topic: 我听说机器学习很火，但完全不知道从哪下手...) ---
+  Quality: 19.7/24 | Steps: 15/15 turns (47 total) | actions: {'reflect': 5, 'challenge': 10} | ttm: {'action': 15}
+  Dims: {"relevance": 3.47, "clarity": 2.6, "interactive": 2.8, "structure": 4.0, "personalization": 3.93, "encouragement": 2.93} | time: 73s
+
+--- full_stack (topic: 我刚开始学编程，听说要用 Git 管理代码，完全不懂...) ---
+  Quality: 19.5/24 | Steps: 15/15 turns (47 total) | actions: {'reflect': 5, 'probe': 3, 'challenge': 7} | ttm: {'action': 15}
+  Dims: {"relevance": 3.4, "clarity": 2.87, "interactive": 2.67, "structure": 4.0, "personalization": 3.93, "encouragement": 2.67} | time: 80s
+
+--- llm_diag (topic: 我想学数据库，SQL 从哪开始...) ---
+  Quality: 19.9/24 | Steps: 15/15 turns (48 total) | actions: {'suggest': 9, 'reflect': 1, 'probe': 3, 'scaffold': 2} | ttm: {}
+  Dims: {"relevance": 3.53, "clarity": 2.93, "interactive": 2.93, "structure": 4.0, "personalization": 4.0, "encouragement": 2.53} | time: 86s
+
+--- rules_diag (topic: 计算机网络怎么学的，那些协议太多了记不住...) ---
+  Quality: 6.9/24 | Steps: 0/15 turns (0 total) | actions: {'suggest': 10, 'probe': 3, 'scaffold': 2} | ttm: {}
+  Dims: {"relevance": 1.0, "clarity": 1.0, "interactive": 0.87, "structure": 1.0, "personalization": 2.0, "encouragement": 1.0} | time: 1s
+
+============================================================
+FINAL RANKING
+============================================================
+  1. llm_ttm            20.1/24 #################### | steps=15/15 (52 total) | {'scaffold': 3, 'challenge': 12}
+  2. llm_ttm_sdt        20.0/24 #################### | steps=15/15 (49 total) | {'reflect': 1, 'challenge': 14}
+  3. llm_diag           19.9/24 ################### | steps=15/15 (48 total) | {'suggest': 9, 'reflect': 1, 'probe': 3, 'scaffold': 2}
+  4. full_behavior      19.7/24 ################### | steps=15/15 (47 total) | {'reflect': 5, 'challenge': 10}
+  5. llm_only           19.5/24 ################### | steps=15/15 (47 total) | {'suggest': 10, 'reflect': 1, 'scaffold': 4}
+  6. full_stack         19.5/24 ################### | steps=15/15 (47 total) | {'reflect': 5, 'probe': 3, 'challenge': 7}
+  7. rules_diag          6.9/24 ###### | steps=0/15 (0 total) | {'suggest': 10, 'probe': 3, 'scaffold': 2}
+  8. all_off             6.7/24 ###### | steps=0/15 (0 total) | {'suggest': 10, 'reflect': 1, 'scaffold': 4}
+
+LLM avg: 19.8/24 | Rule avg: 6.8/24 | Ratio: 2.9x
+Total steps generated (LLM): 290 across 90 turns
+
+Report: D:\Claudedaoy\coherence\reports\fresh_diverse_report.json

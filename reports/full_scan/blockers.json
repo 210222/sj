@@ -1,1 +1,18 @@
-[]
+[
+  {
+    "severity": "P0",
+    "type": "api_key",
+    "file": ".claude/settings.local.json",
+    "line": 152,
+    "detail": "OpenAI/API Secret Key",
+    "source": "S30"
+  },
+  {
+    "severity": "P0",
+    "type": "api_key",
+    "file": "docs/USER_GUIDE.md",
+    "line": 14,
+    "detail": "OpenAI/API Secret Key",
+    "source": "S30"
+  }
+]

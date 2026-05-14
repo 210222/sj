@@ -14,6 +14,7 @@ from api.models.schemas import (
     ErrorResponse,
     GateStatusItem,
 )
+from api.services.dashboard_aggregator import DashboardAggregator, get_llm_runtime_history
 
 _logger = logging.getLogger(__name__)
 router = APIRouter(tags=["admin"])
@@ -72,3 +73,45 @@ async def get_audit_logs(
         raise HTTPException(status_code=429, detail={"error": "RATE_LIMITED", "detail": "Admin rate limit exceeded"})
 
     return AdminAuditResponse(logs=[], total=0, page=page, page_size=50)
+
+
+@router.get(
+    "/admin/llm/runtime",
+    responses={403: {"model": ErrorResponse}, 429: {"model": ErrorResponse}},
+)
+async def get_llm_runtime(request: Request):
+    """Phase 36: 获取 LLM runtime 可观测性汇总（管理员）."""
+    _require_admin(request)
+    limiter = get_rate_limiter()
+    if not limiter.is_allowed("admin:llm", limit=30, window_s=60):
+        raise HTTPException(status_code=429, detail={"error": "RATE_LIMITED", "detail": "Admin rate limit exceeded"})
+
+    summary = DashboardAggregator.get_llm_runtime_summary()
+    return {
+        "status": "ok",
+        "llm_runtime_summary": summary,
+        "note": "cache_eligible is structural evidence, NOT provider-confirmed cache-hit telemetry",
+    }
+
+
+@router.get(
+    "/admin/llm/history",
+    responses={403: {"model": ErrorResponse}, 429: {"model": ErrorResponse}},
+)
+async def get_llm_history(
+    request: Request,
+    hours: int = Query(24, ge=1, le=168),
+    limit: int = Query(200, ge=1, le=1000),
+):
+    """Phase 37: 获取 LLM runtime 持久化历史记录（管理员）."""
+    _require_admin(request)
+    limiter = get_rate_limiter()
+    if not limiter.is_allowed("admin:llm_history", limit=20, window_s=60):
+        raise HTTPException(status_code=429, detail={"error": "RATE_LIMITED", "detail": "Admin rate limit exceeded"})
+
+    history = get_llm_runtime_history(hours=hours, limit=limit)
+    return {
+        "status": "ok",
+        "total": len(history),
+        "records": history,
+    }

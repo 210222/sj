@@ -62,6 +62,14 @@ class CoachBridge:
 
         try:
             result = _run_in_thread(_call)
+            # Phase 36+37: record observability to buffer + persist to SQLite
+            obs = result.get("llm_observability")
+            if obs:
+                try:
+                    from api.services.dashboard_aggregator import record_llm_observability
+                    record_llm_observability(obs, session_id=session_id)
+                except Exception:
+                    pass
         except (TimeoutError, RuntimeError) as e:
             _logger.warning("CoachBridge.chat fallback: %s", e)
             return {
@@ -117,6 +125,8 @@ class CoachBridge:
             "difficulty_contract": result.get("difficulty_contract"),
             # Phase 16: 能力唤醒
             "awakening": result.get("awakening"),
+            # Phase 36: LLM 运行时可观测性
+            "llm_observability": result.get("llm_observability"),
         }
 
     @staticmethod
@@ -181,45 +191,39 @@ class CoachBridge:
             ttm_stage = None
             sdt_profile = None
             try:
-                probe = agent.act(
-                    message,
-                    context={"session_id": session_id,
-                             "event_time_utc": datetime.now(timezone.utc).isoformat()},
+                intent = agent._parse_intent(message)
+                user_state = agent.state_tracker.get_state()
+                if agent._excursion_active:
+                    user_state = {k: 0.5 for k in user_state}
+                    user_state["feasible"] = True
+                action = agent.composer.compose(user_state, intent, agent.memory.recall(intent, user_state))
+                rule_action_type = action.get("action_type", "suggest")
+                ctx, retention, _diff = agent._build_llm_context_bundle(
+                    intent=intent,
+                    action_type=rule_action_type,
+                    ttm_stage=ttm_stage,
+                    sdt_profile=sdt_profile,
+                    user_input=message,
+                    user_state=user_state,
                 )
-                rule_action_type = probe.get("action_type", "suggest")
-                ttm_stage = probe.get("ttm_stage")
-                sdt_profile = probe.get("sdt_profile")
             except Exception:
-                pass
+                ctx = build_coach_context(
+                    intent="general",
+                    action_type=rule_action_type,
+                    ttm_stage=ttm_stage,
+                    sdt_profile=sdt_profile,
+                    user_message=message,
+                    history=[],
+                    difficulty="medium",
+                    memory_snippets=None,
+                    covered_topics=None,
+                )
 
             from src.coach.llm.config import LLMConfig
             from src.coach.llm.client import LLMClient
             from src.coach.llm.prompts import build_coach_context
             llm_config = LLMConfig.from_yaml(cfg)
             client = LLMClient(llm_config)
-            # Phase 21 S21.3: 补全全部参数（同步 REST 路径）
-            _diff = "medium"
-            try:
-                if hasattr(agent, 'diagnostic_engine') and agent.diagnostic_engine:
-                    m = agent.diagnostic_engine.store.get_all_masteries()
-                    if m:
-                        if any(v < 0.3 for v in m.values()):
-                            _diff = "easy"
-                        elif all(v > 0.7 for v in m.values()):
-                            _diff = "hard"
-            except Exception:
-                pass
-            ctx = build_coach_context(
-                intent=rule_action_type,
-                action_type=rule_action_type,
-                ttm_stage=ttm_stage,
-                sdt_profile=sdt_profile,
-                user_message=message,
-                history=agent.memory.recall(rule_action_type, None)[:5],
-                difficulty=_diff,
-                memory_snippets=None,
-                covered_topics=None,
-            )
 
             full_content = ""
             async for chunk in client.generate_stream(ctx):
@@ -243,17 +247,29 @@ class CoachBridge:
             filtered = LLMSafetyFilter.enforce_action_type(filtered, rule_action_type)
             valid, errors = LLMOutputValidator.validate(filtered)
 
+            # Phase 36+37: collect stream observability + persist
+            stream_obs = None
+            if hasattr(client, '_last_stream_observability') and client._last_stream_observability:
+                stream_obs = client._last_stream_observability.to_dict()
+                try:
+                    from api.services.dashboard_aggregator import record_llm_observability
+                    record_llm_observability(stream_obs, session_id=session_id)
+                except Exception:
+                    pass
+
             if valid and align_report["valid"]:
                 yield {"type": "coach_stream_end",
                        "payload": filtered,
                        "safety": {"valid": True, "triggered": triggered},
                        "ttm_stage": ttm_stage, "sdt_profile": sdt_profile,
-                       "flow_channel": None}
+                       "flow_channel": None,
+                       "llm_observability": stream_obs}
             else:
                 yield {"type": "safety_override",
                        "message": "内容安全校验未通过，已替换为安全版本",
                        "safe_payload": filtered,
-                       "errors": errors}
+                       "errors": errors,
+                       "llm_observability": stream_obs}
         except Exception as e:
             _logger.error("chat_stream failed: %s", e)
             yield {"type": "safety_override",

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S32.2 -- 正式体验评分与失败样本归档</name>
+  <version>2.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>32</phase>
+  <sub_stage>S32.2</sub_stage>
+  <sub_stage_name>turn score / breakpoint audit / failure_cases / comparison</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 32 的正式评分与失败样本归档。
+    你以规则评分为主，不调 LLM；你的职责是让评分从“能出数字”升级成“数字可信、可复盘、可比较”。
+  </role>
+
+  <context>
+    当前 run_experience_audit.py 已有 5 维评分实现，但与正式文档和真实体验目标存在偏差：
+    1. 中文“引用性”不能只依赖英文式 split 分词；
+    2. “稳定性”不能等同于“文本长度越长越稳定”；
+    3. 当前只有 scoring.json，没有 per_turn_scores / failure_cases / comparison；
+    4. breakpoint 类断点不应被硬塞进单轮对话总分，而应单独审计。
+
+    本阶段目标是：
+    - 修正文档定义与实现定义的一致性；
+    - 让评分具备正式产物；
+    - 为 S32.3 提供高质量失败样本；
+    - 为 S32.5 提供可对比基线。
+  </context>
+
+  <inputs>
+    <item>S32.1 产出的 long_turn lane turns</item>
+    <item>S32.1 产出的 breakpoint probe turns</item>
+    <item>run_id 隔离后的 all_turns.json</item>
+  </inputs>
+
+  <risk_analysis>
+    1. 若不分层评分，UI / contract 断点会被长轮均分掩盖；
+    2. 若继续用长度近似“稳定性”，会奖励废话而惩罚精简有效回复；
+    3. 若 failure_cases 不正式化，S32.3 诊断将退化为人工读日志；
+    4. 若 comparison 不纳入正式产物，S32.5 无法形成可审计验证。
+  </risk_analysis>
+
+  <task>
+    1. 保留“规则评分为主”的方向，不改成 LLM 评分；
+    2. 将评分拆成两层：
+       - turn_experience_scores：面向长轮对话
+       - breakpoint_audit_results：面向关键体验断点
+    3. 修正各维定义：
+       - 引用性：承接上一条有效用户意图、对象、术语，不以空格分词为唯一依据；
+       - 连续性：是否沿上个有效教学目标推进；
+       - 无空转：是否继续输出伪推进或重复确认；
+       - 稳定性：是否完整、可消费、无异常伪装，不以长度直接代替；
+       - 推进感：用户确认后是否进入下一步，而不是重复总结；
+    4. worst_turns 必须保留 turn 引用与关键证据，而不是只保存 score dict；
+    5. 正式输出：
+       - per_turn_scores.json
+       - scoring.json
+       - failure_cases.json
+       - comparison.json
+       - run_summary.json
+    6. failure_cases 需要按以下标签归档：
+       - false_connected
+       - dropped_next_action
+       - silent_dashboard_error
+       - degrade_shape_instability
+       - payload_masking
+       - topic_reset
+       - non_progress_loop
+    7. 评分结果必须能直接供 S32.3 使用，而不需要再回到原始 turns 人工筛选。
+  </task>
+
+  <outputs>
+    <item>runs/&lt;run_id&gt;/per_turn_scores.json</item>
+    <item>runs/&lt;run_id&gt;/scoring.json</item>
+    <item>runs/&lt;run_id&gt;/failure_cases.json</item>
+    <item>runs/&lt;run_id&gt;/comparison.json</item>
+    <item>runs/&lt;run_id&gt;/run_summary.json</item>
+  </outputs>
+
+  <artifacts>
+    <item>长轮 lane 逐轮评分</item>
+    <item>breakpoint probe 审计结果</item>
+    <item>失败样本归档</item>
+    <item>正式 comparison 基线</item>
+  </artifacts>
+
+  <side_effects>
+    1. 总分模型会比旧版复杂，旧版均分不可直接裸比；
+    2. 某些原先看似高分的轮次，因 payload masking 暴露而会降分；
+    3. breakpoint probe 结果单独可见后，平均分不再是唯一叙事中心。
+  </side_effects>
+
+  <quality_gates>
+    <gate>文档定义与实现定义一致</gate>
+    <gate>中文引用性与稳定性不再偏离</gate>
+    <gate>存在 per_turn_scores / failure_cases / comparison 正式产物</gate>
+    <gate>turn score 与 breakpoint audit 分层明确</gate>
+    <gate>不依赖 LLM 打分</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>Phase 32 评分体系正式化，且具备可比较性</item>
+    <item>failure_cases 成为结构化输入，而不是附带日志</item>
+    <item>comparison 成为正式产物，为 S32.5 提供基线</item>
+    <item>评分结果足够可信，不再明显偏离中文真实体验</item>
+  </success_criteria>
+</prompt>

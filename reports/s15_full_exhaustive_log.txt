@@ -1,0 +1,148 @@
+# S15 Full Exhaustive — 11x8=88 runs
+
+============================================================
+S15 FULL EXHAUSTIVE: 11 configs x 8 scenarios = 88 runs
+8 dimensions: relevance clarity interactive structure personalization encouragement pers_evidence_quality diff_explainability
+============================================================
+
+--- [1/11] all_off ---
+  E01_zero_basics: avg=19.2/32 pers=no
+  E02_metaphor: avg=20.0/32 pers=no
+  E03_stuck: avg=19.0/32 pers=no
+  E04_diagnostic: avg=19.0/32 pers=no
+  E05_cross_session: avg=19.5/32 pers=no
+  E06_parity: avg=18.0/32 pers=no
+  E07_topic_switch: avg=18.5/32 pers=no
+  E08_no_diag: avg=16.0/32 pers=no
+
+--- [2/11] rules_diag ---
+  E01_zero_basics: avg=20.2/32 pers=no
+  E02_metaphor: avg=21.0/32 pers=no
+  E03_stuck: avg=20.0/32 pers=no
+  E04_diagnostic: avg=20.0/32 pers=no
+  E05_cross_session: avg=20.5/32 pers=no
+  E06_parity: avg=19.0/32 pers=no
+  E07_topic_switch: avg=19.5/32 pers=no
+  E08_no_diag: avg=17.0/32 pers=no
+
+--- [3/11] llm_only ---
+  E01_zero_basics: avg=18.2/32 pers=no
+  E02_metaphor: avg=18.3/32 pers=no
+  E03_stuck: avg=18.2/32 pers=no
+  E04_diagnostic: avg=18.0/32 pers=no
+  E05_cross_session: avg=18.0/32 pers=no
+  E06_parity: avg=12.0/32 pers=no
+  E07_topic_switch: avg=17.8/32 pers=no
+  E08_no_diag: avg=20.0/32 pers=no
+
+--- [4/11] llm_ttm ---
+  E01_zero_basics: avg=19.2/32 pers=YES
+  E02_metaphor: avg=19.0/32 pers=YES
+  E03_stuck: avg=18.5/32 pers=YES
+  E04_diagnostic: avg=19.0/32 pers=YES
+  E05_cross_session: avg=19.5/32 pers=YES
+  E06_parity: avg=14.0/32 pers=YES
+  E07_topic_switch: avg=21.2/32 pers=YES
+  E08_no_diag: avg=22.0/32 pers=YES
+
+--- [5/11] llm_ttm_sdt ---
+  E01_zero_basics: avg=19.0/32 pers=YES
+  E02_metaphor: avg=20.0/32 pers=YES
+  E03_stuck: avg=19.0/32 pers=YES
+  E04_diagnostic: avg=17.0/32 pers=YES
+  E05_cross_session: avg=18.8/32 pers=YES
+  E06_parity: avg=14.0/32 pers=YES
+  E07_topic_switch: avg=20.5/32 pers=YES
+  E08_no_diag: avg=22.0/32 pers=YES
+
+--- [6/11] full_behavior ---
+  E01_zero_basics: avg=19.0/32 pers=YES
+  E02_metaphor: avg=19.7/32 pers=YES
+  E03_stuck: avg=20.0/32 pers=YES
+  E04_diagnostic: avg=18.0/32 pers=YES
+  E05_cross_session: avg=18.2/32 pers=YES
+  E06_parity: avg=14.0/32 pers=YES
+  E07_topic_switch: avg=19.2/32 pers=YES
+  E08_no_diag: avg=22.0/32 pers=YES
+
+--- [7/11] llm_diag ---
+  E01_zero_basics: avg=19.4/32 pers=no
+  E02_metaphor: avg=18.7/32 pers=no
+  E03_stuck: avg=18.8/32 pers=no
+  E04_diagnostic: avg=16.5/32 pers=no
+  E05_cross_session: avg=18.2/32 pers=no
+  E06_parity: avg=17.0/32 pers=no
+  E07_topic_switch: avg=19.5/32 pers=no
+  E08_no_diag: avg=21.0/32 pers=no
+
+--- [8/11] full_stack ---
+  E01_zero_basics: avg=20.6/32 pers=YES
+  E02_metaphor: avg=19.7/32 pers=YES
+  E03_stuck: avg=18.2/32 pers=YES
+  E04_diagnostic: avg=18.0/32 pers=YES
+  E05_cross_session: avg=20.2/32 pers=YES
+  E06_parity: avg=12.0/32 pers=YES
+  E07_topic_switch: avg=20.2/32 pers=YES
+  E08_no_diag: avg=22.0/32 pers=YES
+
+--- [9/11] s15_person ---
+  E01_zero_basics: avg=19.4/32 pers=YES
+  E02_metaphor: avg=19.3/32 pers=YES
+  E03_stuck: avg=21.0/32 pers=YES
+  E04_diagnostic: avg=18.0/32 pers=YES
+  E05_cross_session: avg=19.5/32 pers=YES
+  E06_parity: avg=14.0/32 pers=YES
+  E07_topic_switch: avg=19.0/32 pers=YES
+  E08_no_diag: avg=21.3/32 pers=YES
+
+--- [10/11] s15_diff ---
+  E01_zero_basics: avg=19.6/32 pers=YES
+  E02_metaphor: avg=21.0/32 pers=YES
+  E03_stuck: avg=20.2/32 pers=YES
+  E04_diagnostic: avg=19.5/32 pers=YES
+  E05_cross_session: avg=20.5/32 pers=YES
+  E06_parity: avg=15.0/32 pers=YES
+  E07_topic_switch: avg=20.2/32 pers=YES
+  E08_no_diag: avg=21.7/32 pers=YES
+
+--- [11/11] s15_full ---
+  E01_zero_basics: avg=20.0/32 pers=YES
+  E02_metaphor: avg=20.3/32 pers=YES
+  E03_stuck: avg=19.8/32 pers=YES
+  E04_diagnostic: avg=19.5/32 pers=YES
+  E05_cross_session: avg=19.0/32 pers=YES
+  E06_parity: avg=15.0/32 pers=YES
+  E07_topic_switch: avg=21.0/32 pers=YES
+  E08_no_diag: avg=22.0/32 pers=YES
+
+============================================================
+S15 FULL EXHAUSTIVE RESULTS
+============================================================
+   1. s15_diff          20.2/32 ########## | new=3.0/8
+   2. s15_full          20.0/32 ########## | new=3.0/8
+   3. rules_diag        19.8/32 ######### | new=2.5/8
+   4. full_stack        19.7/32 ######### | new=3.0/8
+   5. llm_ttm           19.5/32 ######### | new=2.5/8
+   6. s15_person        19.5/32 ######### | new=2.5/8
+   7. llm_ttm_sdt       19.3/32 ######### | new=2.5/8
+   8. full_behavior     19.2/32 ######### | new=2.5/8
+   9. llm_diag          18.9/32 ######### | new=2.5/8
+  10. all_off           18.8/32 ######### | new=2.0/8
+  11. llm_only          18.1/32 ######### | new=2.0/8
+
+S14 baseline: 15.6/24 (6 dims)
+S15 top-3:    20.0/32 (8 dims)
+Note: scales differ — S14=24pt(6dim), S15=32pt(8dim)
+
+--- New Dimension Performance ---
+  all_off          pers_evidence=1.0/4 diff_explain=3.0/4
+  rules_diag       pers_evidence=1.0/4 diff_explain=4.0/4
+  llm_only         pers_evidence=1.0/4 diff_explain=3.0/4
+  llm_ttm          pers_evidence=2.0/4 diff_explain=3.0/4
+  llm_ttm_sdt      pers_evidence=2.0/4 diff_explain=3.0/4
+  full_behavior    pers_evidence=2.0/4 diff_explain=3.0/4
+  llm_diag         pers_evidence=1.0/4 diff_explain=4.0/4
+  full_stack       pers_evidence=2.0/4 diff_explain=4.0/4
+  s15_person       pers_evidence=2.0/4 diff_explain=3.0/4
+  s15_diff         pers_evidence=2.0/4 diff_explain=4.0/4
+  s15_full         pers_evidence=2.0/4 diff_explain=4.0/4

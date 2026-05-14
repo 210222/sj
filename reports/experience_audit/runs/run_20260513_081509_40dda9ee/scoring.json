@@ -1,0 +1,167 @@
+{
+  "novice_confirm": {
+    "name": "新手A: 只确认",
+    "avg_score": 11.05,
+    "dimensions": {
+      "引用性": 0.0,
+      "连续性": 3.95,
+      "无空转": 4.0,
+      "稳定性": 2.0,
+      "推进感": 1.1
+    },
+    "worst_turns": [
+      {
+        "turn": 2,
+        "score": 11,
+        "user": "嗯",
+        "statement": "general"
+      },
+      {
+        "turn": 3,
+        "score": 11,
+        "user": "继续",
+        "statement": "general"
+      },
+      {
+        "turn": 4,
+        "score": 11,
+        "user": "可以",
+        "statement": "general"
+      }
+    ],
+    "failure_cases": [],
+    "total_turns": 20
+  },
+  "novice_jump": {
+    "name": "新手B: 乱跳",
+    "avg_score": 12.95,
+    "dimensions": {
+      "引用性": 0.0,
+      "连续性": 3.95,
+      "无空转": 4.0,
+      "稳定性": 2.0,
+      "推进感": 3.0
+    },
+    "worst_turns": [
+      {
+        "turn": 1,
+        "score": 12,
+        "user": "教 Python",
+        "statement": "general"
+      },
+      {
+        "turn": 2,
+        "score": 13,
+        "user": "讲列表",
+        "statement": "general"
+      },
+      {
+        "turn": 3,
+        "score": 13,
+        "user": "循环是什么",
+        "statement": "general"
+      }
+    ],
+    "failure_cases": [],
+    "total_turns": 20
+  },
+  "advanced": {
+    "name": "进阶者: 追问",
+    "avg_score": 12.55,
+    "dimensions": {
+      "引用性": 0.0,
+      "连续性": 3.55,
+      "无空转": 4.0,
+      "稳定性": 2.0,
+      "推进感": 3.0
+    },
+    "worst_turns": [
+      {
+        "turn": 2,
+        "score": 11,
+        "user": "为什么",
+        "statement": "为什么"
+      },
+      {
+        "turn": 3,
+        "score": 11,
+        "user": "具体点",
+        "statement": "general"
+      },
+      {
+        "turn": 12,
+        "score": 11,
+        "user": "为什么",
+        "statement": "为什么"
+      }
+    ],
+    "failure_cases": [],
+    "total_turns": 20
+  },
+  "reviewer": {
+    "name": "复习者: 回环",
+    "avg_score": 12.95,
+    "dimensions": {
+      "引用性": 0.0,
+      "连续性": 3.95,
+      "无空转": 4.0,
+      "稳定性": 2.0,
+      "推进感": 3.0
+    },
+    "worst_turns": [
+      {
+        "turn": 1,
+        "score": 12,
+        "user": "教列表",
+        "statement": "general"
+      },
+      {
+        "turn": 2,
+        "score": 13,
+        "user": "教循环",
+        "statement": "general"
+      },
+      {
+        "turn": 3,
+        "score": 13,
+        "user": "再讲一遍列表",
+        "statement": "general"
+      }
+    ],
+    "failure_cases": [],
+    "total_turns": 19
+  },
+  "tester": {
+    "name": "测试者: 考我",
+    "avg_score": 12.05,
+    "dimensions": {
+      "引用性": 0.0,
+      "连续性": 3.05,
+      "无空转": 4.0,
+      "稳定性": 2.0,
+      "推进感": 3.0
+    },
+    "worst_turns": [
+      {
+        "turn": 3,
+        "score": 11,
+        "user": "教列表",
+        "statement": "general"
+      },
+      {
+        "turn": 5,
+        "score": 11,
+        "user": "教循环",
+        "statement": "general"
+      },
+      {
+        "turn": 7,
+        "score": 11,
+        "user": "教函数",
+        "statement": "general"
+      }
+    ],
+    "failure_cases": [],
+    "total_turns": 20
+  }
+}

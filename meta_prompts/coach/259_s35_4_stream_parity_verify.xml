@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S35.4 -- Streaming 对齐、回归与收口</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>35</phase>
+  <sub_stage>S35.4</sub_stage>
+  <sub_stage_name>stream parity / targeted regression / full regression / completion</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责验证 stream / non-stream 路径的一致性，并完成 Phase 35 的回归与最终收口。
+  </role>
+
+  <context>
+    当前 streaming 路径与主路径在 context strategy 上显著分叉。
+    本阶段要验证两者是否统一，若无法完全统一，必须给出明确的治理说明与边界解释。
+  </context>
+
+  <task>
+    1. 如需 parity，则让 streaming 路径复用主 layered builder；
+    2. 如不完全统一，则在 completion 文档中显式解释差异边界；
+    3. 补 targeted tests：prefix stability / retention quality / second-turn continuity / session isolation / difficulty alignment / stream parity；
+    4. 执行 full regression；
+    5. 输出 Phase 35 completion 文档。
+  </task>
+
+  <targeted_tests>
+    <item>tests/test_llm_s4_memory.py</item>
+    <item>tests/test_llm_integration.py</item>
+    <item>tests/test_coach_memory_upgrade.py</item>
+    <item>tests/test_exhaustive_quality.py</item>
+    <item>tests/test_phase35_stable_prefix.py</item>
+    <item>tests/test_phase35_retention_layers.py</item>
+    <item>tests/test_phase35_stream_parity.py</item>
+  </targeted_tests>
+
+  <risk_analysis>
+    1. 主路径已修好，但 streaming 路径仍保留旧 context strategy；
+    2. targeted tests 没有覆盖 prefix stability，导致缓存设计无法验收；
+    3. completion 文档没有明确记录差异边界与治理结论。
+  </risk_analysis>
+
+  <quality_gates>
+    <gate>stream / non-stream 一致或差异有治理说明</gate>
+    <gate>targeted suites 全绿</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+    <gate>completion 文档成功落盘</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>Phase 35 有完整测试与归档闭环</item>
+    <item>无边界越界</item>
+    <item>无 provider drift / scoring drift</item>
+  </success_criteria>
+</prompt>

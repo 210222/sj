@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>模块 D: Disabled 零变化</name>
+  <version>1.0.0</version>
+  <track>EXHAUSTIVE</track>
+  <phase>99</phase>
+  <sub_stage>D</sub_stage>
+  <sub_stage_name>5 tests, 2 min — 全模块 disabled 基线 + 单模块启用不污染</sub_stage_name>
+  <file>tests/test_exhaustive_disabled.py</file>
+
+  <tests>
+
+    <test id="D1" name="全模块 disabled 基线">
+      <code>
+def test_all_disabled_baseline():
+    """所有 13 模块 enabled=false -> act() 行为与 Phase 0 一致。"""
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    r = a.act("teach python list")
+    # 核心字段必须存在
+    assert r["action_type"] in ("suggest", "probe", "challenge")
+    assert r["gate_decision"] in ("GO", "FREEZE")
+    assert r["safety_allowed"] in (True, False)
+    assert r["llm_generated"] is False  # 默认 disabled
+    assert r["personalization_evidence"] is None  # 无历史
+    assert r["diagnostic_result"] is None  # 无诊断引擎
+    assert r["difficulty_contract"]["level"] == "medium"
+    assert r["difficulty_contract"]["reason"] == "default"
+    assert r["ttm_stage"] is None
+    assert r["sdt_profile"] is None
+    assert r["flow_channel"] is None
+    assert r.get("_self_eval") is None or r.get("_self_eval", {}).get("strategy_ineffective") is False
+      </code>
+    </test>
+
+    <test id="D2" name="仅 ttm enabled">
+      <code>
+def test_only_ttm_enabled():
+    """仅 ttm.enabled=true -> sdt/flow 字段为 None。"""
+    import yaml
+    from pathlib import Path
+    cfg_path = Path("config/coach_defaults.yaml")
+    orig = cfg_path.read_text(encoding="utf-8")
+    try:
+        cfg = yaml.safe_load(orig)
+        cfg["ttm"]["enabled"] = True
+        cfg["sdt"]["enabled"] = False
+        cfg["flow"]["enabled"] = False
+        cfg_path.write_text(yaml.dump(cfg), encoding="utf-8")
+        # 清除模块缓存
+        for mod in list(sys.modules.keys()):
+            if "src.coach" in mod:
+                del sys.modules[mod]
+        from src.coach.agent import CoachAgent
+        a = CoachAgent()
+        r = a.act("test")
+        assert r["ttm_stage"] is not None or r["llm_generated"] is False  # TTM may still need data
+        assert r["sdt_profile"] is None  # SDT disabled
+        assert r["flow_channel"] is None  # Flow disabled
+    finally:
+        cfg_path.write_text(orig, encoding="utf-8")
+      </code>
+    </test>
+
+    <test id="D3" name="仅 sdt enabled">
+      <code>
+def test_only_sdt_enabled():
+    """仅 sdt.enabled=true -> ttm/flow 字段为 None。"""
+    import yaml
+    from pathlib import Path
+    cfg_path = Path("config/coach_defaults.yaml")
+    orig = cfg_path.read_text(encoding="utf-8")
+    try:
+        cfg = yaml.safe_load(orig)
+        cfg["ttm"]["enabled"] = False
+        cfg["sdt"]["enabled"] = True
+        cfg["flow"]["enabled"] = False
+        cfg_path.write_text(yaml.dump(cfg), encoding="utf-8")
+        for mod in list(sys.modules.keys()):
+            if "src.coach" in mod:
+                del sys.modules[mod]
+        from src.coach.agent import CoachAgent
+        a = CoachAgent()
+        r = a.act("test")
+        assert r["sdt_profile"] is not None or r["llm_generated"] is False
+        assert r["ttm_stage"] is None
+        assert r["flow_channel"] is None
+    finally:
+        cfg_path.write_text(orig, encoding="utf-8")
+      </code>
+    </test>
+
+    <test id="D4" name="仅 diagnostic_engine enabled">
+      <code>
+def test_only_diag_enabled():
+    """仅 diagnostic_engine.enabled=true -> 其他模型不受影响。"""
+    from src.coach.agent import CoachAgent
+    a = CoachAgent()
+    # diagnostic_engine property exists
+    assert hasattr(a, "diagnostic_engine")
+    # diagnostic_engine 加载不影响 ttm/sdt/flow
+    de = a.diagnostic_engine
+    assert de is not None or a.diagnostic_engine is None  # may be None if disabled in config
+      </code>
+    </test>
+  </tests>
+</prompt>

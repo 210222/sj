@@ -39,7 +39,14 @@ async def pulse_respond(req: PulseRespondRequest, request: Request):
 
     next_action = None
     if req.decision == "accept":
-        next_action = {"action_type": "suggest", "payload": {"statement": "好的，我们继续。"}}
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            _executor,
+            CoachBridge.chat,
+            "我接受，继续",
+            req.session_id,
+        )
+        next_action = {"action_type": result.get("action_type"), "payload": result.get("payload", {})}
     elif req.decision == "rewrite":
         rewrite_text = req.rewrite_content or "用户重新定义前提"
         # 使用 run_in_executor 避免阻塞事件循环

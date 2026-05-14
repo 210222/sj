@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S32.1 -- 体验审计模拟器与断点探针</name>
+  <version>2.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>32</phase>
+  <sub_stage>S32.1</sub_stage>
+  <sub_stage_name>long_turn lane + breakpoint probe lane / run_id / SharedState</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 32 的正式输入生成器。
+    你只负责生成可复现的审计样本与断点探针，不负责评分、不负责修复业务逻辑。
+  </role>
+
+  <context>
+    当前 run_experience_audit.py 已存在，且已经具备：
+    - 5 个画像
+    - 每画像最多 20 轮模拟
+    - HTTP / direct 双路径基础
+    - all_turns.json 输出
+
+    但当前仍缺：
+    - run_id
+    - run_history
+    - breakpoint probe lane
+    - richer turn schema
+    - SharedState 正式参与
+    - 正式输出目录结构
+
+    本阶段目标不是推翻当前脚本，而是在现有基础上把它从“试跑脚本”升级为“正式 baseline 输入生成器”。
+  </context>
+
+  <inputs>
+    <item>run_experience_audit.py 现有 5 画像逻辑</item>
+    <item>long_turn lane: 5 画像 × 20 轮</item>
+    <item>HTTP path: /api/v1/chat</item>
+    <item>direct path: CoachAgent.act()</item>
+  </inputs>
+
+  <risk_analysis>
+    1. 只有长轮画像，没有断点 probe，会漏掉 UI / contract 断链；
+    2. turn 记录字段过少，S32.2 / S32.3 无法做高质量评分与诊断；
+    3. 没有 run_id 与 run_history，后续 comparison 无法成立；
+    4. SharedState 只 import 不使用，会让 Phase 32 退化成单脚本而非管道。
+  </risk_analysis>
+
+  <task>
+    1. 保留现有 5 画像体系，不推翻 `novice_confirm / novice_jump / advanced / reviewer / tester`；
+    2. 在 long_turn lane 之外，新增 5 个 breakpoint probe 场景：
+       - ws_disabled_status_probe
+       - pulse_next_action_probe
+       - dashboard_fetch_failure_probe
+       - aggregator_degrade_shape_probe
+       - payload_text_masking_probe
+    3. 对每条 turn 记录至少补齐以下字段：
+       - run_id
+       - lane_id
+       - profile_id / scenario_id
+       - turn_index
+       - user_message
+       - raw_action_type
+       - raw_payload
+       - extracted_display_text
+       - llm_generated
+       - pulse_present
+       - trace_id（若可得）
+       - error_type / error_detail
+       - transport_mode（http / direct / ui_probe）
+    4. 正式接入 SharedState，记录：
+       - 当前阶段
+       - 当前 profile / scenario
+       - 运行状态
+       - 产物路径
+    5. 正式输出到 `reports/experience_audit/runs/<run_id>/`，不得再覆盖固定路径；
+    6. 运行失败时，不允许静默跳过，必须在 turn 记录中写入错误字段并继续收集后续样本；
+    7. 生成 phase-level 输入产物，供 S32.2 使用，而不是直接进入修复结论。
+  </task>
+
+  <outputs>
+    <item>runs/&lt;run_id&gt;/all_turns.json</item>
+    <item>runs/&lt;run_id&gt;/run_summary.json</item>
+    <item>shared_state.json</item>
+    <item>run_history.json</item>
+  </outputs>
+
+  <artifacts>
+    <item>长轮 lane 原始 turns</item>
+    <item>断点 probe 原始 turns</item>
+    <item>按 run_id 隔离的原始输入集</item>
+  </artifacts>
+
+  <error_handling>
+    1. 任一 turn 失败不得中断整次 run；
+    2. 错误必须被记录为结构化字段，而不是只打印日志；
+    3. direct / http 路径都必须保留 transport_mode 供后续诊断；
+    4. 若某 probe 无法运行，必须记录 skipped_reason，不得静默省略。
+  </error_handling>
+
+  <side_effects>
+    1. 单次运行产物体积会增加；
+    2. baseline 正式化后，问题会显得更多，这是可见化而非退化；
+    3. breakpoint probes 会让 Phase 32 不再只是长轮对话评分，而是完整体验审计输入总线。
+  </side_effects>
+
+  <quality_gates>
+    <gate>保留 5 画像 long_turn lane</gate>
+    <gate>建立 5 个 breakpoint probe lane</gate>
+    <gate>turn 记录字段足够支撑评分与诊断</gate>
+    <gate>存在 run_id 与 run_history</gate>
+    <gate>SharedState 正式写入阶段状态与产物位置</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>Phase 32 baseline 输入生成器正式成立</item>
+    <item>long_turn 与 breakpoint 两条 lane 都能稳定产出</item>
+    <item>样本记录足够细，支持 S32.2 与 S32.3 的结构化消费</item>
+    <item>结果按 run_id 隔离，不再覆盖旧结果</item>
+  </success_criteria>
+</prompt>

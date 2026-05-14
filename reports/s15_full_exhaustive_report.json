@@ -1,0 +1,1496 @@
+{
+  "test_time": "2026-05-08T11:11:32Z",
+  "configs": 11,
+  "scenarios": 8,
+  "total_runs": 88,
+  "s14_baseline": 15.6,
+  "summaries": {
+    "all_off": {
+      "turns": 26,
+      "avg_quality": 18.8,
+      "new_dim_avg": 2.0,
+      "dimensions": {
+        "relevance": 3.92,
+        "clarity": 2.96,
+        "interactive": 2.46,
+        "structure": 3.42,
+        "personalization": 0.0,
+        "encouragement": 2.0,
+        "pers_evidence_quality": 1.0,
+        "diff_explainability": 3.0
+      },
+      "scenes": {
+        "E01_zero_basics": {
+          "turns": 5,
+          "avg_score": 19.2,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 2.6,
+            "structure": 3.6,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E02_metaphor": {
+          "turns": 3,
+          "avg_score": 20.0,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 3.0,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E03_stuck": {
+          "turns": 4,
+          "avg_score": 19.0,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 2.5,
+            "structure": 3.5,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E04_diagnostic": {
+          "turns": 2,
+          "avg_score": 19.0,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 2.5,
+            "structure": 3.5,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E05_cross_session": {
+          "turns": 4,
+          "avg_score": 19.5,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 2.8,
+            "structure": 3.8,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E06_parity": {
+          "turns": 1,
+          "avg_score": 18.0,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 2.0,
+            "structure": 3.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E07_topic_switch": {
+          "turns": 4,
+          "avg_score": 18.5,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 2.2,
+            "structure": 3.2,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E08_no_diag": {
+          "turns": 3,
+          "avg_score": 16.0,
+          "dimensions": {
+            "relevance": 3.3,
+            "clarity": 2.7,
+            "interactive": 1.7,
+            "structure": 2.3,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        }
+      },
+      "time_s": 2.0
+    },
+    "rules_diag": {
+      "turns": 26,
+      "avg_quality": 19.8,
+      "new_dim_avg": 2.5,
+      "dimensions": {
+        "relevance": 3.92,
+        "clarity": 2.96,
+        "interactive": 2.46,
+        "structure": 3.42,
+        "personalization": 0.0,
+        "encouragement": 2.0,
+        "pers_evidence_quality": 1.0,
+        "diff_explainability": 4.0
+      },
+      "scenes": {
+        "E01_zero_basics": {
+          "turns": 5,
+          "avg_score": 20.2,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 2.6,
+            "structure": 3.6,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E02_metaphor": {
+          "turns": 3,
+          "avg_score": 21.0,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 3.0,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E03_stuck": {
+          "turns": 4,
+          "avg_score": 20.0,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 2.5,
+            "structure": 3.5,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E04_diagnostic": {
+          "turns": 2,
+          "avg_score": 20.0,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 2.5,
+            "structure": 3.5,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E05_cross_session": {
+          "turns": 4,
+          "avg_score": 20.5,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 2.8,
+            "structure": 3.8,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E06_parity": {
+          "turns": 1,
+          "avg_score": 19.0,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 2.0,
+            "structure": 3.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E07_topic_switch": {
+          "turns": 4,
+          "avg_score": 19.5,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 2.2,
+            "structure": 3.2,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E08_no_diag": {
+          "turns": 3,
+          "avg_score": 17.0,
+          "dimensions": {
+            "relevance": 3.3,
+            "clarity": 2.7,
+            "interactive": 1.7,
+            "structure": 2.3,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        }
+      },
+      "time_s": 2.0
+    },
+    "llm_only": {
+      "turns": 26,
+      "avg_quality": 18.1,
+      "new_dim_avg": 2.0,
+      "dimensions": {
+        "relevance": 3.23,
+        "clarity": 2.65,
+        "interactive": 2.31,
+        "structure": 3.88,
+        "personalization": 0.0,
+        "encouragement": 2.0,
+        "pers_evidence_quality": 1.0,
+        "diff_explainability": 3.0
+      },
+      "scenes": {
+        "E01_zero_basics": {
+          "turns": 5,
+          "avg_score": 18.2,
+          "dimensions": {
+            "relevance": 3.4,
+            "clarity": 2.4,
+            "interactive": 2.4,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E02_metaphor": {
+          "turns": 3,
+          "avg_score": 18.3,
+          "dimensions": {
+            "relevance": 3.3,
+            "clarity": 2.7,
+            "interactive": 2.3,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E03_stuck": {
+          "turns": 4,
+          "avg_score": 18.2,
+          "dimensions": {
+            "relevance": 3.2,
+            "clarity": 2.5,
+            "interactive": 2.5,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E04_diagnostic": {
+          "turns": 2,
+          "avg_score": 18.0,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 3.0,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E05_cross_session": {
+          "turns": 4,
+          "avg_score": 18.0,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.8,
+            "interactive": 2.2,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E06_parity": {
+          "turns": 1,
+          "avg_score": 12.0,
+          "dimensions": {
+            "relevance": 2.0,
+            "clarity": 2.0,
+            "interactive": 1.0,
+            "structure": 1.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E07_topic_switch": {
+          "turns": 4,
+          "avg_score": 17.8,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.8,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E08_no_diag": {
+          "turns": 3,
+          "avg_score": 20.0,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 3.0,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 3.0
+          }
+        }
+      },
+      "time_s": 143.0
+    },
+    "llm_ttm": {
+      "turns": 26,
+      "avg_quality": 19.5,
+      "new_dim_avg": 2.5,
+      "dimensions": {
+        "relevance": 3.12,
+        "clarity": 2.46,
+        "interactive": 2.19,
+        "structure": 3.77,
+        "personalization": 1.0,
+        "encouragement": 2.0,
+        "pers_evidence_quality": 2.0,
+        "diff_explainability": 3.0
+      },
+      "scenes": {
+        "E01_zero_basics": {
+          "turns": 5,
+          "avg_score": 19.2,
+          "dimensions": {
+            "relevance": 2.8,
+            "clarity": 2.4,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E02_metaphor": {
+          "turns": 3,
+          "avg_score": 19.0,
+          "dimensions": {
+            "relevance": 2.7,
+            "clarity": 2.3,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E03_stuck": {
+          "turns": 4,
+          "avg_score": 18.5,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.2,
+            "interactive": 2.0,
+            "structure": 3.2,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E04_diagnostic": {
+          "turns": 2,
+          "avg_score": 19.0,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.0,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E05_cross_session": {
+          "turns": 4,
+          "avg_score": 19.5,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.5,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E06_parity": {
+          "turns": 1,
+          "avg_score": 14.0,
+          "dimensions": {
+            "relevance": 2.0,
+            "clarity": 2.0,
+            "interactive": 1.0,
+            "structure": 1.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E07_topic_switch": {
+          "turns": 4,
+          "avg_score": 21.2,
+          "dimensions": {
+            "relevance": 3.8,
+            "clarity": 2.8,
+            "interactive": 2.8,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E08_no_diag": {
+          "turns": 3,
+          "avg_score": 22.0,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 3.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        }
+      },
+      "time_s": 140.0
+    },
+    "llm_ttm_sdt": {
+      "turns": 26,
+      "avg_quality": 19.3,
+      "new_dim_avg": 2.5,
+      "dimensions": {
+        "relevance": 2.96,
+        "clarity": 2.42,
+        "interactive": 2.12,
+        "structure": 3.85,
+        "personalization": 1.0,
+        "encouragement": 1.96,
+        "pers_evidence_quality": 2.0,
+        "diff_explainability": 3.0
+      },
+      "scenes": {
+        "E01_zero_basics": {
+          "turns": 5,
+          "avg_score": 19.0,
+          "dimensions": {
+            "relevance": 2.8,
+            "clarity": 2.2,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E02_metaphor": {
+          "turns": 3,
+          "avg_score": 20.0,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 3.0,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E03_stuck": {
+          "turns": 4,
+          "avg_score": 19.0,
+          "dimensions": {
+            "relevance": 3.2,
+            "clarity": 2.2,
+            "interactive": 1.8,
+            "structure": 3.8,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E04_diagnostic": {
+          "turns": 2,
+          "avg_score": 17.0,
+          "dimensions": {
+            "relevance": 2.0,
+            "clarity": 1.5,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 1.5,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E05_cross_session": {
+          "turns": 4,
+          "avg_score": 18.8,
+          "dimensions": {
+            "relevance": 2.5,
+            "clarity": 2.2,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E06_parity": {
+          "turns": 1,
+          "avg_score": 14.0,
+          "dimensions": {
+            "relevance": 2.0,
+            "clarity": 2.0,
+            "interactive": 1.0,
+            "structure": 1.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E07_topic_switch": {
+          "turns": 4,
+          "avg_score": 20.5,
+          "dimensions": {
+            "relevance": 3.2,
+            "clarity": 2.8,
+            "interactive": 2.5,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E08_no_diag": {
+          "turns": 3,
+          "avg_score": 22.0,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 3.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        }
+      },
+      "time_s": 135.0
+    },
+    "full_behavior": {
+      "turns": 26,
+      "avg_quality": 19.2,
+      "new_dim_avg": 2.5,
+      "dimensions": {
+        "relevance": 2.88,
+        "clarity": 2.46,
+        "interactive": 2.12,
+        "structure": 3.77,
+        "personalization": 1.0,
+        "encouragement": 2.0,
+        "pers_evidence_quality": 2.0,
+        "diff_explainability": 3.0
+      },
+      "scenes": {
+        "E01_zero_basics": {
+          "turns": 5,
+          "avg_score": 19.0,
+          "dimensions": {
+            "relevance": 2.6,
+            "clarity": 2.4,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E02_metaphor": {
+          "turns": 3,
+          "avg_score": 19.7,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.3,
+            "interactive": 2.3,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E03_stuck": {
+          "turns": 4,
+          "avg_score": 20.0,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 3.0,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E04_diagnostic": {
+          "turns": 2,
+          "avg_score": 18.0,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.5,
+            "interactive": 2.0,
+            "structure": 2.5,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E05_cross_session": {
+          "turns": 4,
+          "avg_score": 18.2,
+          "dimensions": {
+            "relevance": 2.2,
+            "clarity": 2.0,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E06_parity": {
+          "turns": 1,
+          "avg_score": 14.0,
+          "dimensions": {
+            "relevance": 2.0,
+            "clarity": 2.0,
+            "interactive": 1.0,
+            "structure": 1.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E07_topic_switch": {
+          "turns": 4,
+          "avg_score": 19.2,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.2,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E08_no_diag": {
+          "turns": 3,
+          "avg_score": 22.0,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 3.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        }
+      },
+      "time_s": 136.0
+    },
+    "llm_diag": {
+      "turns": 26,
+      "avg_quality": 18.9,
+      "new_dim_avg": 2.5,
+      "dimensions": {
+        "relevance": 3.23,
+        "clarity": 2.54,
+        "interactive": 2.31,
+        "structure": 3.85,
+        "personalization": 0.0,
+        "encouragement": 2.0,
+        "pers_evidence_quality": 1.0,
+        "diff_explainability": 4.0
+      },
+      "scenes": {
+        "E01_zero_basics": {
+          "turns": 5,
+          "avg_score": 19.4,
+          "dimensions": {
+            "relevance": 3.4,
+            "clarity": 2.6,
+            "interactive": 2.4,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E02_metaphor": {
+          "turns": 3,
+          "avg_score": 18.7,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.7,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E03_stuck": {
+          "turns": 4,
+          "avg_score": 18.8,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.5,
+            "interactive": 2.2,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E04_diagnostic": {
+          "turns": 2,
+          "avg_score": 16.5,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.0,
+            "interactive": 1.5,
+            "structure": 3.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E05_cross_session": {
+          "turns": 4,
+          "avg_score": 18.2,
+          "dimensions": {
+            "relevance": 2.8,
+            "clarity": 2.2,
+            "interactive": 2.2,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E06_parity": {
+          "turns": 1,
+          "avg_score": 17.0,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 3.0,
+            "interactive": 2.0,
+            "structure": 2.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E07_topic_switch": {
+          "turns": 4,
+          "avg_score": 19.5,
+          "dimensions": {
+            "relevance": 3.5,
+            "clarity": 2.5,
+            "interactive": 2.5,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E08_no_diag": {
+          "turns": 3,
+          "avg_score": 21.0,
+          "dimensions": {
+            "relevance": 4.0,
+            "clarity": 3.0,
+            "interactive": 3.0,
+            "structure": 4.0,
+            "personalization": 0.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 1.0,
+            "diff_explainability": 4.0
+          }
+        }
+      },
+      "time_s": 167.0
+    },
+    "full_stack": {
+      "turns": 26,
+      "avg_quality": 19.7,
+      "new_dim_avg": 3.0,
+      "dimensions": {
+        "relevance": 2.69,
+        "clarity": 2.23,
+        "interactive": 2.12,
+        "structure": 3.69,
+        "personalization": 1.0,
+        "encouragement": 1.92,
+        "pers_evidence_quality": 2.0,
+        "diff_explainability": 4.0
+      },
+      "scenes": {
+        "E01_zero_basics": {
+          "turns": 5,
+          "avg_score": 20.6,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.4,
+            "interactive": 2.2,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E02_metaphor": {
+          "turns": 3,
+          "avg_score": 19.7,
+          "dimensions": {
+            "relevance": 2.3,
+            "clarity": 2.3,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E03_stuck": {
+          "turns": 4,
+          "avg_score": 18.2,
+          "dimensions": {
+            "relevance": 2.2,
+            "clarity": 2.0,
+            "interactive": 1.8,
+            "structure": 3.2,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E04_diagnostic": {
+          "turns": 2,
+          "avg_score": 18.0,
+          "dimensions": {
+            "relevance": 2.0,
+            "clarity": 1.5,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 1.5,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E05_cross_session": {
+          "turns": 4,
+          "avg_score": 20.2,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.5,
+            "interactive": 2.2,
+            "structure": 3.5,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E06_parity": {
+          "turns": 1,
+          "avg_score": 12.0,
+          "dimensions": {
+            "relevance": 1.0,
+            "clarity": 1.0,
+            "interactive": 1.0,
+            "structure": 1.0,
+            "personalization": 1.0,
+            "encouragement": 1.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E07_topic_switch": {
+          "turns": 4,
+          "avg_score": 20.2,
+          "dimensions": {
+            "relevance": 2.8,
+            "clarity": 2.2,
+            "interactive": 2.2,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E08_no_diag": {
+          "turns": 3,
+          "avg_score": 22.0,
+          "dimensions": {
+            "relevance": 3.7,
+            "clarity": 2.7,
+            "interactive": 2.7,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        }
+      },
+      "time_s": 144.0
+    },
+    "s15_person": {
+      "turns": 26,
+      "avg_quality": 19.5,
+      "new_dim_avg": 2.5,
+      "dimensions": {
+        "relevance": 3.04,
+        "clarity": 2.54,
+        "interactive": 2.15,
+        "structure": 3.77,
+        "personalization": 1.0,
+        "encouragement": 2.0,
+        "pers_evidence_quality": 2.0,
+        "diff_explainability": 3.0
+      },
+      "scenes": {
+        "E01_zero_basics": {
+          "turns": 5,
+          "avg_score": 19.4,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.4,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E02_metaphor": {
+          "turns": 3,
+          "avg_score": 19.3,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.3,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E03_stuck": {
+          "turns": 4,
+          "avg_score": 21.0,
+          "dimensions": {
+            "relevance": 3.5,
+            "clarity": 3.0,
+            "interactive": 2.5,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E04_diagnostic": {
+          "turns": 2,
+          "avg_score": 18.0,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.5,
+            "interactive": 2.0,
+            "structure": 2.5,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E05_cross_session": {
+          "turns": 4,
+          "avg_score": 19.5,
+          "dimensions": {
+            "relevance": 2.8,
+            "clarity": 2.5,
+            "interactive": 2.2,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E06_parity": {
+          "turns": 1,
+          "avg_score": 14.0,
+          "dimensions": {
+            "relevance": 2.0,
+            "clarity": 2.0,
+            "interactive": 1.0,
+            "structure": 1.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E07_topic_switch": {
+          "turns": 4,
+          "avg_score": 19.0,
+          "dimensions": {
+            "relevance": 2.8,
+            "clarity": 2.2,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        },
+        "E08_no_diag": {
+          "turns": 3,
+          "avg_score": 21.3,
+          "dimensions": {
+            "relevance": 3.7,
+            "clarity": 3.0,
+            "interactive": 2.7,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 3.0
+          }
+        }
+      },
+      "time_s": 140.0
+    },
+    "s15_diff": {
+      "turns": 26,
+      "avg_quality": 20.2,
+      "new_dim_avg": 3.0,
+      "dimensions": {
+        "relevance": 2.73,
+        "clarity": 2.38,
+        "interactive": 2.15,
+        "structure": 3.88,
+        "personalization": 1.0,
+        "encouragement": 2.0,
+        "pers_evidence_quality": 2.0,
+        "diff_explainability": 4.0
+      },
+      "scenes": {
+        "E01_zero_basics": {
+          "turns": 5,
+          "avg_score": 19.6,
+          "dimensions": {
+            "relevance": 2.4,
+            "clarity": 2.2,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E02_metaphor": {
+          "turns": 3,
+          "avg_score": 21.0,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.7,
+            "interactive": 2.3,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E03_stuck": {
+          "turns": 4,
+          "avg_score": 20.2,
+          "dimensions": {
+            "relevance": 2.8,
+            "clarity": 2.2,
+            "interactive": 2.2,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E04_diagnostic": {
+          "turns": 2,
+          "avg_score": 19.5,
+          "dimensions": {
+            "relevance": 2.5,
+            "clarity": 2.0,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E05_cross_session": {
+          "turns": 4,
+          "avg_score": 20.5,
+          "dimensions": {
+            "relevance": 2.8,
+            "clarity": 2.5,
+            "interactive": 2.2,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E06_parity": {
+          "turns": 1,
+          "avg_score": 15.0,
+          "dimensions": {
+            "relevance": 2.0,
+            "clarity": 2.0,
+            "interactive": 1.0,
+            "structure": 1.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E07_topic_switch": {
+          "turns": 4,
+          "avg_score": 20.2,
+          "dimensions": {
+            "relevance": 2.8,
+            "clarity": 2.5,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E08_no_diag": {
+          "turns": 3,
+          "avg_score": 21.7,
+          "dimensions": {
+            "relevance": 3.3,
+            "clarity": 2.7,
+            "interactive": 2.7,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        }
+      },
+      "time_s": 153.0
+    },
+    "s15_full": {
+      "turns": 26,
+      "avg_quality": 20.0,
+      "new_dim_avg": 3.0,
+      "dimensions": {
+        "relevance": 2.69,
+        "clarity": 2.27,
+        "interactive": 2.15,
+        "structure": 3.88,
+        "personalization": 1.0,
+        "encouragement": 2.0,
+        "pers_evidence_quality": 2.0,
+        "diff_explainability": 4.0
+      },
+      "scenes": {
+        "E01_zero_basics": {
+          "turns": 5,
+          "avg_score": 20.0,
+          "dimensions": {
+            "relevance": 2.8,
+            "clarity": 2.2,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E02_metaphor": {
+          "turns": 3,
+          "avg_score": 20.3,
+          "dimensions": {
+            "relevance": 2.7,
+            "clarity": 2.3,
+            "interactive": 2.3,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E03_stuck": {
+          "turns": 4,
+          "avg_score": 19.8,
+          "dimensions": {
+            "relevance": 2.5,
+            "clarity": 2.2,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E04_diagnostic": {
+          "turns": 2,
+          "avg_score": 19.5,
+          "dimensions": {
+            "relevance": 2.5,
+            "clarity": 2.0,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E05_cross_session": {
+          "turns": 4,
+          "avg_score": 19.0,
+          "dimensions": {
+            "relevance": 2.0,
+            "clarity": 2.0,
+            "interactive": 2.0,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E06_parity": {
+          "turns": 1,
+          "avg_score": 15.0,
+          "dimensions": {
+            "relevance": 2.0,
+            "clarity": 2.0,
+            "interactive": 1.0,
+            "structure": 1.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E07_topic_switch": {
+          "turns": 4,
+          "avg_score": 21.0,
+          "dimensions": {
+            "relevance": 3.0,
+            "clarity": 2.5,
+            "interactive": 2.5,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        },
+        "E08_no_diag": {
+          "turns": 3,
+          "avg_score": 22.0,
+          "dimensions": {
+            "relevance": 3.7,
+            "clarity": 2.7,
+            "interactive": 2.7,
+            "structure": 4.0,
+            "personalization": 1.0,
+            "encouragement": 2.0,
+            "pers_evidence_quality": 2.0,
+            "diff_explainability": 4.0
+          }
+        }
+      },
+      "time_s": 156.0
+    }
+  },
+  "ranking": [
+    [
+      "s15_diff",
+      20.2,
+      3.0
+    ],
+    [
+      "s15_full",
+      20.0,
+      3.0
+    ],
+    [
+      "rules_diag",
+      19.8,
+      2.5
+    ],
+    [
+      "full_stack",
+      19.7,
+      3.0
+    ],
+    [
+      "llm_ttm",
+      19.5,
+      2.5
+    ],
+    [
+      "s15_person",
+      19.5,
+      2.5
+    ],
+    [
+      "llm_ttm_sdt",
+      19.3,
+      2.5
+    ],
+    [
+      "full_behavior",
+      19.2,
+      2.5
+    ],
+    [
+      "llm_diag",
+      18.9,
+      2.5
+    ],
+    [
+      "all_off",
+      18.8,
+      2.0
+    ],
+    [
+      "llm_only",
+      18.1,
+      2.0
+    ]
+  ]
+}

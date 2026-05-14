@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S34.1 -- 环境验证</name>
+  <version>1.0.0</version>
+  <track>EXPERIENCE</track>
+  <phase>34</phase>
+  <sub_stage>S34.1</sub_stage>
+  <sub_stage_name>DeepSeek key 运行时验证 / 不落盘</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 34 的环境验证。
+    你的职责是证明：当前 key 在 DeepSeek 兼容接口下可用，且验证过程不将 key 写入任何文件。
+  </role>
+
+  <context>
+    当前仓库只认 DEEPSEEK_API_KEY，且 provider / base_url / model 已固定为 DeepSeek 兼容路径。
+    本阶段不改配置文件，不切换 provider，不改 model，只做最小可用性证明。
+  </context>
+
+  <risk_analysis>
+    1. 若 key 实际失效，后续所有 comparison 都无意义；
+    2. 若把 key 写进文件，会形成严重安全偏离；
+    3. 若后端进程没继承环境变量，后续 audit 会退回规则模式。
+  </risk_analysis>
+
+  <task>
+    1. 仅在运行时设置 DEEPSEEK_API_KEY；
+    2. 用 DeepSeek /chat/completions 最小请求验证 API 可达；
+    3. 记录“环境可用性证明”到 run 元数据，而不是把 key 写进 completion 文档；
+    4. 若验证失败，直接 NO-GO 或 mock，不尝试切换到其它 provider。
+  </task>
+
+  <side_effects>
+    1. 新增一条环境可用性元数据记录；
+    2. 本阶段无代码改动；
+    3. 本阶段通过后，S34.2 才能启动真实 LLM 审计。
+  </side_effects>
+
+  <quality_gates>
+    <gate>DeepSeek API 调用成功</gate>
+    <gate>仓库中无 key 落盘</gate>
+    <gate>允许进入 S34.2</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>环境验证通过</item>
+    <item>key 不落盘</item>
+    <item>明确继续或 NO-GO</item>
+  </success_criteria>
+</prompt>

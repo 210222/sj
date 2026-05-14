@@ -1,0 +1,248 @@
+{
+  "novice_confirm": [
+    {
+      "turn": 1,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说想了解认知主权保护系统，我们继续深入。现在来看第一步：什么是认知主权。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "d82ca51a-e065-4cbb-99ab-6d62c4fbf8aa",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "嗯",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说想了解认知主权保护系统，我们继续深入。认知主权指的是个体对自己思维过程的控制权——包括你选择相信什么、如何思考、以及如何应对外部信息影响的权利。现在我们来拆解这个概念。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "b35451c1-457a-42f2-8ccf-c488cb1996a4",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "继续",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说想继续了解，那我们先从认知主权保护的第一个层面开始：信息输入控制。简单说，就是你有权决定哪些信息能进入你的大脑，就像给思想装一个过滤器。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "396e9d9e-cedf-4b1b-83e5-c780b6a558b2",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "可以",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说可以继续，那我们就深入一下信息输入控制这个层面。想象一下，你的大脑就像一座城堡，信息输入控制就是城堡的吊桥——你可以决定什么时候放下吊桥，让哪些信息进来。这听起来简单，但实际操作中需要几个步骤。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "15fcc2c1-6fb0-4494-8c8c-111f3c48549c",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "好",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说'好'，那我们继续搭建这座认知城堡的吊桥系统。信息输入控制的第一步，是识别信息的来源和意图。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "8337b9ef-6982-466f-8ffd-8054a05060a7",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "novice_jump": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说想了解Transformer的基本思想，我们继续。自注意力机制让模型能同时看到整个序列，但这里有一个关键问题：模型怎么知道每个词在句子中的位置顺序呢？比如“我打你”和“你打我”，词相同但顺序不同，含义完全相反。为了解决这个问题，Transformer引入了位置编码（Positional Encoding），它给每个词的位置添加一个独特的向量，让模型知道词的前后关系。现在我们把这个概念拆解成几步来理解。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "a18a1fd6-b2ff-4a07-a50d-a79c24fb3cd9",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "讲列表",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才说想了解Transformer的基本思想，但你现在问的是“讲列表”，这看起来像是Python基础的内容。不过没关系，我们可以从列表开始，逐步建立你的编程基础。列表是Python中用来存储多个数据的有序容器，比如存储一组数字或字符串。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "0e25bcc7-7b7e-431e-846b-e7eadee4c44f",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "循环是什么",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才提到了循环，这是编程中一个非常核心的概念。循环让我们能够重复执行一段代码，直到满足某个条件为止。比如，如果你想打印1到5的数字，用循环就比写五遍print方便得多。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "8b7eda02-d5e8-4ab3-9681-1fddf7c09cb0",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "字典怎么用",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了循环，现在我们来学习另一个重要的数据结构——字典。字典用于存储键值对，就像一本真实的字典，通过“键”来查找“值”。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "4e91b2e3-1b40-4520-b53b-149b66cbc246",
+      "intent": "怎么",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "学函数",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才提到想学函数，但在那之前，我们先把字典的基础打好。函数是组织代码的另一种方式，而字典是数据存储的关键工具。我们先确保你掌握了字典的基本操作，比如如何创建和访问字典。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "edd91ab3-4dd8-4899-b3cb-1ca6c20480f2",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ],
+  "tester": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才提到了变量像贴了标签的盒子，那我们来拆解一下它的核心操作。第一步：创建变量——用等号给盒子贴标签，比如 `name = '小明'`。第二步：使用变量——直接写标签名就能取出里面的值，比如 `print(name)`。第三步：更新变量——给同一个标签重新赋值，盒子里的内容就变了，比如 `name = '小红'`。第四步：变量命名规则——只能包含字母、数字和下划线，不能以数字开头。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "fe69a560-f90a-4eb4-a595-680b1966c6a5",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 2,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "你刚才学了变量像贴标签的盒子，创建和使用都很简单。来检测一下你的理解：",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "1efa3246-d4a1-4abe-ba09-562f97545aeb",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 3,
+      "user": "教列表",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了变量像贴标签的盒子，现在我们开始学一种能装很多盒子的'大容器'——列表。列表是Python中用来存储多个数据的有序集合。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "a522a3df-6e16-4268-b6c5-af5f4ad658ec",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 4,
+      "user": "考考我",
+      "action_type": "probe",
+      "payload_statement": "你刚才学了列表是Python中用来存储多个数据的有序集合，现在来检测一下你的理解。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "98294a34-3fe3-481d-8731-b3622539a48c",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    },
+    {
+      "turn": 5,
+      "user": "教循环",
+      "action_type": "scaffold",
+      "payload_statement": "你刚才学了列表，现在我们来学循环。循环让你重复执行代码，比如遍历列表中的每个元素。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "bc2a4440-913b-42f3-88bd-0eac16a13f32",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule"
+    }
+  ]
+}

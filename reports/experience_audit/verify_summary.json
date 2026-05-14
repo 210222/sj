@@ -1,0 +1,18 @@
+{
+  "baseline_run_id": "run_20260513_080304_0d62cb26",
+  "current_run_id": "run_20260513_122047_4c1268bb",
+  "improved": [
+    "ws_connection_status",
+    "pulse_next_action",
+    "dashboard_error_visibility",
+    "payload_extraction_fields",
+    "aggregator_connection_sharing"
+  ],
+  "unchanged": [
+    "scoring_algorithm_structure",
+    "audit_pipeline_mechanics"
+  ],
+  "regressed": [],
+  "deferred": [],
+  "final_verdict": "GO"
+}

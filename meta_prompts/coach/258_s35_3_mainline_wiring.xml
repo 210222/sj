@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S35.3 -- 主路径接线与 1M 窗口重标定</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>35</phase>
+  <sub_stage>S35.3</sub_stage>
+  <sub_stage_name>mainline wiring / difficulty alignment / larger-window policy</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责将新的 stable prefix、retained suffix、larger-window policy 真实接入 CoachAgent.act() 主链。
+  </role>
+
+  <context>
+    当前 build_coach_context(... history=[]) 之后仍由 agent.py 补丁式追加 progress_summary 与 context_summary。
+    同时 difficulty 在 prompt 与 runtime contract 中仍存在分叉。
+    多处 history / ai_response / summary 长度限制仍带有小窗口时代的保守压缩假设。
+  </context>
+
+  <task>
+    1. 主 LLM 路径统一走新的 layered prompt builder；
+    2. progress_summary、context_summary、memory_snippets、covered_topics 改为命名层而非后补字符串；
+    3. difficulty 在 prompt 与 difficulty_contract 中同源；
+    4. 放宽 history / memory / ai_response 的容量与长度限制，适配 1M 窗口；
+    5. 保留结构化 summary blocks，避免长上下文退化为噪音堆积。
+  </task>
+
+  <required_adjustments>
+    <item>去掉多段 free-text append 作为主注入方式</item>
+    <item>放宽小窗口限制，但保持结构化块和去重</item>
+    <item>history / summary / memory / progress 的关系必须收口为清晰层结构</item>
+  </required_adjustments>
+
+  <risk_analysis>
+    1. 延续小窗口极限压缩思路，白白浪费 1M 窗口；
+    2. 放宽长度限制后没有结构约束，导致噪音上升；
+    3. difficulty 在 prompt 和 runtime 中继续分叉。
+  </risk_analysis>
+
+  <quality_gates>
+    <gate>主 LLM 路径已使用新 prompt 结构</gate>
+    <gate>difficulty 不再出现 prompt/runtime 不一致</gate>
+    <gate>变化层放宽后仍保持结构化与可控</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>主路径不再依赖补丁式上下文拼接</item>
+    <item>1M 窗口策略与当前实现匹配</item>
+  </success_criteria>
+</prompt>

@@ -1,0 +1,10 @@
+{
+  "total_unique_prefix_hashes": 1,
+  "runs_analyzed": 8,
+  "stable_across_all_runs": true,
+  "hash_distribution": {
+    "15620410": 8
+  },
+  "unstable_hashes_count": 0,
+  "interpretation": "Single unique hash across all runs → stable_prefix is truly stable (content-identical). Multiple hashes → stable_prefix content varies across runs (possible dynamic injection)."
+}

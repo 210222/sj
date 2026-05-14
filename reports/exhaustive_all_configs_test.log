@@ -1,0 +1,2423 @@
+# Exhaustive All-Config Quality Test — 2026-05-07T09:47:13.519998+00:00
+# 256 combos × ~5-7 turns each
+
+======================================================================
+EXHAUSTIVE ALL-CONFIG QUALITY TEST
+Total combos: 256
+Total topics: 53
+Date: 2026-05-07T09:47:13.519998+00:00
+======================================================================
+
+--- [1/256] L+S+D+E+R_37e9 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_beginner_1 (6 turns)
+  6/6 ok | avg quality: 18.3/24 | llm: 6/6
+  steps: 6/6 | questions: 6/6
+  actions: {'reflect': 4, 'probe': 2}
+  dimensions: {'relevance': 3.33, 'clarity': 3.17, 'interactive': 2.83, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 2.0}
+  time: 38s | total: 38s
+
+--- [2/256] T+D+P_a6aa ---
+  Config: ['ttm.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: python_beginner_2 (5 turns)
+  5/5 ok | avg quality: 13.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 2, 'reflect': 1, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.2, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 38s
+
+--- [3/256] L+F+D_a524 ---
+  Config: ['llm.enabled', 'flow.enabled', 'diagnostic_engine.enabled']
+  Topic: python_beginner_3 (5 turns)
+  5/5 ok | avg quality: 16.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 3, 'suggest': 1, 'probe': 1}
+  dimensions: {'relevance': 3.0, 'clarity': 2.6, 'interactive': 2.2, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 32s | total: 70s
+
+--- [4/256] L+S+F+P+R_7d58 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: python_variables_deep (5 turns)
+  5/5 ok | avg quality: 18.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 4.0, 'personalization': 2.4, 'encouragement': 1.4}
+  time: 32s | total: 103s
+
+--- [5/256] L+T+S+F+D+R_2b80 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: python_functions (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 4, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 30s | total: 133s
+
+--- [6/256] L+T+E_478d ---
+  Config: ['llm.enabled', 'ttm.enabled', 'excursion.enabled']
+  Topic: python_lists_dicts (5 turns)
+  5/5 ok | avg quality: 16.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 4, 'scaffold': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 3.2, 'structure': 4.0, 'personalization': 2.4, 'encouragement': 1.0}
+  time: 32s | total: 164s
+
+--- [7/256] T+S+E_90b0 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'excursion.enabled']
+  Topic: python_oop_basics (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 3}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 165s
+
+--- [8/256] L+T+D+E+R_cbee ---
+  Config: ['llm.enabled', 'ttm.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_modules (5 turns)
+  5/5 ok | avg quality: 16.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'scaffold': 1, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 3.0, 'structure': 3.8, 'personalization': 3.0, 'encouragement': 1.2}
+  time: 30s | total: 195s
+
+--- [9/256] T+S_81b4 ---
+  Config: ['ttm.enabled', 'sdt.enabled']
+  Topic: python_file_io (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 4}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 195s
+
+--- [10/256] S+F+P+E_f519 ---
+  Config: ['sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: python_exceptions (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 196s
+
+--- [11/256] L+F+D+P+E+R_4978 ---
+  Config: ['llm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_debugging (5 turns)
+  5/5 ok | avg quality: 17.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 3, 'suggest': 1, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 2.2, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 2.0}
+  time: 36s | total: 233s
+
+--- [12/256] P+E_7fee ---
+  Config: ['sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: python_string_methods (5 turns)
+  5/5 ok | avg quality: 15.8/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'scaffold': 3, 'suggest': 2}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 2.0, 'personalization': 0.8, 'encouragement': 2.6}
+  time: 1s | total: 233s
+
+--- [13/256] T+S+P+E+R_c3be ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: js_basics (5 turns)
+  5/5 ok | avg quality: 13.6/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 2, 'pulse': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 3.2, 'structure': 1.8, 'personalization': 0.8, 'encouragement': 1.6}
+  time: 1s | total: 234s
+
+--- [14/256] L+T+S+P_8490 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'sovereignty_pulse.enabled']
+  Topic: js_functions (5 turns)
+  5/5 ok | avg quality: 17.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'pulse': 1}
+  dimensions: {'relevance': 3.6, 'clarity': 3.0, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 32s | total: 265s
+
+--- [15/256] L+T+S+F+R_e84e ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'relational_safety.enabled']
+  Topic: js_arrays (5 turns)
+  5/5 ok | avg quality: 16.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 4, 'reflect': 1}
+  dimensions: {'relevance': 3.0, 'clarity': 2.6, 'interactive': 3.2, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 30s | total: 296s
+
+--- [16/256] L+T+D_6fa3 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'diagnostic_engine.enabled']
+  Topic: js_dom_manipulation (5 turns)
+  5/5 ok | avg quality: 16.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 2, 'scaffold': 2, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 2.6, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.0}
+  time: 31s | total: 327s
+
+--- PROGRESS: 16/256 done | ETA: 82min ---
+
+
+--- [17/256] R_50e3 ---
+  Config: ['relational_safety.enabled']
+  Topic: js_events (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'suggest': 3, 'scaffold': 2}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 327s
+
+--- [18/256] L+P+E_0100 ---
+  Config: ['llm.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: html_css_layout (5 turns)
+  5/5 ok | avg quality: 17.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 3, 'suggest': 2}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.6}
+  time: 30s | total: 358s
+
+--- [19/256] S_2d21 ---
+  Config: ['sdt.enabled']
+  Topic: css_flexbox (5 turns)
+  5/5 ok | avg quality: 14.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.0}
+  time: 1s | total: 358s
+
+--- [20/256] L+F+D+P_6a32 ---
+  Config: ['llm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: react_components (5 turns)
+  5/5 ok | avg quality: 16.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 4, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 2.0, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 34s | total: 392s
+
+--- [21/256] F+P+E+R_b4ff ---
+  Config: ['flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: react_state (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 1, 'suggest': 2, 'scaffold': 2}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 392s
+
+--- [22/256] L+S+P_cf99 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'sovereignty_pulse.enabled']
+  Topic: node_npm_basics (5 turns)
+  5/5 ok | avg quality: 18.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.8, 'clarity': 2.8, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.8}
+  time: 28s | total: 421s
+
+--- [23/256] L+S+D+P+E_a35d ---
+  Config: ['llm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: array_vs_linkedlist (5 turns)
+  5/5 ok | avg quality: 17.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 2.6, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.8}
+  time: 30s | total: 450s
+
+--- [24/256] T+S+D_aac8 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled']
+  Topic: stack_queue (5 turns)
+  5/5 ok | avg quality: 14.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 1, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.0}
+  time: 1s | total: 451s
+
+--- [25/256] S+E_b88d ---
+  Config: ['sdt.enabled', 'excursion.enabled']
+  Topic: hash_table (5 turns)
+  5/5 ok | avg quality: 14.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 452s
+
+--- [26/256] T+F+E+R_9d15 ---
+  Config: ['ttm.enabled', 'flow.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: binary_tree (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'scaffold': 2}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 452s
+
+--- [27/256] L+S+F+D+P+E+R_15cc ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: graph_basics (5 turns)
+  5/5 ok | avg quality: 17.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.6, 'clarity': 2.8, 'interactive': 2.6, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.4}
+  time: 35s | total: 488s
+
+--- [28/256] L+T+S+F+P+E_700e ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: sorting_algorithms (5 turns)
+  5/5 ok | avg quality: 16.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 2, 'pulse': 1}
+  dimensions: {'relevance': 2.8, 'clarity': 2.4, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.6}
+  time: 27s | total: 514s
+
+--- [29/256] L+T+S+E+R_6eb2 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: recursion_basics (5 turns)
+  5/5 ok | avg quality: 15.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 3}
+  dimensions: {'relevance': 2.8, 'clarity': 2.4, 'interactive': 2.4, 'structure': 3.8, 'personalization': 3.0, 'encouragement': 1.2}
+  time: 27s | total: 541s
+
+--- [30/256] L+S+F+D+P+R_762b ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: dynamic_programming_intro (5 turns)
+  5/5 ok | avg quality: 17.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.6, 'clarity': 2.8, 'interactive': 2.6, 'structure': 3.8, 'personalization': 3.2, 'encouragement': 1.4}
+  time: 35s | total: 576s
+
+--- [31/256] L+T+S+P+E_cd8b ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: binary_search (5 turns)
+  5/5 ok | avg quality: 15.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'pulse': 1}
+  dimensions: {'relevance': 2.8, 'clarity': 2.4, 'interactive': 2.0, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 35s | total: 611s
+
+--- [32/256] L+P+R_f45b ---
+  Config: ['llm.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: two_pointers (5 turns)
+  5/5 ok | avg quality: 15.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 3}
+  dimensions: {'relevance': 2.6, 'clarity': 2.2, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.2}
+  time: 32s | total: 643s
+
+--- PROGRESS: 32/256 done | ETA: 75min ---
+
+
+--- [33/256] L+S+F+D_91c1 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled']
+  Topic: sliding_window (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 34s | total: 677s
+
+--- [34/256] L+F+D+R_c981 ---
+  Config: ['llm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: bfs_dfs (5 turns)
+  5/5 ok | avg quality: 17.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 1, 'suggest': 3, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.0, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.8}
+  time: 33s | total: 710s
+
+--- [35/256] none_6d4e ---
+  Config: []
+  Topic: greedy_algorithms (5 turns)
+  5/5 ok | avg quality: 14.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 1, 'suggest': 4}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 710s
+
+--- [36/256] T+F+D+P_af83 ---
+  Config: ['ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: time_complexity (5 turns)
+  5/5 ok | avg quality: 13.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 3, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 711s
+
+--- [37/256] L+T+S+F+D+E+R_b9a3 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: sql_select (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 2, 'probe': 1}
+  dimensions: {'relevance': 2.2, 'clarity': 2.4, 'interactive': 2.4, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.2}
+  time: 29s | total: 740s
+
+--- [38/256] T+P+E+R_aac9 ---
+  Config: ['ttm.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: sql_joins (5 turns)
+  5/5 ok | avg quality: 12.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'pulse': 1, 'scaffold': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.0, 'structure': 1.0, 'personalization': 0.8, 'encouragement': 1.6}
+  time: 1s | total: 741s
+
+--- [39/256] T+F+D+P+E+R_2b34 ---
+  Config: ['ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: sql_indexes (5 turns)
+  5/5 ok | avg quality: 13.2/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'challenge': 1, 'scaffold': 2, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 2.8, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 742s
+
+--- [40/256] S+D+R_00dd ---
+  Config: ['sdt.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: nosql_intro (5 turns)
+  5/5 ok | avg quality: 14.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 742s
+
+--- [41/256] L+S+D+P+R_8ac6 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: database_design (5 turns)
+  5/5 ok | avg quality: 18.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.8, 'clarity': 3.2, 'interactive': 3.2, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.4}
+  time: 34s | total: 777s
+
+--- [42/256] T+S+R_4061 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'relational_safety.enabled']
+  Topic: git_basics (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 3}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.8}
+  time: 1s | total: 777s
+
+--- [43/256] L+T+F+D_a3d9 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled']
+  Topic: git_branching (5 turns)
+  5/5 ok | avg quality: 17.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 2, 'scaffold': 2, 'probe': 1}
+  dimensions: {'relevance': 3.6, 'clarity': 2.6, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 34s | total: 811s
+
+--- [44/256] T+F+D+E+R_457c ---
+  Config: ['ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: linux_basics (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'scaffold': 2, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 812s
+
+--- [45/256] T+F+D+E_f731 ---
+  Config: ['ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: docker_intro (5 turns)
+  5/5 ok | avg quality: 14.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'scaffold': 1, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 812s
+
+--- [46/256] T+F+D+R_2433 ---
+  Config: ['ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: rest_api_design (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'scaffold': 2, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 813s
+
+--- [47/256] T+F+R_10e8 ---
+  Config: ['ttm.enabled', 'flow.enabled', 'relational_safety.enabled']
+  Topic: cli_tools (5 turns)
+  5/5 ok | avg quality: 15.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'scaffold': 3}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.6}
+  time: 1s | total: 813s
+
+--- [48/256] T+F+D+P+E_b3b2 ---
+  Config: ['ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: memory_management (5 turns)
+  5/5 ok | avg quality: 12.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'scaffold': 1, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.0, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 1.4}
+  time: 1s | total: 814s
+
+--- PROGRESS: 48/256 done | ETA: 59min ---
+
+
+--- [49/256] L+T+P+E+R_fab7 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: process_thread (5 turns)
+  5/5 ok | avg quality: 17.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'pulse': 1, 'scaffold': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.0, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 33s | total: 847s
+
+--- [50/256] T+S+E+R_6404 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: network_protocols (5 turns)
+  5/5 ok | avg quality: 14.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.0, 'structure': 1.0, 'personalization': 0.8, 'encouragement': 2.6}
+  time: 1s | total: 848s
+
+--- [51/256] L+S+P+E+R_c0d5 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: http_https (5 turns)
+  5/5 ok | avg quality: 17.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.4, 'clarity': 2.4, 'interactive': 3.4, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.4}
+  time: 27s | total: 875s
+
+--- [52/256] T+F+P_da3d ---
+  Config: ['ttm.enabled', 'flow.enabled', 'sovereignty_pulse.enabled']
+  Topic: os_concepts (5 turns)
+  5/5 ok | avg quality: 12.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'pulse': 1, 'scaffold': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.0, 'structure': 1.0, 'personalization': 0.8, 'encouragement': 1.6}
+  time: 1s | total: 875s
+
+--- [53/256] S+F+P_ebff ---
+  Config: ['sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled']
+  Topic: compiler_vs_interpreter (5 turns)
+  5/5 ok | avg quality: 13.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.0, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 1.6}
+  time: 1s | total: 876s
+
+--- [54/256] S+F+D+E_9de4 ---
+  Config: ['sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: python_beginner_1 (6 turns)
+  6/6 ok | avg quality: 14.5/24 | llm: 0/6
+  steps: 0/6 | questions: 6/6
+  actions: {'reflect': 4, 'probe': 2}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.17, 'structure': 1.17, 'personalization': 0.83, 'encouragement': 2.33}
+  time: 1s | total: 876s
+
+--- [55/256] F+E+R_b89a ---
+  Config: ['flow.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_beginner_2 (5 turns)
+  5/5 ok | avg quality: 14.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 2, 'reflect': 1, 'suggest': 2}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.8, 'personalization': 0.8, 'encouragement': 1.6}
+  time: 1s | total: 877s
+
+--- [56/256] L+S+F+D+E_9e03 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: python_beginner_3 (5 turns)
+  5/5 ok | avg quality: 16.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.8, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.2, 'encouragement': 1.2}
+  time: 33s | total: 910s
+
+--- [57/256] L+S+F+D+P_936c ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: python_variables_deep (5 turns)
+  5/5 ok | avg quality: 18.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.8, 'clarity': 3.0, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.8}
+  time: 34s | total: 943s
+
+--- [58/256] T+D+E_fd01 ---
+  Config: ['ttm.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: python_functions (5 turns)
+  5/5 ok | avg quality: 14.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.0, 'structure': 1.0, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 944s
+
+--- [59/256] L+F+D+P+E_d9c4 ---
+  Config: ['llm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: python_lists_dicts (5 turns)
+  5/5 ok | avg quality: 16.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 1, 'suggest': 3, 'probe': 1}
+  dimensions: {'relevance': 3.0, 'clarity': 2.8, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 31s | total: 975s
+
+--- [60/256] T+S+D+P+E_8bf0 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: python_oop_basics (5 turns)
+  5/5 ok | avg quality: 13.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 3, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 1.6}
+  time: 1s | total: 976s
+
+--- [61/256] S+D+P+E_0f00 ---
+  Config: ['sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: python_modules (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.6}
+  time: 1s | total: 976s
+
+--- [62/256] S+F+E_0725 ---
+  Config: ['sdt.enabled', 'flow.enabled', 'excursion.enabled']
+  Topic: python_file_io (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 977s
+
+--- [63/256] L+E_212c ---
+  Config: ['llm.enabled', 'excursion.enabled']
+  Topic: python_exceptions (5 turns)
+  5/5 ok | avg quality: 15.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'suggest': 2, 'scaffold': 3}
+  dimensions: {'relevance': 2.8, 'clarity': 2.2, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.2, 'encouragement': 1.0}
+  time: 27s | total: 1004s
+
+--- [64/256] L+T+S+F+E+R_c132 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_debugging (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 4}
+  dimensions: {'relevance': 3.2, 'clarity': 2.4, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.6}
+  time: 29s | total: 1032s
+
+--- PROGRESS: 64/256 done | ETA: 52min ---
+
+
+--- [65/256] L+T+P+R_dc26 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: python_string_methods (5 turns)
+  5/5 ok | avg quality: 16.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'pulse': 1, 'scaffold': 3}
+  dimensions: {'relevance': 3.0, 'clarity': 2.8, 'interactive': 2.2, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.2}
+  time: 26s | total: 1058s
+
+--- [66/256] T+P_57a5 ---
+  Config: ['ttm.enabled', 'sovereignty_pulse.enabled']
+  Topic: js_basics (5 turns)
+  5/5 ok | avg quality: 13.6/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'challenge': 2, 'pulse': 1, 'scaffold': 2}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 3.2, 'structure': 1.8, 'personalization': 0.8, 'encouragement': 1.6}
+  time: 1s | total: 1059s
+
+--- [67/256] T+P+E_c18c ---
+  Config: ['ttm.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: js_functions (5 turns)
+  5/5 ok | avg quality: 13.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 1, 'pulse': 1, 'scaffold': 3}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 1059s
+
+--- [68/256] T+D+P+E_2762 ---
+  Config: ['ttm.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: js_arrays (5 turns)
+  5/5 ok | avg quality: 12.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'scaffold': 1, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.0, 'structure': 1.0, 'personalization': 0.8, 'encouragement': 1.6}
+  time: 1s | total: 1060s
+
+--- [69/256] T+S+F+P+E_589f ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: js_dom_manipulation (5 turns)
+  5/5 ok | avg quality: 13.6/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 3, 'pulse': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.2, 'structure': 1.8, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 1061s
+
+--- [70/256] S+P+R_b713 ---
+  Config: ['sdt.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: js_events (5 turns)
+  5/5 ok | avg quality: 15.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.6}
+  time: 1s | total: 1061s
+
+--- [71/256] S+F+D+P+R_84c3 ---
+  Config: ['sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: html_css_layout (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 1062s
+
+--- [72/256] L+S+D+P+E+R_fe3e ---
+  Config: ['llm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: css_flexbox (5 turns)
+  5/5 ok | avg quality: 17.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.8, 'clarity': 3.0, 'interactive': 3.2, 'structure': 4.0, 'personalization': 2.4, 'encouragement': 1.4}
+  time: 34s | total: 1096s
+
+--- [73/256] L+F+D+E+R_2bdc ---
+  Config: ['llm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: react_components (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 4, 'probe': 1}
+  dimensions: {'relevance': 3.0, 'clarity': 2.8, 'interactive': 2.0, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.8}
+  time: 29s | total: 1126s
+
+--- [74/256] L+T+S+F+P+E+R_96dc ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: react_state (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 3, 'pulse': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 28s | total: 1154s
+
+--- [75/256] S+F+D+P_8f4e ---
+  Config: ['sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: node_npm_basics (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 1154s
+
+--- [76/256] T+F+P+E+R_aa4a ---
+  Config: ['ttm.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: array_vs_linkedlist (5 turns)
+  5/5 ok | avg quality: 12.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 1, 'pulse': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 2.8, 'structure': 1.0, 'personalization': 0.8, 'encouragement': 1.4}
+  time: 1s | total: 1155s
+
+--- [77/256] T+S+F+E_6b47 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'excursion.enabled']
+  Topic: stack_queue (5 turns)
+  5/5 ok | avg quality: 14.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 4, 'reflect': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 1156s
+
+--- [78/256] T+E_4a54 ---
+  Config: ['ttm.enabled', 'excursion.enabled']
+  Topic: hash_table (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 1, 'scaffold': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 1156s
+
+--- [79/256] T+S+F+D_1838 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled']
+  Topic: binary_tree (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 2, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 1157s
+
+--- [80/256] L+T+D+P+E_5a05 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: graph_basics (5 turns)
+  5/5 ok | avg quality: 16.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'scaffold': 2, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.0, 'clarity': 2.4, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 30s | total: 1186s
+
+--- PROGRESS: 80/256 done | ETA: 44min ---
+
+
+--- [81/256] L+T+F+R_458b ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'relational_safety.enabled']
+  Topic: sorting_algorithms (5 turns)
+  5/5 ok | avg quality: 17.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'scaffold': 2}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 30s | total: 1216s
+
+--- [82/256] T+S+F+E+R_5625 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: recursion_basics (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 3}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.8, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 1217s
+
+--- [83/256] P+R_4969 ---
+  Config: ['sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: dynamic_programming_intro (5 turns)
+  5/5 ok | avg quality: 15.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 3}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.6}
+  time: 1s | total: 1218s
+
+--- [84/256] L+P+E+R_bcb5 ---
+  Config: ['llm.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: binary_search (5 turns)
+  5/5 ok | avg quality: 16.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 3, 'suggest': 1, 'reflect': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 2.4, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.6}
+  time: 34s | total: 1252s
+
+--- [85/256] L+T+D+P_af69 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: two_pointers (5 turns)
+  5/5 ok | avg quality: 16.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'scaffold': 2, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.6}
+  time: 30s | total: 1282s
+
+--- [86/256] T+S+D+P+E+R_268e ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: sliding_window (5 turns)
+  5/5 ok | avg quality: 12.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 2, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 1.6}
+  time: 1s | total: 1283s
+
+--- [87/256] L+T+F+P+R_cf36 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: bfs_dfs (5 turns)
+  5/5 ok | avg quality: 18.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 1, 'pulse': 1}
+  dimensions: {'relevance': 3.6, 'clarity': 3.2, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 30s | total: 1312s
+
+--- [88/256] S+P+E_1482 ---
+  Config: ['sdt.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: greedy_algorithms (5 turns)
+  5/5 ok | avg quality: 14.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 1313s
+
+--- [89/256] L+T+S+D+P+E+R_6c3f ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: time_complexity (5 turns)
+  5/5 ok | avg quality: 15.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 3, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.0, 'clarity': 2.6, 'interactive': 2.2, 'structure': 4.0, 'personalization': 2.4, 'encouragement': 1.4}
+  time: 29s | total: 1341s
+
+--- [90/256] F+D_60d5 ---
+  Config: ['flow.enabled', 'diagnostic_engine.enabled']
+  Topic: sql_select (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 2, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 1342s
+
+--- [91/256] L+S+F+D+E+R_e9bd ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: sql_joins (5 turns)
+  5/5 ok | avg quality: 17.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 3.0, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.6}
+  time: 30s | total: 1372s
+
+--- [92/256] S+F+P+E+R_f508 ---
+  Config: ['sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: sql_indexes (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.2, 'interactive': 3.0, 'structure': 1.8, 'personalization': 0.8, 'encouragement': 2.0}
+  time: 1s | total: 1373s
+
+--- [93/256] S+E+R_4032 ---
+  Config: ['sdt.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: nosql_intro (5 turns)
+  5/5 ok | avg quality: 14.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.0}
+  time: 1s | total: 1374s
+
+--- [94/256] F+D+R_220d ---
+  Config: ['flow.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: database_design (5 turns)
+  5/5 ok | avg quality: 14.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 1, 'suggest': 3, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 1374s
+
+--- [95/256] L+D+R_4f99 ---
+  Config: ['llm.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: git_basics (5 turns)
+  5/5 ok | avg quality: 16.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 2, 'probe': 1}
+  dimensions: {'relevance': 3.0, 'clarity': 2.8, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 32s | total: 1406s
+
+--- [96/256] L+T+F+D+P_ede7 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: git_branching (5 turns)
+  5/5 ok | avg quality: 16.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'scaffold': 2, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 2.6, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.0}
+  time: 29s | total: 1435s
+
+--- PROGRESS: 96/256 done | ETA: 40min ---
+
+
+--- [97/256] D+P+E_9001 ---
+  Config: ['diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: linux_basics (5 turns)
+  5/5 ok | avg quality: 15.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 2, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.6}
+  time: 1s | total: 1436s
+
+--- [98/256] T_8e67 ---
+  Config: ['ttm.enabled']
+  Topic: docker_intro (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 1, 'scaffold': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.8}
+  time: 1s | total: 1436s
+
+--- [99/256] L_4c2a ---
+  Config: ['llm.enabled']
+  Topic: rest_api_design (5 turns)
+  5/5 ok | avg quality: 18.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 3}
+  dimensions: {'relevance': 3.8, 'clarity': 2.8, 'interactive': 3.0, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.8}
+  time: 28s | total: 1464s
+
+--- [100/256] L+T+S+F+D+E_858b ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: cli_tools (5 turns)
+  5/5 ok | avg quality: 15.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 3, 'probe': 1}
+  dimensions: {'relevance': 3.0, 'clarity': 2.2, 'interactive': 2.2, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 29s | total: 1493s
+
+--- [101/256] L+T+F_1706 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled']
+  Topic: memory_management (5 turns)
+  5/5 ok | avg quality: 16.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'scaffold': 2}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 24s | total: 1517s
+
+--- [102/256] L+T+S+F+P_c84b ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled']
+  Topic: process_thread (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 1, 'pulse': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.8, 'interactive': 2.8, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.2}
+  time: 26s | total: 1543s
+
+--- [103/256] L+E+R_2e4c ---
+  Config: ['llm.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: network_protocols (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'suggest': 5}
+  dimensions: {'relevance': 3.0, 'clarity': 2.6, 'interactive': 3.0, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 25s | total: 1568s
+
+--- [104/256] L+T+S+F+D_2c07 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled']
+  Topic: http_https (5 turns)
+  5/5 ok | avg quality: 17.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 4, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.0, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 29s | total: 1597s
+
+--- [105/256] E+R_20c4 ---
+  Config: ['excursion.enabled', 'relational_safety.enabled']
+  Topic: os_concepts (5 turns)
+  5/5 ok | avg quality: 14.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 1, 'suggest': 4}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 1597s
+
+--- [106/256] S+D_c8c1 ---
+  Config: ['sdt.enabled', 'diagnostic_engine.enabled']
+  Topic: compiler_vs_interpreter (5 turns)
+  5/5 ok | avg quality: 14.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.0, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 1598s
+
+--- [107/256] T+S+F+P_9e65 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled']
+  Topic: python_beginner_1 (6 turns)
+  6/6 ok | avg quality: 11.3/24 | llm: 0/6
+  steps: 0/6 | questions: 6/6
+  actions: {'challenge': 2, 'reflect': 2, 'pulse': 2}
+  dimensions: {'relevance': 3.0, 'clarity': 2.33, 'interactive': 2.83, 'structure': 0.83, 'personalization': 0.83, 'encouragement': 1.5}
+  time: 1s | total: 1599s
+
+--- [108/256] F+D+P+E_f85b ---
+  Config: ['flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: python_beginner_2 (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 2, 'reflect': 1, 'suggest': 1, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.8, 'personalization': 0.8, 'encouragement': 2.0}
+  time: 1s | total: 1599s
+
+--- [109/256] F+D+P_c41f ---
+  Config: ['flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: python_beginner_3 (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'scaffold': 3, 'suggest': 1, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 2.0, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 1600s
+
+--- [110/256] L+S+P+E_b042 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: python_variables_deep (5 turns)
+  5/5 ok | avg quality: 16.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 2.4, 'structure': 3.8, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 27s | total: 1627s
+
+--- [111/256] T+S+F_a403 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled']
+  Topic: python_functions (5 turns)
+  5/5 ok | avg quality: 14.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.0, 'structure': 1.0, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 1627s
+
+--- [112/256] T+S+D+P+R_9ead ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: python_lists_dicts (5 turns)
+  5/5 ok | avg quality: 12.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 1, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.0, 'structure': 1.0, 'personalization': 0.8, 'encouragement': 1.6}
+  time: 1s | total: 1628s
+
+--- PROGRESS: 112/256 done | ETA: 35min ---
+
+
+--- [113/256] F+D+P+E+R_9ef9 ---
+  Config: ['flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_oop_basics (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 3, 'suggest': 1, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 1629s
+
+--- [114/256] L+S+F+D+P+E_8fe5 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: python_modules (5 turns)
+  5/5 ok | avg quality: 17.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 3.0, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.6}
+  time: 28s | total: 1656s
+
+--- [115/256] L+T+S+F+D+P+R_b0ed ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: python_file_io (5 turns)
+  5/5 ok | avg quality: 16.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 3, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 2.4, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.0}
+  time: 28s | total: 1685s
+
+--- [116/256] D+P+E+R_bf43 ---
+  Config: ['diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_exceptions (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 2, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 1685s
+
+--- [117/256] L+T+F+D+P+E_5bde ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: python_debugging (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 3, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.0, 'clarity': 2.8, 'interactive': 2.2, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.6}
+  time: 29s | total: 1714s
+
+--- [118/256] S+D+E_5d8b ---
+  Config: ['sdt.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: python_string_methods (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 2.0, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 1715s
+
+--- [119/256] T+S+F+P+R_fd59 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: js_basics (5 turns)
+  5/5 ok | avg quality: 13.8/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 2, 'pulse': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 3.2, 'structure': 1.8, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 1715s
+
+--- [120/256] T+S+D+P_3e4a ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: js_functions (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 1716s
+
+--- [121/256] L+D+P+E_b6b7 ---
+  Config: ['llm.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: js_arrays (5 turns)
+  5/5 ok | avg quality: 17.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 1, 'suggest': 3, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 3.0, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 29s | total: 1745s
+
+--- [122/256] S+F+R_aa4a ---
+  Config: ['sdt.enabled', 'flow.enabled', 'relational_safety.enabled']
+  Topic: js_dom_manipulation (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 2.0, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 1746s
+
+--- [123/256] D+P_3dca ---
+  Config: ['diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: js_events (5 turns)
+  5/5 ok | avg quality: 14.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 1, 'suggest': 3, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 1746s
+
+--- [124/256] L+D_a6a7 ---
+  Config: ['llm.enabled', 'diagnostic_engine.enabled']
+  Topic: html_css_layout (5 turns)
+  5/5 ok | avg quality: 16.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 3, 'suggest': 1, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.4, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.8}
+  time: 29s | total: 1776s
+
+--- [125/256] L+T+S+D+R_9ab7 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: css_flexbox (5 turns)
+  5/5 ok | avg quality: 16.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 2, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 3.0, 'interactive': 2.6, 'structure': 4.0, 'personalization': 2.2, 'encouragement': 1.0}
+  time: 28s | total: 1804s
+
+--- [126/256] F+P+E_6e68 ---
+  Config: ['flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: react_components (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 4, 'suggest': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.8, 'structure': 1.8, 'personalization': 0.8, 'encouragement': 2.0}
+  time: 1s | total: 1805s
+
+--- [127/256] L+T+F+P+E+R_46d1 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: react_state (5 turns)
+  5/5 ok | avg quality: 16.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 1, 'pulse': 1, 'scaffold': 2}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 26s | total: 1831s
+
+--- [128/256] L+F+R_6065 ---
+  Config: ['llm.enabled', 'flow.enabled', 'relational_safety.enabled']
+  Topic: node_npm_basics (5 turns)
+  5/5 ok | avg quality: 17.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 2, 'reflect': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 2.8, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.8}
+  time: 29s | total: 1860s
+
+--- PROGRESS: 128/256 done | ETA: 31min ---
+
+
+--- [129/256] T+S+P_fc0e ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'sovereignty_pulse.enabled']
+  Topic: array_vs_linkedlist (5 turns)
+  5/5 ok | avg quality: 12.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 1, 'pulse': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 2.8, 'structure': 1.0, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 1861s
+
+--- [130/256] T+S+F+D+R_2c88 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: stack_queue (5 turns)
+  5/5 ok | avg quality: 14.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 1, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 1861s
+
+--- [131/256] S+P_975a ---
+  Config: ['sdt.enabled', 'sovereignty_pulse.enabled']
+  Topic: hash_table (5 turns)
+  5/5 ok | avg quality: 14.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 1862s
+
+--- [132/256] L+T+F+E+R_7a42 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: binary_tree (5 turns)
+  5/5 ok | avg quality: 15.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'scaffold': 2}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 2.6, 'structure': 4.0, 'personalization': 2.2, 'encouragement': 1.2}
+  time: 27s | total: 1889s
+
+--- [133/256] L+T+R_c7a2 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'relational_safety.enabled']
+  Topic: graph_basics (5 turns)
+  5/5 ok | avg quality: 16.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'scaffold': 2}
+  dimensions: {'relevance': 3.0, 'clarity': 2.4, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.2}
+  time: 30s | total: 1919s
+
+--- [134/256] L+F+P+E_e56f ---
+  Config: ['llm.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: sorting_algorithms (5 turns)
+  5/5 ok | avg quality: 16.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'suggest': 3, 'scaffold': 2}
+  dimensions: {'relevance': 3.2, 'clarity': 2.2, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.6}
+  time: 27s | total: 1946s
+
+--- [135/256] L+D+E_b9ba ---
+  Config: ['llm.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: recursion_basics (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 3, 'suggest': 1, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 31s | total: 1977s
+
+--- [136/256] F+E_5b92 ---
+  Config: ['flow.enabled', 'excursion.enabled']
+  Topic: dynamic_programming_intro (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 3}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 1977s
+
+--- [137/256] F+R_6e8f ---
+  Config: ['flow.enabled', 'relational_safety.enabled']
+  Topic: binary_search (5 turns)
+  5/5 ok | avg quality: 15.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 3, 'suggest': 1, 'reflect': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 1978s
+
+--- [138/256] D+P+R_1ca7 ---
+  Config: ['diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: two_pointers (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 2, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 1978s
+
+--- [139/256] L+T+E+R_2b71 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: sliding_window (5 turns)
+  5/5 ok | avg quality: 15.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'scaffold': 2}
+  dimensions: {'relevance': 2.8, 'clarity': 2.4, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 27s | total: 2005s
+
+--- [140/256] L+S+F+D+R_7443 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: bfs_dfs (5 turns)
+  5/5 ok | avg quality: 19.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.8, 'clarity': 3.0, 'interactive': 3.2, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 2.4}
+  time: 30s | total: 2035s
+
+--- [141/256] L+T+S+F_02bf ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled']
+  Topic: greedy_algorithms (5 turns)
+  5/5 ok | avg quality: 16.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 4, 'reflect': 1}
+  dimensions: {'relevance': 3.0, 'clarity': 2.6, 'interactive': 3.0, 'structure': 3.8, 'personalization': 2.6, 'encouragement': 1.4}
+  time: 31s | total: 2065s
+
+--- [142/256] L+T+D+R_45ed ---
+  Config: ['llm.enabled', 'ttm.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: time_complexity (5 turns)
+  5/5 ok | avg quality: 16.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'scaffold': 3, 'probe': 1}
+  dimensions: {'relevance': 3.0, 'clarity': 2.4, 'interactive': 2.2, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 29s | total: 2095s
+
+--- [143/256] L+T+S+F+D+P+E+R_3caa ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: sql_select (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 2, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 2.8, 'clarity': 2.4, 'interactive': 2.2, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 28s | total: 2123s
+
+--- [144/256] T+S+P+E_6036 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: sql_joins (5 turns)
+  5/5 ok | avg quality: 12.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 1, 'pulse': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.0, 'structure': 1.0, 'personalization': 0.8, 'encouragement': 2.0}
+  time: 1s | total: 2124s
+
+--- PROGRESS: 144/256 done | ETA: 28min ---
+
+
+--- [145/256] L+D+P+R_0c4e ---
+  Config: ['llm.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: sql_indexes (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 2, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.4, 'interactive': 2.6, 'structure': 4.0, 'personalization': 2.4, 'encouragement': 2.0}
+  time: 30s | total: 2153s
+
+--- [146/256] L+T+S+E_d73c ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'excursion.enabled']
+  Topic: nosql_intro (5 turns)
+  5/5 ok | avg quality: 17.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 4, 'reflect': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 3.0, 'interactive': 3.2, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 30s | total: 2184s
+
+--- [147/256] L+S+E_57d3 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'excursion.enabled']
+  Topic: database_design (5 turns)
+  5/5 ok | avg quality: 17.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.8, 'clarity': 2.8, 'interactive': 3.2, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.4}
+  time: 31s | total: 2214s
+
+--- [148/256] L+T+F+P_ccf7 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'sovereignty_pulse.enabled']
+  Topic: git_basics (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 1, 'pulse': 1, 'scaffold': 2}
+  dimensions: {'relevance': 3.4, 'clarity': 3.2, 'interactive': 2.4, 'structure': 4.0, 'personalization': 2.0, 'encouragement': 1.6}
+  time: 27s | total: 2241s
+
+--- [149/256] L+T+S+D+P+R_2a63 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: git_branching (5 turns)
+  5/5 ok | avg quality: 15.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 2, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.0, 'clarity': 2.4, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 31s | total: 2272s
+
+--- [150/256] S+D+P+R_12a7 ---
+  Config: ['sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: linux_basics (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 2273s
+
+--- [151/256] S+F+E+R_45b4 ---
+  Config: ['sdt.enabled', 'flow.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: docker_intro (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.6}
+  time: 1s | total: 2274s
+
+--- [152/256] T+D+P+E+R_1cb0 ---
+  Config: ['ttm.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: rest_api_design (5 turns)
+  5/5 ok | avg quality: 13.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 1, 'scaffold': 2, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 2274s
+
+--- [153/256] S+F+D+E+R_de91 ---
+  Config: ['sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: cli_tools (5 turns)
+  5/5 ok | avg quality: 15.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.8}
+  time: 1s | total: 2275s
+
+--- [154/256] S+R_ca96 ---
+  Config: ['sdt.enabled', 'relational_safety.enabled']
+  Topic: memory_management (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 2276s
+
+--- [155/256] T+S+D+E_4f57 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: process_thread (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 1, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.6}
+  time: 1s | total: 2276s
+
+--- [156/256] L+S+D+E_8675 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: network_protocols (5 turns)
+  5/5 ok | avg quality: 17.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.0, 'clarity': 3.0, 'interactive': 3.0, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.8}
+  time: 32s | total: 2308s
+
+--- [157/256] T+S+F+P+E+R_97be ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: http_https (5 turns)
+  5/5 ok | avg quality: 12.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 4, 'pulse': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 2.8, 'structure': 0.8, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 2309s
+
+--- [158/256] L+S+D_fc17 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled']
+  Topic: os_concepts (5 turns)
+  5/5 ok | avg quality: 18.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.6, 'clarity': 3.0, 'interactive': 3.4, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 2.0}
+  time: 35s | total: 2344s
+
+--- [159/256] E_dd68 ---
+  Config: ['excursion.enabled']
+  Topic: compiler_vs_interpreter (5 turns)
+  5/5 ok | avg quality: 14.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'suggest': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.0, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 2345s
+
+--- [160/256] L+F+P+E+R_c5f2 ---
+  Config: ['llm.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_beginner_1 (6 turns)
+  6/6 ok | avg quality: 17.7/24 | llm: 6/6
+  steps: 6/6 | questions: 6/6
+  actions: {'scaffold': 1, 'suggest': 4, 'reflect': 1}
+  dimensions: {'relevance': 3.33, 'clarity': 3.0, 'interactive': 2.83, 'structure': 4.0, 'personalization': 2.67, 'encouragement': 1.83}
+  time: 30s | total: 2375s
+
+--- PROGRESS: 160/256 done | ETA: 24min ---
+
+
+--- [161/256] P_8818 ---
+  Config: ['sovereignty_pulse.enabled']
+  Topic: python_beginner_2 (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 2, 'reflect': 1, 'suggest': 2}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.8, 'personalization': 0.8, 'encouragement': 2.0}
+  time: 1s | total: 2376s
+
+--- [162/256] L+T+S+P+R_a8fb ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: python_beginner_3 (5 turns)
+  5/5 ok | avg quality: 15.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'pulse': 1}
+  dimensions: {'relevance': 2.8, 'clarity': 2.2, 'interactive': 2.0, 'structure': 4.0, 'personalization': 3.2, 'encouragement': 1.0}
+  time: 25s | total: 2401s
+
+--- [163/256] T+E+R_3e57 ---
+  Config: ['ttm.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_variables_deep (5 turns)
+  5/5 ok | avg quality: 15.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 1, 'scaffold': 2}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.6}
+  time: 1s | total: 2402s
+
+--- [164/256] L+F+P+R_7f30 ---
+  Config: ['llm.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: python_functions (5 turns)
+  5/5 ok | avg quality: 18.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'suggest': 5}
+  dimensions: {'relevance': 3.6, 'clarity': 3.0, 'interactive': 3.6, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.4}
+  time: 26s | total: 2428s
+
+--- [165/256] L+F+E_6223 ---
+  Config: ['llm.enabled', 'flow.enabled', 'excursion.enabled']
+  Topic: python_lists_dicts (5 turns)
+  5/5 ok | avg quality: 16.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 1, 'suggest': 4}
+  dimensions: {'relevance': 3.2, 'clarity': 2.4, 'interactive': 2.8, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.0}
+  time: 29s | total: 2457s
+
+--- [166/256] F+P_9f17 ---
+  Config: ['flow.enabled', 'sovereignty_pulse.enabled']
+  Topic: python_oop_basics (5 turns)
+  5/5 ok | avg quality: 15.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 3, 'suggest': 2}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 2457s
+
+--- [167/256] T+F+P+R_6023 ---
+  Config: ['ttm.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: python_modules (5 turns)
+  5/5 ok | avg quality: 13.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'pulse': 1, 'scaffold': 2}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 2458s
+
+--- [168/256] L+S+D+R_cb7a ---
+  Config: ['llm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: python_file_io (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 33s | total: 2490s
+
+--- [169/256] T+S+F+R_7fd5 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'relational_safety.enabled']
+  Topic: python_exceptions (5 turns)
+  5/5 ok | avg quality: 16.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 3}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 3.0}
+  time: 1s | total: 2491s
+
+--- [170/256] L+S+E+R_14d0 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_debugging (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 2.2, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.6}
+  time: 32s | total: 2523s
+
+--- [171/256] T+D+R_b9ba ---
+  Config: ['ttm.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: python_string_methods (5 turns)
+  5/5 ok | avg quality: 15.2/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'challenge': 1, 'scaffold': 3, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 2.0, 'personalization': 0.8, 'encouragement': 2.0}
+  time: 1s | total: 2523s
+
+--- [172/256] S+D+P_38ca ---
+  Config: ['sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: js_basics (5 turns)
+  5/5 ok | avg quality: 15.2/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.2, 'interactive': 3.4, 'structure': 2.2, 'personalization': 0.8, 'encouragement': 1.6}
+  time: 1s | total: 2524s
+
+--- [173/256] T+S+F+D+E+R_395f ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: js_functions (5 turns)
+  5/5 ok | avg quality: 15.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 2524s
+
+--- [174/256] L+T+S+D+P_6233 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: js_arrays (5 turns)
+  5/5 ok | avg quality: 15.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 1, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 2.8, 'clarity': 2.6, 'interactive': 2.4, 'structure': 3.8, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 26s | total: 2551s
+
+--- [175/256] S+D+P+E+R_a86b ---
+  Config: ['sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: js_dom_manipulation (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.8, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 2551s
+
+--- [176/256] L+S_8003 ---
+  Config: ['llm.enabled', 'sdt.enabled']
+  Topic: js_events (5 turns)
+  5/5 ok | avg quality: 17.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.0, 'clarity': 2.8, 'interactive': 3.0, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.8}
+  time: 29s | total: 2580s
+
+--- PROGRESS: 176/256 done | ETA: 20min ---
+
+
+--- [177/256] L+F+E+R_ec2d ---
+  Config: ['llm.enabled', 'flow.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: html_css_layout (5 turns)
+  5/5 ok | avg quality: 16.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 3, 'suggest': 2}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 2.6, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.8}
+  time: 29s | total: 2609s
+
+--- [178/256] L+T+D+E_da1b ---
+  Config: ['llm.enabled', 'ttm.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: css_flexbox (5 turns)
+  5/5 ok | avg quality: 17.2/24 | llm: 5/5
+  steps: 4/5 | questions: 5/5
+  actions: {'challenge': 2, 'scaffold': 2, 'probe': 1}
+  dimensions: {'relevance': 3.6, 'clarity': 2.8, 'interactive': 2.8, 'structure': 3.4, 'personalization': 2.6, 'encouragement': 2.0}
+  time: 28s | total: 2638s
+
+--- [179/256] L+T_d0cf ---
+  Config: ['llm.enabled', 'ttm.enabled']
+  Topic: react_components (5 turns)
+  5/5 ok | avg quality: 16.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'scaffold': 4}
+  dimensions: {'relevance': 3.2, 'clarity': 2.8, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 24s | total: 2662s
+
+--- [180/256] F+D+E+R_e15a ---
+  Config: ['flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: react_state (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 2, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 2662s
+
+--- [181/256] T+F+D+P+R_c8ee ---
+  Config: ['ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: node_npm_basics (5 turns)
+  5/5 ok | avg quality: 13.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 2, 'pulse': 1, 'probe': 1, 'reflect': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 2663s
+
+--- [182/256] L+S+F+R_b3cf ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'relational_safety.enabled']
+  Topic: array_vs_linkedlist (5 turns)
+  5/5 ok | avg quality: 20.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.8, 'clarity': 3.2, 'interactive': 3.6, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 3.0}
+  time: 27s | total: 2690s
+
+--- [183/256] T+S+F+D+P+R_d7ee ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: stack_queue (5 turns)
+  5/5 ok | avg quality: 12.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 1, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.0, 'structure': 1.0, 'personalization': 0.8, 'encouragement': 1.6}
+  time: 1s | total: 2690s
+
+--- [184/256] T+F+D_6a5c ---
+  Config: ['ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled']
+  Topic: hash_table (5 turns)
+  5/5 ok | avg quality: 14.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'scaffold': 1, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.0}
+  time: 1s | total: 2691s
+
+--- [185/256] S+F+D+P+E_43ec ---
+  Config: ['sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: binary_tree (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 2691s
+
+--- [186/256] L+S+F+P+E_f2db ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: graph_basics (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.2, 'clarity': 2.4, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 29s | total: 2721s
+
+--- [187/256] L+T+S+F+P+R_13b2 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: sorting_algorithms (5 turns)
+  5/5 ok | avg quality: 16.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 2, 'pulse': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 2.8, 'structure': 4.0, 'personalization': 2.8, 'encouragement': 1.0}
+  time: 27s | total: 2748s
+
+--- [188/256] S+F_070b ---
+  Config: ['sdt.enabled', 'flow.enabled']
+  Topic: recursion_basics (5 turns)
+  5/5 ok | avg quality: 15.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.8, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 2749s
+
+--- [189/256] S+F+D_e40c ---
+  Config: ['sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled']
+  Topic: dynamic_programming_intro (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 2749s
+
+--- [190/256] L+R_0ba5 ---
+  Config: ['llm.enabled', 'relational_safety.enabled']
+  Topic: binary_search (5 turns)
+  5/5 ok | avg quality: 16.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 3, 'suggest': 1, 'reflect': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.4, 'interactive': 2.4, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 32s | total: 2781s
+
+--- [191/256] L+T+S_ec02 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled']
+  Topic: two_pointers (5 turns)
+  5/5 ok | avg quality: 15.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 2}
+  dimensions: {'relevance': 2.6, 'clarity': 2.2, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 32s | total: 2814s
+
+--- [192/256] P+E+R_ba20 ---
+  Config: ['sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: sliding_window (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 3}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 2814s
+
+--- PROGRESS: 192/256 done | ETA: 16min ---
+
+
+--- [193/256] T+S+F+D+P_93ef ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: bfs_dfs (5 turns)
+  5/5 ok | avg quality: 12.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 1, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 2.8, 'structure': 0.8, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 2815s
+
+--- [194/256] L+T+F+P+E_2020 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: greedy_algorithms (5 turns)
+  5/5 ok | avg quality: 17.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'pulse': 1, 'scaffold': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 3.0, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.6}
+  time: 30s | total: 2845s
+
+--- [195/256] L+S+F+P+E+R_03b6 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: time_complexity (5 turns)
+  5/5 ok | avg quality: 17.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.6, 'clarity': 3.0, 'interactive': 2.8, 'structure': 4.0, 'personalization': 2.4, 'encouragement': 1.4}
+  time: 34s | total: 2879s
+
+--- [196/256] T+S+D+R_0fe6 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: sql_select (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 2, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 2879s
+
+--- [197/256] L+T+S+D_4ffc ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled']
+  Topic: sql_joins (5 turns)
+  5/5 ok | avg quality: 17.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.2, 'encouragement': 1.2}
+  time: 30s | total: 2909s
+
+--- [198/256] L+P_d90c ---
+  Config: ['llm.enabled', 'sovereignty_pulse.enabled']
+  Topic: sql_indexes (5 turns)
+  5/5 ok | avg quality: 18.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 1, 'suggest': 2, 'scaffold': 2}
+  dimensions: {'relevance': 3.4, 'clarity': 3.2, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 2.2}
+  time: 34s | total: 2943s
+
+--- [199/256] D_d6b8 ---
+  Config: ['diagnostic_engine.enabled']
+  Topic: nosql_intro (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 1, 'suggest': 3, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.6}
+  time: 1s | total: 2944s
+
+--- [200/256] T+F_6671 ---
+  Config: ['ttm.enabled', 'flow.enabled']
+  Topic: database_design (5 turns)
+  5/5 ok | avg quality: 14.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 4, 'scaffold': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 2944s
+
+--- [201/256] L+F+P_a43b ---
+  Config: ['llm.enabled', 'flow.enabled', 'sovereignty_pulse.enabled']
+  Topic: git_basics (5 turns)
+  5/5 ok | avg quality: 16.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 2, 'reflect': 1, 'suggest': 2}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 2.4, 'structure': 4.0, 'personalization': 2.4, 'encouragement': 1.4}
+  time: 28s | total: 2973s
+
+--- [202/256] T+S+F+D+P+E_8e92 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: git_branching (5 turns)
+  5/5 ok | avg quality: 13.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 2, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.0}
+  time: 1s | total: 2973s
+
+--- [203/256] L+S+F+P_ed93 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled']
+  Topic: linux_basics (5 turns)
+  5/5 ok | avg quality: 18.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.6, 'clarity': 3.0, 'interactive': 3.0, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 2.0}
+  time: 32s | total: 3005s
+
+--- [204/256] L+T+D+P+E+R_cbf6 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: docker_intro (5 turns)
+  5/5 ok | avg quality: 17.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 2, 'scaffold': 1, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 3.0, 'interactive': 2.6, 'structure': 3.8, 'personalization': 2.4, 'encouragement': 2.4}
+  time: 30s | total: 3035s
+
+--- [205/256] L+F+D+E_0008 ---
+  Config: ['llm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: rest_api_design (5 turns)
+  5/5 ok | avg quality: 17.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 2, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.8}
+  time: 32s | total: 3067s
+
+--- [206/256] D+E+R_99bc ---
+  Config: ['diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: cli_tools (5 turns)
+  5/5 ok | avg quality: 15.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 3, 'suggest': 1, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.6}
+  time: 1s | total: 3068s
+
+--- [207/256] L+S+D+P_794b ---
+  Config: ['llm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: memory_management (5 turns)
+  5/5 ok | avg quality: 18.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 3.8, 'clarity': 3.2, 'interactive': 3.0, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.6}
+  time: 30s | total: 3098s
+
+--- [208/256] F+D+E_2414 ---
+  Config: ['flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: process_thread (5 turns)
+  5/5 ok | avg quality: 14.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 1, 'suggest': 3, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.0}
+  time: 1s | total: 3099s
+
+--- PROGRESS: 208/256 done | ETA: 12min ---
+
+
+--- [209/256] T+D+E+R_8261 ---
+  Config: ['ttm.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: network_protocols (5 turns)
+  5/5 ok | avg quality: 14.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.0, 'structure': 1.0, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 3099s
+
+--- [210/256] T+S+P+R_8205 ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: http_https (5 turns)
+  5/5 ok | avg quality: 12.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 4, 'pulse': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 2.8, 'structure': 0.8, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 3100s
+
+--- [211/256] L+T+F+D+E_c853 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: os_concepts (5 turns)
+  5/5 ok | avg quality: 15.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'scaffold': 1, 'probe': 1}
+  dimensions: {'relevance': 2.6, 'clarity': 2.4, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 30s | total: 3129s
+
+--- [212/256] L+T+F+D+R_6c20 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: compiler_vs_interpreter (5 turns)
+  5/5 ok | avg quality: 17.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 4, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 3.0, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 2.0}
+  time: 29s | total: 3158s
+
+--- [213/256] S+F+P+R_1756 ---
+  Config: ['sdt.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: python_beginner_1 (6 turns)
+  6/6 ok | avg quality: 14.5/24 | llm: 0/6
+  steps: 0/6 | questions: 6/6
+  actions: {'reflect': 6}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.17, 'structure': 1.17, 'personalization': 0.83, 'encouragement': 2.33}
+  time: 1s | total: 3159s
+
+--- [214/256] L+D+E+R_46d9 ---
+  Config: ['llm.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_beginner_2 (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 2, 'reflect': 1, 'suggest': 1, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 2.4, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.8}
+  time: 31s | total: 3190s
+
+--- [215/256] S+P+E+R_e4c9 ---
+  Config: ['sdt.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_beginner_3 (5 turns)
+  5/5 ok | avg quality: 15.8/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 2.2, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 3190s
+
+--- [216/256] L+T+S+D+P+E_5af5 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: python_variables_deep (5 turns)
+  5/5 ok | avg quality: 16.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 2, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.6, 'interactive': 2.2, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.2}
+  time: 28s | total: 3219s
+
+--- [217/256] L+T+S+D+E+R_3509 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_functions (5 turns)
+  5/5 ok | avg quality: 15.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 4, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.4, 'interactive': 3.0, 'structure': 4.0, 'personalization': 2.2, 'encouragement': 1.0}
+  time: 30s | total: 3249s
+
+--- [218/256] F+D+P+R_330b ---
+  Config: ['flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: python_lists_dicts (5 turns)
+  5/5 ok | avg quality: 14.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 1, 'suggest': 3, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 3250s
+
+--- [219/256] L+T+D+P+R_babd ---
+  Config: ['llm.enabled', 'ttm.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: python_oop_basics (5 turns)
+  5/5 ok | avg quality: 13.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 3, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 2.6, 'clarity': 2.0, 'interactive': 2.0, 'structure': 4.0, 'personalization': 2.0, 'encouragement': 1.0}
+  time: 27s | total: 3276s
+
+--- [220/256] L+S+F_808a ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled']
+  Topic: python_modules (5 turns)
+  5/5 ok | avg quality: 18.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.6, 'clarity': 2.8, 'interactive': 3.0, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.6}
+  time: 27s | total: 3303s
+
+--- [221/256] L+D+P+E+R_596d ---
+  Config: ['llm.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_file_io (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 2, 'reflect': 1, 'suggest': 1, 'probe': 1}
+  dimensions: {'relevance': 2.6, 'clarity': 2.4, 'interactive': 2.2, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.2}
+  time: 27s | total: 3330s
+
+--- [222/256] L+T+P+E_ce4d ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: python_exceptions (5 turns)
+  5/5 ok | avg quality: 16.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'pulse': 1, 'scaffold': 3}
+  dimensions: {'relevance': 3.6, 'clarity': 2.8, 'interactive': 2.2, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.2}
+  time: 27s | total: 3357s
+
+--- [223/256] S+D+E+R_7fed ---
+  Config: ['sdt.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: python_debugging (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 3358s
+
+--- [224/256] T+S+F+D+E_3f2d ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: python_string_methods (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 1/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 3, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 2.0, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 3358s
+
+--- PROGRESS: 224/256 done | ETA: 8min ---
+
+
+--- [225/256] L+T+P_dd3b ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sovereignty_pulse.enabled']
+  Topic: js_basics (5 turns)
+  5/5 ok | avg quality: 14.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 2, 'pulse': 1, 'scaffold': 2}
+  dimensions: {'relevance': 2.4, 'clarity': 2.2, 'interactive': 2.4, 'structure': 4.0, 'personalization': 2.4, 'encouragement': 1.0}
+  time: 25s | total: 3384s
+
+--- [226/256] D+R_eee6 ---
+  Config: ['diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: js_functions (5 turns)
+  5/5 ok | avg quality: 15.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 3, 'reflect': 1, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.6}
+  time: 1s | total: 3384s
+
+--- [227/256] T+P+R_b8d9 ---
+  Config: ['ttm.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: js_arrays (5 turns)
+  5/5 ok | avg quality: 12.6/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'pulse': 1, 'scaffold': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.0, 'structure': 1.0, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 3385s
+
+--- [228/256] L+T+S+F+D+P_4622 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: js_dom_manipulation (5 turns)
+  5/5 ok | avg quality: 16.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 2, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.0, 'clarity': 2.6, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.2}
+  time: 28s | total: 3413s
+
+--- [229/256] L+T+F+D+P+R_f338 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: js_events (5 turns)
+  5/5 ok | avg quality: 16.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 2, 'scaffold': 1, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 2.8, 'interactive': 2.6, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.0}
+  time: 26s | total: 3439s
+
+--- [230/256] T+D+P+R_1e51 ---
+  Config: ['ttm.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: html_css_layout (5 turns)
+  5/5 ok | avg quality: 14.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 3, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 3440s
+
+--- [231/256] L+S+P+R_1435 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: css_flexbox (5 turns)
+  5/5 ok | avg quality: 18.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.8, 'clarity': 3.0, 'interactive': 3.4, 'structure': 3.8, 'personalization': 3.0, 'encouragement': 1.0}
+  time: 33s | total: 3473s
+
+--- [232/256] L+F_bd76 ---
+  Config: ['llm.enabled', 'flow.enabled']
+  Topic: react_components (5 turns)
+  5/5 ok | avg quality: 17.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 4, 'suggest': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 3.0, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 28s | total: 3501s
+
+--- [233/256] L+S+F+E_0983 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'excursion.enabled']
+  Topic: react_state (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.6, 'clarity': 2.8, 'interactive': 3.0, 'structure': 4.0, 'personalization': 2.0, 'encouragement': 1.2}
+  time: 27s | total: 3528s
+
+--- [234/256] T+F+P+E_ff35 ---
+  Config: ['ttm.enabled', 'flow.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: node_npm_basics (5 turns)
+  5/5 ok | avg quality: 13.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 1, 'pulse': 1, 'scaffold': 2}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 3529s
+
+--- [235/256] S+F+D+P+E+R_97b9 ---
+  Config: ['sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: array_vs_linkedlist (5 turns)
+  5/5 ok | avg quality: 14.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.0, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 3529s
+
+--- [236/256] L+T+F+E_2768 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'excursion.enabled']
+  Topic: stack_queue (5 turns)
+  5/5 ok | avg quality: 17.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 4, 'scaffold': 1}
+  dimensions: {'relevance': 3.2, 'clarity': 3.0, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.2, 'encouragement': 1.4}
+  time: 23s | total: 3553s
+
+--- [237/256] D+E_019a ---
+  Config: ['diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: hash_table (5 turns)
+  5/5 ok | avg quality: 14.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 1, 'suggest': 3, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.0}
+  time: 1s | total: 3553s
+
+--- [238/256] T+S+D+E+R_b04b ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: binary_tree (5 turns)
+  5/5 ok | avg quality: 15.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 2, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.8}
+  time: 1s | total: 3554s
+
+--- [239/256] L+T+S+F+E_49d7 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'excursion.enabled']
+  Topic: graph_basics (5 turns)
+  5/5 ok | avg quality: 16.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 2}
+  dimensions: {'relevance': 3.0, 'clarity': 2.4, 'interactive': 2.6, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.6}
+  time: 28s | total: 3581s
+
+--- [240/256] T+F+E_0919 ---
+  Config: ['ttm.enabled', 'flow.enabled', 'excursion.enabled']
+  Topic: sorting_algorithms (5 turns)
+  5/5 ok | avg quality: 15.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'scaffold': 2}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 3582s
+
+--- PROGRESS: 240/256 done | ETA: 4min ---
+
+
+--- [241/256] L+S+R_9c82 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'relational_safety.enabled']
+  Topic: recursion_basics (5 turns)
+  5/5 ok | avg quality: 17.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 2.6, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 27s | total: 3609s
+
+--- [242/256] L+T+S+F+D+P+E_ba7b ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled']
+  Topic: dynamic_programming_intro (5 turns)
+  5/5 ok | avg quality: 16.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 2, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.4, 'interactive': 2.2, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.2}
+  time: 31s | total: 3639s
+
+--- [243/256] S+F+D+R_7889 ---
+  Config: ['sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'relational_safety.enabled']
+  Topic: binary_search (5 turns)
+  5/5 ok | avg quality: 15.2/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'reflect': 4, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.6, 'structure': 1.6, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 3640s
+
+--- [244/256] T+R_b646 ---
+  Config: ['ttm.enabled', 'relational_safety.enabled']
+  Topic: two_pointers (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'scaffold': 2}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.4}
+  time: 1s | total: 3640s
+
+--- [245/256] T+S+F+D+P+E+R_10ee ---
+  Config: ['ttm.enabled', 'sdt.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: sliding_window (5 turns)
+  5/5 ok | avg quality: 13.0/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 1, 'reflect': 2, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.6, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 1.8}
+  time: 1s | total: 3641s
+
+--- [246/256] L+D+P_d553 ---
+  Config: ['llm.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled']
+  Topic: bfs_dfs (5 turns)
+  5/5 ok | avg quality: 16.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 1, 'suggest': 3, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.4, 'interactive': 2.8, 'structure': 4.0, 'personalization': 2.6, 'encouragement': 1.4}
+  time: 27s | total: 3668s
+
+--- [247/256] L+T+F+D+P+E+R_279c ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: greedy_algorithms (5 turns)
+  5/5 ok | avg quality: 17.4/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 2, 'scaffold': 1, 'pulse': 1, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 3.0, 'interactive': 2.8, 'structure': 3.8, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 29s | total: 3697s
+
+--- [248/256] L+T+F+D+E+R_afc9 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: time_complexity (5 turns)
+  5/5 ok | avg quality: 15.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 1, 'scaffold': 3, 'probe': 1}
+  dimensions: {'relevance': 2.6, 'clarity': 2.4, 'interactive': 2.2, 'structure': 3.8, 'personalization': 2.6, 'encouragement': 1.4}
+  time: 29s | total: 3726s
+
+--- [249/256] L+S+F+E+R_1693 ---
+  Config: ['llm.enabled', 'sdt.enabled', 'flow.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: sql_select (5 turns)
+  5/5 ok | avg quality: 17.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'reflect': 5}
+  dimensions: {'relevance': 3.6, 'clarity': 2.8, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 26s | total: 3752s
+
+--- [250/256] F_946c ---
+  Config: ['flow.enabled']
+  Topic: sql_joins (5 turns)
+  5/5 ok | avg quality: 14.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 1, 'suggest': 4}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 3753s
+
+--- [251/256] L+F+D+P+R_7e1e ---
+  Config: ['llm.enabled', 'flow.enabled', 'diagnostic_engine.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: sql_indexes (5 turns)
+  5/5 ok | avg quality: 17.6/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 2, 'probe': 1}
+  dimensions: {'relevance': 3.4, 'clarity': 2.8, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.2, 'encouragement': 1.4}
+  time: 31s | total: 3784s
+
+--- [252/256] L+T+S+P+E+R_98f6 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'sovereignty_pulse.enabled', 'excursion.enabled', 'relational_safety.enabled']
+  Topic: nosql_intro (5 turns)
+  5/5 ok | avg quality: 18.2/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 1, 'pulse': 1}
+  dimensions: {'relevance': 3.8, 'clarity': 3.0, 'interactive': 3.0, 'structure': 4.0, 'personalization': 3.2, 'encouragement': 1.2}
+  time: 28s | total: 3812s
+
+--- [253/256] T+D_022d ---
+  Config: ['ttm.enabled', 'diagnostic_engine.enabled']
+  Topic: database_design (5 turns)
+  5/5 ok | avg quality: 14.4/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'challenge': 3, 'scaffold': 1, 'probe': 1}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.2, 'structure': 1.2, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 3812s
+
+--- [254/256] L+T+S+D+E_13a8 ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'diagnostic_engine.enabled', 'excursion.enabled']
+  Topic: git_basics (5 turns)
+  5/5 ok | avg quality: 16.0/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 2, 'reflect': 2, 'probe': 1}
+  dimensions: {'relevance': 2.8, 'clarity': 3.0, 'interactive': 2.4, 'structure': 4.0, 'personalization': 2.4, 'encouragement': 1.4}
+  time: 26s | total: 3838s
+
+--- [255/256] F+P+R_064a ---
+  Config: ['flow.enabled', 'sovereignty_pulse.enabled', 'relational_safety.enabled']
+  Topic: git_branching (5 turns)
+  5/5 ok | avg quality: 14.8/24 | llm: 0/5
+  steps: 0/5 | questions: 5/5
+  actions: {'scaffold': 2, 'suggest': 3}
+  dimensions: {'relevance': 4.0, 'clarity': 3.0, 'interactive': 3.4, 'structure': 1.4, 'personalization': 0.8, 'encouragement': 2.2}
+  time: 1s | total: 3839s
+
+--- [256/256] L+T+S+R_74de ---
+  Config: ['llm.enabled', 'ttm.enabled', 'sdt.enabled', 'relational_safety.enabled']
+  Topic: linux_basics (5 turns)
+  5/5 ok | avg quality: 16.8/24 | llm: 5/5
+  steps: 5/5 | questions: 5/5
+  actions: {'challenge': 3, 'reflect': 2}
+  dimensions: {'relevance': 3.0, 'clarity': 2.6, 'interactive': 2.8, 'structure': 4.0, 'personalization': 3.0, 'encouragement': 1.4}
+  time: 26s | total: 3865s
+
+--- PROGRESS: 256/256 done | ETA: 0min ---
+
+
+======================================================================
+FINAL REPORT
+======================================================================
+Total combos: 256
+Completed: 256
+Failed: 0
+Total time: 64.4 min
+Overall avg quality: 15.6/24
+Overall max quality: 20.2/24
+Overall min quality: 11.3/24
+
+--- Dimension Averages ---
+  clarity: 2.80/4
+  encouragement: 1.78/4
+  interactive: 2.97/4
+  personalization: 1.81/4
+  relevance: 3.55/4
+  structure: 2.69/4
+
+--- By Feature Group ---
+  LLM ON (any): 16.8/24 (n=128)
+  Behavior OFF (T=S=F=false): 15.8/24 (n=32)
+  Behavior ALL (T=S=F=true): 15.1/24 (n=32)
+  Safety ON (P/E/R): 15.6/24 (n=224)
+
+  LLM ON avg:  16.8/24 (n=128)
+  LLM OFF avg: 14.4/24 (n=128)
+
+  TTM ON avg:  15.2/24 (n=128)
+  TTM OFF avg: 16.1/24 (n=128)
+
+  Diagnostic ON avg:  15.6/24 (n=128)
+  Diagnostic OFF avg: 15.7/24 (n=128)
+
+--- Top 10 ---
+  1. L+S+F+R_b3cf  20.2/24  topic=array_vs_linkedlist  config=['llm', 'sdt', 'flow', 'relational_safety']
+  2. L+S+F+D+R_7443  19.0/24  topic=bfs_dfs  config=['llm', 'sdt', 'flow', 'diagnostic_engine', 'relational_safety']
+  3. L+S+D_fc17  18.6/24  topic=os_concepts  config=['llm', 'sdt', 'diagnostic_engine']
+  4. L+P_d90c  18.6/24  topic=sql_indexes  config=['llm', 'sovereignty_pulse']
+  5. L+S+F+P_ed93  18.6/24  topic=linux_basics  config=['llm', 'sdt', 'flow', 'sovereignty_pulse']
+  6. L+S+D+P_794b  18.6/24  topic=memory_management  config=['llm', 'sdt', 'diagnostic_engine', 'sovereignty_pulse']
+  7. L+S+D+E+R_37e9  18.3/24  topic=python_beginner_1  config=['llm', 'sdt', 'diagnostic_engine', 'excursion', 'relational_safety']
+  8. L+S+P_cf99  18.2/24  topic=node_npm_basics  config=['llm', 'sdt', 'sovereignty_pulse']
+  9. L+S+D+P+R_8ac6  18.2/24  topic=database_design  config=['llm', 'sdt', 'diagnostic_engine', 'sovereignty_pulse', 'relational_safety']
+  10. L+S+F+D+P_936c  18.2/24  topic=python_variables_deep  config=['llm', 'sdt', 'flow', 'diagnostic_engine', 'sovereignty_pulse']
+
+--- Bottom 10 ---
+  1. T+F+D+P+E_b3b2  12.4/24  topic=memory_management  config=['ttm', 'flow', 'diagnostic_engine', 'sovereignty_pulse', 'excursion']
+  2. T+F+P_da3d  12.4/24  topic=os_concepts  config=['ttm', 'flow', 'sovereignty_pulse']
+  3. T+D+P+E_2762  12.4/24  topic=js_arrays  config=['ttm', 'diagnostic_engine', 'sovereignty_pulse', 'excursion']
+  4. T+S+D+P+R_9ead  12.4/24  topic=python_lists_dicts  config=['ttm', 'sdt', 'diagnostic_engine', 'sovereignty_pulse', 'relational_safety']
+  5. T+S+P_fc0e  12.4/24  topic=array_vs_linkedlist  config=['ttm', 'sdt', 'sovereignty_pulse']
+  6. T+S+F+D+P+R_d7ee  12.4/24  topic=stack_queue  config=['ttm', 'sdt', 'flow', 'diagnostic_engine', 'sovereignty_pulse', 'relational_safety']
+  7. T+S+F+D+P_93ef  12.2/24  topic=bfs_dfs  config=['ttm', 'sdt', 'flow', 'diagnostic_engine', 'sovereignty_pulse']
+  8. T+S+P+R_8205  12.2/24  topic=http_https  config=['ttm', 'sdt', 'sovereignty_pulse', 'relational_safety']
+  9. T+F+P+E+R_aa4a  12.0/24  topic=array_vs_linkedlist  config=['ttm', 'flow', 'sovereignty_pulse', 'excursion', 'relational_safety']
+  10. T+S+F+P_9e65  11.3/24  topic=python_beginner_1  config=['ttm', 'sdt', 'flow', 'sovereignty_pulse']
+
+Report: D:\Claudedaoy\coherence\reports\exhaustive_all_configs_report.json
+Log: D:\Claudedaoy\coherence\reports\exhaustive_all_configs_test.log
+Duration: 64.4 min
