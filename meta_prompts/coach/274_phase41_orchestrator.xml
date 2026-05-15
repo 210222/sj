@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 41 -- 跨会话学习连续性</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>41</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>运行时模型恢复 / 老用户检测 / 跨会话上下文</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 41 的总控执行。
+    你的职责不是建用户身份系统，不是改 persistence schema，
+    而是利用已有 SessionPersistence，在新会话启动时恢复持久化的学习状态，
+    让同一 session_id 的用户回来时不需要从零开始。
+  </role>
+
+  <global_constraints>
+    1. 禁止修改 contracts/**；
+    2. 禁止修改 src/inner/**；
+    3. 禁止修改 src/middle/**；
+    4. 禁止修改 src/outer/**；
+    5. 禁止修改 provider / model / base_url；
+    6. 禁止修改 scoring 维度与 breakpoint probes；
+    7. 禁止引入用户身份系统/登录/多用户；
+    8. 恢复是可选的：失败就跳过，不阻塞主流程；
+    9. 对新用户无影响。
+  </global_constraints>
+
+  <execution_order>
+    <step>S41.1 → S41.2 → S41.3</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s41_1" name="运行时模型恢复">
+      <meta_prompt>275_s41_1_model_restore.xml</meta_prompt>
+    </stage>
+    <stage id="s41_2" name="老用户上下文注入">
+      <meta_prompt>276_s41_2_returning_context.xml</meta_prompt>
+    </stage>
+    <stage id="s41_3" name="回归与收口">
+      <meta_prompt>277_s41_3_regression_close.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+
+  <go_gate_policy>
+    <gate>GO_S41.1: 运行时模型可从持久化数据恢复，失败不阻塞。</gate>
+    <gate>GO_S41.2: 老用户上下文块在 LLM prompt 中正确注入。</gate>
+    <gate>GO_S41.3: full regression 通过，completion 归档。</gate>
+  </go_gate_policy>
+
+  <success_criteria>
+    <item>同一 session_id 回来时 TTM/SDT/BKT 恢复</item>
+    <item>LLM 优先续接上次教学内容</item>
+    <item>新用户不受影响</item>
+  </success_criteria>
+</prompt>

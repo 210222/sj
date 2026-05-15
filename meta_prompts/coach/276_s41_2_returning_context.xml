@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S41.2 -- 老用户上下文注入</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>41</phase>
+  <sub_stage>S41.2</sub_stage>
+  <sub_stage_name>_build_context_summary 跨会话块</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+  <role>在 _build_context_summary() 中为回头用户增加跨会话学习回顾块。</role>
+  <task>
+    1. 新增"上次学习回顾"块：上次学习目标、主题、掌握高的技能 top 3；
+    2. 只在 _is_returning_user == True 且 turn_count &lt;= 1 时注入；
+    3. 明确提示 LLM："优先从上次的进度续接教学"。
+  </task>
+  <quality_gates>
+    <gate>回头用户首轮 prompt 含"上次学习回顾"块</gate>
+    <gate>新用户 prompt 不含此块</gate>
+  </quality_gates>
+</prompt>

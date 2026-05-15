@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S41.1 -- 运行时模型恢复</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>41</phase>
+  <sub_stage>S41.1</sub_stage>
+  <sub_stage_name>从 SessionPersistence 恢复 TTM/SDT/BKT</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+  <role>在 CoachAgent 中新增 _restore_persisted_state()，在 act() 首次调用时从 SessionPersistence 恢复持久化的学习状态。</role>
+  <task>
+    1. 新增 _restore_persisted_state() 方法；
+    2. 检测 total_turns > 0 判断是否为回头用户；
+    3. 恢复 ttm_stage / autonomy/competence/relatedness / skill_masteries；
+    4. 所有恢复操作用 try/except 包裹；
+    5. 设置 self._is_returning_user = True；
+    6. 在 act() 中 turn_count == 0 时调用。
+  </task>
+  <quality_gates>
+    <gate>有数据时返回 True，无数据或异常时返回 False</gate>
+    <gate>对新用户无副作用</gate>
+  </quality_gates>
+</prompt>
