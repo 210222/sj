@@ -889,7 +889,10 @@ def _generate_cross_run_evidence():
     # 7. Phase 37: score trends analysis
     _generate_score_trends()
 
-    print(f"  Phase 36 cross-run evidence: 4 files generated (+ Phase 37: failure patterns + regression alerts + score trends)")
+    # 8. Phase 38: MRT variant comparison (when data available)
+    _generate_mrt_comparison()
+
+    print(f"  Phase 36 cross-run evidence: 4 files generated (+ Phase 37: failure patterns + regression alerts + score trends + Phase 38: MRT comparison)")
 
 
 def _generate_failure_aggregation() -> None:
@@ -948,6 +951,15 @@ def _generate_failure_aggregation() -> None:
     }
     with open(OUTPUT_DIR / "failure_patterns.json", "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
+
+
+def _generate_mrt_comparison() -> None:
+    """Phase 38: 产出 MRT variant comparison 报告."""
+    try:
+        from src.coach.mrt import generate_variant_comparison_report
+        generate_variant_comparison_report(str(OUTPUT_DIR))
+    except Exception:
+        pass
 
 
 def _generate_score_trends() -> None:

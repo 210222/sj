@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S38.4 -- 回归与收口</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>38</phase>
+  <sub_stage>S38.4</sub_stage>
+  <sub_stage_name>targeted tests / full regression / completion 归档</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 38 的最终回归与收口验证。
+  </role>
+
+  <task>
+    1. 补 targeted tests：MRT outcome 采集 / 策略变体分配 / 贝叶斯估计输出；
+    2. 验证 MRT 变体路径不影响非 MRT 变体的行为；
+    3. 运行 full regression；
+    4. 输出 completion 文档。
+  </task>
+
+  <quality_gates>
+    <gate>targeted tests 全绿</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+    <gate>completion 文档成功落盘</gate>
+  </quality_gates>
+</prompt>

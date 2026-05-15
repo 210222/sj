@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S38.3 -- 贝叶斯估计接入</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>38</phase>
+  <sub_stage>S38.3</sub_stage>
+  <sub_stage_name>BayesianEstimator 真实数据消费</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责让 BayesianEstimator 消费 S38.1 采集的真实 outcome 数据，
+    产出变体效果的后验分布。
+  </role>
+
+  <task>
+    1. 在 MRTExperiment 中增加 aggregate_outcomes() 方法；
+    2. 以变体为分组，汇总每个变体的 success/failure 计数；
+    3. 定义 outcome 阈值：has_steps + has_example + 非空转 = success；
+    4. 将聚合数据输入 BayesianEstimator.estimate_binary()；
+    5. 产出 reports/experience_audit/mrt_variant_comparison.json；
+    6. 报告格式：variant_id、mean、ci_95、effect_size、posterior_overlap、n。
+  </task>
+
+  <outcome_threshold>
+    <item>基本 success 条件：response_length >= 40 且 transport_status == "ok"</item>
+    <item>scaffold/suggest 的增强条件：has_steps == True 或 has_example == True</item>
+  </outcome_threshold>
+
+  <risk_analysis>
+    1. 小样本下后验分布不可信 — 报告 must 包含 n 和 min_sample 检查；
+    2. outcome 阈值设计不当导致变体差异被掩盖；
+    3. 贝叶斯估计结果被误读为因果结论。
+  </risk_analysis>
+
+  <quality_gates>
+    <gate>aggregate_outcomes() 正确按变体分组</gate>
+    <gate>mrt_variant_comparison.json 包含 effect_size / ci_95 / posterior_overlap</gate>
+    <gate>小样本时报告明确标注 sample_size_warning</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>BayesianEstimator 基于真实数据产出估计</item>
+    <item>变体对比报告可机器读取</item>
+  </success_criteria>
+</prompt>

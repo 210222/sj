@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S38.1 -- Outcome 采集</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>38</phase>
+  <sub_stage>S38.1</sub_stage>
+  <sub_stage_name>MRT assignment → outcome 关联与持久化</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责给 MRT 补上 outcome 采集链路。
+    当前 MRT 分配变体后没有记录任何教学效果数据，本阶段的目标是让每次变体分配对应可度量的 outcome。
+  </role>
+
+  <task>
+    1. 在 MRTExperiment 中增加 record_outcome() 方法；
+    2. 在 CoachAgent.act() 返回前，将本轮 MRT assignment 与 outcome 信号关联；
+    3. 采集的 outcome 信号包括：
+       - response_length（payload statement 长度，代理指标）
+       - has_steps（是否产出结构化步骤）
+       - has_example（是否包含示例/类比）
+       - transport_status（LLM 调用是否成功）
+    4. 将 outcome 写入 SQLite（复用 Phase 36 的 observability 表或新建轻量表）；
+    5. 不改 MRT 现有 assign() 逻辑。
+  </task>
+
+  <outcome_note>
+    outcome 信号只采集原始特征，不在此处计算教学评分。
+    outcome 与 experience audit scoring 是两个独立语义层。
+  </outcome_note>
+
+  <risk_analysis>
+    1. outcome 字段与 scoring 维度产生语义耦合 — 只采集原始信号，不在此计算教学评分；
+    2. 持久化失败阻塞主流程 — try/except 保护。
+  </risk_analysis>
+
+  <quality_gates>
+    <gate>每次 MRT assignment 伴随 outcome 信号被记录</gate>
+    <gate>outcome 数据可被 SQL 查询聚合</gate>
+    <gate>主流程不因 outcome 采集失败而中断</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>MRT 变体与 outcome 的关联链路闭合</item>
+    <item>outcome 信号不依赖体验审计评分维度</item>
+  </success_criteria>
+</prompt>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 38 -- 教学策略 A/B 测试框架</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>38</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>MRT outcome 闭环 / 策略变体 / 贝叶斯估计</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 38 的总控执行。
+    你的职责不是新建实验平台，不是替换策略选择逻辑，也不是做强化学习，
+    而是将 Phase 7 已存在的 MRT 框架收口成可实际运行的教学策略 A/B 对比系统。
+    你必须严格按子阶段串行推进，任何阶段未 GO，禁止进入下一阶段。
+  </role>
+
+  <global_constraints>
+    1. 禁止修改 contracts/**；
+    2. 禁止修改 src/inner/**；
+    3. 禁止修改 src/middle/**；
+    4. 禁止修改 src/outer/**；
+    5. 禁止修改 provider / model / base_url；
+    6. 禁止修改 Phase 32 scoring 维度与 breakpoint probes；
+    7. 禁止替换 composer 的策略选择逻辑；
+    8. 禁止引入多臂老虎机、强化学习等超出当前架构能力的框架；
+    9. 子阶段严格串行，未 GO 不得进入下一阶段。
+  </global_constraints>
+
+  <execution_order>
+    <step>S38.1 → S38.2 → S38.3 → S38.4</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s38_1" name="Outcome 采集">
+      <meta_prompt>266_s38_1_outcome_collection.xml</meta_prompt>
+    </stage>
+    <stage id="s38_2" name="策略变体扩展">
+      <meta_prompt>267_s38_2_strategy_variants.xml</meta_prompt>
+    </stage>
+    <stage id="s38_3" name="贝叶斯估计接入">
+      <meta_prompt>268_s38_3_bayesian_estimation.xml</meta_prompt>
+    </stage>
+    <stage id="s38_4" name="回归与收口">
+      <meta_prompt>269_s38_4_regression_close.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+
+  <required_outputs>
+    <item>MRT outcome 采集链路</item>
+    <item>strategy 级变体定义</item>
+    <item>BayesianEstimator 真实数据接入</item>
+    <item>reports/experience_audit/mrt_variant_comparison.json</item>
+    <item>reports/phase38_mrt_ab_framework_execution_plan.md</item>
+    <item>reports/phase38_mrt_ab_framework_completion.md</item>
+  </required_outputs>
+
+  <risk_analysis>
+    1. 将 MRT 从 style 扩展到 strategy 后，安全门禁可能被绕过；
+    2. outcome 采集与 experience audit 评分维度产生语义耦合；
+    3. BayesianEstimator 在小样本下不稳定，误判变体效果；
+    4. strategy 变体覆盖 action_type 时与 composer 的 override 链冲突。
+  </risk_analysis>
+
+  <go_gate_policy>
+    <gate>GO_S38.1: MRT assignment 与本轮 outcome 信号已关联并持久化。</gate>
+    <gate>GO_S38.2: strategy 级变体可被分配，安全门禁行为不变。</gate>
+    <gate>GO_S38.3: BayesianEstimator 基于真实 outcome 数据产出后验分布。</gate>
+    <gate>GO_S38.4: targeted tests + full regression 通过，completion 归档。</gate>
+  </go_gate_policy>
+
+  <quality_gates>
+    <gate>不得修改 contracts/**、src/inner/**、src/middle/**、src/outer/**</gate>
+    <gate>不得修改 provider / model / base_url</gate>
+    <gate>targeted tests 全绿</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>MRT 从"骨架存在"升级为"可运行可度量可比较"</item>
+    <item>变体效果有真实数据支持的贝叶斯后验</item>
+    <item>安全门禁在所有变体路径下仍完整运行</item>
+  </success_criteria>
+</prompt>

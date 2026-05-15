@@ -382,6 +382,32 @@ class CoachAgent:
             cfg = MRTConfig.from_dict(mrt_cfg)
             self._mrt = MRTExperiment(config=cfg)
 
+    def _record_mrt_outcome_if_needed(self, result: dict) -> None:
+        """S38.1: 当 MRT 启用且有变体分配时，记录 outcome 信号."""
+        try:
+            mrt_assign = result.get("mrt_assignment")
+            if not mrt_assign or not mrt_assign.get("is_variant"):
+                return
+            payload = result.get("payload", {})
+            stmt = str(payload.get("statement", "") or "")
+            example_kw = ["例如", "比如", "示例", "举个例子", "代码", "code", "print", "def "]
+            step_kw = ["步骤", "第1", "首先", "step", "Step", "第一"]
+            from src.coach.mrt import MRTOutcome
+            outcome = MRTOutcome(
+                variant_id=mrt_assign.get("variant_id", ""),
+                trace_id=result.get("trace_id", ""),
+                session_id=self.session_id,
+                action_type=result.get("action_type", ""),
+                response_length=len(stmt),
+                has_steps=any(kw in stmt for kw in step_kw),
+                has_example=any(kw in stmt for kw in example_kw),
+                transport_status="ok",
+            )
+            if self._mrt:
+                self._mrt.record_outcome(outcome)
+        except Exception:
+            pass  # outcome 记录失败不阻塞主流程
+
     # ── Phase 7 接口 ─────────────────────────────────────────────
 
     def run_diagnostics(self, treatment_covariates: list[dict] | None = None,
@@ -958,8 +984,17 @@ class CoachAgent:
                 )
                 if assignment.is_variant:
                     packet["mrt_variant"] = assignment.to_dict()
-                    if "payload" in packet:
+                    if assignment.dimension == "style" and "payload" in packet:
                         packet["payload"]["style_delta"] = assignment.delta
+                    # S38.2: strategy 变体覆盖 action_type（安全门禁保护）
+                    if assignment.dimension == "strategy":
+                        current_at = packet.get("action_type", "")
+                        if current_at not in MRTExperiment.PROTECTED_ACTION_TYPES:
+                            override = self._mrt.get_strategy_override(assignment)
+                            if override:
+                                packet["action_type"] = override
+                                if "payload" in packet:
+                                    packet["payload"]["mrt_strategy_variant"] = assignment.variant_id
                 packet["mrt_assignment"] = assignment.to_dict()
 
         # 6. 调用治理管线（包裹 fallback，异常时返回安全降级包）
@@ -1255,6 +1290,8 @@ class CoachAgent:
         awakening = self._build_awakening()
         if awakening and self._turn_count == 1:
             result["awakening"] = awakening
+        # Phase 38 S38.1: MRT outcome 采集
+        self._record_mrt_outcome_if_needed(result)
         return result
 
     # ── V18.8 脉冲 ──────────────────────────────────────────────

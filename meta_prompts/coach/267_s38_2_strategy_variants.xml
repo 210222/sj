@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S38.2 -- 策略变体扩展</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>38</phase>
+  <sub_stage>S38.2</sub_stage>
+  <sub_stage_name>从 style delta 扩展到策略级变体</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责将 MRT 从仅有两个 style 变体，扩展到支持策略级变体。
+    策略变体的含义是：对同一用户状态，系统可以选择不同的 action_type 路径。
+  </role>
+
+  <task>
+    1. 在 MRTExperiment.VARIANTS 中增加 strategy 维度变体；
+    2. 定义 strategy 变体的行为：当被分配时，可覆盖 composer 产出的 action_type；
+    3. 策略变体示例：
+       - scaffold_first（默认）
+       - suggest_first（将 scaffold 替换为 suggest）
+    4. 安全门禁不变：pulse、precedent_intercept、counterfactual block 不可被 strategy 变体覆盖；
+    5. 高风险 action_type（challenge、probe）不参与 strategy 变体；
+    6. 所有变体路径均保留完整 observability 字段。
+  </task>
+
+  <must_not_override>
+    <item>pulse 注入</item>
+    <item>precedent_intercept 的 defer 降级</item>
+    <item>counterfactual 的 block 降级</item>
+    <item>diagnostic_probe 覆盖</item>
+  </must_not_override>
+
+  <risk_analysis>
+    1. strategy 变体覆盖 action_type 可能绕过 composer 的安全约束；
+    2. 变体数量增加导致样本分散；
+    3. 变体路径与默认路径的 observability 产生语义不一致。
+  </risk_analysis>
+
+  <quality_gates>
+    <gate>strategy 变体被分配并记录到 outcome</gate>
+    <gate>pulse/precedent/counterfactual 行为未被 strategy 变体影响</gate>
+    <gate>所有变体路径 observability 字段完整</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>系统可对比同一用户状态下的不同策略路径</item>
+    <item>安全约束不被变体绕过</item>
+  </success_criteria>
+</prompt>
