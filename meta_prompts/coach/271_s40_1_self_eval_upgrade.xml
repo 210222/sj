@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S40.1 -- Self-Eval 升级</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>40</phase>
+  <sub_stage>S40.1</sub_stage>
+  <sub_stage_name>从单轮二元标记升级为累积策略质量评估</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责将当前 _self_eval（单轮策略有效/无效二元标记）升级为基于 MRT outcome 的累积策略质量评估。
+    数据来源是 Phase 38 的 mrt_outcomes 表，输出是每种 action_type 的有效率与结构率。
+  </role>
+
+  <task>
+    1. 在 MRTExperiment 中增加静态方法 get_strategy_quality(min_samples=5)；
+    2. 按 action_type 分组统计：
+       - effective_rate（transport=ok 且 response_length≥40 的比例）
+       - structured_rate（has_steps 的比例）
+       - avg_length
+       - n（样本数）
+    3. 仅返回 n ≥ min_samples 的 action_type，防止小样本误导；
+    4. 查询最近的 200 条 outcome，避免全表扫描；
+    5. 失败（表不存在/无数据）时返回空 dict，不抛异常。
+  </task>
+
+  <quality_gates>
+    <gate>数据充足时返回每种 action_type 的有效率</gate>
+    <gate>数据不足或异常时返回空 dict</gate>
+    <gate>有 sample_size_warning 语义</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>累积策略质量评估可被 composer 直接消费</item>
+    <item>不受单轮波动影响</item>
+  </success_criteria>
+</prompt>

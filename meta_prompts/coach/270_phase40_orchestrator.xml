@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 40 -- 教学策略自评与自适应</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>40</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>MRT 回灌 / self-eval 升级 / composer 轻量偏好</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责 Phase 40 的总控执行。
+    你的职责不是新建评估系统，不是替换 composer，也不是引入强化学习，
+    而是把 Phase 38 MRT 闭环产出的策略效果数据，回灌到 composer 的策略选择中，
+    形成一条最轻量的"评估→偏好"回路。
+    你必须严格按子阶段串行推进，任何阶段未 GO，禁止进入下一阶段。
+  </role>
+
+  <global_constraints>
+    1. 禁止修改 contracts/**；
+    2. 禁止修改 src/inner/**；
+    3. 禁止修改 src/middle/**；
+    4. 禁止修改 src/outer/**；
+    5. 禁止修改 provider / model / base_url；
+    6. 禁止修改 scoring 维度与 breakpoint probes；
+    7. 禁止替换 composer 主逻辑；
+    8. 禁止引入强化学习/多臂老虎机；
+    9. MRT 偏好必须是软偏置，不能硬覆盖 action_type；
+    10. 子阶段严格串行，未 GO 不得进入下一阶段。
+  </global_constraints>
+
+  <execution_order>
+    <step>S40.1 → S40.2 → S40.3</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s40_1" name="Self-Eval 升级">
+      <meta_prompt>271_s40_1_self_eval_upgrade.xml</meta_prompt>
+    </stage>
+    <stage id="s40_2" name="MRT-Informed Composer 偏好">
+      <meta_prompt>272_s40_2_composer_adaptation.xml</meta_prompt>
+    </stage>
+    <stage id="s40_3" name="回归与收口">
+      <meta_prompt>273_s40_3_regression_close.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+
+  <required_outputs>
+    <item>MRTExperiment.get_strategy_quality()</item>
+    <item>PolicyComposer._apply_mrt_preference()</item>
+    <item>reports/phase40_strategy_adaptation_execution_plan.md</item>
+    <item>reports/phase40_strategy_adaptation_completion.md</item>
+  </required_outputs>
+
+  <go_gate_policy>
+    <gate>GO_S40.1: get_strategy_quality() 可基于真实 outcome 数据产出有效率。</gate>
+    <gate>GO_S40.2: _apply_mrt_preference() 仅作为软偏好，不破坏 composer 主链。</gate>
+    <gate>GO_S40.3: targeted tests + full regression 通过，completion 归档。</gate>
+  </go_gate_policy>
+
+  <quality_gates>
+    <gate>不得修改 contracts/**、src/inner/**、src/middle/**、src/outer/**</gate>
+    <gate>不得修改 provider / model / base_url</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>MRT outcome 数据可被 composer 消费</item>
+    <item>偏好是软的，不绕过安全约束</item>
+    <item>"评估→偏好"回路闭合</item>
+  </success_criteria>
+</prompt>

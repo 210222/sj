@@ -100,6 +100,9 @@ class PolicyComposer:
                     new_idx = max(0, min(len(levels) - 1, idx + (1 if adjust > 0 else -1)))
                     payload["difficulty"] = levels[new_idx]
 
+        # Phase 40: MRT-informed 策略偏好（软偏置，不硬覆盖）
+        action_type = self._apply_mrt_preference(action_type, intent)
+
         # Phase 25: 策略无效时切换教学模式
         if self_eval and self_eval.get("strategy_ineffective"):
             current = action_type
@@ -135,6 +138,41 @@ class PolicyComposer:
             "intent": intent or _DEFAULT_INTENT,
             "domain_passport": passport,
         }
+
+    @staticmethod
+    def _apply_mrt_preference(action_type: str, intent: str) -> str:
+        """Phase 40: 基于 MRT 累积 outcome 的轻量策略偏好。
+
+        仅在 MRT 数据充足时生效。优先考虑教学结构更有效的相近策略。
+        """
+        try:
+            from src.coach.mrt import MRTExperiment
+            quality = MRTExperiment.get_strategy_quality(min_samples=5)
+        except Exception:
+            return action_type
+
+        if not quality or action_type not in quality:
+            return action_type
+
+        current = quality[action_type]
+        pairs = [
+            ("scaffold", "suggest"),
+            ("suggest", "scaffold"),
+            ("challenge", "probe"),
+            ("probe", "challenge"),
+        ]
+        for src, dst in pairs:
+            if action_type != src or dst not in quality:
+                continue
+            alt = quality[dst]
+            if (
+                alt["effective_rate"] > current["effective_rate"] + 0.1
+                and alt["structured_rate"] > current["structured_rate"]
+                and alt["n"] >= 5
+                and current["n"] >= 5
+            ):
+                return dst
+        return action_type
 
     def _select_action_type(self, intent: str) -> str:
         """关键词→action_type 匹配。"""

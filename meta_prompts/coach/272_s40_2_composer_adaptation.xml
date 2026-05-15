@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S40.2 -- MRT-Informed Composer 偏好</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>40</phase>
+  <sub_stage>S40.2</sub_stage>
+  <sub_stage_name>轻量策略偏好权重 — 消费 get_strategy_quality()</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <role>
+    你负责在 composer 的策略选择中加入 MRT-informed 轻量偏好。
+    这不是硬覆盖，而是一个有约束的软偏置。
+  </role>
+
+  <task>
+    1. 在 PolicyComposer 中增加静态方法 _apply_mrt_preference(action_type, intent)；
+    2. 调用 get_strategy_quality() 获取当前累积质量；
+    3. 仅允许在以下策略对之间偏好切换：scaffold↔suggest、challenge↔probe；
+    4. 切换条件：两个 action_type 的 n≥5、备选 effective_rate 比当前高 0.1+、备选 structured_rate 比当前高；
+    5. 切换不可覆盖 pulse/precedent/counterfactual 的安全决策；
+    6. 方法置于 compose() 流程中 TTM/SDT/flow 之后、Phase 25 切换之前。
+  </task>
+
+  <must_not_override>
+    <item>pulse 注入</item>
+    <item>precedent_intercept 的 defer 降级</item>
+    <item>counterfactual 的 block 降级</item>
+    <item>diagnostic_probe</item>
+    <item>TTM/SDT 的安全约束</item>
+  </must_not_override>
+
+  <quality_gates>
+    <gate>偏好仅在数据充足时生效</gate>
+    <gate>偏好不覆盖安全约束</gate>
+    <gate>composer 主逻辑未被替换</gate>
+  </quality_gates>
+
+  <success_criteria>
+    <item>"评估→偏好"回路闭合</item>
+    <item>偏好是软的、可解释的、有约束的</item>
+  </success_criteria>
+</prompt>
