@@ -225,12 +225,12 @@ mrt:
   enabled: false
   estimation:
     confidence_level: 0.95
-    min_sample_per_variant: 10
+    min_sample_per_variant: 3          # Phase 43: 单用户场景适配 (原 10)
   outcome_metrics:
   - engagement_score
   - completion_rate
   - satisfaction_rating
-  randomization_rate: 0.2
+  randomization_rate: 0.5             # Phase 43: 单用户无对比感知, 50% 安全 (原 0.2)
   window_hours: 24
 precedent_intercept:
   action:

@@ -122,9 +122,9 @@ class MRTExperiment:
     """MRT 实验管理器。"""
 
     VARIANTS = [
-        # Style 变体（Phase 7 原有）
-        {"id": "A", "name": "鼓励型", "delta": 0.2, "dimension": "style"},
-        {"id": "B", "name": "反思型", "delta": -0.1, "dimension": "style"},
+        # Phase 43: style 变体暂禁用 — 单用户场景样本不足，先聚焦 strategy 维度
+        # {"id": "A", "name": "鼓励型", "delta": 0.2, "dimension": "style"},
+        # {"id": "B", "name": "反思型", "delta": -0.1, "dimension": "style"},
         # Strategy 变体（Phase 38 S38.2 新增）
         {"id": "S_scaffold_first", "name": "脚手架优先", "override_action_type": "scaffold", "dimension": "strategy"},
         {"id": "S_suggest_first", "name": "建议优先", "override_action_type": "suggest", "dimension": "strategy"},
