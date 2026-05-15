@@ -12,6 +12,8 @@ import { SettingsPanel } from './components/settings/SettingsPanel';
 import { TTMStageCard } from './components/dashboard/TTMStageCard';
 import { SDTEnergyRings } from './components/dashboard/SDTEnergyRings';
 import { GateShieldBadge } from './components/dashboard/GateShieldBadge';
+import { GatePipeline } from './components/admin/GatePipeline';
+import { AuditLogViewer } from './components/admin/AuditLogViewer';
 import { getUserDashboard } from './api/client';
 import type { TTMRadarData, SDTRingsData, UserDashboardResponse } from './types/api';
 import { TeachingStatus } from './components/TeachingStatus';
@@ -71,6 +73,7 @@ export function App() {
   const { getBlockingMode, recordPulse } = useAdaptivePulse(state.sessionId);
   const [pendingPulse, setPendingPulse] = useState<PulseEvent | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [adminMode, setAdminMode] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>('connecting');
   const [isLoading, setIsLoading] = useState(false);
   // Phase 13x: 仪表盘可视化数据
@@ -175,6 +178,8 @@ export function App() {
         memory_status: res.memory_status ?? undefined,
         options: (res.payload as any)?.options ?? undefined,
         awakening: res.awakening as ChatMessage['awakening'] ?? undefined,
+        // Phase 42: LLM observability
+        llm_observability: res.llm_observability ?? undefined,
       });
       if (res.ttm_stage) setTTMStage(res.ttm_stage as TTMStage);
       if (res.sdt_profile) setSDTProfile(res.sdt_profile);
@@ -291,6 +296,27 @@ export function App() {
             <div style={{ height: 'var(--space-md)' }} />
             {dashSDT && <SDTEnergyRings data={dashSDT} />}
             {dashFull && <TeachingStatus dashboard={dashFull} />}
+            <div style={{ height: 'var(--space-md)' }} />
+            {/* Phase 42: Admin toggle */}
+            <button
+              onClick={() => setAdminMode(!adminMode)}
+              style={{
+                padding: '6px 12px', fontSize: 12, cursor: 'pointer',
+                background: adminMode ? coachColors.sageGreen : 'transparent',
+                color: adminMode ? '#fff' : coachColors.deepMocha,
+                border: `1px solid ${coachColors.lavenderGray}`,
+                borderRadius: 'var(--radius-md)',
+              }}
+            >
+              {adminMode ? '关闭管理面板' : '管理面板'}
+            </button>
+            {adminMode && (
+              <div style={{ marginTop: 'var(--space-sm)' }}>
+                <GatePipeline summary={dashFull as Record<string, unknown> | null} />
+                <div style={{ height: 'var(--space-sm)' }} />
+                <AuditLogViewer />
+              </div>
+            )}
             <div style={{ height: 'var(--space-lg)' }} />
             <SettingsPanel />
           </div>

@@ -8,9 +8,9 @@ import { coachColors, semanticColors } from '../../styles/theme';
 import type { AdminAuditResponse } from '../../types/api';
 
 interface AuditLogViewerProps {
-  data: AdminAuditResponse;
-  onPageChange: (page: number) => void;
-  onSeverityChange: (severity: string) => void;
+  data?: AdminAuditResponse | null;
+  onPageChange?: (page: number) => void;
+  onSeverityChange?: (severity: string) => void;
   loading?: boolean;
 }
 
@@ -30,7 +30,7 @@ export function AuditLogViewer({
 
   const handleSeverity = useCallback((s: string) => {
     setSeverity(s);
-    onSeverityChange(s);
+    onSeverityChange?.(s);
   }, [onSeverityChange]);
 
   const logs = data?.logs ?? [];
@@ -125,7 +125,7 @@ export function AuditLogViewer({
         <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-sm)', marginTop: 'var(--space-md)' }}>
           <button
             disabled={page <= 1}
-            onClick={() => onPageChange(page - 1)}
+            onClick={() => onPageChange?.(page - 1)}
             style={{
               padding: 'var(--space-xs) var(--space-md)',
               border: `1px solid ${coachColors.lavenderGray}`,
@@ -143,7 +143,7 @@ export function AuditLogViewer({
           </span>
           <button
             disabled={page >= Math.ceil(total / pageSize)}
-            onClick={() => onPageChange(page + 1)}
+            onClick={() => onPageChange?.(page + 1)}
             style={{
               padding: 'var(--space-xs) var(--space-md)',
               border: `1px solid ${coachColors.lavenderGray}`,

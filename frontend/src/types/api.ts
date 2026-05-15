@@ -32,6 +32,49 @@ export interface ChatResponse {
   memory_status?: Record<string, unknown> | null;
   difficulty_contract?: Record<string, unknown> | null;
   awakening?: Record<string, unknown> | null;
+  // Phase 36: LLM observability
+  llm_observability?: LLMObservability | null;
+  // Phase 41: returning user
+  is_returning_user?: boolean;
+}
+
+export interface CacheObservability {
+  cache_eligible: boolean;
+  cache_eligibility_reason: string;
+  stable_prefix_hash: string;
+  stable_prefix_chars: number;
+  stable_prefix_share: number;
+  prefix_shape_version: string;
+}
+
+export interface RuntimeObservability {
+  path: string;
+  streaming: boolean;
+  latency_ms: number;
+  tokens_total: number;
+  tokens_prompt: number | null;
+  tokens_completion: number | null;
+  token_usage_available: boolean;
+  prompt_cache_hit_tokens: number | null;
+  prompt_cache_miss_tokens: number | null;
+  cost_usd: number | null;
+  transport_status: string;
+  finish_reason: string;
+}
+
+export interface LLMObservability {
+  cache: CacheObservability;
+  runtime: RuntimeObservability;
+  retention?: Record<string, unknown>;
+}
+
+export interface LLMRuntimeSummary {
+  avg_latency_ms: number;
+  cache_eligible_rate: number;
+  cache_hit_rate: number | null;
+  total_tokens: number;
+  total_cost_usd: number;
+  call_count: number;
 }
 
 export interface PulseEvent {
@@ -83,6 +126,11 @@ export interface UserDashboardResponse {
   progress: ProgressData;
   mastery_snapshot?: Record<string, unknown> | null;
   review_queue?: Array<Record<string, unknown>> | null;
+  // Phase 36-37: LLM runtime
+  llm_runtime_summary?: LLMRuntimeSummary | null;
+  session_llm_summary?: LLMRuntimeSummary | null;
+  // Phase 40: strategy quality
+  strategy_quality?: Record<string, { effective_rate: number; n: number; structured_rate: number }> | null;
 }
 
 export interface GateStatusItem {

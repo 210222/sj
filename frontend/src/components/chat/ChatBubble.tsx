@@ -115,6 +115,27 @@ export function ChatBubble({ message, onEnableRecommended, onSkipAwakening }: Ch
               已引用
             </span>
           )}
+          {/* Phase 42: LLM observability compact tags */}
+          {(message.llm_observability as any)?.runtime?.latency_ms > 0 && (
+            <span style={{ padding: '1px 6px', borderRadius: 8,
+              background: 'var(--color-warm-white)', color: coachColors.deepMocha, border: '1px solid var(--color-lavender-gray)' }}>
+              {(message.llm_observability as any).runtime.latency_ms < 1000
+                ? `${Math.round((message.llm_observability as any).runtime.latency_ms)}ms`
+                : `${((message.llm_observability as any).runtime.latency_ms / 1000).toFixed(1)}s`}
+            </span>
+          )}
+          {(message.llm_observability as any)?.cache?.cache_eligible && (
+            <span style={{ padding: '1px 6px', borderRadius: 8,
+              background: coachColors.sageGreen, color: '#fff', opacity: 0.8 }}>
+              缓存
+            </span>
+          )}
+          {(message.llm_observability as any)?.runtime?.cost_usd != null && (
+            <span style={{ padding: '1px 6px', borderRadius: 8,
+              background: coachColors.coralCandy, color: coachColors.deepMocha }}>
+              ${(message.llm_observability as any).runtime.cost_usd.toFixed(4)}
+            </span>
+          )}
         </div>
       )}
 

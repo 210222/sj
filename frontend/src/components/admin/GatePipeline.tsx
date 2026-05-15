@@ -11,7 +11,8 @@ import { coachColors, semanticColors } from '../../styles/theme';
 import type { AdminGatesResponse } from '../../types/api';
 
 interface GatePipelineProps {
-  data: AdminGatesResponse;
+  data?: AdminGatesResponse | null;
+  summary?: Record<string, unknown> | null;
 }
 
 const GATE_DESCRIPTIONS: Record<number, string> = {

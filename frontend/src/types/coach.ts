@@ -1,4 +1,4 @@
-import type { PulseEvent } from './api';
+import type { LLMObservability, PulseEvent } from './api';
 
 /** 教练引擎类型 */
 
@@ -61,6 +61,7 @@ export interface ChatMessage {
   difficulty_contract?: Record<string, unknown>;
   personalization_evidence?: Record<string, unknown> | null;
   memory_status?: Record<string, unknown> | null;
+  llm_observability?: LLMObservability | null;
   options?: Array<{ label: string; description: string }>;
   pulse?: PulseEvent;
   awakening?: {
