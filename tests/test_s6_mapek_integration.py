@@ -9,6 +9,7 @@ class TestMAPEKIntegration:
     def test_mapek_disabled_by_default(self):
         agent = CoachAgent(session_id="test_s6_int_disabled")
         result = agent.act("hello")
+        # mapek disabled by default in coach_defaults.yaml
         assert result["mapek_enabled"] is False
         assert result["phase6_integrated"] is False
         assert agent._monitor is None
@@ -19,7 +20,7 @@ class TestMAPEKIntegration:
         result = agent.act("give me a suggestion")
         assert "mapek_enabled" in result
         assert "phase6_integrated" in result
-        assert result["phase6_integrated"] is False  # default OFF
+        assert result["phase6_integrated"] is False  # mapek disabled by default
 
     def test_ceo_judge_returns_strategy(self):
         agent = CoachAgent(session_id="test_ceo")
