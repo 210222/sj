@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S42.1 -- API 类型与数据管道对齐</name>
+  <phase>42</phase><sub_stage>S42.1</sub_stage>
+  <before_state><file path="frontend/src/types/api.ts">ChatResponse 缺少 llm_observability</file></before_state>
+  <after_state><file path="frontend/src/types/">ChatResponse.llm_observability / UserDashboardResponse.llm_runtime_summary / ChatMessage.llm_observability 就位</file></after_state>
+  <implementation>
+    <modify file="frontend/src/types/api.ts"><add>CacheObservability / RuntimeObservability / LLMObservability / LLMRuntimeSummary 类型</add></modify>
+    <modify file="frontend/src/types/coach.ts"><add>ChatMessage.llm_observability</add></modify>
+  </implementation>
+</prompt>

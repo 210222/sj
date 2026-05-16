@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S39.1 -- API 路由修复</name>
+  <phase>39</phase>
+  <sub_stage>S39.1</sub_stage>
+  <before_state><file path="api/main.py:99">SPA fallback 在 include_router 之前注册，拦截所有 /api/v1/* 返回 404（19 tests fail）</file></before_state>
+  <after_state><file path="api/main.py">路由注册 → SPA fallback（含 health endpoint 在 fallback 之前），所有 API 端点可被 TestClient 正常访问</file></after_state>
+  <implementation>
+    <modify file="api/main.py"><move>@app.get("/{full_path:path}") 从 ~line 100 移到所有 include_router 之后</move></modify>
+    <modify file="api/main.py"><move>@app.get("/api/v1/health") 移到 SPA catch-all 之前</move></modify>
+  </implementation>
+  <go_gate>34/34 API 测试通过</go_gate>
+</prompt>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S37.1 -- cost_usd + SQLite 持久化</name>
+  <phase>37</phase><sub_stage>S37.1</sub_stage>
+  <before_state><file path="src/coach/llm/schemas.py">RuntimeObservability 有 cache hit/miss tokens 但无真实成本计算</file></before_state>
+  <after_state><file path="src/coach/llm/schemas.py">cost_usd 计算属性基于 DeepSeek 定价；dashboard_aggregator.py 有 SQLite 全量持久化 + 90 天自动清理</file></after_state>
+  <implementation>
+    <modify file="src/coach/llm/schemas.py"><add>cost_usd 计算属性：cache_hit=$0.07/M, cache_miss=$0.27/M, output=$1.10/M</add></modify>
+    <modify file="api/services/dashboard_aggregator.py"><add>_cleanup_old_observability(retention_days=90)</add></modify>
+  </implementation>
+  <go_gate>cost_usd 计算正确，SQLite 持久化 + 清理就绪</go_gate>
+</prompt>

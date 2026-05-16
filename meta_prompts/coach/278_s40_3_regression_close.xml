@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S40.3 -- 回归与收口</name>
+  <phase>40</phase><sub_stage>S40.3</sub_stage>
+  <before_state><file path="src/coach/mrt.py">get_strategy_quality() 已实现；composer._apply_mrt_preference() 已接线</file></before_state>
+  <after_state><expected_behavior>全量回归通过，策略自适应偏好不破坏 composer 主链</expected_behavior></after_state>
+  <quality_gates>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+    <gate>completion 文档落盘</gate>
+  </quality_gates>
+</prompt>

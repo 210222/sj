@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S37.2 -- 评分趋势 + 回归告警 + 失败热力图</name>
+  <phase>37</phase><sub_stage>S37.2</sub_stage>
+  <before_state><file path="run_experience_audit.py">audit 产出 scoring/all_turns/evidence 但无趋势、告警和模式分析</file></before_state>
+  <after_state><file path="reports/experience_audit/">score_trends.json / regression_alerts.json / failure_patterns.json 自动产出</file></after_state>
+  <implementation>
+    <modify file="run_experience_audit.py"><add>_generate_score_trends() / _generate_regression_alerts() / _generate_failure_patterns()</add></modify>
+  </implementation>
+  <go_gate>三个新 audit 报告自动产出</go_gate>
+</prompt>

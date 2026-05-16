@@ -144,6 +144,7 @@ class CoachAgent:
         self._current_atype: str = "suggest"
         self._prev_teaching: str = ""  # Phase 31: 上一轮教学内容
         self._current_atype: str = "suggest"
+        self._is_returning_user: bool = False  # Phase 41: 跨会话连续性
 
     # ── 配置访问 ────────────────────────────────────────────────
 
@@ -174,6 +175,51 @@ class CoachAgent:
         if all(m > 0.7 for m in masteries.values()):
             return {"level": "hard", "reason": "bkt_mastery"}
         return {"level": "medium", "reason": "bkt_mastery"}
+
+    def _restore_persisted_state(self) -> bool:
+        """Phase 41: 从 SessionPersistence 恢复跨会话学习状态。返回是否检测到老用户。"""
+        if self._persistence is None:
+            return False
+        try:
+            profile = self._persistence.get_profile()
+            total_turns = profile.get("total_turns", 0)
+            if total_turns == 0:
+                return False
+
+            # 恢复 TTM 阶段到运行时状态机
+            persisted_stage = profile.get("ttm_stage", "contemplation")
+            if self.ttm is not None and hasattr(self.ttm, "current_stage"):
+                try:
+                    self.ttm.current_stage = persisted_stage
+                except Exception:
+                    pass
+
+            # 恢复 SDT 分数到运行时评估器
+            persisted_autonomy = float(profile.get("autonomy", 0.5))
+            persisted_competence = float(profile.get("competence", 0.5))
+            persisted_relatedness = float(profile.get("relatedness", 0.5))
+            if self.sdt is not None:
+                try:
+                    self.sdt._autonomy = persisted_autonomy
+                    self.sdt._competence = persisted_competence
+                    self.sdt._relatedness = persisted_relatedness
+                except Exception:
+                    pass
+
+            # 恢复 BKT 掌握度到诊断引擎
+            skill_masteries = profile.get("skill_masteries", {})
+            if isinstance(skill_masteries, dict) and skill_masteries:
+                if self.diagnostic_engine is not None:
+                    try:
+                        for skill, mastery in skill_masteries.items():
+                            self.diagnostic_engine.store.update(skill, float(mastery))
+                    except Exception:
+                        pass
+
+            self._is_returning_user = True
+            return True
+        except Exception:
+            return False
 
     def _determine_llm_difficulty(self) -> str:
         """统一计算 LLM prompt 与 runtime contract 使用的 difficulty。"""
@@ -573,6 +619,35 @@ class CoachAgent:
                 lines.append(f"  本轮策略: {cur}")
                 lines.append(f"  切换原因: {reason}")
 
+        # Phase 41: 跨会话连续性 — 老用户上次学习回顾
+        if getattr(self, "_is_returning_user", False) and self._turn_count <= 1:
+            try:
+                if self._persistence:
+                    p = self._persistence.get_profile()
+                    goal = p.get("learning_goal", "")
+                    topic = p.get("current_topic", "")
+                    skills = self._persistence.get_skills_with_recency()
+                    summary_parts = []
+                    if goal:
+                        summary_parts.append(f"上次学习目标: {goal}")
+                    if topic:
+                        summary_parts.append(f"上次学习主题: {topic}")
+                    if skills:
+                        top_skills = sorted(
+                            skills.items(), key=lambda x: x[1].get("mastery", 0), reverse=True
+                        )[:3]
+                        skill_str = "; ".join(
+                            f"{s}(掌握{d['mastery']:.0%}, {d['days_elapsed']:.0f}天前)"
+                            for s, d in top_skills
+                        )
+                        summary_parts.append(f"掌握较高技能: {skill_str}")
+                    if summary_parts:
+                        lines.append("=== 上次学习回顾 ===")
+                        lines.append("用户是回头学习者，请优先从上次的进度续接教学，不要像第一次见面那样开场。")
+                        lines.extend(summary_parts)
+            except Exception:
+                pass
+
         # Phase 31: 上一轮教学内容
         prev_teach = getattr(self, "_prev_teaching", "")
         # 跨实例时从 persistence 读取
@@ -612,6 +687,10 @@ class CoachAgent:
         activation_result = self._handle_activation_intent(user_input)
         if activation_result:
             return activation_result
+
+        # 0.9 Phase 41: 跨会话状态恢复（仅首次调用生效）
+        if self._turn_count == 0:
+            self._restore_persisted_state()
 
         # 1. 解析意图
         intent = self._parse_intent(user_input)

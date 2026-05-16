@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S39.2 -- 测试断言对齐</name>
+  <phase>39</phase>
+  <sub_stage>S39.2</sub_stage>
+  <before_state><file path="tests/test_exhaustive_quality.py:39">test_models_disabled_return_none 断言 agent.ttm is None，但 config 已启用</file></before_state>
+  <after_state><file path="tests/">8 个测试文件断言不再假设 disabled 状态；keyword 路由测试改为 membership check</file></after_state>
+  <implementation>
+    <modify file="tests/test_exhaustive_quality.py"><update>models_disabled → models_enabled；difficulty_contract reason → "bkt_mastery"</update></modify>
+    <modify file="tests/test_coach_agent.py"><update>keyword 路由断言改用 membership check</update></modify>
+    <modify file="tests/test_composer_upgrade.py"><update>ttm/sdt 断言改为 not None</update></modify>
+    <modify file="tests/test_s6_mapek_integration.py"><update>mapek 断言改为 enabled</update></modify>
+  </implementation>
+  <go_gate>17/17 测试断言对齐完成</go_gate>
+</prompt>

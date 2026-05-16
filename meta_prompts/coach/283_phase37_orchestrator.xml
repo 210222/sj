@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 37 -- 观测与审计补齐</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>37</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>cost_usd / SQLite 持久化 / 评分趋势 / 回归告警</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <before_state>
+    <file path="src/coach/llm/schemas.py">RuntimeObservability 已有 tokens_prompt/tokens_completion/prompt_cache_hit_tokens/prompt_cache_miss_tokens，但 cost_proxy 是占位符，无真实 cost_usd</file>
+    <file path="api/services/dashboard_aggregator.py">_OBS_BUFFER 环形缓冲存在但无 SQLite 持久化，get_llm_runtime_history 不完整</file>
+    <file path="run_experience_audit.py">scoring 和 evidence 产出完善但无评分趋势、回归告警、失败热力图</file>
+    <numeric_anchor>1419 passed / 30 failed / 5 skipped (Phase 36 完成时)</numeric_anchor>
+  </before_state>
+
+  <after_state>
+    <expected_behavior>每次 LLM 调用产出 cost_usd 真实成本；observability 数据持久化到 SQLite 90 天；audit 自动产出 score_trends/regression_alerts/failure_patterns</expected_behavior>
+    <regression_gate>1466 passed / 0 failed</regression_gate>
+  </after_state>
+
+  <role>
+    你负责 Phase 37 的总控执行。本阶段是 Phase 36 观测能力的收尾补齐。
+  </role>
+
+  <global_constraints>
+    1. 禁止修改 contracts/**
+    2. 禁止修改 src/inner/** / src/middle/** / src/outer/**
+    3. 禁止修改 provider / model / base_url
+    4. 禁止修改 scoring 维度与 breakpoint probes
+  </global_constraints>
+
+  <execution_order>
+    <step>S37.1 -&gt; S37.2 -&gt; S37.3</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s37_1" name="cost_usd + SQLite 持久化">
+      <meta_prompt>284_s37_1_cost_sqlite.xml</meta_prompt>
+    </stage>
+    <stage id="s37_2" name="评分趋势 + 回归告警 + 失败热力图">
+      <meta_prompt>285_s37_2_audit_reports.xml</meta_prompt>
+    </stage>
+    <stage id="s37_3" name="回归与收口">
+      <meta_prompt>286_s37_3_regression_close.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+
+  <implementation>
+    <modify file="src/coach/llm/schemas.py" method="RuntimeObservability">
+      <add>cost_usd 计算属性：DeepSeek 定价 cache_hit=$0.07/M, cache_miss=$0.27/M, output=$1.10/M</add>
+    </modify>
+    <modify file="api/services/dashboard_aggregator.py">
+      <add>_cleanup_old_observability(retention_days=90)</add>
+      <add>persist_llm_observability()</add>
+    </modify>
+    <modify file="run_experience_audit.py">
+      <add>_generate_score_trends()</add>
+      <add>_generate_regression_alerts()</add>
+      <add>_generate_failure_patterns()</add>
+    </modify>
+  </implementation>
+
+  <field_map>
+    <from>RuntimeObservability.tokens_prompt/tokens_completion/prompt_cache_hit_tokens/prompt_cache_miss_tokens</from>
+    <to>RuntimeObservability.cost_usd</to>
+  </field_map>
+
+  <drift_guard>
+    <forbidden>不改 provider/model/base_url</forbidden>
+    <forbidden>不把 cost_proxy 留为占位符</forbidden>
+    <forbidden>SQLite 清理不阻塞主流程</forbidden>
+  </drift_guard>
+
+  <go_gate_policy>
+    <gate>GO_S37.1: cost_usd 计算正确，SQLite 持久化 + 清理就绪</gate>
+    <gate>GO_S37.2: 三个新 audit 报告自动产出</gate>
+    <gate>GO_S37.3: full regression 通过</gate>
+  </go_gate_policy>
+
+  <quality_gates>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+  </quality_gates>
+</prompt>

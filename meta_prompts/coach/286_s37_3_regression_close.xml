@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S37.3 -- 回归与收口</name>
+  <phase>37</phase><sub_stage>S37.3</sub_stage>
+  <quality_gates><gate>python -m pytest tests/ -q 全绿</gate><gate>completion 文档落盘</gate></quality_gates>
+</prompt>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S42.2 -- Dashboard 升级</name>
+  <phase>42</phase><sub_stage>S42.2</sub_stage>
+  <before_state><file path="frontend/src/components/chat/ChatBubble.tsx">只显示 AI/规则 + 难度标签，无运行时数据</file></before_state>
+  <after_state><file path="frontend/src/components/chat/ChatBubble.tsx">llm_observability 存在时显示延迟/缓存/成本标签</file></after_state>
+</prompt>

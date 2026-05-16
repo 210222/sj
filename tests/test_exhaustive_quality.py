@@ -39,10 +39,10 @@ class TestDisabledBaseline:
     def test_models_disabled_return_none(self):
         """TTM/SDT/diagnostic_engine 默认关闭（coach_defaults.yaml enabled: false）."""
         a = CoachAgent()
-        assert a.ttm is None
-        assert a.sdt is None
-        assert a.flow is not None  # flow 始终加载
-        assert a.diagnostic_engine is None
+        assert a.ttm is not None  # Phase 39: TTM now enabled by default
+        assert a.sdt is not None
+        assert a.flow is not None
+        assert a.diagnostic_engine is None  # diagnostic_engine still disabled in config
 
     def test_act_does_not_crash_with_all_disabled(self):
         """全 disabled 时多轮对话不崩溃."""
@@ -103,13 +103,13 @@ class TestDataFlowEndToEnd:
         """TTM 默认关闭 -> ttm_stage 为 None."""
         a = CoachAgent()
         r = a.act("test")
-        assert r["ttm_stage"] is None
+        assert r["ttm_stage"] is not None  # Phase 39: TTM now enabled
 
     def test_sdt_profile_none_when_disabled(self):
         """SDT 默认关闭 -> sdt_profile 为 None."""
         a = CoachAgent()
         r = a.act("test")
-        assert r["sdt_profile"] is None
+        assert r["sdt_profile"] is not None  # Phase 39: SDT now enabled
 
     def test_flow_channel_not_none(self):
         """Flow 始终可用 -> flow_channel 非 None."""

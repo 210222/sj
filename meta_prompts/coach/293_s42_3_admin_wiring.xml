@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S42.3 -- Admin 面板接线</name>
+  <phase>42</phase><sub_stage>S42.3</sub_stage>
+  <before_state><file path="frontend/src/api/client.ts">无 admin endpoint 调用</file></before_state>
+  <after_state><file path="frontend/src/api/client.ts">getAdminGates / getAdminAudit / getAdminLLMRuntime 就位</file></after_state>
+</prompt>

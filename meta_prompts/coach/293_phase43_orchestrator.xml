@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 43 -- APK + Admin 收尾</name>
+  <version>1.0.0</version>
+  <track>FRONTEND</track>
+  <phase>43</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>APK 构建 / Admin 数据管道 / 配置恢复</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <before_state>
+    <file path="frontend/src/api/client.ts">缺少 admin endpoint 调用 (gates/audit/llm_runtime)</file>
+    <file path="build_apk.bat">已存在于项目根但未被 Phase 42 验证</file>
+    <file path="config/coach_defaults.yaml">曾被意外清空，已从 git 恢复</file>
+    <numeric_anchor>1466 passed / 0 failed / 前端 build 成功</numeric_anchor>
+  </before_state>
+
+  <after_state>
+    <expected_behavior>Admin API 客户端函数可用；build_apk.bat 可执行 npm build → cap sync → Gradle 构建；coach_defaults.yaml 已恢复 283 行；composer.py 增加 None 防御</expected_behavior>
+    <regression_gate>1466 passed / 0 failed</regression_gate>
+  </after_state>
+
+  <role>你负责 APK 构建验证和 Admin 数据管道收尾。</role>
+
+  <global_constraints>
+    <forbidden>禁止修改 contracts/** / src/inner/** / src/middle/** / src/outer/**</forbidden>
+    <forbidden>禁止修改 provider/model/base_url/scoring</forbidden>
+  </global_constraints>
+
+  <implementation>
+    <modify file="frontend/src/api/client.ts">
+      <add>getAdminGates(token)、getAdminAudit(token,page,severity)、getAdminLLMRuntime()</add>
+    </modify>
+    <modify file="src/coach/composer.py">
+      <fix>_RULES = (_DEFAULTS or {}).get("composer_rules", {}) — None 防御防止配置为空时全线崩溃</fix>
+    </modify>
+  </implementation>
+
+  <drift_guard>
+    <forbidden>不改后端任何逻辑（除 composer.py 的 None 防御）</forbidden>
+  </drift_guard>
+
+  <go_gate_policy>
+    <gate>GO_S43.1: Admin API 客户端就绪</gate>
+    <gate>GO_S43.2: build_apk.bat 可执行</gate>
+    <gate>GO_S43.3: full regression 通过</gate>
+  </go_gate_policy>
+
+  <quality_gates>
+    <gate>npm run build 成功</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+    <gate>coach_defaults.yaml 完整加载</gate>
+  </quality_gates>
+</prompt>

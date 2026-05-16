@@ -11,7 +11,7 @@ import sqlite3
 import threading
 import time
 from collections import deque
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -137,8 +137,29 @@ def get_llm_runtime_history(hours: int = 24, limit: int = 500) -> list[dict]:
         return []
 
 
+_OBS_WRITE_COUNT: int = 0
+_OBS_CLEANUP_INTERVAL = 100  # 每 100 次写入做一次过期清理
+
+
+def _cleanup_old_observability(retention_days: int = 90) -> int:
+    """删除超过保留天数的 LLM observability 记录，返回删除行数。"""
+    try:
+        _ensure_llm_runtime_table()
+        conn = sqlite3.connect(str(_DB_PATH))
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=retention_days)).isoformat()
+        c = conn.execute(
+            "DELETE FROM llm_runtime_log WHERE created_at_utc < ?", (cutoff,),
+        )
+        conn.commit()
+        conn.close()
+        return c.rowcount
+    except Exception:
+        return 0
+
+
 def record_llm_observability(obs: dict, session_id: str = "") -> None:
     """供 agent / coach_bridge 调用，写入缓冲 + 持久化."""
+    global _OBS_WRITE_COUNT
     if not obs or not isinstance(obs, dict):
         return
     with _OBS_BUFFER_LOCK:
@@ -152,6 +173,10 @@ def record_llm_observability(obs: dict, session_id: str = "") -> None:
         })
     # Phase 37: 同时持久化到 SQLite
     persist_llm_observability(obs, session_id=session_id)
+    # 定期清理超过 90 天的旧记录
+    _OBS_WRITE_COUNT += 1
+    if _OBS_WRITE_COUNT % _OBS_CLEANUP_INTERVAL == 0:
+        _cleanup_old_observability(retention_days=90)
 
 
 @lru_cache(maxsize=1)

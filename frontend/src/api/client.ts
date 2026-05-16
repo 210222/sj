@@ -80,6 +80,20 @@ export function getUserDashboard(sessionId: string): Promise<UserDashboardRespon
   return request('GET', `/dashboard/user?session_id=${encodeURIComponent(sessionId)}`);
 }
 
+// ── Admin ──
+
+export function getAdminGates(token?: string): Promise<Record<string, unknown>> {
+  return request('GET', `/admin/gates/status?token=${encodeURIComponent(token || '')}`);
+}
+
+export function getAdminAudit(token?: string, page = 1, severity = 'all'): Promise<Record<string, unknown>> {
+  return request('GET', `/admin/audit/logs?token=${encodeURIComponent(token || '')}&page=${page}&severity=${severity}`);
+}
+
+export function getAdminLLMRuntime(): Promise<Record<string, unknown>> {
+  return request('GET', '/admin/llm/runtime');
+}
+
 // ── 健康检查 ──
 
 export function healthCheck(): Promise<HealthResponse> {

@@ -96,20 +96,6 @@ else:
     _logger.info("Frontend dist/ not found — run 'cd frontend && npm run build' to enable UI")
 
 
-@app.get("/")
-@app.get("/{full_path:path}")
-async def serve_frontend(full_path: str = ""):
-    """SPA fallback: 非 API 路径返回前端入口."""
-    if full_path.startswith("api/"):
-        raise HTTPException(status_code=404)
-    index_path = _FRONTEND_DIR / "index.html"
-    if index_path.exists():
-        return FileResponse(str(index_path))
-    return JSONResponse(
-        status_code=404,
-        content={"error": "NOT_FOUND", "detail": "Frontend not built. Run: cd frontend && npm run build"},
-    )
-
 
 # 路由注册
 app.include_router(session.router, prefix="/api/v1")
@@ -126,3 +112,18 @@ app.include_router(config_router.router, prefix="/api/v1")
 async def health_check():
     """健康检查端点."""
     return HealthResponse()
+
+
+@app.get("/")
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str = ""):
+    """SPA fallback: 非 API 路径返回前端入口."""
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404)
+    index_path = _FRONTEND_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(str(index_path))
+    return JSONResponse(
+        status_code=404,
+        content={"error": "NOT_FOUND", "detail": "Frontend not built. Run: cd frontend && npm run build"},
+    )

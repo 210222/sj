@@ -48,6 +48,11 @@ class CacheObservability:
 @dataclass
 class RuntimeObservability:
     """LLM 调用运行时证据."""
+    # DeepSeek API 定价 ($/1M tokens)
+    _PRICE_CACHE_HIT = 0.07
+    _PRICE_CACHE_MISS = 0.27
+    _PRICE_OUTPUT = 1.10
+
     path: str = ""
     streaming: bool = False
     request_started_at_utc: str = ""
@@ -66,6 +71,32 @@ class RuntimeObservability:
     timeout_s: float = 30.0
     transport_status: str = "ok"
 
+    @property
+    def cost_usd(self) -> float | None:
+        """基于真实 DeepSeek 定价和 provider 返回的 cache-hit/miss 遥测计算的成本。
+
+        仅当 token_usage_available 且至少有一个 token 计数时返回有效值。
+        """
+        prompt = self.tokens_prompt
+        completion = self.tokens_completion
+        if prompt is None or completion is None:
+            return None
+        cache_hit = self.prompt_cache_hit_tokens or 0
+        cache_miss = self.prompt_cache_miss_tokens or 0
+        # 若 provider 未返回 cache 分解，则全部计为 cache miss
+        if cache_hit == 0 and cache_miss == 0:
+            cache_miss = prompt
+        # 对齐取整误差
+        accounted = cache_hit + cache_miss
+        if accounted > 0 and accounted != prompt:
+            cache_miss = max(0, prompt - cache_hit)
+        return round(
+            (cache_hit / 1_000_000.0) * self._PRICE_CACHE_HIT
+            + (cache_miss / 1_000_000.0) * self._PRICE_CACHE_MISS
+            + (completion / 1_000_000.0) * self._PRICE_OUTPUT,
+            6,
+        )
+
     def to_dict(self) -> dict:
         return {
             "path": self.path,
@@ -82,6 +113,7 @@ class RuntimeObservability:
             "token_usage_available": self.token_usage_available,
             "prompt_cache_hit_tokens": self.prompt_cache_hit_tokens,
             "prompt_cache_miss_tokens": self.prompt_cache_miss_tokens,
+            "cost_usd": self.cost_usd,
             "retry_count": self.retry_count,
             "timeout_s": self.timeout_s,
             "transport_status": self.transport_status,

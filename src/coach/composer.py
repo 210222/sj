@@ -12,9 +12,9 @@ with open(_CONFIG_PATH, encoding="utf-8") as _f:
 
 from src.coach.handlers import HandlerRegistry
 
-_RULES = _DEFAULTS.get("composer_rules", {})
-_DEFAULT_INTENT = _DEFAULTS.get("default_intent", "general")
-_DEFAULT_PASSPORT = _DEFAULTS.get("default_domain_passport", "medium")
+_RULES = (_DEFAULTS or {}).get("composer_rules", {})
+_DEFAULT_INTENT = (_DEFAULTS or {}).get("default_intent", "general")
+_DEFAULT_PASSPORT = (_DEFAULTS or {}).get("default_domain_passport", "medium")
 
 
 class PolicyComposer:

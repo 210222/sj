@@ -1214,6 +1214,47 @@ def _rule_based_student_reply(student) -> str:
         return "好的，继续讲吧。我有点跟着费劲，能慢一点吗？"
 
 
+def score_interactive_session(transcript: list[dict], effect: dict) -> dict:
+    """S44.3/S46.3: 4 维效果评分 (0-4 each)."""
+    CONFUSION_WORDS = {"不懂", "不太理解", "困惑", "为什么", "什么意思", "不确定", "不明白"}
+    scores = {}
+
+    # 1. 知识转移: mastery_delta → 0-4
+    delta = abs(effect.get("mastery_delta", 0))
+    scores["知识转移"] = min(4, max(0, round(delta * 10)))
+
+    # 2. 策略适应: 困惑后 action_type 是否切换
+    adapt_score = 0
+    for i in range(1, len(transcript)):
+        prev_student = transcript[i - 1].get("student", "")
+        prev_action = transcript[i - 1].get("coach_action_type", "")
+        curr_action = transcript[i].get("coach_action_type", "")
+        if any(w in prev_student for w in CONFUSION_WORDS):
+            if prev_action != curr_action:
+                adapt_score = min(4, adapt_score + 1)
+    scores["策略适应"] = adapt_score if adapt_score > 0 else 2
+
+    # 3. 解释质量: 学生消息中是否包含教练教学概念
+    quality_score = 0
+    for i, t in enumerate(transcript):
+        coach_stmt = t.get("coach_statement", "")
+        student_msg = transcript[i].get("student", "") if i < len(transcript) - 1 else ""
+        concepts = [w for w in ["变量", "列表", "循环", "函数", "字典", "条件", "Python", "算法", "递归", "类", "对象"] if w in coach_stmt]
+        if concepts and any(c in student_msg for c in concepts):
+            quality_score = min(4, quality_score + 1)
+    scores["解释质量"] = quality_score if quality_score > 0 else 1
+
+    # 4. 互动节奏: 非确认轮次 + 追问比例
+    CONFIRM = {"好", "嗯", "继续", "可以", "好的", "行", "是", "对", "ok", "yes"}
+    non_confirm = sum(1 for t in transcript if t.get("student", "") not in CONFIRM)
+    questions = sum(1 for t in transcript if any(w in t.get("student", "") for w in CONFUSION_WORDS))
+    rate = non_confirm / max(len(transcript), 1)
+    scores["互动节奏"] = min(4, round(rate * 3 + questions * 0.5))
+
+    scores["total"] = sum(scores.values())
+    return scores
+
+
 def run_interactive_audit(coach_url: str = "http://127.0.0.1:8001",
                           turns: int = 6) -> dict:
     """S44.3: 跑全部 3 个画像的交互式审计，产出效果报告."""
@@ -1280,7 +1321,16 @@ def run_interactive_audit(coach_url: str = "http://127.0.0.1:8001",
     report["persisted_to"] = str(run_dir / "interactive_turns.json")
     with open(OUTPUT_DIR / "interactive_effect_report.json", "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
-    print(f"\n[S44.3] 效果报告: {OUTPUT_DIR / 'interactive_effect_report.json'}")
+
+    # S46.3: 4 维效果评分
+    all_scores = {}
+    for pid, r in results.items():
+        all_scores[pid] = score_interactive_session(
+            r.get("transcript", []), r.get("effect", {}))
+    with open(OUTPUT_DIR / "interactive_scoring.json", "w", encoding="utf-8") as f:
+        json.dump(all_scores, f, ensure_ascii=False, indent=2)
+    print(f"\n[S44.3/S46.3] 效果报告: {OUTPUT_DIR / 'interactive_effect_report.json'}")
+    print(f"[S46.3] 效果评分: {OUTPUT_DIR / 'interactive_scoring.json'}")
     print(f"   transcript: {run_dir / 'interactive_turns.json'}")
     return report
 

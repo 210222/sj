@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 42 -- 前端/APK 对齐</name>
+  <version>1.0.0</version>
+  <track>FRONTEND</track>
+  <phase>42</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>API 类型对齐 / Dashboard 升级 / Admin 接线 / APK 构建</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence/frontend</scope>
+
+  <before_state>
+    <file path="frontend/src/types/api.ts">ChatResponse 缺少 llm_observability；UserDashboardResponse 缺少 llm_runtime_summary/session_llm_summary/strategy_quality</file>
+    <file path="frontend/src/types/coach.ts">ChatMessage 缺少 llm_observability 字段</file>
+    <file path="frontend/src/components/chat/ChatBubble.tsx">每条 AI 消息只显示 AI/规则 标签和难度，不显示延迟/缓存/成本</file>
+    <numeric_anchor>1466 passed / 0 failed / 15.5-15.6 教学评分</numeric_anchor>
+  </before_state>
+
+  <after_state>
+    <expected_behavior>前端 TypeScript 类型与后端 Phase 35-41 schema 对齐；ChatBubble 在每条 LLM 消息上显示延迟/缓存命中/成本标签；npm run build 零错误</expected_behavior>
+    <regression_gate>npm run build 成功；1466 passed / 0 failed</regression_gate>
+  </after_state>
+
+  <role>你负责将后端 Phase 35-41 新增能力同步到前端可见层。不新建 UI 框架，不重写前端架构。</role>
+
+  <global_constraints>
+    <forbidden>禁止修改 contracts/** / src/** / config/**</forbidden>
+    <forbidden>禁止重写前端架构</forbidden>
+    <forbidden>禁止修改 provider/model/base_url/scoring</forbidden>
+    <forbidden>所有新字段必须可选，不破坏已有消息兼容性</forbidden>
+  </global_constraints>
+
+  <implementation>
+    <modify file="frontend/src/types/api.ts">
+      <add_type>CacheObservability、RuntimeObservability、LLMObservability、LLMRuntimeSummary</add_type>
+      <add_field to="ChatResponse">llm_observability?: LLMObservability | null</add_field>
+      <add_field to="UserDashboardResponse">llm_runtime_summary?、session_llm_summary?、strategy_quality?</add_field>
+    </modify>
+    <modify file="frontend/src/types/coach.ts">
+      <add_field to="ChatMessage">llm_observability?: Record&lt;string, unknown&gt; | null</add_field>
+    </modify>
+    <modify file="frontend/src/components/chat/ChatBubble.tsx">
+      <add_tags>延迟标签 (ms/s)、缓存命中绿色标签、成本 $0.xxxx 标签 — 仅在 llm_observability 数据存在时显示</add_tags>
+    </modify>
+    <modify file="frontend/src/api/client.ts">
+      <add>getAdminGates、getAdminAudit、getAdminLLMRuntime</add>
+    </modify>
+  </implementation>
+
+  <drift_guard>
+    <forbidden>不删 Flutter 端</forbidden>
+    <forbidden>不改后端任何逻辑</forbidden>
+  </drift_guard>
+
+  <go_gate_policy>
+    <gate>GO_S42.1: TypeScript 编译零错误</gate>
+    <gate>GO_S42.2: ChatBubble 可显示 LLM 标签</gate>
+    <gate>GO_S42.3: Admin API 客户端就绪</gate>
+    <gate>GO_S42.4: npm run build 成功 + 全量回归通过</gate>
+  </go_gate_policy>
+
+  <quality_gates>
+    <gate>npm run build 无 TypeScript 错误</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+  </quality_gates>
+</prompt>

@@ -68,6 +68,6 @@ class TestCoachAgentPhase4:
     def test_models_disabled_by_default(self):
         """Phase 4: TTM/SDT/flow 默认关闭（coach_defaults.yaml enabled: false）."""
         agent = CoachAgent(session_id="test_s4_5_disabled")
-        assert agent.ttm is None
-        assert agent.sdt is None
+        assert agent.ttm is not None  # Phase 39: TTM/SDT now enabled
+        assert agent.sdt is not None
         assert agent.flow is not None  # flow 始终加载，不受 enabled flag 控制
