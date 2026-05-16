@@ -1880,34 +1880,32 @@ class CoachAgent:
 
     @staticmethod
     def _update_config(key: str, enabled: bool) -> None:
-        """修改 coach_defaults.yaml 中模块的 enabled 状态.
-
-        与 api/routers/config_router._write_config() 保持写入语义一致:
-        safe_dump + 模块缓存失效 + API 侧配置缓存失效。
-        """
+        """Phase 47: 文件锁 + 显式 reload，替代 sys.modules 清理."""
         from pathlib import Path
         import yaml
+        from api.config import _CONFIG_LOCK
         cfg_path = Path(__file__).resolve().parent.parent.parent / "config" / "coach_defaults.yaml"
         try:
-            with open(cfg_path, "r", encoding="utf-8") as f:
-                cfg = yaml.safe_load(f) or {}
-            if key not in cfg:
-                cfg[key] = {}
-            cfg[key]["enabled"] = enabled
-            # 处理 auto_affects
-            caps = cfg.get("capabilities", {})
-            if key in caps and enabled:
-                for affect in caps[key].get("auto_affects", []):
-                    if affect not in cfg:
-                        cfg[affect] = {}
-                    cfg[affect]["enabled"] = True
-            with open(cfg_path, "w", encoding="utf-8") as f:
-                yaml.safe_dump(cfg, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
-            # 统一缓存失效（与 config_router._write_config 一致）
-            import sys
-            for mod in list(sys.modules.keys()):
-                if mod.startswith("src.coach"):
-                    del sys.modules[mod]
+            with _CONFIG_LOCK:
+                with open(cfg_path, "r", encoding="utf-8") as f:
+                    cfg = yaml.safe_load(f) or {}
+                if key not in cfg:
+                    cfg[key] = {}
+                cfg[key]["enabled"] = enabled
+                caps = cfg.get("capabilities", {})
+                if key in caps and enabled:
+                    for affect in caps[key].get("auto_affects", []):
+                        if affect not in cfg:
+                            cfg[affect] = {}
+                        cfg[affect]["enabled"] = True
+                with open(cfg_path, "w", encoding="utf-8") as f:
+                    yaml.safe_dump(cfg, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+            # Phase 47: 显式重载替代 sys.modules 清理
+            try:
+                from src.coach.composer import reload_config
+                reload_config()
+            except Exception:
+                pass
             try:
                 from api.services.dashboard_aggregator import _invalidate_cache
                 _invalidate_cache()

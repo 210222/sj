@@ -7,11 +7,27 @@ import yaml
 from pathlib import Path
 
 _CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "coach_defaults.yaml"
-try:
-    with open(_CONFIG_PATH, encoding="utf-8") as _f:
-        _DEFAULTS = yaml.safe_load(_f) or {}
-except Exception:
-    _DEFAULTS = {}
+_DEFAULTS = {}
+_CONFIG_LOADED = False
+
+
+def reload_config() -> None:
+    """Phase 47: 显式重载 coach_defaults.yaml，替代 sys.modules 清理."""
+    global _DEFAULTS, _CONFIG_LOADED
+    try:
+        with open(_CONFIG_PATH, encoding="utf-8") as _f:
+            _DEFAULTS = yaml.safe_load(_f) or {}
+    except Exception:
+        pass
+    _CONFIG_LOADED = True
+
+
+def _ensure_config() -> None:
+    if not _CONFIG_LOADED:
+        reload_config()
+
+# Phase 47: 模块导入时初始化，保持向后兼容
+_ensure_config()
 
 from src.coach.handlers import HandlerRegistry
 

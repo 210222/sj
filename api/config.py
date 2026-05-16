@@ -1,6 +1,10 @@
 """API 层运行时配置 — 默认值可通过环境变量覆盖."""
 
 import os
+import threading
+
+# ── Phase 47: 共享文件锁，保护 config_router + agent 的并发写 ──
+_CONFIG_LOCK = threading.Lock()
 
 # ── CORS ──
 CORS_ORIGINS: list[str] = os.getenv(
