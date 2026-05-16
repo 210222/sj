@@ -1107,6 +1107,7 @@ def run_interactive_game(
         "beginner": "你好，我想学Python，但我是完全零基础，从哪里开始？",
         "fuzzy_basics": "我之前学过一点列表和循环，但感觉很多概念是模糊的，能帮我梳理一下吗？",
         "jumpy": "我学过变量和条件判断，但函数还不太懂。今天我们学什么？",
+        "passive": "好",
     }
     msg = first_messages.get(student_profile, "你好，开始教学吧")
 
@@ -1137,11 +1138,13 @@ def run_interactive_game(
         # 学生生成回复（不使用 LLM 客户端时用规则）
         msg = _generate_student_response(student, coach_r)
 
-    # 效果评估
+    # 效果评估 (4 维)
     effect = student.get_effectiveness_summary()
+    effect_score = score_interactive_session(transcript, student)
     effect["profile"] = student_profile
     effect["turns"] = game_turns
     effect["game_sid"] = sid
+    effect["scoring"] = effect_score
 
     return {"transcript": transcript, "effect": effect, "session_id": sid}
 
@@ -1167,6 +1170,32 @@ def _generate_student_response(student, coach_r: dict) -> str:
     return _rule_based_student_reply(student)
 
 
+def score_interactive_session(transcript: list[dict], student) -> dict:
+    """S44.3: 4 dimension teaching effect scoring, 0-4 each, parallel to morphology."""
+    if not transcript:
+        return {"知识转移": 0, "策略适应": 0, "解释质量": 0, "互动节奏": 0, "total": 0}
+
+    mastery = student.get_mastery_delta()
+    knowledge_score = min(4.0, round(mastery / 0.1))
+
+    action_types = [t.get("coach_action_type", "") for t in transcript]
+    unique_actions = len(set(a for a in action_types if a))
+    strategy_score = min(4.0, unique_actions * 1.0)
+
+    stmt_lens = [len(t.get("coach_statement", "")) for t in transcript]
+    avg_len = sum(stmt_lens) / max(len(stmt_lens), 1)
+    explain_score = min(4.0, round(avg_len / 40.0))
+
+    valid_turns = sum(1 for t in transcript if t.get("coach_statement") and len(t.get("coach_statement", "")) > 20)
+    rhythm_score = min(4.0, round((valid_turns / max(len(transcript), 1)) * 4.0))
+
+    total = round(knowledge_score + strategy_score + explain_score + rhythm_score, 1)
+    return {
+        "知识转移": knowledge_score, "策略适应": strategy_score,
+        "解释质量": explain_score, "互动节奏": rhythm_score,
+        "total": total, "mastery_delta": round(mastery, 4),
+    }
+
 def _rule_based_student_reply(student) -> str:
     """规则驱动的学生回复（无需 LLM）."""
     exposed = list(student.state.exposed_concepts)
@@ -1189,7 +1218,7 @@ def run_interactive_audit(coach_url: str = "http://127.0.0.1:8001",
                           turns: int = 6) -> dict:
     """S44.3: 跑全部 3 个画像的交互式审计，产出效果报告."""
     results = {}
-    for profile_id in ["beginner", "fuzzy_basics", "jumpy"]:
+    for profile_id in ["beginner", "fuzzy_basics", "jumpy", "passive"]:
         print(f"\n[S44.2] 交互式对局: {profile_id} ({turns} turns)...")
         r = run_interactive_game(student_profile=profile_id,
                                  game_turns=turns, coach_url=coach_url)
@@ -1223,25 +1252,61 @@ def run_interactive_audit(coach_url: str = "http://127.0.0.1:8001",
             "Positive delta = student learned. Higher = more effective teaching."
         ),
     }
+    # 持久化: per-run interactive transcript
+    run_id = f"interactive_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+    run_dir = RUN_HISTORY_DIR / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    all_transcripts = {pid: r["transcript"] for pid, r in results.items()}
+    with open(run_dir / "interactive_turns.json", "w", encoding="utf-8") as f:
+        json.dump({"run_id": run_id, "profiles": all_transcripts,
+                   "game_turns": turns}, f, ensure_ascii=False, indent=2)
+
+    # 持久化: per-profile interactive_scoring.json
+    for pid, r in results.items():
+        profile_score = r["effect"].get("scoring", {})
+        profile_dir = run_dir / pid
+        profile_dir.mkdir(parents=True, exist_ok=True)
+        scoring_doc = {
+            "run_id": run_id, "profile": pid,
+            "turns": r["effect"]["turns"],
+            "morphology_scores": None,
+            "effect_scores": profile_score,
+        }
+        with open(profile_dir / "interactive_scoring.json", "w", encoding="utf-8") as f:
+            json.dump(scoring_doc, f, ensure_ascii=False, indent=2)
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    report["run_id"] = run_id
+    report["persisted_to"] = str(run_dir / "interactive_turns.json")
     with open(OUTPUT_DIR / "interactive_effect_report.json", "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
     print(f"\n[S44.3] 效果报告: {OUTPUT_DIR / 'interactive_effect_report.json'}")
+    print(f"   transcript: {run_dir / 'interactive_turns.json'}")
     return report
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Phase 32+44 体验审计管道")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--quick", action="store_true",
+                      help="快速模式: 3 画像 × 5 轮")
+    mode.add_argument("--interactive", action="store_true",
+                      help="Phase 44: 交互式审计 (LLM 学生代理 × 教练对局)")
     parser.add_argument("--use-http", action="store_true",
-                        help="通过 HTTP 调用后端")
-    parser.add_argument("--quick", action="store_true",
-                        help="快速模式: 3 画像 × 5 轮")
-    parser.add_argument("--interactive", action="store_true",
-                        help="Phase 44: 交互式审计 (LLM 学生代理 × 教练对局)")
+                        help="通过 HTTP 调用后端 (quick 模式需要)")
     parser.add_argument("--turns", type=int, default=6,
                         help="交互式对局轮数 (default 6)")
+    parser.add_argument("--profile", type=str, default=None,
+                        choices=["beginner", "fuzzy_basics", "jumpy", "passive"],
+                        help="交互模式指定单个画像 (不指定则跑全部 4 个)")
     args = parser.parse_args()
     if args.interactive:
-        run_interactive_audit(coach_url="http://127.0.0.1:8001", turns=args.turns)
+        if args.profile:
+            r = run_interactive_game(student_profile=args.profile,
+                                     game_turns=args.turns,
+                                     coach_url="http://127.0.0.1:8001")
+            print(f"mastery_delta={r['effect']['scoring']['mastery_delta']:.2f}")
+        else:
+            run_interactive_audit(coach_url="http://127.0.0.1:8001", turns=args.turns)
     else:
         main(use_http=args.use_http, quick=args.quick)
