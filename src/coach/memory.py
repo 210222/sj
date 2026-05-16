@@ -124,8 +124,10 @@ class SessionMemory:
             conn.close()
 
     def recall(self, intent: str, user_state: dict | None = None,
-               limit: int | None = None) -> list[dict]:
+               limit: int | None = None, session_id: str | None = None) -> list[dict]:
         """FTS5 关键词搜索 → 与 Phase 1 同格式的召回列表。
+
+        Phase 47: 新增 session_id 可选参数，在 SQL 层过滤 session，避免全表扫描后 Python 侧丢弃。
 
         Returns:
             [{"intent": str, "data": {..}, "ts": float}, ...]
@@ -136,43 +138,71 @@ class SessionMemory:
         conn = self._connect()
         try:
             if not intent or intent.lower() == "general":
-                rows = conn.execute(
-                    """SELECT session_id, turn_index, intent, action_type, user_input,
-                              ai_response, safety_allowed, created_at_utc
-                       FROM sessions
-                       ORDER BY created_at_utc DESC LIMIT ?""",
-                    (limit,),
-                ).fetchall()
+                if session_id:
+                    rows = conn.execute(
+                        """SELECT session_id, turn_index, intent, action_type, user_input,
+                                  ai_response, safety_allowed, created_at_utc
+                           FROM sessions WHERE session_id = ?
+                           ORDER BY created_at_utc DESC LIMIT ?""",
+                        (session_id, limit),
+                    ).fetchall()
+                else:
+                    rows = conn.execute(
+                        """SELECT session_id, turn_index, intent, action_type, user_input,
+                                  ai_response, safety_allowed, created_at_utc
+                           FROM sessions
+                           ORDER BY created_at_utc DESC LIMIT ?""",
+                        (limit,),
+                    ).fetchall()
             else:
-                # 优先 FTS5 MATCH；不可用或空结果回退 LIKE（中文分词 compatible）
                 rows: list = []
                 fts_ok = False
                 try:
-                    rows_fts = conn.execute(
-                        """SELECT s.session_id, s.turn_index, s.intent, s.action_type,
-                                  s.user_input, s.ai_response, s.safety_allowed, s.created_at_utc
-                           FROM sessions s
-                           JOIN sessions_fts sf ON s.rowid = sf.rowid
-                           WHERE sessions_fts MATCH ?
-                           ORDER BY rank LIMIT ?""",
-                        (intent, limit),
-                    ).fetchall()
+                    if session_id:
+                        rows_fts = conn.execute(
+                            """SELECT s.session_id, s.turn_index, s.intent, s.action_type,
+                                      s.user_input, s.ai_response, s.safety_allowed, s.created_at_utc
+                               FROM sessions s
+                               JOIN sessions_fts sf ON s.rowid = sf.rowid
+                               WHERE sessions_fts MATCH ? AND s.session_id = ?
+                               ORDER BY rank LIMIT ?""",
+                            (intent, session_id, limit),
+                        ).fetchall()
+                    else:
+                        rows_fts = conn.execute(
+                            """SELECT s.session_id, s.turn_index, s.intent, s.action_type,
+                                      s.user_input, s.ai_response, s.safety_allowed, s.created_at_utc
+                               FROM sessions s
+                               JOIN sessions_fts sf ON s.rowid = sf.rowid
+                               WHERE sessions_fts MATCH ?
+                               ORDER BY rank LIMIT ?""",
+                            (intent, limit),
+                        ).fetchall()
                     fts_ok = True
                     if rows_fts:
                         rows = list(rows_fts)
                 except sqlite3.OperationalError:
-                    pass  # FTS5 不可用
+                    pass
 
-                # FTS5 不可用或返回空 → LIKE 降级
                 if not fts_ok or not rows:
-                    rows = conn.execute(
-                        """SELECT session_id, turn_index, intent, action_type,
-                                  user_input, ai_response, safety_allowed, created_at_utc
-                           FROM sessions
-                           WHERE intent LIKE ? OR user_input LIKE ?
-                           ORDER BY created_at_utc DESC LIMIT ?""",
-                        (f"%{intent}%", f"%{intent}%", limit),
-                    ).fetchall()
+                    if session_id:
+                        rows = conn.execute(
+                            """SELECT session_id, turn_index, intent, action_type,
+                                      user_input, ai_response, safety_allowed, created_at_utc
+                               FROM sessions
+                               WHERE (intent LIKE ? OR user_input LIKE ?) AND session_id = ?
+                               ORDER BY created_at_utc DESC LIMIT ?""",
+                            (f"%{intent}%", f"%{intent}%", session_id, limit),
+                        ).fetchall()
+                    else:
+                        rows = conn.execute(
+                            """SELECT session_id, turn_index, intent, action_type,
+                                      user_input, ai_response, safety_allowed, created_at_utc
+                               FROM sessions
+                               WHERE intent LIKE ? OR user_input LIKE ?
+                               ORDER BY created_at_utc DESC LIMIT ?""",
+                            (f"%{intent}%", f"%{intent}%", limit),
+                        ).fetchall()
 
             results = []
             for row in rows:

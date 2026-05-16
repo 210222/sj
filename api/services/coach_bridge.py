@@ -11,6 +11,8 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from datetime import datetime, timezone
 from typing import Any
 
+from src.coach.llm.prompts import build_coach_context  # Phase 47: 提前到模块级避免 fallback NameError
+
 _logger = logging.getLogger(__name__)
 
 # 线程池复用，避免每请求创建线程
@@ -221,7 +223,6 @@ class CoachBridge:
 
             from src.coach.llm.config import LLMConfig
             from src.coach.llm.client import LLMClient
-            from src.coach.llm.prompts import build_coach_context
             llm_config = LLMConfig.from_yaml(cfg)
             client = LLMClient(llm_config)
 

@@ -21,8 +21,10 @@ router = APIRouter(tags=["admin"])
 
 
 def _require_admin(request: Request) -> None:
-    """从 Authorization header 校验管理员身份."""
+    """从 Authorization header 或 ?token= query param 校验管理员身份."""
     token = request.headers.get("Authorization", "").removeprefix("Bearer ")
+    if not token:
+        token = request.query_params.get("token", "")
     iam = get_iam()
     if not token or not iam.is_admin(token):
         raise HTTPException(

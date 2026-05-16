@@ -69,12 +69,27 @@ export interface LLMObservability {
 }
 
 export interface LLMRuntimeSummary {
-  avg_latency_ms: number;
+  sample_size: number;
+  path_distribution: Record<string, number>;
   cache_eligible_rate: number;
-  cache_hit_rate: number | null;
-  total_tokens: number;
-  total_cost_usd: number;
-  call_count: number;
+  transport_status_distribution: Record<string, number>;
+  avg_latency_ms?: number;
+  p50_latency_ms?: number;
+  p95_latency_ms?: number;
+  p99_latency_ms?: number;
+  max_latency_ms?: number;
+  avg_tokens_total?: number;
+  avg_stable_prefix_share?: number;
+}
+
+export interface SessionLLMSummary {
+  session_id: string;
+  total_calls: number;
+  cache_eligible_rate: number;
+  avg_latency_ms: number;
+  avg_tokens: number;
+  first_call_utc: string | null;
+  last_call_utc: string | null;
 }
 
 export interface PulseEvent {
@@ -128,7 +143,7 @@ export interface UserDashboardResponse {
   review_queue?: Array<Record<string, unknown>> | null;
   // Phase 36-37: LLM runtime
   llm_runtime_summary?: LLMRuntimeSummary | null;
-  session_llm_summary?: LLMRuntimeSummary | null;
+  session_llm_summary?: SessionLLMSummary | null;
   // Phase 40: strategy quality
   strategy_quality?: Record<string, { effective_rate: number; n: number; structured_rate: number }> | null;
 }

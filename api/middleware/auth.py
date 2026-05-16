@@ -53,10 +53,11 @@ class IAMSkeleton:
 
     def is_admin(self, token: str) -> bool:
         """检查 token 是否具有管理员权限."""
-        if not self.validate_token(token):
-            return False
+        # Phase 47: ADMIN_TOKENS 环境变量注入的 token 直接通过，不依赖 _tokens 注册
         if ADMIN_TOKENS and token in ADMIN_TOKENS:
             return True
+        if not self.validate_token(token):
+            return False
         return False
 
     def get_session_tree(

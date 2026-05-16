@@ -7,8 +7,11 @@ import yaml
 from pathlib import Path
 
 _CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "coach_defaults.yaml"
-with open(_CONFIG_PATH, encoding="utf-8") as _f:
-    _DEFAULTS = yaml.safe_load(_f)
+try:
+    with open(_CONFIG_PATH, encoding="utf-8") as _f:
+        _DEFAULTS = yaml.safe_load(_f) or {}
+except Exception:
+    _DEFAULTS = {}
 
 from src.coach.handlers import HandlerRegistry
 

@@ -29,8 +29,11 @@ _logger = logging.getLogger(__name__)
 _config_path = Path(__file__).resolve().parent.parent.parent / "config" / "coach_defaults.yaml"
 
 def _load_config() -> dict:
-    with open(_config_path, encoding="utf-8") as _f:
-        return yaml.safe_load(_f)
+    try:
+        with open(_config_path, encoding="utf-8") as _f:
+            return yaml.safe_load(_f) or {}
+    except Exception:
+        return {}
 
 _coach_cfg = _load_config()
 _composer_rules = _coach_cfg.get("composer_rules", {})

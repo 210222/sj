@@ -767,7 +767,7 @@ def _generate_per_run_evidence(all_turns: dict, scoring: dict, run_dir: Path, ru
     print(f"  Phase 36 per-run evidence: 3 files generated")
 
 
-def _generate_cross_run_evidence():
+def _generate_cross_run_evidence(scoring: dict | None = None):
     """基于 run_history 和 per-run evidence 生成 cross-run 的 4 个文件."""
     runs_dir = RUN_HISTORY_DIR
     if not runs_dir.exists():
@@ -884,7 +884,7 @@ def _generate_cross_run_evidence():
     _generate_failure_aggregation()
 
     # 6. Phase 37: regression alerts
-    _generate_regression_alerts(scoring if 'scoring' in dir() else None)
+    _generate_regression_alerts(scoring)
 
     # 7. Phase 37: score trends analysis
     _generate_score_trends()
@@ -1194,7 +1194,7 @@ def score_interactive_session(transcript: list[dict], effect: dict) -> dict:
     scores = {}
 
     # 1. 知识转移: mastery_delta → 0-4
-    delta = abs(effect.get("mastery_delta", 0))
+    delta = max(0.0, effect.get("mastery_delta", 0))
     scores["知识转移"] = min(4, max(0, round(delta * 10)))
 
     # 2. 策略适应: 困惑后 action_type 是否切换
@@ -1212,7 +1212,7 @@ def score_interactive_session(transcript: list[dict], effect: dict) -> dict:
     quality_score = 0
     for i, t in enumerate(transcript):
         coach_stmt = t.get("coach_statement", "")
-        student_msg = transcript[i].get("student", "") if i < len(transcript) - 1 else ""
+        student_msg = transcript[i + 1].get("student", "") if i + 1 < len(transcript) else ""
         concepts = [w for w in ["变量", "列表", "循环", "函数", "字典", "条件", "Python", "算法", "递归", "类", "对象"] if w in coach_stmt]
         if concepts and any(c in student_msg for c in concepts):
             quality_score = min(4, quality_score + 1)

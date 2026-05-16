@@ -236,51 +236,6 @@ class MRTExperiment:
             pass  # outcome 持久化失败不阻塞主流程
 
     @staticmethod
-    def get_strategy_quality(min_samples: int = 5) -> dict[str, dict]:
-        """Phase 40: 从 MRT outcomes 计算每种 action_type 的累积有效率。
-
-        Returns: {action_type: {"effective_rate": float, "n": int, "avg_length": float}}
-        """
-        _ensure_mrt_outcome_table()
-        try:
-            conn = sqlite3.connect(str(_DB_PATH))
-            rows = conn.execute(
-                """SELECT action_type, response_length, has_steps, has_example, transport_status
-                   FROM mrt_outcomes
-                   WHERE action_type IS NOT NULL AND action_type != ''
-                   ORDER BY created_at_utc DESC LIMIT 200"""
-            ).fetchall()
-            conn.close()
-        except Exception:
-            return {}
-
-        by_type: dict[str, list[dict]] = {}
-        for at, resp_len, has_steps, has_example, transport in rows:
-            if at not in by_type:
-                by_type[at] = []
-            by_type[at].append({
-                "ok": transport == "ok" and resp_len >= 40,
-                "has_steps": bool(has_steps),
-                "has_example": bool(has_example),
-                "response_length": resp_len,
-            })
-
-        quality: dict[str, dict] = {}
-        for at, items in by_type.items():
-            if len(items) < min_samples:
-                continue
-            effective = sum(1 for it in items if it["ok"]) / len(items)
-            avg_len = sum(it["response_length"] for it in items) / len(items)
-            structured = sum(1 for it in items if it["has_steps"]) / len(items)
-            quality[at] = {
-                "effective_rate": round(effective, 4),
-                "n": len(items),
-                "avg_length": round(avg_len, 1),
-                "structured_rate": round(structured, 4),
-            }
-        return quality
-
-    @staticmethod
     def aggregate_outcomes() -> dict:
         """S38.3: 按 variant_id 聚合 outcome，返回 success/failure 计数."""
         _ensure_mrt_outcome_table()

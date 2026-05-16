@@ -16,6 +16,8 @@ _DB_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "user_profil
 def _get_db() -> sqlite3.Connection:
     _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(_DB_PATH))
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS profiles (
             session_id TEXT PRIMARY KEY,
@@ -169,16 +171,33 @@ class SessionPersistence:
         if not row:
             return {}
         return {
-            "ttm_stage": row[1], "autonomy": row[2], "competence": row[3],
-            "relatedness": row[4], "total_turns": row[5],
-            "topics_covered": json.loads(row[6]) if row[6] else [],
-            "skill_masteries": json.loads(row[7]) if row[7] else {},
-            "difficulty_level": row[8],
-            # Phase 20 S20.3: 学习目标字段（防御性读取，兼容旧行）
-            "learning_goal": row[11] if len(row) > 11 and row[11] else "",
-            "current_topic": row[12] if len(row) > 12 and row[12] else "",
-            "goal_progress": row[13] if len(row) > 13 and row[13] else 0.0,
+            "ttm_stage": row["ttm_stage"], "autonomy": row["autonomy"],
+            "competence": row["competence"], "relatedness": row["relatedness"],
+            "total_turns": row["total_turns"],
+            "topics_covered": json.loads(row["topics_covered"]) if row["topics_covered"] else [],
+            "skill_masteries": json.loads(row["skill_masteries"]) if row["skill_masteries"] else {},
+            "difficulty_level": row["difficulty_level"],
+            "learning_goal": row["learning_goal"] or "",
+            "current_topic": row["current_topic"] or "",
+            "goal_progress": row["goal_progress"] or 0.0,
         }
+
+    def save_skill_masteries(self, masteries: dict) -> None:
+        """Phase 47: 将更新后的 skill_masteries 写回 profiles 表."""
+        try:
+            self.db.execute(
+                "UPDATE profiles SET skill_masteries = ? WHERE session_id = ?",
+                (json.dumps(masteries), self.session_id))
+            self.db.commit()
+        except Exception:
+            pass
+
+    def close(self) -> None:
+        """Phase 47: 关闭持久化连接."""
+        try:
+            self.db.close()
+        except Exception:
+            pass
 
     # ── Phase 17: 知情同意持久化 ──
 
