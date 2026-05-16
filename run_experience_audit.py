@@ -1087,11 +1087,161 @@ def _generate_regression_alerts(latest_scoring: dict | None = None) -> None:
         json.dump(report, f, ensure_ascii=False, indent=2)
 
 
+# ── Phase 44: Interactive Audit Engine ─────────────────────────────
+
+def run_interactive_game(
+    student_profile: str = "beginner",
+    game_turns: int = 6,
+    coach_url: str = "http://127.0.0.1:8001",
+) -> dict:
+    """S44.2: 运行一次教练-学生对局，返回 transcript + effect 报告."""
+    import urllib.request as _ur, json as _j, uuid as _uuid
+
+    sid = f"interactive_{student_profile}_{_uuid.uuid4().hex[:6]}"
+    from src.coach.student_agent import StudentAgent
+    student = StudentAgent(profile_id=student_profile)
+    transcript: list[dict] = []
+
+    # 学生开场
+    first_messages = {
+        "beginner": "你好，我想学Python，但我是完全零基础，从哪里开始？",
+        "fuzzy_basics": "我之前学过一点列表和循环，但感觉很多概念是模糊的，能帮我梳理一下吗？",
+        "jumpy": "我学过变量和条件判断，但函数还不太懂。今天我们学什么？",
+    }
+    msg = first_messages.get(student_profile, "你好，开始教学吧")
+
+    for turn in range(game_turns):
+        # 发送到教练
+        data = _j.dumps({"session_id": sid, "message": msg}).encode()
+        req = _ur.Request(f"{coach_url}/api/v1/chat", data=data,
+                          headers={"Content-Type": "application/json"})
+        try:
+            with _ur.urlopen(req, timeout=60) as resp:
+                coach_r = _j.loads(resp.read().decode("utf-8"))
+        except Exception as e:
+            transcript.append({"turn": turn, "student": msg, "coach_error": str(e)})
+            break
+
+        # 学生消费教练回复
+        student.consume_coach_response(coach_r)
+        coach_stmt = str(coach_r.get("payload", {}).get("statement", ""))[:200]
+        action_type = str(coach_r.get("action_type", "?"))
+        transcript.append({
+            "turn": turn,
+            "student": msg,
+            "coach_action_type": action_type,
+            "coach_statement": coach_stmt,
+            "llm_generated": coach_r.get("llm_generated", False),
+        })
+
+        # 学生生成回复（不使用 LLM 客户端时用规则）
+        msg = _generate_student_response(student, coach_r)
+
+    # 效果评估
+    effect = student.get_effectiveness_summary()
+    effect["profile"] = student_profile
+    effect["turns"] = game_turns
+    effect["game_sid"] = sid
+
+    return {"transcript": transcript, "effect": effect, "session_id": sid}
+
+
+def _generate_student_response(student, coach_r: dict) -> str:
+    """生成学生回复：尝试用 LLM，失败则用规则 fallback."""
+    try:
+        from src.coach.llm.config import LLMConfig
+        import os
+        import yaml
+        cfg_path = Path(__file__).resolve().parent / "config" / "coach_defaults.yaml"
+        with open(cfg_path, encoding="utf-8") as f:
+            cfg = yaml.safe_load(f)
+        llm_cfg = cfg.get("llm", {})
+        if llm_cfg.get("enabled", False) and os.getenv("DEEPSEEK_API_KEY"):
+            llm_config = LLMConfig.from_yaml(cfg)
+            from src.coach.llm.client import LLMClient
+            client = LLMClient(llm_config)
+            return student.generate_response(client, llm_config)
+    except Exception:
+        pass
+    # Rule-based fallback: 基于知识状态的简单回复
+    return _rule_based_student_reply(student)
+
+
+def _rule_based_student_reply(student) -> str:
+    """规则驱动的学生回复（无需 LLM）."""
+    exposed = list(student.state.exposed_concepts)
+    known = list(student.state.known_concepts.keys())
+    coach_said = student._last_coach_statement[:100]
+
+    # 检测理解关键词
+    understood = any(kw in coach_said for kw in ["第一步", "首先", "例如", "比如", "步骤", "总结"])
+    if understood and exposed:
+        for c in exposed[:1]:
+            student.state.learn(c, gain=0.15)
+        return f"哦，{exposed[0]}原来是这个意思。那接下来呢？"
+    elif known:
+        return f"我大概知道{known[-1]}了，能再深入讲一下吗？"
+    else:
+        return "好的，继续讲吧。我有点跟着费劲，能慢一点吗？"
+
+
+def run_interactive_audit(coach_url: str = "http://127.0.0.1:8001",
+                          turns: int = 6) -> dict:
+    """S44.3: 跑全部 3 个画像的交互式审计，产出效果报告."""
+    results = {}
+    for profile_id in ["beginner", "fuzzy_basics", "jumpy"]:
+        print(f"\n[S44.2] 交互式对局: {profile_id} ({turns} turns)...")
+        r = run_interactive_game(student_profile=profile_id,
+                                 game_turns=turns, coach_url=coach_url)
+        results[profile_id] = r
+        effect = r["effect"]
+        print(f"  mastery_delta={effect['mastery_delta']:.2f}  "
+              f"concepts_learned={effect['concepts_learned']}  "
+              f"exposed={effect['concepts_exposed']}")
+
+    # 效果报告
+    report = {
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "game_turns_per_profile": turns,
+        "profiles": {},
+        "summary": {},
+    }
+    for pid, r in results.items():
+        e = r["effect"]
+        report["profiles"][pid] = {
+            "mastery_delta": e["mastery_delta"],
+            "concepts_learned": e["concepts_learned"],
+            "concepts_exposed": e["concepts_exposed"],
+            "turns": e["turns"],
+            "transcript_turns": len(r["transcript"]),
+        }
+    deltas = [p["mastery_delta"] for p in report["profiles"].values()]
+    report["summary"] = {
+        "total_profiles": len(results),
+        "mean_mastery_delta": round(sum(deltas) / len(deltas), 4) if deltas else 0,
+        "interpretation": (
+            "Positive delta = student learned. Higher = more effective teaching."
+        ),
+    }
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    with open(OUTPUT_DIR / "interactive_effect_report.json", "w", encoding="utf-8") as f:
+        json.dump(report, f, ensure_ascii=False, indent=2)
+    print(f"\n[S44.3] 效果报告: {OUTPUT_DIR / 'interactive_effect_report.json'}")
+    return report
+
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Phase 32 体验审计管道")
+    parser = argparse.ArgumentParser(description="Phase 32+44 体验审计管道")
     parser.add_argument("--use-http", action="store_true",
-                        help="通过 HTTP 调用后端 (需要服务运行在 http://127.0.0.1:8001)")
+                        help="通过 HTTP 调用后端")
     parser.add_argument("--quick", action="store_true",
-                        help="快速模式: 3 画像 × 5 轮 (用于 LLM 验证)")
+                        help="快速模式: 3 画像 × 5 轮")
+    parser.add_argument("--interactive", action="store_true",
+                        help="Phase 44: 交互式审计 (LLM 学生代理 × 教练对局)")
+    parser.add_argument("--turns", type=int, default=6,
+                        help="交互式对局轮数 (default 6)")
     args = parser.parse_args()
-    main(use_http=args.use_http, quick=args.quick)
+    if args.interactive:
+        run_interactive_audit(coach_url="http://127.0.0.1:8001", turns=args.turns)
+    else:
+        main(use_http=args.use_http, quick=args.quick)

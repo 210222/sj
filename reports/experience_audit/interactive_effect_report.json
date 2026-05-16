@@ -1,0 +1,32 @@
+{
+  "generated_at_utc": "2026-05-16T03:39:21.068634+00:00",
+  "game_turns_per_profile": 4,
+  "profiles": {
+    "beginner": {
+      "mastery_delta": 0.15,
+      "concepts_learned": 1,
+      "concepts_exposed": 1,
+      "turns": 4,
+      "transcript_turns": 4
+    },
+    "fuzzy_basics": {
+      "mastery_delta": 0.45,
+      "concepts_learned": 3,
+      "concepts_exposed": 2,
+      "turns": 4,
+      "transcript_turns": 4
+    },
+    "jumpy": {
+      "mastery_delta": 0.45,
+      "concepts_learned": 3,
+      "concepts_exposed": 0,
+      "turns": 4,
+      "transcript_turns": 4
+    }
+  },
+  "summary": {
+    "total_profiles": 3,
+    "mean_mastery_delta": 0.35,
+    "interpretation": "Positive delta = student learned. Higher = more effective teaching."
+  }
+}
