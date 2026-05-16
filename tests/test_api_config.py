@@ -13,16 +13,20 @@ CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "coach_default
 
 @pytest.fixture(autouse=True)
 def restore_config():
-    """每个测试前后恢复 config 文件."""
+    """每个测试后恢复 config 文件 + 重载 composer 配置."""
     backup = None
     if CONFIG_PATH.exists():
         backup = CONFIG_PATH.read_bytes()
     yield
     if backup is not None:
         CONFIG_PATH.write_bytes(backup)
-    # 清缓存
     from api.services.dashboard_aggregator import _invalidate_cache
     _invalidate_cache()
+    try:
+        from src.coach.composer import reload_config
+        reload_config()
+    except Exception:
+        pass
 
 
 class TestConfigGet:

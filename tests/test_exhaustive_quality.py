@@ -41,8 +41,8 @@ class TestDisabledBaseline:
         a = CoachAgent()
         assert a.ttm is not None  # Phase 39: TTM now enabled by default
         assert a.sdt is not None
-        assert a.flow is not None
-        assert a.diagnostic_engine is None  # diagnostic_engine still disabled in config
+        assert a.flow is None  # Phase 47: flow 遵守 enabled: false
+        assert a.diagnostic_engine is not None  # Phase 47: diagnostic_engine enabled in config
 
     def test_act_does_not_crash_with_all_disabled(self):
         """全 disabled 时多轮对话不崩溃."""
@@ -62,11 +62,11 @@ class TestDisabledBaseline:
         assert t2 >= t1, f"turns should increment: {t1} -> {t2}"
 
     def test_difficulty_contract_defaults_when_disabled(self):
-        """diagnostic_engine 默认关闭，difficulty_contract 返回 default."""
+        """Phase 47: diagnostic_engine enabled, difficulty_contract 返回 bkt_mastery."""
         a = CoachAgent()
         r = a.act("test")
         dc = r.get("difficulty_contract", {})
-        assert dc.get("reason") == "default"
+        assert dc.get("reason") == "bkt_mastery"
         assert dc.get("level") == "medium"
 
 
@@ -78,17 +78,17 @@ class TestDataFlowEndToEnd:
     """mastery -> TTM/SDT/Flow -> composer -> LLM 全链路."""
 
     def test_mastery_to_difficulty_easy(self):
-        """diagnostic_engine 默认关闭，difficulty_contract 返回 default."""
+        """Phase 47: diagnostic_engine enabled -> reason = bkt_mastery."""
         a = CoachAgent(session_id="df_easy")
         r = a.act("test")
         assert r["difficulty_contract"]["level"] == "medium"
-        assert r["difficulty_contract"]["reason"] == "default"
+        assert r["difficulty_contract"]["reason"] == "bkt_mastery"
 
     def test_mastery_to_difficulty_default_disabled(self):
-        """diagnostic_engine 默认关闭 -> reason = default."""
+        """Phase 47: diagnostic_engine enabled -> reason = bkt_mastery."""
         a = CoachAgent()
         r = a.act("test")
-        assert r["difficulty_contract"]["reason"] == "default"
+        assert r["difficulty_contract"]["reason"] == "bkt_mastery"
 
     def test_covered_topics_is_none_when_disabled(self):
         """diagnostic_engine 已启用，personalization_evidence 可含 diagnostic 来源."""
@@ -112,10 +112,10 @@ class TestDataFlowEndToEnd:
         assert r["sdt_profile"] is not None  # Phase 39: SDT now enabled
 
     def test_flow_channel_not_none(self):
-        """Flow 始终可用 -> flow_channel 非 None."""
+        """Phase 47: flow 遵守 enabled: false -> flow_channel 为 None."""
         a = CoachAgent()
         r = a.act("test")
-        assert r["flow_channel"] is not None
+        assert r["flow_channel"] is None
 
     def test_progress_summary_none_no_mastery(self):
         """无 mastery 数据时 _progress_summary 为 None."""

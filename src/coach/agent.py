@@ -144,7 +144,6 @@ class CoachAgent:
 
         # Phase 27: 上下文引擎
         self._prev_ctx: dict | None = None
-        self._current_atype: str = "suggest"
         self._prev_teaching: str = ""  # Phase 31: 上一轮教学内容
         self._current_atype: str = "suggest"
         self._is_returning_user: bool = False  # Phase 41: 跨会话连续性
@@ -334,16 +333,17 @@ class CoachAgent:
     @property
     def flow(self):
         if self._flow is None:
-            from src.coach.flow import FlowOptimizer
             cfg = _coach_cfg.get("flow", {})
-            bkt_params = cfg.get("bkt", {}) if cfg else {}
-            self._flow = FlowOptimizer(bkt_params, cfg or {})
+            if isinstance(cfg, dict) and cfg.get("enabled", False):
+                from src.coach.flow import FlowOptimizer
+                bkt_params = cfg.get("bkt", {}) if cfg else {}
+                self._flow = FlowOptimizer(bkt_params, cfg or {})
         return self._flow
 
     @property
     def diagnostic_engine(self):
         if self._diagnostic_engine is None:
-            cfg = _coach_cfg.get("diagnostic_engine") or _coach_cfg.get("diagnostics", {})
+            cfg = _coach_cfg.get("diagnostic_engine", {})
             if isinstance(cfg, dict) and cfg.get("enabled", False):
                 from src.coach.diagnostic_engine import DiagnosticEngine
                 self._diagnostic_engine = DiagnosticEngine(config=cfg)
@@ -1619,7 +1619,6 @@ class CoachAgent:
 
     # ── 意图解析 ────────────────────────────────────────────────
 
-    @staticmethod
     @staticmethod
     def _parse_intent(user_input: str) -> str:
         if not user_input:
