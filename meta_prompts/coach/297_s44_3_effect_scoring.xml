@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S44.3 — 教学效果评分</name><version>1.0.0</version><track>COACH</track><phase>44</phase>
+  <sub_stage>S44.3</sub_stage><sub_stage_name>mastery_delta 量化 + 效果报告</sub_stage_name>
+  <role>基于 StudentAgent 的 mastery_delta 量化教学效果，产出 interactive_effect_report.json</role>
+  <task>
+    1. 每个画像完成对局后记录 mastery_delta / concepts_learned / turns
+    2. 对比不同 coach action_type 分布与学习效果
+    3. 产出 reports/experience_audit/interactive_effect_report.json
+  </task>
+  <quality_gates>
+    <gate>mastery_delta 可区分不同教学策略的效果</gate>
+    <gate>interactive_effect_report.json 可机器读取</gate>
+  </quality_gates>
+</prompt>

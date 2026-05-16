@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S44.1 — StudentAgent</name><version>1.0.0</version><track>COACH</track><phase>44</phase>
+  <sub_stage>S44.1</sub_stage><sub_stage_name>LLM 学生代理 + 知识状态模型</sub_stage_name>
+  <role>实现 StudentAgent：3 个画像、StudentKnowledgeState 追踪、LLM 生成学生回复</role>
+  <task>
+    1. StudentKnowledgeState: known_concepts 字典 + exposed_concepts 集合 + turn_history
+    2. StudentAgent: consume_coach_response → 提取概念 → 生成 LLM 回复 → 更新掌握度
+    3. 3 个画像: beginner / fuzzy_basics / jumpy
+    4. get_effectiveness_summary: mastery_delta + concepts_learned
+  </task>
+  <quality_gates>
+    <gate>StudentAgent 从 LLM 回复中检测学习信号并更新 known_concepts</gate>
+    <gate>3 个画像各自有独立的知识起点</gate>
+  </quality_gates>
+</prompt>

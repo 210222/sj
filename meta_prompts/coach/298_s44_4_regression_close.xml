@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S44.4 — 回归与收口</name><version>1.0.0</version><track>COACH</track><phase>44</phase>
+  <sub_stage>S44.4</sub_stage><sub_stage_name>targeted tests / full regression</sub_stage_name>
+  <role>验证 StudentAgent 行为正确、教练不受影响、1466/0/5</role>
+  <quality_gates>
+    <gate>StudentAgent 3 个画像均可生成回复</gate>
+    <gate>mastery_delta >= 0（不应出现负学习）</gate>
+    <gate>python -m pytest tests/ -q 全绿</gate>
+  </quality_gates>
+</prompt>

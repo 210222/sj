@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S44.2 — 交互式教学引擎</name><version>1.0.0</version><track>COACH</track><phase>44</phase>
+  <sub_stage>S44.2</sub_stage><sub_stage_name>教练-学生对局循环</sub_stage_name>
+  <role>实现交互式教练-学生对局：CoachAgent.act → StudentAgent.consume → generate_response → 下一轮</role>
+  <task>
+    1. 多轮对局循环 (默认 10 turns)
+    2. 每轮: 学生发消息 → 教练 act → 学生消费教练回复 → 学生生成新回复
+    3. 记录 full transcript
+    4. 教练和学生的 LLM 调用分开追踪
+  </task>
+  <quality_gates>
+    <gate>10 轮对局可完整完成</gate>
+    <gate>transcript 包含每轮的 coach 和 student 消息</gate>
+  </quality_gates>
+</prompt>

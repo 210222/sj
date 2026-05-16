@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 44 — 交互式教学审计：LLM 学生代理</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>44</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>StudentAgent / interactive engine / effect scoring / regression close</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+  <role>Phase 44 总控：将静态 3-profile audit 升级为 LLM 学生代理驱动的交互式教学审计。不替换现有 audit，新增 interactive mode。</role>
+  <global_constraints>
+    1. 禁止修改 contracts/** / src/inner/** / src/middle/** / src/outer/**
+    2. 禁止修改 provider/model/base_url / scoring 维度
+    3. 不替换现有 run_experience_audit.py
+    4. 学生代理 LLM 调用不计入教学 observability
+  </global_constraints>
+  <sub_stages>
+    <stage id="s44_1" name="StudentAgent"><meta_prompt>295_s44_1_student_agent.xml</meta_prompt></stage>
+    <stage id="s44_2" name="Interactive Engine"><meta_prompt>296_s44_2_interactive_engine.xml</meta_prompt></stage>
+    <stage id="s44_3" name="Effect Scoring"><meta_prompt>297_s44_3_effect_scoring.xml</meta_prompt></stage>
+    <stage id="s44_4" name="Regression Close"><meta_prompt>298_s44_4_regression_close.xml</meta_prompt></stage>
+  </sub_stages>
+  <go_gate_policy>
+    <gate>GO_S44.1: StudentAgent 可生成有知识状态的回复</gate>
+    <gate>GO_S44.2: 交互式教练-学生对局可完成</gate>
+    <gate>GO_S44.3: mastery_delta 可量化教学效果</gate>
+    <gate>GO_S44.4: 1466/0/5 全量回归</gate>
+  </go_gate_policy>
+</prompt>
