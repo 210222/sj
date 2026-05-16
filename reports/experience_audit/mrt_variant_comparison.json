@@ -1,0 +1,5 @@
+{
+  "status": "insufficient_data",
+  "variants": 1,
+  "note": "need at least 2 variants with data — enable mrt.enabled in coach_defaults.yaml"
+}

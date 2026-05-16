@@ -363,7 +363,14 @@ def generate_variant_comparison_report(output_dir: str | None = None) -> dict:
     """S38.3: 从 mrt_outcomes 聚合数据，运行贝叶斯估计，产出对比报告."""
     aggregated = MRTExperiment.aggregate_outcomes()
     if not aggregated or len(aggregated) < 2:
-        return {"status": "insufficient_data", "variants": len(aggregated), "note": "need at least 2 variants with data"}
+        report = {"status": "insufficient_data", "variants": len(aggregated),
+                  "note": "need at least 2 variants with data — enable mrt.enabled in coach_defaults.yaml"}
+        if output_dir:
+            out_path = Path(output_dir) / "mrt_variant_comparison.json"
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(out_path, "w", encoding="utf-8") as f:
+                json.dump(report, f, ensure_ascii=False, indent=2)
+        return report
 
     estimator = BayesianEstimator()
     # Use the variant with most samples as "control" (likely scaffold_first)

@@ -1140,7 +1140,7 @@ def run_interactive_game(
 
     # 效果评估 (4 维)
     effect = student.get_effectiveness_summary()
-    effect_score = score_interactive_session(transcript, student)
+    effect_score = score_interactive_session(transcript, effect)
     effect["profile"] = student_profile
     effect["turns"] = game_turns
     effect["game_sid"] = sid
@@ -1169,32 +1169,6 @@ def _generate_student_response(student, coach_r: dict) -> str:
     # Rule-based fallback: 基于知识状态的简单回复
     return _rule_based_student_reply(student)
 
-
-def score_interactive_session(transcript: list[dict], student) -> dict:
-    """S44.3: 4 dimension teaching effect scoring, 0-4 each, parallel to morphology."""
-    if not transcript:
-        return {"知识转移": 0, "策略适应": 0, "解释质量": 0, "互动节奏": 0, "total": 0}
-
-    mastery = student.get_mastery_delta()
-    knowledge_score = min(4.0, round(mastery / 0.1))
-
-    action_types = [t.get("coach_action_type", "") for t in transcript]
-    unique_actions = len(set(a for a in action_types if a))
-    strategy_score = min(4.0, unique_actions * 1.0)
-
-    stmt_lens = [len(t.get("coach_statement", "")) for t in transcript]
-    avg_len = sum(stmt_lens) / max(len(stmt_lens), 1)
-    explain_score = min(4.0, round(avg_len / 40.0))
-
-    valid_turns = sum(1 for t in transcript if t.get("coach_statement") and len(t.get("coach_statement", "")) > 20)
-    rhythm_score = min(4.0, round((valid_turns / max(len(transcript), 1)) * 4.0))
-
-    total = round(knowledge_score + strategy_score + explain_score + rhythm_score, 1)
-    return {
-        "知识转移": knowledge_score, "策略适应": strategy_score,
-        "解释质量": explain_score, "互动节奏": rhythm_score,
-        "total": total, "mastery_delta": round(mastery, 4),
-    }
 
 def _rule_based_student_reply(student) -> str:
     """规则驱动的学生回复（无需 LLM）."""
