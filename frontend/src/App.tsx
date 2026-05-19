@@ -1,5 +1,6 @@
 /** Coherence Coach — React SPA 根组件. */
 
+import 'katex/dist/katex.min.css';
 import { useState, useCallback, useEffect } from 'react';
 import { useCoachState } from './hooks/useCoachState';
 import { useAdaptivePulse } from './hooks/useAdaptivePulse';
@@ -17,6 +18,8 @@ import { AuditLogViewer } from './components/admin/AuditLogViewer';
 import { getUserDashboard } from './api/client';
 import type { TTMRadarData, SDTRingsData, UserDashboardResponse } from './types/api';
 import { TeachingStatus } from './components/TeachingStatus';
+import { LLMRuntimeCard } from './components/dashboard/LLMRuntimeCard';
+import { SkillTreeCard } from './components/dashboard/SkillTreeCard';
 import { createSession, sendMessage, respondPulse } from './api/client';
 import { getTTMUI } from './utils/stateMachine';
 import { applyColorAdaptation } from './utils/colorAdapt';
@@ -76,6 +79,7 @@ export function App() {
   const [adminMode, setAdminMode] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>('connecting');
   const [isLoading, setIsLoading] = useState(false);
+  const [teachReport, setTeachReport] = useState<Record<string, Record<string, unknown>> | null>(null);
   // Phase 13x: 仪表盘可视化数据
   const [dashTTM, setDashTTM] = useState<TTMRadarData | null>(null);
   const [dashSDT, setDashSDT] = useState<SDTRingsData | null>(null);
@@ -92,6 +96,20 @@ export function App() {
       });
     }
   }, [sidebarOpen, state.sessionId]);
+
+  // Phase 55: 获取教学审计报告（超过 7 天不显示）
+  useEffect(() => {
+    if (adminMode) {
+      fetch('/reports/experience_audit/teaching_capability_report.json')
+        .then(r => r.json()).then(data => {
+          if (data.generated_at_utc) {
+            const ageDays = (Date.now() - new Date(data.generated_at_utc).getTime()) / 86400000;
+            if (ageDays > 7) { setTeachReport(null); return; }
+          }
+          setTeachReport(data);
+        }).catch(() => setTeachReport(null));
+    }
+  }, [adminMode]);
 
   // 初始化会话
   useEffect(() => {
@@ -120,6 +138,7 @@ export function App() {
           ? passport.source_tag as ChatMessage['sourceTag']
           : undefined,
         timestamp: new Date().toISOString(),
+        diagram: (payload as any)?.diagram ?? undefined,
       });
       if (msg.ttm_stage) setTTMStage(msg.ttm_stage as TTMStage);
       if (msg.sdt_profile) setSDTProfile(msg.sdt_profile as Record<string, number>);
@@ -180,6 +199,8 @@ export function App() {
         awakening: res.awakening as ChatMessage['awakening'] ?? undefined,
         // Phase 42: LLM observability
         llm_observability: res.llm_observability ?? undefined,
+        // Phase 62: diagram
+        diagram: (res.payload as any)?.diagram ?? undefined,
       });
       if (res.ttm_stage) setTTMStage(res.ttm_stage as TTMStage);
       if (res.sdt_profile) setSDTProfile(res.sdt_profile);
@@ -232,6 +253,7 @@ export function App() {
           ),
           actionType: na.action_type as ChatMessage['actionType'],
           timestamp: new Date().toISOString(),
+          diagram: (na.payload as any)?.diagram ?? undefined,
         });
       }
     }).finally(() => {
@@ -254,6 +276,7 @@ export function App() {
           ),
           actionType: na.action_type as ChatMessage['actionType'],
           timestamp: new Date().toISOString(),
+          diagram: (na.payload as any)?.diagram ?? undefined,
         });
       }
     }).finally(() => {
@@ -296,6 +319,10 @@ export function App() {
             <div style={{ height: 'var(--space-md)' }} />
             {dashSDT && <SDTEnergyRings data={dashSDT} />}
             {dashFull && <TeachingStatus dashboard={dashFull} />}
+            {dashFull && <SkillTreeCard masterySnapshot={dashFull.mastery_snapshot} />}
+            {dashFull?.session_llm_summary && (
+              <LLMRuntimeCard summary={dashFull.session_llm_summary} />
+            )}
             <div style={{ height: 'var(--space-md)' }} />
             {/* Phase 42: Admin toggle */}
             <button
@@ -315,6 +342,48 @@ export function App() {
                 <GatePipeline summary={dashFull as Record<string, unknown> | null} />
                 <div style={{ height: 'var(--space-sm)' }} />
                 <AuditLogViewer />
+                {/* Phase 55: LLM Observability */}
+                {dashFull?.llm_runtime_summary && (
+                  <div style={{ marginTop: 'var(--space-sm)', padding: '10px 12px',
+                    background: '#f9f7f3', borderRadius: 8, fontSize: 12 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 6 }}>LLM Observability</div>
+                    <div>缓存命中率: {((dashFull.llm_runtime_summary.cache_eligible_rate ?? 0) * 100).toFixed(0)}%</div>
+                    <div>P50: {(dashFull.llm_runtime_summary.p50_latency_ms ?? 0) < 1000
+                      ? `${Math.round(dashFull.llm_runtime_summary.p50_latency_ms ?? 0)}ms`
+                      : `${((dashFull.llm_runtime_summary.p50_latency_ms ?? 0) / 1000).toFixed(1)}s`}
+                      {' '}P95: {(dashFull.llm_runtime_summary.p95_latency_ms ?? 0) < 1000
+                      ? `${Math.round(dashFull.llm_runtime_summary.p95_latency_ms ?? 0)}ms`
+                      : `${((dashFull.llm_runtime_summary.p95_latency_ms ?? 0) / 1000).toFixed(1)}s`}</div>
+                    <div>样本数: {dashFull.llm_runtime_summary.sample_size}</div>
+                  </div>
+                )}
+                {/* Phase 55: 教学审计结果 */}
+                {teachReport && (() => {
+                  const PROFILE_NAMES: Record<string, string> = {
+                    fake_understanding: '虚假掌握型',
+                    misconception: '误解型',
+                    anxious: '焦虑型',
+                  };
+                  return (
+                  <div style={{ marginTop: 'var(--space-sm)', padding: '10px 12px',
+                    background: '#f9f7f3', borderRadius: 8, fontSize: 12 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 6 }}>教学能力评测 (LLM 评委)</div>
+                    {Object.entries(teachReport).map(([pid, data]) => (
+                      <div key={pid} style={{ display: 'flex', alignItems: 'center', marginBottom: 3 }}>
+                        <span style={{ width: 100, opacity: 0.7 }}>{PROFILE_NAMES[pid] || pid}</span>
+                        <span style={{ flex: 1, height: 6, background: 'var(--color-lavender-gray)', borderRadius: 3, marginRight: 8 }}>
+                          <span style={{ display: 'block', height: '100%', borderRadius: 3,
+                            background: 'var(--color-sage-green)',
+                            width: `${Math.min(100, ((data as any).mean_total ?? 0) / 30 * 100)}%` }} />
+                        </span>
+                        <span style={{ fontWeight: 600, width: 40, textAlign: 'right' }}>
+                          {(data as any).mean_total ?? (data as any).total ?? '--'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  );
+                })()}
               </div>
             )}
             <div style={{ height: 'var(--space-lg)' }} />

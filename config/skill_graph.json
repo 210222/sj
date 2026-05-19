@@ -1,10 +1,21 @@
 {
   "python_variable":    {"prerequisites": [],           "related": ["python_type", "python_condition"]},
+  "python_type":        {"prerequisites": ["python_variable"], "related": ["python_list", "python_dict"]},
   "python_condition":   {"prerequisites": ["python_variable"], "related": ["python_loop"]},
   "python_loop":        {"prerequisites": ["python_variable","python_condition"], "related": ["python_list","python_comprehension"]},
   "python_list":        {"prerequisites": ["python_variable","python_loop"], "related": ["python_dict","python_tuple"]},
   "python_dict":        {"prerequisites": ["python_list","python_variable"], "related": ["python_json"]},
-  "python_function":    {"prerequisites": ["python_variable","python_condition","python_loop"], "related": ["python_class","python_module"]},
+  "python_tuple":       {"prerequisites": ["python_list"], "related": ["python_dict"]},
+  "python_function":    {"prerequisites": ["python_variable","python_condition","python_loop"], "related": ["python_class","python_module","python_lambda"]},
   "python_comprehension": {"prerequisites": ["python_list","python_loop","python_function"], "related": ["python_generator"]},
-  "python_class":       {"prerequisites": ["python_function","python_variable"], "related": ["python_module"]}
+  "python_generator":   {"prerequisites": ["python_function","python_comprehension"], "related": []},
+  "python_class":       {"prerequisites": ["python_function","python_variable"], "related": ["python_module","python_decorator"]},
+  "python_module":      {"prerequisites": ["python_function"], "related": ["python_json"]},
+  "python_json":        {"prerequisites": ["python_dict"], "related": ["python_module"]},
+  "python_lambda":      {"prerequisites": ["python_function"], "related": ["python_list"]},
+  "python_decorator":   {"prerequisites": ["python_function","python_class"], "related": ["python_module"]},
+  "python_recursion":   {"prerequisites": ["python_function","python_loop"], "related": ["algorithm_intro"]},
+  "algorithm_intro":    {"prerequisites": ["python_function","python_list"], "related": ["sorting","searching"]},
+  "sorting":            {"prerequisites": ["python_list","algorithm_intro"], "related": ["searching"]},
+  "searching":          {"prerequisites": ["python_list","algorithm_intro"], "related": ["sorting"]}
 }

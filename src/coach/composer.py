@@ -3,8 +3,11 @@
 阶段 4 升级为 TTM+SDT+心流决策统一入口。
 """
 
+import logging
 import yaml
 from pathlib import Path
+
+_logger = logging.getLogger(__name__)
 
 _CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "coach_defaults.yaml"
 _DEFAULTS = {}
@@ -168,6 +171,7 @@ class PolicyComposer:
             from src.coach.mrt import MRTExperiment
             quality = MRTExperiment.get_strategy_quality(min_samples=5)
         except Exception:
+            _logger.warning("MRT preference lookup failed, falling back to default", exc_info=True)
             return action_type
 
         if not quality or action_type not in quality:
@@ -192,6 +196,58 @@ class PolicyComposer:
             ):
                 return dst
         return action_type
+
+    # Phase 58: 中文意图 → skill_graph 英文键映射
+    _CONCEPT_MAP: dict[str, str] = {
+        "变量": "python_variable", "类型": "python_type", "条件": "python_condition",
+        "循环": "python_loop", "列表": "python_list", "字典": "python_dict",
+        "元组": "python_tuple", "函数": "python_function", "推导式": "python_comprehension",
+        "生成器": "python_generator", "类": "python_class", "模块": "python_module",
+        "json": "python_json", "lambda": "python_lambda", "装饰器": "python_decorator",
+        "递归": "python_recursion", "算法": "algorithm_intro",
+        "排序": "sorting", "搜索": "searching",
+    }
+
+    @staticmethod
+    def _check_learning_path(intent: str, mastery: dict[str, float]) -> dict:
+        """Phase 58: 基于 SkillGraph + BKT 的学习路径检测。
+
+        返回 {"prerequisites": [...], "suggested_next": [...], "has_graph": bool, "hint": str}
+        软建议——不改变 action_type，只在 context 中注入。
+        """
+        try:
+            from src.coach.diagnostic_engine import SkillGraph
+            sg = SkillGraph()
+        except Exception:
+            return {"has_graph": False, "hint": ""}
+        skill = PolicyComposer._CONCEPT_MAP.get(intent, f"python_{intent}")
+        _REVERSE_MAP = {v: k for k, v in PolicyComposer._CONCEPT_MAP.items()}
+        unmastered = sg.has_unmastered_prerequisites(skill, mastery, threshold=0.6)
+        unmastered_cn = [_REVERSE_MAP.get(u, u) for u in unmastered]
+        if unmastered:
+            return {
+                "has_graph": True,
+                "prerequisites": unmastered,
+                "suggested_next": [],
+                "hint": f"学习路径提示: {intent} 的前置概念 {', '.join(unmastered_cn)} 尚未掌握(阈值0.6)。建议先复习前置，再推进当前概念。",
+            }
+        current_level = mastery.get(skill, 0)
+        suggested = []
+        if current_level >= 0.7:
+            deps = sg.get_dependents(skill)
+            suggested = [d for d in deps if mastery.get(d, 0) < 0.5]
+        if suggested:
+            suggested_cn = [_REVERSE_MAP.get(s, s) for s in suggested[:3]]
+            return {
+                "has_graph": True,
+                "prerequisites": [],
+                "suggested_next": suggested,
+                "hint": f"学习路径提示: {intent} 已掌握({current_level:.0%})。可继续学习 {', '.join(suggested_cn)}。",
+            }
+        all_skills = sg._graph.keys() if hasattr(sg, '_graph') else []
+        if skill in all_skills:
+            return {"has_graph": True, "prerequisites": [], "suggested_next": [], "hint": ""}
+        return {"has_graph": False, "hint": f"学习路径提示: {intent} 暂无学习路径数据，教练可自由发挥。"}
 
     def _select_action_type(self, intent: str) -> str:
         """关键词→action_type 匹配。"""

@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from typing import Any
 from pathlib import Path
 
-from src.coach.data import MemoryStore
+from src.coach.data import MemoryStore, _utc_now
 
 _logger = logging.getLogger(__name__)
 
@@ -44,10 +44,6 @@ CREATE VIRTUAL TABLE IF NOT EXISTS sessions_fts USING fts5(
     content_rowid=rowid
 );
 """
-
-
-def _utc_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
 
 class SessionMemory:

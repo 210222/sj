@@ -64,6 +64,7 @@ export interface ChatMessage {
   llm_observability?: LLMObservability | null;
   options?: Array<{ label: string; description: string }>;
   pulse?: PulseEvent;
+  diagram?: { type: string; content: any; language?: string };
   awakening?: {
     triggered: boolean;
     total_modules: number;

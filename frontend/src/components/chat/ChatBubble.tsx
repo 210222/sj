@@ -2,9 +2,11 @@
 
  * source_tag 渲染为小型标签标识（rule/statistical/hypothesis）.
  */
+import { useEffect, useRef } from 'react';
 import type { ChatMessage } from '../../types/coach';
 import { coachColors } from '../../styles/theme';
 import { AwakeningPanel } from './AwakeningPanel';
+import { DiagramRenderer } from './DiagramRenderer';
 
 interface ChatBubbleProps {
   message: ChatMessage;
@@ -22,6 +24,47 @@ const SOURCE_TAG_STYLES: Record<string, { bg: string; text: string; label: strin
 
 export function ChatBubble({ message, onEnableRecommended, onSkipAwakening }: ChatBubbleProps) {
   const isUser = message.role === 'user';
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Phase 62: KaTeX auto-render inline $...$ formulas
+  useEffect(() => {
+    if (!contentRef.current) return;
+    let cancelled = false;
+    import('katex').then((katex) => {
+      if (cancelled) return;
+      try {
+        // 直接使用原始文本,避免 innerHTML 的 HTML 实体编码破坏 LaTeX (& → &amp;)
+        let raw = message.content;
+        console.log('[KaTeX] raw[:200]', raw.slice(0, 200));
+
+        // 兜底: LLM 可能忘记用 $...$ 包裹 LaTeX——检测裸露的 \begin{...}...\end{...} 并自动包裹
+        const hasDelimiters = /\$[^$]+\$/.test(raw);
+        if (!hasDelimiters) {
+          raw = raw.replace(/(\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\})/g, '$$$1$$');
+        }
+
+        // 安全网: HTML 实体解码 (&amp;→&, &lt;→< 等), 防止管线中任何环节的意外转义
+        const decodeHTML = (s: string): string => {
+          const t = document.createElement('textarea');
+          t.innerHTML = s;
+          return t.value;
+        };
+
+        const displayReplaced = raw.replace(/\$\$([^$]+)\$\$/g, (_: string, formula: string) => {
+          try {
+            return katex.default.renderToString(decodeHTML(formula.trim()), { throwOnError: false, displayMode: true });
+          } catch { return _; }
+        });
+        const inlineReplaced = displayReplaced.replace(/\$([^$]+)\$/g, (_: string, formula: string) => {
+          try {
+            return katex.default.renderToString(decodeHTML(formula.trim()), { throwOnError: false, displayMode: false });
+          } catch { return _; }
+        });
+        if (!cancelled && contentRef.current) contentRef.current.innerHTML = inlineReplaced;
+      } catch { /* ignore */ }
+    }).catch(() => { /* ignore */ });
+    return () => { cancelled = true; };
+  }, [message.content]);
 
   if (message.actionType === 'awakening' && message.awakening) {
     return (
@@ -62,8 +105,15 @@ export function ChatBubble({ message, onEnableRecommended, onSkipAwakening }: Ch
             : 'var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--border-radius-bubble, var(--radius-sm))',
         }}
       >
-        {message.content}
+        <span ref={contentRef}>{message.content}</span>
       </div>
+
+      {/* Phase 62: 图文渲染 */}
+      {message.diagram && (
+        <div style={{ maxWidth: '95%', marginTop: 8 }}>
+          <DiagramRenderer diagram={message.diagram} />
+        </div>
+      )}
 
       {/* Phase 29: 选项按钮 */}
       {message.options && message.options.length > 0 && (

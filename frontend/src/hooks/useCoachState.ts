@@ -7,7 +7,7 @@ function loadInitialState(): CoachState {
   const token = sessionStorage.getItem('coherence_token') || '';
   const sessionId = sessionStorage.getItem('coherence_session_id') || '';
   // 从 localStorage 恢复对话历史
-  let messages: any[] = [];
+  let messages: ChatMessage[] = [];
   if (sessionId) {
     try {
       const saved = localStorage.getItem(`coherence_messages_${sessionId}`);

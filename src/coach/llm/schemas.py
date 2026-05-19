@@ -259,7 +259,7 @@ def _load_dsl_slots() -> dict[str, set[str]]:
         return {}
 
 _ACTION_TYPE_SLOTS: dict[str, set[str]] = _load_dsl_slots()
-_UNIVERSAL_KEYS = {"statement", "question", "hint", "difficulty", "steps", "topics"}
+_UNIVERSAL_KEYS = {"statement", "question", "hint", "difficulty", "steps", "topics", "diagram"}
 
 
 class LLMDSLAligner:

@@ -22,6 +22,8 @@ from src.coach.llm.client import LLMClient, LLMError
 from src.coach.llm.prompts import build_coach_context
 from src.coach.llm.schemas import LLMDSLAligner, LLMOutputValidator
 from src.coach.llm.safety_filter import LLMSafetyFilter
+from src.coach.flow import BKTEngine
+from src.coach.mrt import MRTExperiment
 
 _logger = logging.getLogger(__name__)
 
@@ -38,12 +40,8 @@ def _load_config() -> dict:
 _coach_cfg = _load_config()
 _composer_rules = _coach_cfg.get("composer_rules", {})
 
-# 构建 keyword → label 映射（与 composer_rules 同源，消弭双表不同步风险）
-_KEYWORD_TO_INTENT: dict[str, str] = {}
-for _action_type, _keywords in _composer_rules.items():
-    for _kw in _keywords:
-        if _kw not in _KEYWORD_TO_INTENT:
-            _KEYWORD_TO_INTENT[_kw] = _kw
+# 从 composer_rules 展平得到所有中文关键词，按长度降序用于意图匹配
+_ALL_KEYWORDS: set[str] = {kw for keywords in _composer_rules.values() for kw in keywords}
 
 # ── V18.8 action_type 强度映射 ──────────────────────────────────
 _INTENSITY_MAP: dict[str, float] = {
@@ -143,10 +141,11 @@ class CoachAgent:
         self._progress_summary: str | None = None
 
         # Phase 27: 上下文引擎
-        self._prev_ctx: dict | None = None
         self._prev_teaching: str = ""  # Phase 31: 上一轮教学内容
         self._current_atype: str = "suggest"
         self._is_returning_user: bool = False  # Phase 41: 跨会话连续性
+        self._last_learning_path_intent: str = ""  # Phase 58: 学习路径去重
+        self._learning_path_hint: str = ""  # Phase 58: 学习路径建议文本
 
     # ── 配置访问 ────────────────────────────────────────────────
 
@@ -516,15 +515,7 @@ class CoachAgent:
     # ── Phase 27: 上下文引擎 ──────────────────────────────────
 
     def _build_context_summary(self, this_action_type: str = "") -> str:
-        """构建结构化上下文摘要 (5块).
-
-        DeepSeek 1M 上下文窗口, 2000 tokens 无压力。
-        基于 Adaptive Focus Memory: FULL/COMPRESS/PLACEHOLDER 三级。
-
-        Args:
-            this_action_type: 本轮最终 action_type（在所有 override 之后），用于策略连续性块。
-                             为空时回退到 self._current_atype。
-        """
+        """构建结构化上下文摘要，委托给各专用 helper。"""
         lines: list[str] = []
         raw = self.memory.recall("general", None, limit=10)
         recent = [
@@ -532,47 +523,72 @@ class CoachAgent:
             if h.get("data", {}).get("session_id") == self.session_id
         ][-10:]
 
-        # Block 1: 对话历史 (recall 返回 DESC = 最新在前)
-        if recent:
-            lines.append("=== 对话历史 ===")
-            r0 = recent[0]  # P0 fix: 最新消息 (DESC第一个)
-            d0 = r0.get("data", {})
-            msg0 = d0.get("user_input", "")
-            at0 = d0.get("action_type", "")
-            taught = d0.get("ai_response", "")[:80]
-            if msg0:
-                if taught:
-                    lines.append(f"[最近] 用户: {msg0[:80]} | 教练[{at0}]: {taught}")
-                else:
-                    lines.append(f"[最近] 用户: {msg0[:120]} | 教练: {at0}")
-            mid = recent[1:4]  # 第2-4新的
-            if mid:
-                items = []
-                for h in mid:
-                    d = h.get("data", {})
-                    m = d.get("user_input", "")[:40]
-                    t = d.get("action_type", "")
-                    items.append(f"[{t}] {m}" if m else f"[{t}]")
-                lines.append("[近轮] " + " | ".join(items))
-            early = recent[4:]
-            if early:
-                seen = set()
-                dedup = []
-                for h in early:
-                    m = str(h.get("data", {}).get("user_input", ""))[:15]
-                    if m and m not in seen:
-                        seen.add(m)
-                        dedup.append(m)
-                if dedup:
-                    lines.append("[早期] " + "; ".join(dedup[:4]))
+        self._add_context_history(lines, recent)
+        self._add_context_skill_snapshot(lines)
+        self._add_context_learning_goal(lines)
+        self._add_context_strategy_continuity(lines, recent, this_action_type)
+        self._add_context_returning_user(lines)
 
-        # Block 2+5: 技能快照 + 待复习 (合并为一次 SQLite 查询)
+        lp_hint = getattr(self, "_learning_path_hint", "")
+        if lp_hint:
+            lines.append("=== 学习路径建议 ===")
+            lines.append(lp_hint)
+
+        prev_teach = getattr(self, "_prev_teaching", "")
+        if not prev_teach and self._persistence:
+            try:
+                trend = self._persistence.get_mastery_trend("_prev_teaching", 7)
+                if trend:
+                    prev_teach = trend[-1].get("value", "")
+            except Exception:
+                pass
+        if prev_teach and len(prev_teach) > 3:
+            lines.append(prev_teach)
+        return "\n".join(lines)
+
+    def _add_context_history(self, lines: list[str], recent: list) -> None:
+        """Block 1: 对话历史 (recall 返回 DESC = 最新在前)."""
+        if not recent:
+            return
+        lines.append("=== 对话历史 ===")
+        r0 = recent[0]
+        d0 = r0.get("data", {})
+        msg0 = d0.get("user_input", "")
+        at0 = d0.get("action_type", "")
+        taught = d0.get("ai_response", "")[:80]
+        if msg0:
+            if taught:
+                lines.append(f"[最近] 用户: {msg0[:80]} | 教练[{at0}]: {taught}")
+            else:
+                lines.append(f"[最近] 用户: {msg0[:120]} | 教练: {at0}")
+        mid = recent[1:4]
+        if mid:
+            items = []
+            for h in mid:
+                d = h.get("data", {})
+                m = d.get("user_input", "")[:40]
+                t = d.get("action_type", "")
+                items.append(f"[{t}] {m}" if m else f"[{t}]")
+            lines.append("[近轮] " + " | ".join(items))
+        early = recent[4:]
+        if early:
+            seen = set()
+            dedup = []
+            for h in early:
+                m = str(h.get("data", {}).get("user_input", ""))[:15]
+                if m and m not in seen:
+                    seen.add(m)
+                    dedup.append(m)
+            if dedup:
+                lines.append("[早期] " + "; ".join(dedup[:4]))
+
+    def _add_context_skill_snapshot(self, lines: list[str]) -> None:
+        """Block 2+5: 技能快照 + 待复习."""
         try:
             if self._persistence:
                 skills = self._persistence.get_skills_with_recency()
                 if skills:
                     lines.append("=== 技能快照 ===")
-                    from src.coach.flow import BKTEngine
                     bkt = BKTEngine()
                     review_items = []
                     for skill, data in list(skills.items())[:5]:
@@ -591,7 +607,8 @@ class CoachAgent:
         except Exception:
             pass
 
-        # Block 3: 学习目标
+    def _add_context_learning_goal(self, lines: list[str]) -> None:
+        """Block 3: 学习目标."""
         try:
             if self._persistence:
                 p = self._persistence.get_profile()
@@ -606,64 +623,54 @@ class CoachAgent:
         except Exception:
             pass
 
-        # Block 4: 策略连续性 (recent[0]=最新即上一轮, recent[1]=再上一轮)
+    def _add_context_strategy_continuity(self, lines: list[str], recent: list, this_action_type: str) -> None:
+        """Block 4: 策略连续性."""
         cur = this_action_type or getattr(self, "_current_atype", "suggest")
-        if len(recent) >= 2:
-            prev_data = recent[1].get("data", {})
-            prev_a = prev_data.get("action_type", "?")
-            lines.append("=== 策略连续性 ===")
-            lines.append(f"  上一轮策略: {prev_a}")
-            if cur != prev_a and cur != "?":
-                reason = "策略切换"
-                try:
-                    se = getattr(self, "_self_eval", None)
-                    if se and se.get("reason"): reason = se["reason"]
-                except Exception: pass
-                lines.append(f"  本轮策略: {cur}")
-                lines.append(f"  切换原因: {reason}")
-
-        # Phase 41: 跨会话连续性 — 老用户上次学习回顾
-        if getattr(self, "_is_returning_user", False) and self._turn_count <= 1:
+        if len(recent) < 2:
+            return
+        prev_data = recent[1].get("data", {})
+        prev_a = prev_data.get("action_type", "?")
+        lines.append("=== 策略连续性 ===")
+        lines.append(f"  上一轮策略: {prev_a}")
+        if cur != prev_a and cur != "?":
+            reason = "策略切换"
             try:
-                if self._persistence:
-                    p = self._persistence.get_profile()
-                    goal = p.get("learning_goal", "")
-                    topic = p.get("current_topic", "")
-                    skills = self._persistence.get_skills_with_recency()
-                    summary_parts = []
-                    if goal:
-                        summary_parts.append(f"上次学习目标: {goal}")
-                    if topic:
-                        summary_parts.append(f"上次学习主题: {topic}")
-                    if skills:
-                        top_skills = sorted(
-                            skills.items(), key=lambda x: x[1].get("mastery", 0), reverse=True
-                        )[:3]
-                        skill_str = "; ".join(
-                            f"{s}(掌握{d['mastery']:.0%}, {d['days_elapsed']:.0f}天前)"
-                            for s, d in top_skills
-                        )
-                        summary_parts.append(f"掌握较高技能: {skill_str}")
-                    if summary_parts:
-                        lines.append("=== 上次学习回顾 ===")
-                        lines.append("用户是回头学习者，请优先从上次的进度续接教学，不要像第一次见面那样开场。")
-                        lines.extend(summary_parts)
-            except Exception:
-                pass
+                se = getattr(self, "_self_eval", None)
+                if se and se.get("reason"): reason = se["reason"]
+            except Exception: pass
+            lines.append(f"  本轮策略: {cur}")
+            lines.append(f"  切换原因: {reason}")
 
-        # Phase 31: 上一轮教学内容
-        prev_teach = getattr(self, "_prev_teaching", "")
-        # 跨实例时从 persistence 读取
-        if not prev_teach and self._persistence:
-            try:
-                trend = self._persistence.get_mastery_trend("_prev_teaching", 7)
-                if trend:
-                    prev_teach = trend[-1].get("value", "")
-            except Exception:
-                pass
-        if prev_teach and len(prev_teach) > 3:
-            lines.append(prev_teach)
-        return "\n".join(lines)
+    def _add_context_returning_user(self, lines: list[str]) -> None:
+        """Phase 41: 跨会话连续性 — 老用户上次学习回顾."""
+        if not (getattr(self, "_is_returning_user", False) and self._turn_count <= 1):
+            return
+        try:
+            if self._persistence:
+                p = self._persistence.get_profile()
+                goal = p.get("learning_goal", "")
+                topic = p.get("current_topic", "")
+                skills = self._persistence.get_skills_with_recency()
+                summary_parts = []
+                if goal:
+                    summary_parts.append(f"上次学习目标: {goal}")
+                if topic:
+                    summary_parts.append(f"上次学习主题: {topic}")
+                if skills:
+                    top_skills = sorted(
+                        skills.items(), key=lambda x: x[1].get("mastery", 0), reverse=True
+                    )[:3]
+                    skill_str = "; ".join(
+                        f"{s}(掌握{d['mastery']:.0%}, {d['days_elapsed']:.0f}天前)"
+                        for s, d in top_skills
+                    )
+                    summary_parts.append(f"掌握较高技能: {skill_str}")
+                if summary_parts:
+                    lines.append("=== 上次学习回顾 ===")
+                    lines.append("用户是回头学习者，请优先从上次的进度续接教学，不要像第一次见面那样开场。")
+                    lines.extend(summary_parts)
+        except Exception:
+            pass
 
     def act(self, user_input: str, context: dict | None = None) -> dict:
         """处理一次用户对话。
@@ -697,6 +704,20 @@ class CoachAgent:
 
         # 1. 解析意图
         intent = self._parse_intent(user_input)
+
+        # 1.5 Phase 58: 学习路径检测（话题切换时触发）
+        self._learning_path_hint = ""
+        if intent and intent != self._last_learning_path_intent and intent not in ("general", "suggest", ""):
+            self._last_learning_path_intent = intent
+            try:
+                mastery = {}
+                if self._persistence:
+                    profile = self._persistence.get_profile()
+                    mastery = profile.get("skill_masteries", {})
+                result = PolicyComposer._check_learning_path(intent, mastery or {})
+                self._learning_path_hint = result.get("hint", "")
+            except Exception:
+                pass
 
         # 2. 读取当前用户状态（远足模式下旁路历史影响）
         user_state = self.state_tracker.get_state()
@@ -797,7 +818,6 @@ class CoachAgent:
         review_override = None
         try:
             if self._persistence:
-                from src.coach.flow import BKTEngine
                 bkt = BKTEngine()
                 skills = self._persistence.get_skills_with_recency()
                 review_queue = []
@@ -1236,22 +1256,8 @@ class CoachAgent:
         except Exception:
             self._self_eval = None
 
-        # Phase 27: 更新上下文引擎状态
-        self._current_atype = packet.get("action_type", "suggest")
-        try:
-            sd = sdt_profile or {}
-            comp = sd.get("competence", 0.5)
-            if comp < 0.3:
-                r = "困难(competence偏低)"
-            elif comp > 0.7:
-                r = "顺利(competence充足)"
-            else:
-                r = "正常跟进"
-            self._prev_ctx = {"action_type": self._current_atype, "reaction": r}
-        except Exception:
-            self._prev_ctx = {"action_type": self._current_atype, "reaction": "正常跟进"}
-
         # Phase 29: 全线接线 — 5 处 save
+        self._current_atype = packet.get("action_type", "suggest")
         # 用 user_input 原文 (parsed intent 常为 "general")
         topic_text = (user_input or "").strip()
         has_topic = topic_text and len(topic_text) > 3 and intent != "suggest_options"
@@ -1333,7 +1339,6 @@ class CoachAgent:
                         if skill in self._last_mastery and mastery >= 0.7 and self._last_mastery.get(skill, 0) < 0.7:
                             reasons.append(f"{skill}: 已达到{mastery:.0%}")
                 if self._persistence:
-                    from src.coach.flow import BKTEngine
                     bkt = BKTEngine()
                     skills_data = self._persistence.get_skills_with_recency()
                     for skill, data in skills_data.items():
@@ -1579,8 +1584,8 @@ class CoachAgent:
         S6.7 集成时接入 act()，当前独立可用。
         """
         ctx = context or {}
-        ttm_stage = None
-        if self.ttm is not None:
+        ttm_stage = ctx.get("ttm_stage")
+        if not ttm_stage and self.ttm is not None:
             try:
                 ttm_result = self.ttm.assess({"cognitive_indicators": [0.5]})
                 ttm_stage = ttm_result.get("current_stage")
@@ -1624,9 +1629,9 @@ class CoachAgent:
         if not user_input:
             return "general"
         user_input_lower = user_input.lower()
-        for kw in sorted(_KEYWORD_TO_INTENT, key=len, reverse=True):
+        for kw in sorted(_ALL_KEYWORDS, key=len, reverse=True):
             if kw in user_input_lower:
-                return _KEYWORD_TO_INTENT[kw]
+                return kw
         return "general"
 
     # ── Phase 17: 能力唤醒 + 知情同意 ───────────────────────────
