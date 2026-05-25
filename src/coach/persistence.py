@@ -42,9 +42,10 @@ def _get_db() -> sqlite3.Connection:
     except sqlite3.OperationalError:
         pass
     # Phase 20 S20.3: 学习目标字段迁移
-    for col, col_type in [("learning_goal", "TEXT"), ("current_topic", "TEXT")]:
+    for sql in ["ALTER TABLE profiles ADD COLUMN learning_goal TEXT",
+                "ALTER TABLE profiles ADD COLUMN current_topic TEXT"]:
         try:
-            conn.execute(f"ALTER TABLE profiles ADD COLUMN {col} {col_type}")
+            conn.execute(sql)
             conn.commit()
         except sqlite3.OperationalError:
             pass
