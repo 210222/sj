@@ -8,18 +8,21 @@ capabilities:
     recommended_for: 安全优先
     risk: low
   diagnostic_engine:
-    auto_affects: []
+    auto_affects:
+    - flow
+    - sdt
     impact: 数据收集
     name: 诊断引擎
-    purpose: 效果验证
-    recommended: false
-    recommended_for: 量化反馈
+    purpose: 技能掌握度诊断
+    recommended: true
+    recommended_for: 所有用户
     risk: medium
   diagnostics:
-    auto_affects: []
+    auto_affects:
+    - counterfactual
     impact: 升档检查
     name: 因果诊断
-    purpose: 因果验证
+    purpose: 三诊断因果验证（平衡性/负对照/安慰剂）
     recommended: false
     recommended_for: 严谨归因
     risk: medium
@@ -40,12 +43,14 @@ capabilities:
     recommended_for: 明确目标
     risk: low
   llm:
-    auto_affects: []
+    auto_affects:
+    - mrt
+    - diagnostic_engine
     impact: LLM生成
     name: LLM增强
-    purpose: 自然回复
-    recommended: false
-    recommended_for: 自然对话
+    purpose: 自然语言教学回复
+    recommended: true
+    recommended_for: 所有用户
     risk: medium
   mapek:
     auto_affects: []
@@ -59,9 +64,9 @@ capabilities:
     auto_affects: []
     impact: 策略变体
     name: MRT
-    purpose: 随机实验
+    purpose: 策略效果随机对照实验
     recommended: false
-    recommended_for: 数据驱动
+    recommended_for: 数据驱动优化
     risk: medium
   precedent_intercept:
     auto_affects: []
@@ -166,6 +171,23 @@ diagnostics:
   placebo_window:
     p_value_threshold: 0.05
     window_hours_before: 2
+diagram:
+  deepseek_multimodal:
+    api_key_env: DEEPSEEK_API_KEY
+    base_url: https://api.deepseek.com/v1
+    max_tokens: 1000
+    model: deepseek-multimodal
+    temperature: 0.2
+    timeout_s: 15
+  gemini:
+    api_key_env: GEMINI_API_KEY
+    max_retries: 1
+    max_tokens: 2000
+    model: gemini-2.5-flash
+    temperature: 0.2
+    timeout_s: 15
+  provider: gemini
+  proxy: http://127.0.0.1:7897
 excursion:
   command_prefix: /excursion
   duration_turns: 3
@@ -179,7 +201,7 @@ flow:
     learn: 0.2
     prior: 0.3
     slip: 0.1
-  enabled: false
+  enabled: true
   flow_zone:
     anxiety_threshold: 0.8
     boredom_threshold: 0.2

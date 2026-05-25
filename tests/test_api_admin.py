@@ -48,7 +48,7 @@ class TestAdminGates:
             assert "id" in gate
             assert "name" in gate
             assert "status" in gate
-            assert gate["status"] in ("pass", "warn", "block")
+            assert gate["status"] in ("pass", "warn", "block", "not_implemented")
             assert "metric" in gate
 
     def test_gates_rate_limit(self, monkeypatch):

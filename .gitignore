@@ -8,3 +8,4 @@ data/*.db
 *_secret*
 credentials*
 **/api_key*
+config/.yaml_write.lock

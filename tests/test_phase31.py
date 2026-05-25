@@ -61,15 +61,15 @@ class TestActOrderContinuity:
         assert "策略连续性" in s, f"摘要缺策略连续性块: {repr(s)[:120]}"
         assert "上一轮策略:" in s, f"策略连续性块缺上一轮策略: {repr(s)[:120]}"
 
-    def test_prev_ctx_has_action_type_after_act(self):
-        """act() 后 _prev_ctx 含上一轮真实 action_type."""
+    def test_current_atype_set_after_act(self):
+        """act() 后 _current_atype 含本轮真实 action_type."""
         sid = f"p31_b2_{int(time.time())}"
         a = CoachAgent(session_id=sid)
         a.act("hello")
-        assert "_prev_ctx" in a.__dict__ or hasattr(a, "_prev_ctx")
+        assert hasattr(a, "_current_atype")
         a.act("teach me python")
-        prev = a._prev_ctx
-        assert "action_type" in prev, f"_prev_ctx 缺 action_type: {prev}"
+        assert a._current_atype in ("suggest", "scaffold", "probe", "challenge",
+                                     "reflect", "defer", "pulse", "excursion")
 
 
 # ═══════════════════════════════════════════════════════════════

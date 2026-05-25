@@ -176,10 +176,34 @@ class LLMResponse:
         try:
             data = json.loads(self.content)
             if isinstance(data, dict):
-                return data
+                return _repair_json_latex(data)
         except (json.JSONDecodeError, TypeError):
             pass
+        # 解析失败 → 尝试从原始 JSON 文本中提取 statement 字段
+        import re
+        match = re.search(
+            r'"statement"\s*:\s*"((?:[^"\\]|\\["\\/bfnrt]|\\u[0-9a-fA-F]{4})*)"',
+            self.content
+        )
+        if match:
+            return {"statement": match.group(1)}
         return {"statement": self.content.strip()}
+
+
+def _repair_json_latex(obj):
+    """递归修复 JSON 解析时被损坏的 LaTeX 命令.
+
+    JSON 规范中 \\b \\f \\r \\t 会被解析为控制字符。
+    LaTeX 命令 \\begin \\frac \\rightarrow \\text \\times 等以这些字母开头，
+    这 4 个控制字符在教学文本中无合法用途——只能是损坏的 LaTeX。
+    """
+    if isinstance(obj, str):
+        return obj.replace('\x08', '\\b').replace('\x0c', '\\f').replace('\x0d', '\\r').replace('\x09', '\\t')
+    if isinstance(obj, dict):
+        return {k: _repair_json_latex(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_repair_json_latex(v) for v in obj]
+    return obj
 
 
 def _sha256(text: str) -> str:

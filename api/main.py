@@ -91,6 +91,12 @@ async def not_found_handler(request: Request, exc: Exception):
 _FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 if _FRONTEND_DIR.exists():
     app.mount("/assets", StaticFiles(directory=_FRONTEND_DIR / "assets"), name="assets")
+    _REPORTS_DIR = Path(__file__).resolve().parent.parent / "reports"
+    if _REPORTS_DIR.exists():
+        app.mount("/reports", StaticFiles(directory=_REPORTS_DIR), name="reports")
+    _CONFIG_DIR = Path(__file__).resolve().parent.parent / "config"
+    if _CONFIG_DIR.exists():
+        app.mount("/config", StaticFiles(directory=_CONFIG_DIR), name="config")
     _logger.info("Frontend static files served from %s", _FRONTEND_DIR)
 else:
     _logger.info("Frontend dist/ not found — run 'cd frontend && npm run build' to enable UI")

@@ -21,6 +21,26 @@ _executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="coach_bridge")
 # 默认超时（秒）
 CALL_TIMEOUT = 30.0
 
+# Phase 73: CoachAgent 实例缓存（按 session_id），避免每请求重建丢失内存状态
+import threading
+_agent_cache: dict[str, object] = {}
+_agent_cache_lock = threading.Lock()
+_AGENT_CACHE_MAX = 100
+
+
+def _get_or_create_agent(session_id: str):
+    """按 session_id 缓存 CoachAgent。LRU 淘汰，最多 100 个。"""
+    with _agent_cache_lock:
+        if session_id in _agent_cache:
+            return _agent_cache[session_id]
+        CoachAgent = _import_coach_agent()
+        agent = CoachAgent(session_id=session_id)
+        if len(_agent_cache) >= _AGENT_CACHE_MAX:
+            oldest = next(iter(_agent_cache))
+            del _agent_cache[oldest]
+        _agent_cache[session_id] = agent
+        return agent
+
 
 def _import_coach_agent():
     """延迟导入 CoachAgent，带 try/except 保护."""
@@ -52,8 +72,7 @@ class CoachBridge:
         通过线程池执行同步调用，防止阻塞事件循环。
         """
         def _call() -> dict[str, Any]:
-            CoachAgent = _import_coach_agent()
-            agent = CoachAgent(session_id=session_id)
+            agent = _get_or_create_agent(session_id)
             return agent.act(
                 message,
                 context={
@@ -135,8 +154,7 @@ class CoachBridge:
     def get_ttm_stage(session_id: str) -> str | None:
         """读取用户当前 TTM 阶段."""
         def _call() -> dict[str, Any]:
-            CoachAgent = _import_coach_agent()
-            agent = CoachAgent(session_id=session_id)
+            agent = _get_or_create_agent(session_id)
             return agent.act("status", context={"session_id": session_id})
 
         try:
@@ -150,8 +168,7 @@ class CoachBridge:
     def get_sdt_scores(session_id: str) -> dict[str, float]:
         """读取用户当前 SDT 三核评分."""
         def _call() -> dict[str, Any]:
-            CoachAgent = _import_coach_agent()
-            agent = CoachAgent(session_id=session_id)
+            agent = _get_or_create_agent(session_id)
             return agent.act("status", context={"session_id": session_id})
 
         try:
@@ -180,8 +197,7 @@ class CoachBridge:
         from collections.abc import AsyncGenerator
 
         try:
-            CoachAgent = _import_coach_agent()
-            agent = CoachAgent(session_id=session_id)
+            agent = _get_or_create_agent(session_id)
             cfg = agent._cfg()
             llm_cfg = cfg.get("llm", {})
             if not llm_cfg.get("enabled", False):
@@ -234,6 +250,8 @@ class CoachBridge:
             # 拼接 → payload
             try:
                 payload = json.loads(full_content)
+                from src.coach.llm.schemas import _repair_json_latex
+                payload = _repair_json_latex(payload)
                 if not isinstance(payload, dict):
                     payload = {"statement": full_content.strip()}
             except json.JSONDecodeError:

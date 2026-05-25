@@ -56,6 +56,45 @@ _INTENSITY_MAP: dict[str, float] = {
 }
 
 
+# ── Phase 71: Gemini 画图辅助函数 ──────────────────────────────
+
+def _should_call_gemini(user_input: str, intent: str, action_type: str,
+                         statement: str, needs_diagram: bool | None) -> bool:
+    """双保险: DeepSeek 判断 OR 关键词匹配."""
+    if action_type in ("defer", "pulse", "excursion", "awakening"):
+        return False
+    if len(statement) < 30:
+        return False
+    # 保险1: DeepSeek 明确说需要
+    if needs_diagram:
+        return True
+    # 保险2: 关键词兜底
+    ui = user_input.lower()
+    user_triggers = [
+        "画个图", "画张图", "画图", "图示", "图解",
+        "让我更了解", "更直观", "看不懂", "太抽象了",
+        "举个例子看看", "形象一点", "可视化"
+    ]
+    if any(kw in ui for kw in user_triggers):
+        return True
+    topics = [
+        "流程", "步骤", "算法", "排序", "搜索", "遍历", "递归",
+        "分类", "层级", "体系", "结构", "框架",
+        "矩阵", "几何", "向量", "数据结构", "树", "链表", "栈", "队列", "图",
+        "函数", "图像", "曲线", "坐标", "变换", "导数",
+        "代码", "实现", "怎么写", "编程",
+    ]
+    return any(kw in intent for kw in topics) or any(kw in ui for kw in topics)
+
+
+def _get_diagram_provider(cfg: dict):
+    """从配置创建 DiagramProvider，不可用时返回 None."""
+    from src.coach.llm.config import DiagramProviderConfig
+    from src.coach.llm.diagram_provider import GeminiProvider
+    dpc = DiagramProviderConfig.from_yaml(cfg)
+    return GeminiProvider(dpc) if dpc.enabled else None
+
+
 class CoachAgent:
     """CCA-T 教练引擎。
 
@@ -225,6 +264,16 @@ class CoachAgent:
     def _determine_llm_difficulty(self) -> str:
         """统一计算 LLM prompt 与 runtime contract 使用的 difficulty。"""
         difficulty = "medium"
+        # 从 persistence 读取上一轮 Flow 调整后的难度作为基线
+        try:
+            if self._persistence:
+                profile = self._persistence.get_profile()
+                saved = profile.get("difficulty_level", "medium")
+                if saved in ("easy", "medium", "hard"):
+                    difficulty = saved
+        except Exception:
+            pass
+        # BKT mastery 做极端覆盖
         try:
             if self.diagnostic_engine:
                 masteries = self.diagnostic_engine.store.get_all_masteries()
@@ -1048,6 +1097,28 @@ class CoachAgent:
                         llm_obs = llm_response.observability.to_dict()
                         llm_obs["retention"] = retention_obs
                         llm_observability = llm_obs
+
+                    # Phase 73: Gemini 读 _diagram_plan 生成, 或优化 DeepSeek 草稿
+                    try:
+                        provider = _get_diagram_provider(self._cfg())
+                        if provider:
+                            payload_before_align = llm_response.to_payload()
+                            stmt = action["payload"].get("statement", "")
+                            # 路径 A: DeepSeek 给了 _diagram_plan → Gemini 从描述生成
+                            plan = payload_before_align.get("_diagram_plan", "")
+                            if plan and len(str(plan)) > 10:
+                                gen = provider.generate_from_plan(plan_text=str(plan), statement=stmt)
+                                if gen and "type" in gen:
+                                    action["payload"]["diagram"] = gen
+                            # 路径 B: DeepSeek 直接给了 diagram → Gemini 优化
+                            elif isinstance(payload_before_align.get("diagram"), dict):
+                                ds_diagram = payload_before_align["diagram"]
+                                if ds_diagram.get("content"):
+                                    opt = provider.generate(original=ds_diagram.get("content", ""), statement=stmt)
+                                    if opt and "type" in opt:
+                                        action["payload"]["diagram"] = opt
+                    except Exception:
+                        pass  # Gemini 失败 → DeepSeek 原图兜底
                 else:
                     _logger.warning("LLM output validation failed: %s; using rule fallback", errors)
             except LLMError as e:
@@ -1060,7 +1131,7 @@ class CoachAgent:
             payload = action.get("payload", dict())
             stmt = payload.get("statement", "") or payload.get("option", "") or payload.get("prompt", "") or payload.get("step", "") or payload.get("question", "") or payload.get("objective", "")
             atype = action.get("action_type", "")
-            if stmt and len(stmt) > 3:
+            if stmt and len(stmt) > 3 and atype != "probe":
                 self._prev_teaching = f"[教] {atype}: {stmt[:120]}"
                 # 跨实例持久化
                 try:
@@ -1366,7 +1437,13 @@ class CoachAgent:
                     )
                 dc = result.get("difficulty_contract", {})
                 if dc.get("level"):
-                    self._persistence.save_difficulty(dc["level"])
+                    difficulty_to_save = dc["level"]
+                    # Flow 调整覆盖
+                    if flow_result and flow_result.get("adjust_difficulty", 0.0) != 0.0:
+                        flow_adjusted = action.get("payload", {}).get("difficulty", "")
+                        if flow_adjusted and flow_adjusted != dc["level"]:
+                            difficulty_to_save = flow_adjusted
+                    self._persistence.save_difficulty(difficulty_to_save)
         except Exception:
             _logger.warning("Phase 20 persistence save failed", exc_info=True)
         # 禁语过滤
@@ -1379,6 +1456,20 @@ class CoachAgent:
             result["awakening"] = awakening
         # Phase 38 S38.1: MRT outcome 采集
         self._record_mrt_outcome_if_needed(result)
+        # Phase 73: Gate Audit Buffer 记录
+        try:
+            from api.services.gate_audit_buffer import get_gate_buffer
+            get_gate_buffer().record(
+                session_id=self.session_id,
+                trace_id=result.get("trace_id", ""),
+                action_type=result.get("action_type", ""),
+                safety_allowed=result.get("safety_allowed", True),
+                gate_decision=result.get("gate_decision", "GO"),
+                audit_level=result.get("audit_level", "pass"),
+                premise_rewrite_rate=result.get("premise_rewrite_rate", 0.0),
+            )
+        except Exception:
+            pass
         return result
 
     # ── V18.8 脉冲 ──────────────────────────────────────────────
@@ -1887,10 +1978,10 @@ class CoachAgent:
         """Phase 47: 文件锁 + 显式 reload，替代 sys.modules 清理."""
         from pathlib import Path
         import yaml
-        from api.config import _CONFIG_LOCK
+        from api.config import _config_write_lock
         cfg_path = Path(__file__).resolve().parent.parent.parent / "config" / "coach_defaults.yaml"
         try:
-            with _CONFIG_LOCK:
+            with _config_write_lock():
                 with open(cfg_path, "r", encoding="utf-8") as f:
                     cfg = yaml.safe_load(f) or {}
                 if key not in cfg:

@@ -1,10 +1,39 @@
 """API 层运行时配置 — 默认值可通过环境变量覆盖."""
 
 import os
-import threading
+import sys
+from contextlib import contextmanager
+from pathlib import Path
 
-# ── Phase 47: 共享文件锁，保护 config_router + agent 的并发写 ──
-_CONFIG_LOCK = threading.Lock()
+# ── Phase 47: 跨进程文件锁，保护 config_router + agent 的并发写 ──
+_LOCK_PATH = Path(__file__).resolve().parent.parent / "config" / ".yaml_write.lock"
+
+
+@contextmanager
+def _config_write_lock():
+    """跨进程写锁。Windows 用 msvcrt，Unix 用 fcntl。"""
+    _LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
+    lock_fd = open(_LOCK_PATH, "w")
+    try:
+        if sys.platform == "win32":
+            import msvcrt
+            msvcrt.locking(lock_fd.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(lock_fd.fileno(), fcntl.LOCK_EX)
+        yield
+    finally:
+        if sys.platform == "win32":
+            import msvcrt
+            try:
+                lock_fd.seek(0)
+                msvcrt.locking(lock_fd.fileno(), msvcrt.LK_UNLCK, 1)
+            except Exception:
+                pass
+        else:
+            import fcntl
+            fcntl.flock(lock_fd.fileno(), fcntl.LOCK_UN)
+        lock_fd.close()
 
 # ── CORS ──
 CORS_ORIGINS: list[str] = os.getenv(

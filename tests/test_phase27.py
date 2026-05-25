@@ -24,14 +24,13 @@ class TestContextV3:
         assert "对话历史" in s, f"多轮摘要应含对话历史: {repr(s)[:80]}"
         assert len(s) > 50, f"多轮摘要内容过短: {len(s)}"
 
-    def test_prev_ctx_tracks_action_type(self):
+    def test_current_atype_tracks_after_act(self):
+        """_prev_ctx removed as dead code; _current_atype is the canonical strategy tracker."""
         a = CoachAgent(session_id="t_v3_3")
         a.act("hello")
-        assert hasattr(a, "_prev_ctx")
-        prev_ctx = a._prev_ctx
-        assert "action_type" in prev_ctx, f"_prev_ctx 应含 action_type: {prev_ctx}"
-        a.act("teach me python basics")
-        assert hasattr(a, "_prev_ctx")
+        assert hasattr(a, "_current_atype")
+        assert a._current_atype in ("suggest", "scaffold", "probe", "challenge",
+                                     "reflect", "defer", "pulse", "excursion")
 
     def test_current_atype_initialized(self):
         a = CoachAgent()

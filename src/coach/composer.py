@@ -115,7 +115,9 @@ class PolicyComposer:
             # 3. 心流定难度
             if flow_result:
                 adjust = flow_result.get("adjust_difficulty", 0.0)
-                if adjust != 0.0 and "difficulty" in payload:
+                if adjust != 0.0:
+                    if "difficulty" not in payload:
+                        payload["difficulty"] = "medium"
                     levels = ["low", "medium", "high"]
                     current = payload.get("difficulty", "medium")
                     idx = levels.index(current) if current in levels else 1
@@ -169,7 +171,9 @@ class PolicyComposer:
         """
         try:
             from src.coach.mrt import MRTExperiment
-            quality = MRTExperiment.get_strategy_quality(min_samples=5)
+            mrt_estimation = _DEFAULTS.get("mrt", {}).get("estimation", {})
+            min_samples = mrt_estimation.get("min_sample_per_variant", 5)
+            quality = MRTExperiment.get_strategy_quality(min_samples=min_samples)
         except Exception:
             _logger.warning("MRT preference lookup failed, falling back to default", exc_info=True)
             return action_type

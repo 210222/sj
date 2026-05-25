@@ -45,17 +45,16 @@ async def get_gates_status(request: Request):
     if not limiter.is_allowed("admin:gates", limit=30, window_s=60):
         raise HTTPException(status_code=429, detail={"error": "RATE_LIMITED", "detail": "Admin rate limit exceeded"})
 
-    gates = [
-        GateStatusItem(id=1, name="Agency Gate", status="pass", metric="premise_rewrite_rate"),
-        GateStatusItem(id=2, name="Excursion Gate", status="pass", metric="exploration_evidence_count"),
-        GateStatusItem(id=3, name="Learning Gate", status="pass", metric="no_assist_trajectory"),
-        GateStatusItem(id=4, name="Relational Gate", status="pass", metric="compliance_signal_score"),
-        GateStatusItem(id=5, name="Causal Gate", status="pass", metric="causal_diagnostics_triple"),
-        GateStatusItem(id=6, name="Audit Gate", status="pass", metric="audit_health"),
-        GateStatusItem(id=7, name="Framing Gate", status="pass", metric="framing_audit_pass"),
-        GateStatusItem(id=8, name="Window Gate", status="pass", metric="window_schema_version_consistency"),
-    ]
-    return AdminGatesResponse(gates=gates, overall="pass")
+    from api.services.gate_audit_buffer import get_gate_buffer
+    gates_data = get_gate_buffer().get_latest_gates()
+    gates = [GateStatusItem(**g) for g in gates_data]
+    overall = "pass"
+    for g in gates_data:
+        if g.get("status") == "block":
+            overall = "block"; break
+        if g.get("status") == "warn":
+            overall = "warn"
+    return AdminGatesResponse(gates=gates, overall=overall)
 
 
 @router.get(
@@ -74,7 +73,9 @@ async def get_audit_logs(
     if not limiter.is_allowed("admin:audit", limit=20, window_s=60):
         raise HTTPException(status_code=429, detail={"error": "RATE_LIMITED", "detail": "Admin rate limit exceeded"})
 
-    return AdminAuditResponse(logs=[], total=0, page=page, page_size=50)
+    from api.services.gate_audit_buffer import get_gate_buffer
+    data = get_gate_buffer().get_audit_logs(page=page, severity=severity)
+    return AdminAuditResponse(logs=data["logs"], total=data["total"], page=data["page"], page_size=data["page_size"])
 
 
 @router.get(

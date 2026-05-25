@@ -349,6 +349,7 @@ def generate_variant_comparison_report(output_dir: str | None = None) -> dict:
         comparisons.append(est)
 
     report = {
+        "status": "ok",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "control": {"variant_id": control_id, "total": control_data["total"], "success": control_data["success"]},
         "comparisons": comparisons,

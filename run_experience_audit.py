@@ -1093,6 +1093,7 @@ def run_interactive_game(
     student_profile: str = "beginner",
     game_turns: int = 6,
     coach_url: str = "http://127.0.0.1:8001",
+    api_key: str = "",
 ) -> dict:
     """S44.2: 运行一次教练-学生对局，返回 transcript + effect 报告."""
     import urllib.request as _ur, json as _j, uuid as _uuid
@@ -1135,8 +1136,8 @@ def run_interactive_game(
             "llm_generated": coach_r.get("llm_generated", False),
         })
 
-        # 学生生成回复（不使用 LLM 客户端时用规则）
-        msg = _generate_student_response(student, coach_r)
+        # Phase 50: 学生生成回复（LLM 优先，规则 fallback）
+        msg = _generate_student_response(student, coach_r, api_key=api_key)
 
     # 效果评估 (4 维)
     effect = student.get_effectiveness_summary()
@@ -1149,34 +1150,108 @@ def run_interactive_game(
     return {"transcript": transcript, "effect": effect, "session_id": sid}
 
 
-def _generate_student_response(student, coach_r: dict) -> str:
-    """生成学生回复：尝试用 LLM，失败则用规则 fallback."""
-    try:
-        from src.coach.llm.config import LLMConfig
-        import os
-        import yaml
-        cfg_path = Path(__file__).resolve().parent / "config" / "coach_defaults.yaml"
-        with open(cfg_path, encoding="utf-8") as f:
-            cfg = yaml.safe_load(f)
-        llm_cfg = cfg.get("llm", {})
-        if llm_cfg.get("enabled", False) and os.getenv("DEEPSEEK_API_KEY"):
-            llm_config = LLMConfig.from_yaml(cfg)
-            from src.coach.llm.client import LLMClient
-            client = LLMClient(llm_config)
-            return student.generate_response(client, llm_config)
-    except Exception:
-        pass
-    # Rule-based fallback: 基于知识状态的简单回复
+def _generate_student_response(student, coach_r: dict, api_key: str = "") -> str:
+    """Phase 50: 生成学生回复 — LLM 优先，规则 fallback."""
+    key = api_key or os.getenv("DEEPSEEK_API_KEY", "")
+    if key:
+        try:
+            from src.coach.llm.config import LLMConfig
+            import yaml
+            cfg_path = Path(__file__).resolve().parent / "config" / "coach_defaults.yaml"
+            with open(cfg_path, encoding="utf-8") as f:
+                cfg = yaml.safe_load(f) or {}
+            llm_cfg_raw = cfg.get("llm", {})
+            if llm_cfg_raw.get("enabled", False):
+                # 覆盖 key 避免依赖环境变量
+                llm_cfg_raw["api_key_env"] = None
+                llm_config = LLMConfig(
+                    enabled=True, api_key=key,
+                    model=llm_cfg_raw.get("model", "deepseek-chat"),
+                    base_url=llm_cfg_raw.get("base_url", "https://api.deepseek.com/v1"),
+                    temperature=llm_cfg_raw.get("temperature", 0.7),
+                    max_tokens=llm_cfg_raw.get("max_tokens", 2000),
+                    timeout_s=llm_cfg_raw.get("timeout_s", 30),
+                    max_retries=llm_cfg_raw.get("max_retries", 1),
+                )
+                # Phase 50: 学生用纯文本 API 调用（非 JSON），因为学生 prompt 要求纯文本回复
+                import urllib.request as _ur2
+                import json as _j2
+                system = student._build_student_prompt()
+                body = _j2.dumps({
+                    "model": llm_config.model,
+                    "messages": [
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": "请以学生的身份回复教练"},
+                    ],
+                    "temperature": 0.9,
+                    "max_tokens": 200,
+                }).encode()
+                req = _ur2.Request(
+                    f"{llm_config.base_url}/chat/completions",
+                    data=body,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": f"Bearer {key}",
+                    },
+                )
+                with _ur2.urlopen(req, timeout=llm_config.timeout_s) as resp:
+                    result = _j2.loads(resp.read().decode())
+                content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
+                student_msg = content.strip()[:300] or "嗯，继续讲吧。"
+                student._last_student_message = student_msg
+                if any(kw in student_msg for kw in ["懂了", "明白了", "理解了", "原来如此"]):
+                    for concept in list(student.state.exposed_concepts)[:2]:
+                        student.state.learn(concept, gain=0.2)
+                return student_msg
+        except Exception:
+            pass
     return _rule_based_student_reply(student)
 
 
 def _rule_based_student_reply(student) -> str:
-    """规则驱动的学生回复（无需 LLM）."""
+    """Phase 48: 挑战模式感知的规则学生回复（无需 LLM）."""
     exposed = list(student.state.exposed_concepts)
     known = list(student.state.known_concepts.keys())
-    coach_said = student._last_coach_statement[:100]
+    coach_said = student._last_coach_statement[:200]
+    challenge = student.profile.get("challenge_mode", "")
+    turn = student._turn_count
+    misconception = student.profile.get("builtin_misconception", "")
 
-    # 检测理解关键词
+    # ── 挑战模式: 虚假掌握 ──
+    if challenge == "fake_understanding":
+        closed_q = any(kw in coach_said for kw in ["懂了吗", "明白了吗", "会了吗", "理解了吗", "对不对"])
+        deep_ask = any(kw in coach_said for kw in ["你说说看", "你怎么想", "自己做", "你来讲", "试试"])
+        if deep_ask:
+            return f"嗯...我觉得{misconception}，是这样吗？" if misconception else "我试了一下，但不确定对不对..."
+        if closed_q and turn >= 2:
+            return "嗯，懂了。"
+        if turn <= 1:
+            return "好的，我从零开始学。你讲吧。"
+        return "嗯，大概明白了。继续往下讲吧。"
+
+    # ── 挑战模式: 思维误区 ──
+    if challenge == "misconception":
+        if misconception and turn >= 2:
+            trigger_words = misconception[:4] if len(misconception) >= 4 else "这个"
+            if any(kw in coach_said for kw in [trigger_words, "循环", "遍历"] if len(kw) >= 1):
+                return f"但是{trigger_words}不是只能这样用吗？{misconception}"
+        if known and turn >= 1:
+            return f"我理解{known[-1]}了，但换个方式我就不确定了。比如{known[-1]}用在别的地方行不行？"
+        return "好，我试着按照你讲的去想。但我之前学的方法好像和你讲的不太一样..."
+
+    # ── 挑战模式: 畏难退缩 ──
+    if challenge == "anxious":
+        triggers = student.profile.get("anxiety_trigger_concepts", [])
+        hit_trigger = any(t in coach_said for t in triggers)
+        if hit_trigger and turn >= 2:
+            return "这个好像太难了...我可能学不会这个。能换点简单的吗？"
+        if turn >= 3 and not any(kw in coach_said for kw in ["慢慢来", "不着急", "分成几步", "你可以的", "先试"]):
+            return "嗯..."  # 退缩信号：回复极短
+        if turn <= 1:
+            return "好，我试试。不过我学东西比较慢，怕跟不上。"
+        return "好的，我在听。但好像还是不太明白..."
+
+    # ── 默认行为（原有逻辑）──
     understood = any(kw in coach_said for kw in ["第一步", "首先", "例如", "比如", "步骤", "总结"])
     if understood and exposed:
         for c in exposed[:1]:
@@ -1309,6 +1384,63 @@ def run_interactive_audit(coach_url: str = "http://127.0.0.1:8001",
     return report
 
 
+def _run_teaching_audit(coach_url: str = "http://127.0.0.1:8001", turns: int = 8, num_runs: int = 1) -> None:
+    """Phase 48: 教学能力评测 — 7 维框架 × 3 挑战画像."""
+    import os as _os, statistics as _st
+    from src.coach.teaching_evaluator import evaluate_teaching_capability, evaluate_with_llm
+    api_key = _os.getenv("DEEPSEEK_API_KEY", "")
+    challenge_profiles = ["fake_understanding", "misconception", "anxious"]
+    all_reports = {}
+    for pid in challenge_profiles:
+        print(f"\n[Phase 52] : {pid} ({turns} turns)...")
+        print(f"\n[Phase 52] 教学能力评测: {pid} ({turns} turns)...")
+        result = run_interactive_game(
+            student_profile=pid, game_turns=turns, coach_url=coach_url, api_key=api_key)
+        transcript = result.get("transcript", [])
+        # Phase 52: LLM-as-judge 优先，关键词评测 fallback
+        if api_key:
+            llm_scores = evaluate_with_llm(transcript, api_key)
+        else:
+            llm_scores = {}
+        if llm_scores:
+            total = sum(float(llm_scores.get(k, 1)) for k in llm_scores if k.startswith(("1_","2_","3_","4_","5_","6_")))
+            print(f"  [LLM Judge] Total: {total:.1f}/30.0")
+            for i in range(1, 7):
+                k = f"{i}_"
+                for sk in llm_scores:
+                    if sk.startswith(k) and not sk.startswith("evidence"):
+                        ev = llm_scores.get(f"evidence_{i}", "")
+                        print(f"    {sk}: {llm_scores[sk]}/5 | {str(ev)[:80]}")
+                        break
+            all_reports[pid] = {"profile_id": pid, "turns": turns, "scores": {k: llm_scores.get(k, 1) for k in llm_scores if not k.startswith("evidence")}, "total": round(total, 1), "judge": "llm"}
+        else:
+            # Fallback: keyword evaluator
+            student_snapshots = []
+            from src.coach.student_agent import StudentAgent
+            student = StudentAgent(profile_id=pid)
+            for t in transcript:
+                coach_r = {"payload": {"statement": t.get("coach_statement", "")},
+                           "action_type": t.get("coach_action_type", "")}
+                student.consume_coach_response(coach_r)
+                snapshot = dict(student.state.known_concepts)
+                confused = any(kw in t.get("student", "") for kw in
+                              ["不懂", "不理解", "为什么", "什么意思", "太难", "学不会"])
+                student_snapshots.append({
+                    "known_concepts": snapshot,
+                    "confusion_signal": confused,
+                })
+            report = evaluate_teaching_capability(transcript, {"profile_id": pid}, student_snapshots)
+            print(f"  [Keyword] Total: {report.total:.1f}/5.0 | {report.interpretation}")
+            for dim, score in report.scores.items():
+                print(f"    {dim}: {score}/5")
+            all_reports[pid] = report.to_dict()
+    import json
+    output = {pid: (r.to_dict() if hasattr(r, 'to_dict') else r) for pid, r in all_reports.items()}
+    with open(OUTPUT_DIR / "teaching_capability_report.json", "w", encoding="utf-8") as f:
+        json.dump(output, f, ensure_ascii=False, indent=2)
+    print(f"\n[Phase 48] 报告: {OUTPUT_DIR / 'teaching_capability_report.json'}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Phase 32+44 体验审计管道")
     mode = parser.add_mutually_exclusive_group()
@@ -1316,19 +1448,45 @@ if __name__ == "__main__":
                       help="快速模式: 3 画像 × 5 轮")
     mode.add_argument("--interactive", action="store_true",
                       help="Phase 44: 交互式审计 (LLM 学生代理 × 教练对局)")
+    mode.add_argument("--teaching-audit", action="store_true",
+                      help="Phase 48: 教学能力评测 (7 维框架 × 挑战画像)")
     parser.add_argument("--use-http", action="store_true",
-                        help="通过 HTTP 调用后端 (quick 模式需要)")
-    parser.add_argument("--turns", type=int, default=6,
-                        help="交互式对局轮数 (default 6)")
+                        help="通过 HTTP 调用后端")
+    parser.add_argument("--turns", type=int, default=10,
+                        help="交互式/教学审计轮数 (default 10)")
+    parser.add_argument("--runs", type=int, default=1,
+                        help="教学审计运行次数，取均值 (default 1)")
     parser.add_argument("--profile", type=str, default=None,
-                        choices=["beginner", "fuzzy_basics", "jumpy", "passive"],
-                        help="交互模式指定单个画像 (不指定则跑全部 4 个)")
+                        help="单个画像 ID")
     args = parser.parse_args()
-    if args.interactive:
+    api_key = os.getenv("DEEPSEEK_API_KEY", "")
+    if args.teaching_audit:
+        if args.runs > 1:
+            all_totals = {}
+            for r in range(args.runs):
+                print(f"\n=== Teaching Audit Run {r+1}/{args.runs} ===")
+                _run_teaching_audit(coach_url="http://127.0.0.1:8001", turns=args.turns)
+                # Collect latest scores
+                try:
+                    with open(OUTPUT_DIR / "teaching_capability_report.json", encoding="utf-8") as f:
+                        report = __import__('json').load(f)
+                    for pid, data in report.items():
+                        all_totals.setdefault(pid, []).append(data.get("total", 0))
+                except Exception:
+                    pass
+            print("\n=== Multi-Run Summary ===")
+            for pid, totals in all_totals.items():
+                if len(totals) >= 2:
+                    import statistics
+                    print(f"  {pid}: mean={statistics.mean(totals):.1f} std={statistics.stdev(totals):.1f} range=[{min(totals):.0f},{max(totals):.0f}] n={len(totals)}")
+        else:
+            _run_teaching_audit(coach_url="http://127.0.0.1:8001", turns=args.turns)
+    elif args.interactive:
         if args.profile:
             r = run_interactive_game(student_profile=args.profile,
                                      game_turns=args.turns,
-                                     coach_url="http://127.0.0.1:8001")
+                                     coach_url="http://127.0.0.1:8001",
+                                     api_key=api_key)
             print(f"mastery_delta={r['effect']['scoring']['mastery_delta']:.2f}")
         else:
             run_interactive_audit(coach_url="http://127.0.0.1:8001", turns=args.turns)

@@ -44,8 +44,8 @@ def _read_config() -> dict:
 
 
 def _write_config(cfg: dict) -> None:
-    from api.config import _CONFIG_LOCK
-    with _CONFIG_LOCK:
+    from api.config import _config_write_lock
+    with _config_write_lock():
         yaml_str = yaml.safe_dump(cfg, allow_unicode=True, default_flow_style=False, sort_keys=False)
         with open(_CONFIG_PATH, "w", encoding="utf-8") as f:
             f.write(yaml_str)

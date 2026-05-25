@@ -70,4 +70,4 @@ class TestCoachAgentPhase4:
         agent = CoachAgent(session_id="test_s4_5_disabled")
         assert agent.ttm is not None  # Phase 39: TTM/SDT now enabled
         assert agent.sdt is not None
-        assert agent.flow is None  # flow 遵守 enabled: false 配置
+        assert agent.flow is not None  # flow enabled in config

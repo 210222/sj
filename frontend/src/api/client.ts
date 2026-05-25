@@ -92,9 +92,6 @@ export function createChatWebSocket(_sessionId: string): WebSocket {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const host = window.location.host;
   const ws = new WebSocket(`${protocol}//${host}/api/v1/chat/ws`);
-  ws.onopen = () => {
-    // 发送轻量 ping 确认连接，不触发 LLM 调用
-    ws.send(JSON.stringify({ type: 'ping' }));
-  };
+  ws.onopen = () => {};
   return ws;
 }

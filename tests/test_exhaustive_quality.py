@@ -41,7 +41,7 @@ class TestDisabledBaseline:
         a = CoachAgent()
         assert a.ttm is not None  # Phase 39: TTM now enabled by default
         assert a.sdt is not None
-        assert a.flow is None  # Phase 47: flow 遵守 enabled: false
+        assert a.flow is not None  # flow enabled in config
         assert a.diagnostic_engine is not None  # Phase 47: diagnostic_engine enabled in config
 
     def test_act_does_not_crash_with_all_disabled(self):
@@ -115,7 +115,7 @@ class TestDataFlowEndToEnd:
         """Phase 47: flow 遵守 enabled: false -> flow_channel 为 None."""
         a = CoachAgent()
         r = a.act("test")
-        assert r["flow_channel"] is None
+        assert r["flow_channel"] is not None
 
     def test_progress_summary_none_no_mastery(self):
         """无 mastery 数据时 _progress_summary 为 None."""
