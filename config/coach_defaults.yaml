@@ -164,7 +164,7 @@ diagnostic_engine:
 diagnostics:
   balance_check:
     smd_threshold: 0.25
-  enabled: true
+  enabled: false
   negative_control:
     min_control_events: 5
     overlap_threshold: 0.8
@@ -210,7 +210,7 @@ flow:
 llm:
   api_key_env: DEEPSEEK_API_KEY
   base_url: https://api.deepseek.com/v1
-  enabled: true
+  enabled: false
   fallback_to_rules: false
   max_retries: 2
   max_tokens: 2000
@@ -221,7 +221,7 @@ llm:
 mapek:
   analyze:
     min_confidence: 0.3
-  enabled: true
+  enabled: false
   execute:
     max_retries: 2
   knowledge:
@@ -244,7 +244,7 @@ mrt:
   - probe
   - reflect
   - scaffold
-  enabled: true
+  enabled: false
   estimation:
     confidence_level: 0.95
     min_sample_per_variant: 3
