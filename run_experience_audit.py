@@ -95,8 +95,34 @@ PROFILES = {
     },
     "tester": {
         "name": "测试者: 考我",
-        "messages": (["教 Python", "考考我", "教列表", "考考我", "教循环",
-                      "考考我", "教函数", "考考我", "教类", "考考我"] * 2)[:20],
+        "messages": (["教 Python", "考考我", "教列表", "列表就是放数据的对吧？", "考考我",
+                      "def 是定义函数...那 return 是什么？", "教循环", "考考我",
+                      "for 和 while 什么时候用哪个？", "教函数"] * 2)[:20],
+    },
+    "slow_learner": {
+        "name": "慢热型: 渐进理解",
+        "messages": [
+            "教 Python",
+            "不知道，没学过编程",
+            "哦，print(2+3) 会输出 5 对吗？",
+            "列表就是 [1,2,3] 这种吧？",
+            "那列表和元组什么区别？",
+            "不太明白... 能举个例子吗？",
+            "哦！列表可以改，元组不行！",
+            "那我存学生的分数，应该用列表还是元组？",
+            "对，分数会变，用列表。懂了",
+            "那循环是什么？",
+            "不知道，从没用过",
+            "就是重复做一件事？像每天打卡？",
+            "for i in range(5) 是重复 5 次？",
+            "那 range(1,6) 和 range(6) 差别在哪？",
+            "前者从1开始，后者从0开始？",
+            "对，我试了是对的",
+            "那 while 和 for 什么区别？",
+            "for 是知道次数，while 是等条件？",
+            "差不多理解了",
+            "嗯，我总结一下：列表可变用[]，元组不可变用()；循环分for和while..."
+        ][:20],
     },
 }
 
@@ -527,7 +553,7 @@ def main(use_http: bool = False, quick: bool = False):
 
     # Select profiles and turn limit
     if quick:
-        quick_profiles = ["novice_confirm", "novice_jump", "tester"]
+        quick_profiles = ["novice_confirm", "novice_jump", "tester", "slow_learner"]
         profiles_subset = {k: v for k, v in PROFILES.items() if k in quick_profiles}
         max_turns = 5
     else:
