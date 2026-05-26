@@ -152,29 +152,23 @@ class CoachBridge:
 
     @staticmethod
     def get_ttm_stage(session_id: str) -> str | None:
-        """读取用户当前 TTM 阶段."""
-        def _call() -> dict[str, Any]:
-            agent = _get_or_create_agent(session_id)
-            return agent.act("status", context={"session_id": session_id})
-
+        """读取用户当前 TTM 阶段（从持久化数据，不触发 act）."""
         try:
-            result = _run_in_thread(_call, timeout=10.0)
-            return result.get("ttm_stage")
+            agent = _get_or_create_agent(session_id)
+            if agent._persistence:
+                profile = agent._persistence.get_profile()
+                return profile.get("ttm_stage")
         except Exception:
             _logger.warning("get_ttm_stage failed", exc_info=True)
-            return None
+        return None
 
     @staticmethod
     def get_sdt_scores(session_id: str) -> dict[str, float]:
-        """读取用户当前 SDT 三核评分."""
-        def _call() -> dict[str, Any]:
-            agent = _get_or_create_agent(session_id)
-            return agent.act("status", context={"session_id": session_id})
-
+        """读取用户当前 SDT 三核评分（从持久化数据，不触发 act）."""
         try:
-            result = _run_in_thread(_call, timeout=10.0)
-            profile = result.get("sdt_profile")
-            if profile and isinstance(profile, dict):
+            agent = _get_or_create_agent(session_id)
+            if agent._persistence:
+                profile = agent._persistence.get_profile()
                 return {
                     "autonomy": float(profile.get("autonomy", 0.5)),
                     "competence": float(profile.get("competence", 0.5)),
