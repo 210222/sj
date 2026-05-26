@@ -549,6 +549,20 @@ def main(use_http: bool = False, quick: bool = False):
     print(f"  Phase 32 — 体验审计管道 [{mode_label}] (run: {run_id})")
     print("=" * 70)
 
+    # Guard: 防止 linter 将 llm.enabled 改回 false 导致审计分数崩溃
+    import yaml
+    _cfg_path = Path(__file__).resolve().parent / "config" / "coach_defaults.yaml"
+    if _cfg_path.exists():
+        with open(_cfg_path, encoding="utf-8") as _f:
+            _cfg = yaml.safe_load(_f) or {}
+        _llm_enabled = _cfg.get("llm", {}).get("enabled", False)
+        if not _llm_enabled:
+            print("=" * 70)
+            print("  ⚠️  WARNING: llm.enabled=false in coach_defaults.yaml")
+            print("  Linter 可能已将配置改回 false。审计分数将严重偏低。")
+            print("  修复: 将 config/coach_defaults.yaml 中 llm.enabled 改为 true")
+            print("=" * 70)
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     run_dir = RUN_HISTORY_DIR / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -1417,7 +1431,7 @@ def _run_teaching_audit(coach_url: str = "http://127.0.0.1:8001", turns: int = 8
     import os as _os, statistics as _st
     from src.coach.teaching_evaluator import evaluate_teaching_capability, evaluate_with_llm
     api_key = _os.getenv("DEEPSEEK_API_KEY", "")
-    challenge_profiles = ["fake_understanding", "misconception", "anxious"]
+    challenge_profiles = ["fake_understanding", "misconception", "anxious", "slow_learner"]
     all_reports = {}
     for pid in challenge_profiles:
         print(f"\n[Phase 52] : {pid} ({turns} turns)...")
