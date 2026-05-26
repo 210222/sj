@@ -1,5 +1,45 @@
 {
-  "status": "insufficient_data",
-  "variants": 1,
-  "note": "need at least 2 variants with data — enable mrt.enabled in coach_defaults.yaml"
+  "status": "ok",
+  "generated_at_utc": "2026-05-22T06:13:00.770795+00:00",
+  "control": {
+    "variant_id": "S_suggest_first",
+    "total": 106,
+    "success": 0
+  },
+  "comparisons": [
+    {
+      "method": "beta_binomial",
+      "variant_mean": 0.011,
+      "control_mean": 0.0093,
+      "effect_size": 0.0017,
+      "ci_95": [
+        -0.0261,
+        0.0296
+      ],
+      "posterior_overlap": 0.9166,
+      "variant_n": 89,
+      "control_n": 106,
+      "variant_id": "S_scaffold_first",
+      "control_id": "S_suggest_first",
+      "sample_size_warning": false
+    },
+    {
+      "method": "beta_binomial",
+      "variant_mean": 0.9821,
+      "control_mean": 0.0093,
+      "effect_size": 0.9729,
+      "ci_95": [
+        0.9341,
+        1.0117
+      ],
+      "posterior_overlap": 0.0,
+      "variant_n": 54,
+      "control_n": 106,
+      "variant_id": "B",
+      "control_id": "S_suggest_first",
+      "sample_size_warning": false
+    }
+  ],
+  "min_sample_per_variant": 10,
+  "note": "effect_size > 0 favors variant; posterior_overlap near 0 = clear separation"
 }

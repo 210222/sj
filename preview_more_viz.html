@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>更多方案预览 — JSXGraph / Excalidraw / Plotly</title>
+<script src="https://cdn.jsdelivr.net/npm/jsxgraph@1/distrib/jsxgraphcore.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsxgraph@1/distrib/jsxgraph.css">
+<script src="https://cdn.jsdelivr.net/npm/plotly.js@2/dist/plotly.min.js"></script>
+<style>
+:root {
+  --deep-mocha: #3d322b; --warm-white: #fdfaf5; --soft-blue: #dce8f5;
+  --sage-green: #8a9f87; --coral-candy: #f2d5c4; --lavender-gray: #e0dce8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: var(--warm-white); color: var(--deep-mocha); }
+.preview-container { max-width: 700px; margin: 24px auto; padding: 16px; }
+
+.chat-bubble {
+  padding: 14px 18px; border-radius: 14px; margin-bottom: 16px;
+  line-height: 1.6; font-size: 14px;
+}
+.chat-bubble.coach { background: var(--soft-blue); max-width: 92%; }
+.chat-bubble.user { background: var(--lavender-gray); max-width: 85%; margin-left: auto; }
+
+.diagram-box {
+  margin: 12px 0; padding: 12px; background: #fff;
+  border: 1px solid var(--lavender-gray); border-radius: 8px;
+}
+.diagram-box .label {
+  font-size: 10px; text-transform: uppercase; color: var(--sage-green);
+  margin-bottom: 8px; font-weight: 600;
+}
+
+.section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin: 32px 0 10px; opacity: 0.4; }
+
+.jxg-board { width: 100%; height: 320px; }
+
+.plotly-chart { width: 100%; height: 350px; }
+
+.excalidraw-preview {
+  width: 100%; height: 280px; background: #fff;
+  border: 1px solid var(--lavender-gray); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+.excalidraw-preview .scene {
+  width: 100%; height: 100%; position: relative; padding: 20px;
+  font-family: 'Virgil', 'Comic Sans MS', cursive;
+}
+.excalidraw-preview svg text { font-family: 'Virgil', 'Comic Sans MS', cursive; }
+
+.compare-table { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 11px; margin-top: 16px; }
+.compare-table > div {
+  padding: 10px; background: #fff; border-radius: 8px; border: 1px solid var(--lavender-gray);
+}
+.compare-table b { display: block; margin-bottom: 4px; }
+.compare-table .good { color: var(--sage-green); }
+.compare-table .bad { color: #c9a04a; }
+</style>
+</head>
+<body>
+<div class="preview-container">
+<h2 style="margin-bottom:16px;font-size:16px;">更多方案预览 — JSXGraph / Plotly</h2>
+
+<!-- ===== Scene 1: JSXGraph — interactive geometry + algebra ===== -->
+<div class="section-label">方案 1：JSXGraph — 交互式几何 + 函数（npm install, AI 可生成）</div>
+<div class="chat-bubble user">sin 函数图像上的点是怎么对应到单位圆上的？</div>
+<div class="chat-bubble coach">
+  看这个交互图——<b>拖动下面的红点</b>，同时观察函数曲线上对应的点和单位圆上的角度：
+  <div class="diagram-box">
+    <div class="label">📐 JSXGraph — 交互式函数 + 几何（可拖动）</div>
+    <div class="jxg-board" id="jxg-scene1"></div>
+  </div>
+  红线是 sin(x) 的图像，蓝点是当前位置，橙线是对应的单位圆角度。这个图<b>不是预制的</b>——教练通过 JSON 参数就能当场生成不同函数、不同范围、不同标注的交互式数学图。
+</div>
+
+<!-- ===== Scene 2: JSXGraph — right triangle exam question ===== -->
+<div class="section-label">方案 2：JSXGraph — AI 教练当场生成考试题（直角三角形）</div>
+<div class="chat-bubble user">考考我</div>
+<div class="chat-bubble coach">
+  好的——请看题：
+  <b>在直角三角形 ABC 中，∠C = 90°，AC = 4，BC = 3。请计算 AB = ?</b>
+  <div class="diagram-box">
+    <div class="label">📐 JSXGraph — 考试题：当场生成的几何图</div>
+    <div class="jxg-board" id="jxg-scene2"></div>
+  </div>
+  提示：用勾股定理。你算出来的 AB 是多少？
+</div>
+
+<!-- ===== Scene 3: Plotly — 3D surface ===== -->
+<div class="section-label">方案 3：Plotly.js — 3D 可视化（npm install, AI 可生成 JSON）</div>
+<div class="chat-bubble user">二元函数 z = sin(x)*cos(y) 的图像是什么样的？</div>
+<div class="chat-bubble coach">
+  AI 教练可以通过 JSON 输出 3D 图形数据：
+  <div class="diagram-box">
+    <div class="label">📊 Plotly — 3D 曲面图 (可拖拽旋转)</div>
+    <div class="plotly-chart" id="plotly-scene1"></div>
+  </div>
+  这个曲面像一块波浪形的布料。用鼠标拖拽可以旋转视角。对于多元微积分、线性代数、机器学习中的代价函数曲面，3D 图比公式直观得多。
+</div>
+
+<!-- ===== Comparison table ===== -->
+<div class="section-label">方案对比：JSXGraph vs Plotly vs ECharts vs Mermaid</div>
+
+<div class="compare-table">
+  <div>
+    <b>JSXGraph</b>
+    <span class="good">✅ AI 可生成 (JSON)</span>
+    <span class="good">✅ npm install 离线</span>
+    <span class="good">✅ 交互式拖动/旋转</span>
+    <span class="good">✅ 几何 + 代数 + 函数</span>
+    <span class="good">✅ 可出考试题</span>
+    <span class="bad">⚠️ 文档偏学术</span>
+    适合：数学、几何、物理
+  </div>
+  <div>
+    <b>Plotly.js</b>
+    <span class="good">✅ AI 可生成 (JSON)</span>
+    <span class="good">✅ npm install 离线</span>
+    <span class="good">✅ 3D 曲面/散点/线</span>
+    <span class="good">✅ 交互式旋转/缩放</span>
+    <span class="bad">❌ 不能画几何图形</span>
+    适合：3D 数学、数据可视化
+  </div>
+  <div>
+    <b>ECharts</b>
+    <span class="good">✅ AI 可生成 (JSON)</span>
+    <span class="good">✅ npm install 离线</span>
+    <span class="good">✅ 图表类型最多</span>
+    <span class="bad">❌ 不能交互拖动</span>
+    <span class="bad">❌ 不能画几何图</span>
+    适合：统计、对比、树形
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:11px;margin-top:10px;">
+  <div style="padding:10px;background:#fff;border-radius:8px;border:1px solid var(--lavender-gray);">
+    <b>Mermaid</b><br>
+    ✅ 文本→图形<br>
+    ✅ 流程图/时序/思维导图<br>
+    ❌ 不能画函数/几何<br>
+    适合：概念、流程、关系
+  </div>
+  <div style="padding:10px;background:#fff;border-radius:8px;border:1px solid var(--lavender-gray);">
+    <b>KaTeX</b><br>
+    ✅ LaTeX→公式<br>
+    ✅ 极轻量<br>
+    ❌ 纯文本渲染<br>
+    适合：数学公式
+  </div>
+  <div style="padding:10px;background:#fff;border-radius:8px;border:1px solid var(--sage-green);">
+    <b>推荐组合</b><br>
+    流程 → Mermaid<br>
+    公式 → KaTeX<br>
+    数学/几何 → JSXGraph<br>
+    统计/树形 → ECharts<br>
+    3D → Plotly
+  </div>
+</div>
+
+<div style="text-align:center;margin-top:40px;font-size:10px;opacity:0.3;">
+  Coherence Phase 62 Research — JSXGraph / Plotly / Excalidraw
+</div>
+</div>
+
+<script>
+// JSXGraph: sin(x) + unit circle
+(function(){
+  var board = JXG.JSXGraph.initBoard('jxg-scene1', {
+    boundingbox: [-1, 1.8, 7.5, -1.8], axis: true, showCopyright: false,
+  });
+  // sin curve
+  board.create('functiongraph', [function(x){ return Math.sin(x); }, 0, 2*Math.PI], {strokeColor:'#e74c3c', strokeWidth:2});
+  // draggable point on x-axis
+  var p = board.create('glider', [1.5, 0, board.defaultAxes.x], {name:'拖动我 →', color:'#2980b9', size:4});
+  // point on curve
+  var q = board.create('point', [function(){ return p.X(); }, function(){ return Math.sin(p.X()); }], {color:'#2980b9', size:5, name:'sin(x)'});
+  // projection lines
+  board.create('segment', [[function(){return p.X()},0], q], {dash:2, strokeColor:'#999'});
+  board.create('segment', [[0,0], [function(){return p.X()},0]], {strokeColor:'#2980b9', strokeWidth:1});
+})();
+
+// JSXGraph: right triangle exam question
+(function(){
+  var board = JXG.JSXGraph.initBoard('jxg-scene2', {
+    boundingbox: [-0.5, 5, 5.5, -0.5], axis: false, showCopyright: false,
+  });
+  // Triangle vertices — A(0,4), B(3,0), C(0,0)
+  var A = board.create('point', [0, 4], {name:'A', size:4, fixed:true});
+  var B = board.create('point', [3, 0], {name:'B', size:4, fixed:true});
+  var C = board.create('point', [0, 0], {name:'C', size:4, fixed:true});
+  board.create('polygon', [A, B, C], {
+    borders: {strokeWidth:2},
+    vertices: {visible:true},
+  });
+  // Right angle mark at C
+  board.create('nonreflexangle', [A, C, B], {radius: 0.4, fillColor: '#ddd'});
+  // Labels
+  board.create('text', [1.5, 2.3, 'AC = 4'], {fontSize:13});
+  board.create('text', [1.8, -0.3, 'BC = 3'], {fontSize:13});
+  board.create('text', [1.2, 1.3, 'AB = ?'], {fontSize:14, color:'#e74c3c'});
+  // Square marker for right angle
+  board.create('text', [0.3, 0.3, '90°'], {fontSize:11});
+})();
+
+// Plotly: 3D surface
+(function(){
+  var x = [], y = [], z = [];
+  for (var i = 0; i <= 50; i++) {
+    var xi = -3 + i * 0.12;
+    var row = [];
+    for (var j = 0; j <= 50; j++) {
+      var yj = -3 + j * 0.12;
+      row.push(Math.sin(xi) * Math.cos(yj));
+    }
+    x.push(xi);
+    y.push(y == null ? yj : yj);
+    z.push(row);
+  }
+  Plotly.newPlot('plotly-scene1', [{
+    type: 'surface',
+    z: (function(){
+      var arr = [];
+      for (var i = 0; i <= 50; i++) {
+        var xi = -3 + i * 0.12;
+        var row = [];
+        for (var j = 0; j <= 50; j++) {
+          var yj = -3 + j * 0.12;
+          row.push(Math.sin(xi) * Math.cos(yj));
+        }
+        arr.push(row);
+      }
+      return arr;
+    })(),
+    colorscale: 'Viridis',
+  }], {
+    scene: { xaxis: {title:'x'}, yaxis: {title:'y'}, zaxis: {title:'z=sin(x)cos(y)'} },
+    margin: { l: 0, r: 0, t: 20, b: 0 },
+  }, { responsive: true });
+})();
+</script>
+</body>
+</html>

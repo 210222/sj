@@ -3,70 +3,63 @@
     "severity": "P3",
     "type": "long_function",
     "file": "src/coach/agent.py",
-    "line": 64,
-    "detail": "__init__() is 82 lines (max 80)"
+    "line": 104,
+    "detail": "__init__() is 83 lines (max 80)"
   },
   {
     "severity": "P3",
     "type": "too_many_parameters",
     "file": "src/coach/agent.py",
-    "line": 300,
+    "line": 510,
     "detail": "run_diagnostics() has 9 parameters (max 6)"
   },
   {
     "severity": "P3",
     "type": "too_many_parameters",
     "file": "src/coach/agent.py",
-    "line": 330,
+    "line": 540,
     "detail": "audit_v18_7_gates() has 8 parameters (max 6)"
   },
   {
     "severity": "P3",
+    "type": "deep_nesting",
+    "file": "src/coach/agent.py",
+    "line": 634,
+    "detail": "_add_context_skill_snapshot() nesting depth 7 (max 5)"
+  },
+  {
+    "severity": "P3",
     "type": "long_function",
     "file": "src/coach/agent.py",
-    "line": 356,
-    "detail": "_build_context_summary() is 111 lines (max 80)"
+    "line": 724,
+    "detail": "act() is 749 lines (max 80)"
   },
   {
     "severity": "P3",
     "type": "deep_nesting",
     "file": "src/coach/agent.py",
-    "line": 356,
-    "detail": "_build_context_summary() nesting depth 7 (max 5)"
+    "line": 724,
+    "detail": "act() nesting depth 9 (max 5)"
   },
   {
     "severity": "P3",
     "type": "long_function",
     "file": "src/coach/agent.py",
-    "line": 469,
-    "detail": "act() is 737 lines (max 80)"
-  },
-  {
-    "severity": "P3",
-    "type": "deep_nesting",
-    "file": "src/coach/agent.py",
-    "line": 469,
-    "detail": "act() nesting depth 7 (max 5)"
-  },
-  {
-    "severity": "P3",
-    "type": "long_function",
-    "file": "src/coach/agent.py",
-    "line": 1507,
+    "line": 1773,
     "detail": "_handle_consent_response() is 90 lines (max 80)"
   },
   {
     "severity": "P3",
     "type": "long_function",
     "file": "src/coach/agent.py",
-    "line": 1599,
+    "line": 1865,
     "detail": "_handle_activation_intent() is 109 lines (max 80)"
   },
   {
     "severity": "P4",
     "type": "magic_constants",
     "file": "src/coach/agent.py",
-    "detail": "186 magic number constants detected"
+    "detail": "200 magic number constants detected"
   },
   {
     "severity": "P4",
@@ -78,21 +71,21 @@
     "severity": "P3",
     "type": "long_function",
     "file": "src/coach/composer.py",
-    "line": 37,
-    "detail": "compose() is 100 lines (max 80)"
+    "line": 59,
+    "detail": "compose() is 105 lines (max 80)"
   },
   {
     "severity": "P3",
     "type": "too_many_parameters",
     "file": "src/coach/composer.py",
-    "line": 37,
+    "line": 59,
     "detail": "compose() has 9 parameters (max 6)"
   },
   {
     "severity": "P4",
     "type": "magic_constants",
     "file": "src/coach/composer.py",
-    "detail": "24 magic number constants detected"
+    "detail": "39 magic number constants detected"
   },
   {
     "severity": "P4",
@@ -167,28 +160,54 @@
   },
   {
     "severity": "P3",
+    "type": "long_function",
+    "file": "src/coach/memory.py",
+    "line": 122,
+    "detail": "recall() is 101 lines (max 80)"
+  },
+  {
+    "severity": "P3",
     "type": "too_many_parameters",
     "file": "src/coach/memory.py",
-    "line": 189,
+    "line": 227,
     "detail": "promote_to_fact() has 7 parameters (max 6)"
   },
   {
     "severity": "P4",
     "type": "magic_constants",
     "file": "src/coach/mrt.py",
-    "detail": "19 magic number constants detected"
+    "detail": "38 magic number constants detected"
   },
   {
     "severity": "P4",
     "type": "magic_constants",
     "file": "src/coach/persistence.py",
-    "detail": "36 magic number constants detected"
+    "detail": "27 magic number constants detected"
   },
   {
     "severity": "P4",
     "type": "magic_constants",
     "file": "src/coach/sdt.py",
     "detail": "25 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/coach/student_agent.py",
+    "detail": "36 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "long_function",
+    "file": "src/coach/teaching_evaluator.py",
+    "line": 125,
+    "detail": "evaluate_teaching_capability() is 187 lines (max 80)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/coach/teaching_evaluator.py",
+    "detail": "68 magic number constants detected"
   },
   {
     "severity": "P4",
@@ -206,21 +225,34 @@
   {
     "severity": "P4",
     "type": "magic_constants",
-    "file": "src/coach/llm/memory_context.py",
+    "file": "src/coach/llm/client.py",
     "detail": "11 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/coach/llm/memory_context.py",
+    "detail": "15 magic number constants detected"
+  },
+  {
+    "severity": "P3",
+    "type": "long_function",
+    "file": "src/coach/llm/prompts.py",
+    "line": 229,
+    "detail": "build_coach_context() is 115 lines (max 80)"
   },
   {
     "severity": "P3",
     "type": "too_many_parameters",
     "file": "src/coach/llm/prompts.py",
-    "line": 160,
-    "detail": "build_coach_context() has 10 parameters (max 6)"
+    "line": 229,
+    "detail": "build_coach_context() has 12 parameters (max 6)"
   },
   {
     "severity": "P4",
     "type": "magic_constants",
     "file": "src/coach/llm/prompts.py",
-    "detail": "31 magic number constants detected"
+    "detail": "56 magic number constants detected"
   },
   {
     "severity": "P3",
@@ -235,6 +267,12 @@
     "file": "src/coach/llm/safety_filter.py",
     "line": 20,
     "detail": "filter_payload() nesting depth 6 (max 5)"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "src/coach/llm/schemas.py",
+    "detail": "17 magic number constants detected"
   },
   {
     "severity": "P4",
@@ -579,7 +617,13 @@
     "severity": "P4",
     "type": "magic_constants",
     "file": "tests/test_exhaustive_quality.py",
-    "detail": "42 magic number constants detected"
+    "detail": "49 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_experience_audit.py",
+    "detail": "19 magic number constants detected"
   },
   {
     "severity": "P4",
@@ -615,7 +659,7 @@
     "severity": "P4",
     "type": "magic_constants",
     "file": "tests/test_llm_s4_memory.py",
-    "detail": "13 magic number constants detected"
+    "detail": "16 magic number constants detected"
   },
   {
     "severity": "P4",
@@ -670,6 +714,18 @@
     "type": "magic_constants",
     "file": "tests/test_phase30.py",
     "detail": "11 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_phase36_llm_observability.py",
+    "detail": "21 magic number constants detected"
+  },
+  {
+    "severity": "P4",
+    "type": "magic_constants",
+    "file": "tests/test_phase38_mrt_ab.py",
+    "detail": "14 magic number constants detected"
   },
   {
     "severity": "P4",
@@ -952,7 +1008,31 @@
   {
     "severity": "P4",
     "type": "unused_import",
+    "file": "src/coach/memory.py",
+    "detail": "Unused imports: timezone"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/coach/mrt.py",
+    "detail": "Unused imports: Any, field"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
     "file": "src/coach/persistence.py",
+    "detail": "Unused imports: annotations"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/coach/student_agent.py",
+    "detail": "Unused imports: annotations, json"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "src/coach/teaching_evaluator.py",
     "detail": "Unused imports: annotations"
   },
   {
@@ -971,7 +1051,7 @@
     "severity": "P4",
     "type": "unused_import",
     "file": "src/coach/llm/client.py",
-    "detail": "Unused imports: annotations"
+    "detail": "Unused imports: RetentionObservability, annotations"
   },
   {
     "severity": "P4",
@@ -989,7 +1069,7 @@
     "severity": "P4",
     "type": "unused_import",
     "file": "src/coach/llm/memory_context.py",
-    "detail": "Unused imports: annotations"
+    "detail": "Unused imports: Any, annotations"
   },
   {
     "severity": "P4",
@@ -1019,7 +1099,7 @@
     "severity": "P4",
     "type": "unused_import",
     "file": "src/coach/llm/schemas.py",
-    "detail": "Unused imports: annotations"
+    "detail": "Unused imports: annotations, time"
   },
   {
     "severity": "P4",
@@ -1180,6 +1260,12 @@
   {
     "severity": "P4",
     "type": "unused_import",
+    "file": "tests/test_api_config.py",
+    "detail": "Unused imports: EXPOSED_KEYS"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
     "file": "tests/test_api_dashboard.py",
     "detail": "Unused imports: pytest"
   },
@@ -1288,6 +1374,12 @@
   {
     "severity": "P4",
     "type": "unused_import",
+    "file": "tests/test_experience_audit.py",
+    "detail": "Unused imports: os, pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
     "file": "tests/test_flow.py",
     "detail": "Unused imports: math"
   },
@@ -1307,7 +1399,7 @@
     "severity": "P4",
     "type": "unused_import",
     "file": "tests/test_llm_client.py",
-    "detail": "Unused imports: SYSTEM_PROMPT, json, os"
+    "detail": "Unused imports: json, os"
   },
   {
     "severity": "P4",
@@ -1325,7 +1417,7 @@
     "severity": "P4",
     "type": "unused_import",
     "file": "tests/test_llm_s4_memory.py",
-    "detail": "Unused imports: extract_memory_snippets, get_learning_path, pytest"
+    "detail": "Unused imports: get_learning_path, pytest"
   },
   {
     "severity": "P4",
@@ -1386,6 +1478,30 @@
     "type": "unused_import",
     "file": "tests/test_phase23.py",
     "detail": "Unused imports: time"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_phase31.py",
+    "detail": "Unused imports: SessionMemory, pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_phase36_llm_observability.py",
+    "detail": "Unused imports: json, os, pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_phase36_stream_runtime_parity.py",
+    "detail": "Unused imports: json, pytest"
+  },
+  {
+    "severity": "P4",
+    "type": "unused_import",
+    "file": "tests/test_phase38_mrt_ab.py",
+    "detail": "Unused imports: json, pytest"
   },
   {
     "severity": "P4",
@@ -1542,6 +1658,26 @@
     "type": "race_condition_risk",
     "file": "tests/test_ledger.py",
     "detail": "Threading usage without Lock/RLock — potential race condition"
+  },
+  {
+    "severity": "P4",
+    "type": "license_issue",
+    "detail": "fastapi: P4 — license not verified"
+  },
+  {
+    "severity": "P4",
+    "type": "license_issue",
+    "detail": "uvicorn: P4 — license not verified"
+  },
+  {
+    "severity": "P4",
+    "type": "license_issue",
+    "detail": "pydantic: P4 — license not verified"
+  },
+  {
+    "severity": "P4",
+    "type": "license_issue",
+    "detail": "google-generativeai: P4 — license not verified"
   },
   {
     "severity": "P4",

@@ -1,0 +1,25 @@
+{
+  "run_id": "run_20260515_034831_b16edeaa",
+  "sample_size": 15,
+  "path_distribution": {
+    "http_sync": 15
+  },
+  "transport_status_distribution": {
+    "ok": 15
+  },
+  "avg_latency_ms": 3454.5,
+  "p50_latency_ms": 3470.6,
+  "p95_latency_ms": null,
+  "p99_latency_ms": null,
+  "min_latency_ms": 1918.3,
+  "max_latency_ms": 5249.0,
+  "std_latency_ms": 807.8,
+  "avg_tokens_total": 1707.2,
+  "total_prompt_tokens": 21303,
+  "total_completion_tokens": 4305,
+  "total_cache_hit_tokens": 11904,
+  "total_cache_miss_tokens": 9399,
+  "estimated_cost_usd": 0.004188,
+  "total_retention_history_hits": 42,
+  "total_retention_memory_hits": 50
+}

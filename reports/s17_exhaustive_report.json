@@ -46,7 +46,6 @@
     "S17.R5 反悔后无 awakening",
     "S17.G1 test_s16_awakening.py",
     "S17.G2 test_s17_consent.py",
-    "S17.G3 全量回归",
     "S17.G4 冷启动 < 2s",
     "S17.G5 中文编码无乱码",
     "S17.G6 特殊字符不崩溃",
@@ -60,14 +59,18 @@
     {
       "id": "S17.3.3a 迁移后列存在",
       "detail": "got ('shown',)"
+    },
+    {
+      "id": "S17.G3 全量回归",
+      "detail": "exit=1"
     }
   ],
   "skipped": [],
   "metadata": {
-    "timestamp": "2026-05-12T05:39:51Z",
+    "timestamp": "2026-05-25T05:49:38Z",
     "total": 53,
-    "passed": 51,
-    "failed": 2,
-    "pass_rate": 96.2
+    "passed": 50,
+    "failed": 3,
+    "pass_rate": 94.3
   }
 }

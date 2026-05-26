@@ -1,0 +1,14 @@
+{
+  "run_id": "interactive_20260516_040906",
+  "profile": "beginner",
+  "turns": 3,
+  "morphology_scores": null,
+  "effect_scores": {
+    "知识转移": 3,
+    "策略适应": 1.0,
+    "解释质量": 3,
+    "互动节奏": 4.0,
+    "total": 11.0,
+    "mastery_delta": 0.3
+  }
+}

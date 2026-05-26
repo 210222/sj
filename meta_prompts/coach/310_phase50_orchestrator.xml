@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 50 -- LLM 学生代理启用</name><version>1.0.0</version><track>AUDIT</track><phase>50</phase>
+  <before_state><file path="run_experience_audit.py">_generate_student_response() 因缺 DEEPSEEK_API_KEY 总是回退到规则学生。教学审计的学生侧没有 LLM，挑战模式不生效</file></before_state>
+  <after_state><file path="run_experience_audit.py">_generate_student_response() 接受 api_key、_build_student_prompt() 纯文本 API、LLM 学生启用</file></after_state>
+  <implementation>
+    <modify file="run_experience_audit.py">_generate_student_response 接受 api_key、纯文本(非JSON)API调用</modify>
+    <modify file="src/coach/student_agent.py">新增 _build_student_prompt()</modify>
+  </implementation>
+  <go_gate>1466/0/5</go_gate>
+</prompt>

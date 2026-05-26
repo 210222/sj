@@ -2,7 +2,7 @@
   {
     "severity": "P2",
     "type": "knowledge_silo",
-    "detail": "Top author 210222 owns 96% of code — bus factor=1"
+    "detail": "Top author 210222 owns 100% of code — bus factor=1"
   },
   {
     "severity": "P3",

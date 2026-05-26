@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S59.2 -- App.tsx 集成</name><phase>59</phase><sub_stage>S59.2</sub_stage>
+  <task>App.tsx: import SkillTreeCard，在 TeachingStatus 下方插入。只在 dashFull 非空时渲染</task>
+  <go_gate>侧边栏显示技能树。null mastery 时全灰</go_gate>
+</prompt>

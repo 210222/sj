@@ -1,0 +1,35 @@
+{
+  "run_id": "run_20260515_034706_f8f608e3",
+  "start_time": "2026-05-15T03:48:20.015950+00:00",
+  "probes": {
+    "pulse_next_action": {
+      "passed": true,
+      "detail": "No pulse triggered (acceptable)",
+      "timestamp_utc": "2026-05-15T03:48:30.571774+00:00"
+    },
+    "dashboard_errors": {
+      "passed": false,
+      "detail": "Dashboard request failed: HTTP Error 404: Not Found",
+      "timestamp_utc": "2026-05-15T03:48:30.593586+00:00"
+    },
+    "aggregator_shape": {
+      "passed": false,
+      "detail": "Attempt 0 failed: HTTP Error 404: Not Found",
+      "timestamp_utc": "2026-05-15T03:48:30.608798+00:00"
+    },
+    "payload_extraction": {
+      "passed": true,
+      "detail": "All 9 payload shapes extracted correctly",
+      "timestamp_utc": "2026-05-15T03:48:30.608798+00:00"
+    },
+    "ws_status": {
+      "passed": true,
+      "detail": "WS hook structure OK",
+      "timestamp_utc": "2026-05-15T03:48:30.609801+00:00"
+    }
+  },
+  "breakpoints_detected": [
+    "dashboard_errors",
+    "aggregator_shape"
+  ]
+}

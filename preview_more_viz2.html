@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>更多方案预览 — PlantUML / Excalidraw / SVG</title>
+<style>
+:root {
+  --deep-mocha: #3d322b; --warm-white: #fdfaf5; --soft-blue: #dce8f5;
+  --sage-green: #8a9f87; --coral-candy: #f2d5c4; --lavender-gray: #e0dce8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: var(--warm-white); color: var(--deep-mocha); }
+.preview-container { max-width: 720px; margin: 24px auto; padding: 16px; }
+
+.chat-bubble {
+  padding: 14px 18px; border-radius: 14px; margin-bottom: 16px;
+  line-height: 1.6; font-size: 14px;
+}
+.chat-bubble.coach { background: var(--soft-blue); max-width: 92%; }
+.chat-bubble.user { background: var(--lavender-gray); max-width: 85%; margin-left: auto; }
+
+.diagram-box {
+  margin: 12px 0; padding: 12px; background: #fff;
+  border: 1px solid var(--lavender-gray); border-radius: 8px;
+}
+.diagram-box .label {
+  font-size: 10px; text-transform: uppercase; color: var(--sage-green);
+  margin-bottom: 8px; font-weight: 600;
+}
+
+.section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin: 32px 0 10px; opacity: 0.4; }
+
+.plantuml-img { max-width: 100%; border-radius: 8px; }
+.excalidraw-scene { width: 100%; height: 260px; background: #fff; border: 1px solid var(--lavender-gray); border-radius: 8px; position: relative; }
+.excalidraw-scene svg { width: 100%; height: 100%; }
+.excalidraw-scene line, .excalidraw-scene rect, .excalidraw-scene ellipse { stroke: #3d322b; stroke-width: 1.5; }
+.excalidraw-scene text { font-family: Virgil, 'Comic Sans MS', cursive; font-size: 16px; fill: #3d322b; }
+.excalidraw-scene .label-box { fill: none; stroke: #8a9f87; stroke-width: 1; stroke-dasharray: 4 2; }
+
+.native-svg { width: 100%; height: 260px; background: #fff; border-radius: 8px; border: 1px solid var(--lavender-gray); overflow: hidden; }
+.native-svg svg { width: 100%; height: 100%; }
+
+.compare-table { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 11px; margin-top: 20px; }
+.compare-table > div { padding: 10px; background: #fff; border-radius: 8px; border: 1px solid var(--lavender-gray); }
+.compare-table b { display: block; margin-bottom: 4px; }
+.compare-table .good { color: var(--sage-green); }
+.compare-table .bad { color: #c9a04a; }
+
+.final-recommendation {
+  margin-top: 20px; padding: 14px; background: #f0f7f0; border-radius: 10px;
+  border: 1px solid var(--sage-green); font-size: 13px; line-height: 1.6;
+}
+.final-recommendation b { color: var(--sage-green); }
+</style>
+</head>
+<body>
+<div class="preview-container">
+<h2 style="margin-bottom:16px;font-size:16px;">更多方案预览 — PlantUML / Excalidraw / 原生SVG</h2>
+
+<!-- ===== Scene 1: PlantUML — more diagram types than Mermaid ===== -->
+<div class="section-label">方案 4：PlantUML — 比 Mermaid 更多的图表类型（通过 Kroki API 渲染）</div>
+<div class="chat-bubble user">TCP 连接的状态是怎么变化的？</div>
+<div class="chat-bubble coach">
+  PlantUML 可以画状态图——比 Mermaid 的 stateDiagram 更详细：
+  <div class="diagram-box">
+    <div class="label">📊 PlantUML — TCP 状态机</div>
+    <img class="plantuml-img" src="https://kroki.io/plantuml/svg/eNp9kk1PhDAQhu_8ioY9KZIPhS9PJh6MZjXGgwc2hEhTugtDW6Ts-uvdAkV3qXCBOc_zvjMdKB1TYTYBGQl0CHBTZR8cWOucBk6-4E7OPfISNzhQZb1nghI3NY80hRB8qMwwi0z9o8mhy7OkMLJ_Ybsi9R-jH1K4g6km5t2gGdOk0qq0LifktCkgxMhIaMwiq-WHl__wHhQ1YY7sKbgf9ewM2DGmnP1TDF3jMfxCw1G9Mm8M_WXXOrM9yANcZqY6clqyFyymvUWuEdMoCnsYTpKPyW-KD9j9wMZ_-hR4f8e4b3De5u6Ie4_5Nzp-w2B9HluCmx3FYquJF9V_OMT8IduunfeoP78B5lZm_A" alt="TCP State Machine">
+  </div>
+  PlantUML 支持：时序图、类图、用例图、活动图、组件图、状态图、部署图、甘特图、思维导图、线框图——全部通过文本描述生成。AI 教练输出 PlantUML 文本 → Kroki API 渲染成图。
+  <br><br>
+  <b>缺点</b>：Kroki 是外部 API（kroki.io），离线不可用。也可以自建 Kroki 服务。
+</div>
+
+<!-- ===== Scene 2: Excalidraw — hand-drawn quick sketches ===== -->
+<div class="section-label">方案 5：Excalidraw — 手绘风格速写（npm install，AI 可生成 JSON）</div>
+<div class="chat-bubble user">二叉树是什么样的？</div>
+<div class="chat-bubble coach">
+  随手画给你看——这是二叉树的基本结构：
+  <div class="diagram-box">
+    <div class="label">✏️ Excalidraw — 手绘风格（AI 生成 JSON → 前端渲染）</div>
+    <div class="excalidraw-scene">
+      <svg id="excal-svg" viewBox="0 0 600 260">
+        <!-- Root node -->
+        <ellipse cx="300" cy="30" rx="35" ry="18" fill="#dce8f5" stroke="#3d322b" stroke-width="1.5"/>
+        <text x="300" y="35" text-anchor="middle">5</text>
+        <!-- Left child -->
+        <ellipse cx="180" cy="120" rx="35" ry="18" fill="#dce8f5" stroke="#3d322b" stroke-width="1.5"/>
+        <text x="180" y="125" text-anchor="middle">3</text>
+        <line x1="280" y1="45" x2="200" y2="105" stroke="#3d322b" stroke-width="1.5"/>
+        <!-- Right child -->
+        <ellipse cx="420" cy="120" rx="35" ry="18" fill="#dce8f5" stroke="#3d322b" stroke-width="1.5"/>
+        <text x="420" y="125" text-anchor="middle">8</text>
+        <line x1="320" y1="45" x2="400" y2="105" stroke="#3d322b" stroke-width="1.5"/>
+        <!-- Grandchildren -->
+        <ellipse cx="120" cy="210" rx="35" ry="18" fill="#f2d5c4" stroke="#3d322b" stroke-width="1.5"/>
+        <text x="120" y="215" text-anchor="middle">1</text>
+        <line x1="165" y1="135" x2="135" y2="195" stroke="#3d322b" stroke-width="1.5"/>
+        <ellipse cx="240" cy="210" rx="35" ry="18" fill="#f2d5c4" stroke="#3d322b" stroke-width="1.5"/>
+        <text x="240" y="215" text-anchor="middle">4</text>
+        <line x1="190" y1="135" x2="225" y2="195" stroke="#3d322b" stroke-width="1.5"/>
+        <ellipse cx="500" cy="210" rx="35" ry="18" fill="#f2d5c4" stroke="#3d322b" stroke-width="1.5"/>
+        <text x="500" y="215" text-anchor="middle">10</text>
+        <line x1="430" y1="135" x2="485" y2="195" stroke="#3d322b" stroke-width="1.5"/>
+        <!-- Hand-drawn question mark -->
+        <text x="360" y="215" text-anchor="middle" font-size="22">?</text>
+        <line x1="440" y1="135" x2="370" y2="200" stroke="#c9a04a" stroke-width="1" stroke-dasharray="4 3"/>
+        <!-- Notes -->
+        <text x="300" y="250" text-anchor="middle" font-size="11" fill="#8a9f87">左子树 &lt; 父节点 &lt; 右子树</text>
+      </svg>
+    </div>
+  </div>
+  每个节点左边都比它小，右边都比它大。那你说说 8 的左子树里有什么？右子树呢？
+  <br><br>
+  Excalidraw 的 JSON 格式比较冗长，不如 Mermaid 简洁。但它有手绘风格，适合快速草图和概念讲解。
+</div>
+
+<!-- ===== Scene 3: Pure SVG — no library needed ===== -->
+<div class="section-label">方案 6：原生 SVG — 零依赖，AI 直接输出 SVG 代码</div>
+<div class="chat-bubble user">列表的内存布局是什么样的？</div>
+<div class="chat-bubble coach">
+  直接画给你看——不需要任何第三方库：
+  <div class="diagram-box">
+    <div class="label">🎨 原生 SVG — 零外部依赖</div>
+    <div class="native-svg">
+      <svg viewBox="0 0 600 260" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6 Z" fill="#8a9f87"/>
+          </marker>
+        </defs>
+        <!-- Memory boxes -->
+        <rect x="40" y="30" width="120" height="40" rx="4" fill="#dce8f5"/>
+        <text x="100" y="54" text-anchor="middle" font-size="13">索引 0: 'a'</text>
+        <text x="100" y="78" text-anchor="middle" font-size="9" fill="#999">地址 0x1000</text>
+
+        <rect x="40" y="100" width="120" height="40" rx="4" fill="#dce8f5"/>
+        <text x="100" y="124" text-anchor="middle" font-size="13">索引 1: 'b'</text>
+        <text x="100" y="148" text-anchor="middle" font-size="9" fill="#999">地址 0x1008</text>
+
+        <rect x="40" y="170" width="120" height="40" rx="4" fill="#dce8f5"/>
+        <text x="100" y="194" text-anchor="middle" font-size="13">索引 2: 'c'</text>
+        <text x="100" y="218" text-anchor="middle" font-size="9" fill="#999">地址 0x1010</text>
+
+        <!-- Pointer arrows -->
+        <line x1="170" y1="55" x2="250" y2="55" stroke="#8a9f87" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="170" y1="125" x2="250" y2="125" stroke="#8a9f87" stroke-width="1.5" marker-end="url(#arrow)"/>
+        <line x1="170" y1="195" x2="250" y2="195" stroke="#8a9f87" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+        <!-- Memory explanation -->
+        <text x="280" y="55" font-size="12">→ 存储 'a' 的地址</text>
+        <text x="280" y="125" font-size="12">→ 存储 'b' 的地址</text>
+        <text x="280" y="195" font-size="12">→ 存储 'c' 的地址</text>
+
+        <!-- Right side: array notation -->
+        <text x="480" y="150" text-anchor="middle" font-size="13" fill="#2980b9">
+          连续内存 =
+        </text>
+        <text x="480" y="175" text-anchor="middle" font-size="12" fill="#2980b9">
+          [a | b | c]
+        </text>
+        <text x="480" y="195" text-anchor="middle" font-size="10" fill="#999">
+          通过 start + i×8 定位
+        </text>
+      </svg>
+    </div>
+  </div>
+  列表在内存里是一排连续格子，通过"起始地址 + 索引 × 每个元素大小"就能瞬间定位到任意位置——这叫 O(1) 随机访问。<b>现在你猜猜字典为什么不能用这种方式？</b>
+</div>
+
+<!-- ===== Final comparison ===== -->
+<div class="section-label">全部方案对比</div>
+
+<div class="compare-table">
+  <div>
+    <b>Mermaid</b>
+    <span class="good">✅ 文本→图形超简洁</span>
+    <span class="good">✅ 10+ 图表类型</span>
+    <span class="bad">❌ 无数学/几何</span>
+    重量: 轻 | npm + CDN
+  </div>
+  <div>
+    <b>KaTeX</b>
+    <span class="good">✅ 数学公式最美</span>
+    <span class="good">✅ 极轻</span>
+    <span class="bad">❌ 纯公式，无图</span>
+    重量: 极轻 | npm
+  </div>
+  <div>
+    <b>ECharts</b>
+    <span class="good">✅ 图表类型最全</span>
+    <span class="good">✅ JSON 配置</span>
+    <span class="bad">❌ 无几何/交互拖动</span>
+    重量: 中 | npm
+  </div>
+</div>
+
+<div class="compare-table" style="margin-top: 6px;">
+  <div>
+    <b>JSXGraph</b>
+    <span class="good">✅ 交互几何+函数</span>
+    <span class="good">✅ AI 可生成 JSON</span>
+    <span class="good">✅ 考试出题完美</span>
+    <span class="bad">❌ 文档偏学术</span>
+    重量: 中 | npm
+  </div>
+  <div>
+    <b>PlantUML</b>
+    <span class="good">✅ 比 Mermaid 更多类型</span>
+    <span class="good">✅ 类图/部署图/线框</span>
+    <span class="bad">❌ 需 Kroki API (离线不可用)</span>
+    <span class="bad">❌ 没有数学/几何</span>
+    重量: 轻 | 外部API
+  </div>
+  <div>
+    <b>原生 SVG</b>
+    <span class="good">✅ 零依赖，极自由</span>
+    <span class="good">✅ AI 可直接输出 SVG</span>
+    <span class="bad">❌ AI 生成复杂SVG不稳定</span>
+    重量: 零 | 无依赖
+  </div>
+</div>
+
+<!-- ===== Final Recommendation ===== -->
+<div class="final-recommendation">
+  <b>建议 Phase 62 最终选型（按优先级）</b><br><br>
+  1️⃣ <b>Mermaid + KaTeX</b> — 起步。轻量、覆盖 80% 场景（流程/关系/公式/时序/思维导图）<br>
+  2️⃣ <b>JSXGraph</b> — 数学/几何的 GeoGebra 替代。交互式、AI 可生成、可考试<br>
+  3️⃣ <b>ECharts</b> — 备选。需要多曲线对比、树形图、热力图时再用<br>
+  <br>
+  ⛔ 不选的理由：<br>
+  · Plotly — 功能与 ECharts 重叠，3D 场景极少<br>
+  · PlantUML — 依赖外部 Kroki API，离线不可用<br>
+  · Excalidraw — JSON 太冗长，不适合 AI 生成<br>
+  · GeoGebra — 只能引用，不能 AI 生成<br>
+  · 原生 SVG — AI 生成复杂图的稳定性不可控
+</div>
+
+<div style="text-align:center;margin-top:40px;font-size:10px;opacity:0.3;">
+  Coherence Phase 62 Research — Complete Visualization Library Comparison
+</div>
+</div>
+</body>
+</html>

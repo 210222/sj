@@ -1,5 +1,5 @@
 {
-  "health_index": 53.0,
+  "health_index": 53.4,
   "risk_index": 100,
   "method": "ISO25010 + DORA + CVSS + SPACE — 实测加权(非硬编码)",
   "dimensional_labels": {

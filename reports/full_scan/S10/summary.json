@@ -1,41 +1,59 @@
 {
   "step": "S10",
   "status": "GO",
-  "executed_at_utc": "2026-05-12T05:58:43.159Z",
+  "executed_at_utc": "2026-05-25T05:39:26.051Z",
   "layer": "A — Code Anatomy",
   "module_stats": {
     "layers": {
       "coach": {
-        "files": 33,
-        "lines": 7522,
-        "functions": 316,
-        "classes": 69,
-        "avg_complexity": 3.3,
-        "high_complexity_count": 8,
+        "files": 36,
+        "lines": 9576,
+        "functions": 381,
+        "classes": 80,
+        "avg_complexity": 3.51,
+        "high_complexity_count": 17,
         "high_complexity_funcs": [
           {
             "file": "src/coach/agent.py",
-            "function": "_build_context_summary",
-            "line": 356,
-            "complexity": 36
+            "function": "_restore_persisted_state",
+            "line": 219,
+            "complexity": 16
+          },
+          {
+            "file": "src/coach/agent.py",
+            "function": "_determine_llm_difficulty",
+            "line": 264,
+            "complexity": 11
+          },
+          {
+            "file": "src/coach/agent.py",
+            "function": "_add_context_skill_snapshot",
+            "line": 634,
+            "complexity": 11
           },
           {
             "file": "src/coach/agent.py",
             "function": "act",
-            "line": 469,
-            "complexity": 153
+            "line": 724,
+            "complexity": 155
           },
           {
             "file": "src/coach/agent.py",
             "function": "_handle_activation_intent",
-            "line": 1599,
+            "line": 1865,
             "complexity": 18
+          },
+          {
+            "file": "src/coach/agent.py",
+            "function": "_update_config",
+            "line": 1977,
+            "complexity": 14
           },
           {
             "file": "src/coach/composer.py",
             "function": "compose",
-            "line": 37,
-            "complexity": 17
+            "line": 59,
+            "complexity": 18
           },
           {
             "file": "src/coach/dsl.py",
@@ -50,16 +68,10 @@
             "complexity": 15
           },
           {
-            "file": "src/coach/llm/client.py",
-            "function": "_call_api",
-            "line": 81,
-            "complexity": 12
-          },
-          {
-            "file": "src/coach/llm/client.py",
-            "function": "_read_sse",
-            "line": 171,
-            "complexity": 11
+            "file": "src/coach/memory.py",
+            "function": "recall",
+            "line": 122,
+            "complexity": 13
           }
         ]
       },
@@ -160,11 +172,11 @@
         "high_complexity_funcs": []
       },
       "tests": {
-        "files": 91,
-        "lines": 17844,
-        "functions": 1445,
-        "classes": 322,
-        "avg_complexity": 1.57,
+        "files": 99,
+        "lines": 19053,
+        "functions": 1544,
+        "classes": 355,
+        "avg_complexity": 1.55,
         "high_complexity_count": 15,
         "high_complexity_funcs": [
           {
@@ -231,23 +243,23 @@
       }
     },
     "totals": {
-      "files": 188,
-      "lines": 31884,
-      "funcs": 1962,
-      "classes": 417,
-      "high_cc_count": 28
+      "files": 199,
+      "lines": 35147,
+      "funcs": 2126,
+      "classes": 461,
+      "high_cc_count": 37
     }
   },
   "code_smells": {
-    "total": 144,
+    "total": 153,
     "by_severity": {
-      "P3": 56,
-      "P4": 88
+      "P3": 58,
+      "P4": 95
     }
   },
   "sbom": {
-    "packages": 3,
-    "license_issues": 0,
+    "packages": 5,
+    "license_issues": 4,
     "vulnerabilities": 0
   },
   "tla_readiness": {
@@ -333,7 +345,10 @@
           "src/coach/fallback.py",
           "src/coach/memory.py",
           "src/coach/state.py",
+          "src/coach/student_agent.py",
+          "src/coach/teaching_evaluator.py",
           "src/coach/ttm.py",
+          "src/coach/llm/diagram_provider.py",
           "src/coach/llm/memory_context.py",
           "src/coach/llm/prompts.py",
           "src/coach/llm/schemas.py",
@@ -364,6 +379,7 @@
           "tests/test_exhaustive_config.py",
           "tests/test_exhaustive_isolated.py",
           "tests/test_exhaustive_quality.py",
+          "tests/test_experience_audit.py",
           "tests/test_fresh_diverse_quality.py",
           "tests/test_llm_client.py",
           "tests/test_llm_s2_safety.py",
@@ -373,6 +389,8 @@
           "tests/test_middle_shared_config.py",
           "tests/test_middle_shared_contract.py",
           "tests/test_phase22.py",
+          "tests/test_phase36_llm_observability.py",
+          "tests/test_phase36_stream_runtime_parity.py",
           "tests/test_real_user_simulation.py",
           "tests/test_resolver.py",
           "tests/test_s15_evaluation.py",
@@ -416,12 +434,15 @@
         [
           "src/coach/data.py",
           "src/coach/memory.py",
+          "src/coach/mrt.py",
           "src/coach/persistence.py",
-          "src/inner/ledger/db.py"
+          "src/inner/ledger/db.py",
+          "tests/test_api_config.py",
+          "tests/test_phase31.py"
         ]
       ]
     ],
     "note": "TLA+ recommended for state machine verification. AWS S3/DynamoDB and Azure Cosmos DB used TLA+ to find design-level bugs that stress tests cannot catch."
   },
-  "findings_count": 257
+  "findings_count": 280
 }

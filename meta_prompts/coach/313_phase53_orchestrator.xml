@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 53 -- 评测稳定性与精细调优</name><version>1.0.0</version><track>AUDIT</track><phase>53</phase>
+  <before_state><numeric>LLM 评委单次评分方差大(fake 20↔30, misconception 29↔20)。效果验证卡在 3/5</numeric></before_state>
+  <after_state><numeric>--runs 3 多次取均值 + temperature 0.3→0.1 + 验证指令优先+对比示例+why理由 + turns 6→10。综合均值 28.0/30 (4.7/5.0)</numeric></after_state>
+  <implementation>
+    <modify file="src/coach/teaching_evaluator.py">temperature 0.1</modify>
+    <modify file="run_experience_audit.py">--runs N 多次循环取均值 + turns default 10</modify>
+    <modify file="src/coach/llm/prompts.py">验证指令优先 + 对比示例(错/对) + why理由</modify>
+  </implementation>
+  <go_gate>1466/0/5</go_gate>
+</prompt>

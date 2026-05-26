@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 62 -- 图文教学能力</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>62</phase>
+  <sub_stage>ORCHESTRATOR</sub_stage>
+  <sub_stage_name>Mermaid + KaTeX + Desmos + Prism / 触发策略 / 前端渲染</sub_stage_name>
+  <scope>D:/Claudedaoy/coherence</scope>
+
+  <before_state>
+    <file path="frontend/package.json">无可视化库依赖。教练只能输出纯文本和 JSON</file>
+    <file path="src/coach/llm/prompts.py">_STABLE_SYSTEM_PREFIX 无图形触发策略。_ACTION_TYPE_INSTRUCTIONS 无 diagram 字段</file>
+    <numeric>1466/0/5。dist 205 kB。0 个可视化库</numeric>
+  </before_state>
+
+  <after_state>
+    <file path="frontend/package.json">+mermaid +katex +desmos +prismjs</file>
+    <file path="src/coach/llm/prompts.py">_STABLE_SYSTEM_PREFIX 新增图形触发规则。_ACTION_TYPE_INSTRUCTIONS 新增 diagram 字段要求</file>
+    <file path="frontend/src/components/chat/ChatBubble.tsx">diagram 字段检测与渲染</file>
+    <numeric>1466/0/5。dist ~825 kB。4 个可视化库</numeric>
+  </after_state>
+
+  <role>
+    你是 Phase 62 的总控执行者。你的职责是让教练具备图文教学能力——在讲解抽象概念时自动输出流程图、数学公式、函数图像、代码高亮。
+    你不是在"美化 UI"，你是在把教练从"纯文本"升级为"文本+图形"。
+  </role>
+
+  <global_constraints>
+    <forbidden>禁止修改 contracts/inner/middle/outer</forbidden>
+    <forbidden>禁止修改 provider/model/base_url/scoring</forbidden>
+    <forbidden>禁止修改 composer 主逻辑</forbidden>
+    <forbidden>diagram 字段为可选——不输出时行为不变</forbidden>
+    <forbidden>前端渲染失败时必须降级显示原始文本，不能白屏</forbidden>
+  </global_constraints>
+
+  <execution_order>
+    <step>S62.1 → S62.2 → S62.3 → S62.4</step>
+  </execution_order>
+
+  <sub_stages>
+    <stage id="s62_1" name="npm install + 渲染组件">
+      <meta_prompt>327_s62_1_install_and_components.xml</meta_prompt>
+    </stage>
+    <stage id="s62_2" name="ChatBubble 集成 + 降级处理">
+      <meta_prompt>328_s62_2_chatbubble_integration.xml</meta_prompt>
+    </stage>
+    <stage id="s62_3" name="教练 prompt 注入 + diagram 字段">
+      <meta_prompt>329_s62_3_prompt_injection.xml</meta_prompt>
+    </stage>
+    <stage id="s62_4" name="构建验证 + 全量回归 + APK">
+      <meta_prompt>330_s62_4_build_regression_apk.xml</meta_prompt>
+    </stage>
+  </sub_stages>
+
+  <go_gate_policy>
+    <gate>GO_S62.1: npm install 成功，4 个渲染组件可 import</gate>
+    <gate>GO_S62.2: ChatBubble 检测 diagram 字段并渲染。降级逻辑生效</gate>
+    <gate>GO_S62.3: 教练 prompt 含图形触发策略。_ACTION_TYPE_INSTRUCTIONS 要求输出 diagram</gate>
+    <gate>GO_S62.4: npm build + 1466/0/5 + APK 构建成功</gate>
+  </go_gate_policy>
+</prompt>

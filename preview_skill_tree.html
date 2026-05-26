@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>学习地图预览 - Coherence Phase 59</title>
+<style>
+:root {
+  --deep-mocha: #3d322b; --warm-white: #fdfaf5; --soft-blue: #dce8f5;
+  --sage-green: #8a9f87; --coral-candy: #f2d5c4; --lavender-gray: #e0dce8;
+  --gold: #c9a04a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: var(--warm-white); color: var(--deep-mocha); }
+
+.preview-container { max-width: 360px; margin: 24px auto; padding: 16px; }
+
+.card {
+  background: linear-gradient(135deg, #f8f5f0 0%, #fdfaf5 100%);
+  border: 1px solid var(--lavender-gray);
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
+}
+.card h4 { font-size: 12px; font-weight: 600; margin-bottom: 10px; opacity: 0.8; }
+
+/* Skill nodes */
+.skill-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; padding: 4px 6px; border-radius: 6px; cursor: pointer; transition: background 0.15s; }
+.skill-row:hover { background: rgba(0,0,0,0.03); }
+.skill-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.skill-dot.mastered { background: var(--sage-green); }
+.skill-dot.learning { background: var(--gold); }
+.skill-dot.locked { background: var(--lavender-gray); }
+.skill-dot.prereq { border: 2px dashed var(--gold); background: transparent; }
+.skill-name { font-size: 12px; flex: 1; }
+.skill-level { font-size: 10px; opacity: 0.5; width: 30px; text-align: right; }
+
+.indent-1 { margin-left: 18px; }
+.indent-2 { margin-left: 36px; }
+.indent-3 { margin-left: 54px; }
+
+.section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 8px; opacity: 0.4; }
+
+.legend { display: flex; gap: 12px; font-size: 10px; margin-bottom: 12px; opacity: 0.6; }
+.legend-item { display: flex; align-items: center; gap: 4px; }
+
+.tooltip { font-size: 10px; opacity: 0.5; margin-top: 8px; padding: 6px 8px; background: var(--soft-blue); border-radius: 6px; }
+</style>
+</head>
+<body>
+<div class="preview-container">
+  <h2 style="margin-bottom:16px;font-size:15px;">Coherence — 学习地图预览</h2>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><span class="skill-dot mastered"></span> 已掌握</div>
+    <div class="legend-item"><span class="skill-dot learning"></span> 学习中</div>
+    <div class="legend-item"><span class="skill-dot locked"></span> 未开始</div>
+    <div class="legend-item"><span class="skill-dot prereq"></span> 建议先修</div>
+  </div>
+
+  <!-- Scenario A: New student, no mastery data -->
+  <div class="section-label">场景 A：新学生（全灰 — 无掌握度数据）</div>
+  <div class="card">
+    <h4>🧭 学习地图</h4>
+    <div class="skill-row"><span class="skill-dot locked"></span><span class="skill-name">变量</span><span class="skill-level">--</span></div>
+    <div class="skill-row indent-1"><span class="skill-dot locked"></span><span class="skill-name">类型</span><span class="skill-level">--</span></div>
+    <div class="skill-row indent-1"><span class="skill-dot locked"></span><span class="skill-name">条件</span><span class="skill-level">--</span></div>
+    <div class="skill-row indent-2"><span class="skill-dot locked"></span><span class="skill-name">循环</span><span class="skill-level">--</span></div>
+    <div class="skill-row indent-3"><span class="skill-dot locked"></span><span class="skill-name">列表</span><span class="skill-level">--</span></div>
+    <div class="skill-row indent-3"><span class="skill-dot locked"></span><span class="skill-name">函数</span><span class="skill-level">--</span></div>
+    <div class="tooltip">暂无学习记录。开始对话后自动更新。</div>
+  </div>
+
+  <!-- Scenario B: Active learner, partial mastery -->
+  <div class="section-label">场景 B：学习中（变量✅ 条件🟡 循环🟡 → 函数未解锁）</div>
+  <div class="card">
+    <h4>🧭 学习地图</h4>
+    <div class="skill-row"><span class="skill-dot mastered"></span><span class="skill-name">变量</span><span class="skill-level">85%</span></div>
+    <div class="skill-row indent-1"><span class="skill-dot mastered"></span><span class="skill-name">类型</span><span class="skill-level">70%</span></div>
+    <div class="skill-row indent-1"><span class="skill-dot learning"></span><span class="skill-name">条件</span><span class="skill-level">45%</span></div>
+    <div class="skill-row indent-2"><span class="skill-dot learning"></span><span class="skill-name">循环</span><span class="skill-level">35%</span></div>
+    <div class="skill-row indent-3"><span class="skill-dot locked"></span><span class="skill-name">列表</span><span class="skill-level">--</span></div>
+    <div class="skill-row indent-3"><span class="skill-dot prereq"></span><span class="skill-name">函数</span><span class="skill-level">需循环≥70%</span></div>
+    <div class="tooltip">💡 继续学完「循环」后可解锁「函数」和「列表」。</div>
+  </div>
+
+  <!-- Scenario C: Advanced learner -->
+  <div class="section-label">场景 C：进阶（函数✅ → 递归/装饰器/模块 已解锁）</div>
+  <div class="card">
+    <h4>🧭 学习地图</h4>
+    <div class="skill-row"><span class="skill-dot mastered"></span><span class="skill-name">变量</span><span class="skill-level">95%</span></div>
+    <div class="skill-row indent-1"><span class="skill-dot mastered"></span><span class="skill-name">条件</span><span class="skill-level">90%</span></div>
+    <div class="skill-row indent-2"><span class="skill-dot mastered"></span><span class="skill-name">循环</span><span class="skill-level">85%</span></div>
+    <div class="skill-row indent-3"><span class="skill-dot mastered"></span><span class="skill-name">列表</span><span class="skill-level">80%</span></div>
+    <div class="skill-row indent-3"><span class="skill-dot mastered"></span><span class="skill-name">函数</span><span class="skill-level">75%</span></div>
+    <div class="skill-row indent-4"><span class="skill-dot locked"></span><span class="skill-name">递归</span><span class="skill-level">🔒</span></div>
+    <div class="skill-row indent-4"><span class="skill-dot locked"></span><span class="skill-name">装饰器</span><span class="skill-level">🔒</span></div>
+    <div class="skill-row indent-4"><span class="skill-dot locked"></span><span class="skill-name">模块</span><span class="skill-level">🔒</span></div>
+    <div class="skill-row indent-3"><span class="skill-dot learning"></span><span class="skill-name">字典</span><span class="skill-level">55%</span></div>
+    <div class="tooltip">💡 函数已掌握！可继续学习：递归、装饰器、模块</div>
+  </div>
+
+  <div style="text-align:center;margin-top:24px;font-size:10px;opacity:0.3;">
+    Coherence Phase 59 Preview — Skill Tree Dashboard Card
+  </div>
+</div>
+</body>
+</html>

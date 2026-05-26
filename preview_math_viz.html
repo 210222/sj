@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>ECharts + GeoGebra 预览 — Phase 62</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<style>
+:root {
+  --deep-mocha: #3d322b; --warm-white: #fdfaf5; --soft-blue: #dce8f5;
+  --sage-green: #8a9f87; --coral-candy: #f2d5c4; --lavender-gray: #e0dce8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: var(--warm-white); color: var(--deep-mocha); }
+.preview-container { max-width: 680px; margin: 24px auto; padding: 16px; }
+
+.chat-bubble {
+  padding: 14px 18px; border-radius: 14px; margin-bottom: 16px;
+  line-height: 1.6; font-size: 14px;
+}
+.chat-bubble.coach { background: var(--soft-blue); max-width: 90%; }
+.chat-bubble.user { background: var(--lavender-gray); max-width: 85%; margin-left: auto; }
+
+.diagram-box {
+  margin: 12px 0; padding: 12px; background: #fff;
+  border: 1px solid var(--lavender-gray); border-radius: 8px;
+}
+.diagram-box .label {
+  font-size: 10px; text-transform: uppercase; color: var(--sage-green);
+  margin-bottom: 8px; font-weight: 600;
+}
+
+.section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin: 32px 0 10px; opacity: 0.4; }
+
+.chart-container { width: 100%; height: 320px; }
+
+.geogebra-frame { width: 100%; height: 400px; border: none; border-radius: 8px; }
+
+.compare-box { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.compare-box .mini-chart { height: 220px; background: #fff; border-radius: 8px; border: 1px solid var(--lavender-gray); }
+.compare-box .mini-label { font-size: 10px; text-align: center; padding: 4px; opacity: 0.6; }
+</style>
+</head>
+<body>
+<div class="preview-container">
+<h2 style="margin-bottom:16px;font-size:16px;">ECharts + GeoGebra 预览</h2>
+
+<!-- ===== Scene 1: ECharts multi-line function graph ===== -->
+<div class="section-label">场景 1：ECharts — sin(x) 和 cos(x) 对比 + 叠加图</div>
+<div class="chat-bubble user">sin 和 cos 的图像有什么区别？</div>
+<div class="chat-bubble coach">
+  把它们放在一起看——红色是 sin，蓝色是 cos。注意 cos 是 sin 向左平移了 π/2：
+  <div class="diagram-box">
+    <div class="label">📊 ECharts — 多曲线对比</div>
+    <div class="chart-container" id="chart-sin-cos"></div>
+  </div>
+  关键规律：cos(x) = sin(x + π/2)。你看 x=0 时，sin=0（红线从原点开始），cos=1（蓝线从顶点开始）。现在自己说说 x=π 时两者各是多少？
+</div>
+
+<!-- ===== Scene 2: ECharts tree ===== -->
+<div class="section-label">场景 2：ECharts — Python 数据结构内存树形图</div>
+<div class="chat-bubble user">列表和字典在内存里是什么样的？</div>
+<div class="chat-bubble coach">
+  列表像一排连续格子，字典像键值对散列分布——看这个树形对比：
+  <div class="diagram-box">
+    <div class="label">📊 ECharts — 数据结构树形图</div>
+    <div class="compare-box">
+      <div>
+        <div class="mini-label">列表 (list)</div>
+        <div class="mini-chart" id="chart-tree-list"></div>
+      </div>
+      <div>
+        <div class="mini-label">字典 (dict)</div>
+        <div class="mini-chart" id="chart-tree-dict"></div>
+      </div>
+    </div>
+  </div>
+  列表通过索引 0,1,2... 快速定位，字典通过 hash(key) 计算位置。你觉得查"name"这个键，在列表和字典里哪个更快？
+</div>
+
+<!-- ===== Scene 3: GeoGebra interactive ===== -->
+<div class="section-label">场景 3：GeoGebra — 交互式三角函数 + 单位圆</div>
+<div class="chat-bubble user">sin 函数的图像是怎么和圆联系起来的？</div>
+<div class="chat-bubble coach">
+  看这个交互式画板——拖动圆上的蓝色点，观察右边 sin 值如何变化：
+  <div class="diagram-box">
+    <div class="label">📐 GeoGebra — 交互式单位圆 (sin)</div>
+    <iframe class="geogebra-frame" src="https://www.geogebra.org/material/iframe/id/mb2hvchh/width/640/height/400/border/ffffff/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/true/rc/false/ld/false/sdz/true/ctl/false"
+      allowfullscreen></iframe>
+  </div>
+  蓝色点的 y 坐标就是 sin(θ) 的值。你注意到 sin 在哪些角度取到最大值 1 和最小值 -1 了吗？
+</div>
+
+<!-- ===== Scene 4: GeoGebra right triangle ===== -->
+<div class="section-label">场景 4：GeoGebra — 交互式直角三角形 (勾股定理)</div>
+<div class="chat-bubble user">勾股定理 a²+b²=c² 怎么用图形理解？</div>
+<div class="chat-bubble coach">
+  拖动三角形的顶点，观察三个正方形的面积变化——a²+b² 永远等于 c²：
+  <div class="diagram-box">
+    <div class="label">📐 GeoGebra — 勾股定理交互演示</div>
+    <iframe class="geogebra-frame" src="https://www.geogebra.org/material/iframe/id/fvbwgshg/width/640/height/400/border/ffffff/sfsb/true/smb/false/stb/false/stbh/false/ai/false/asb/false/sri/true/rc/false/ld/false/sdz/true/ctl/false"
+      allowfullscreen></iframe>
+  </div>
+  现在你拖动试试——不管三角形怎么变，红色正方形 + 蓝色正方形的面积，总是等于绿色正方形的面积。这就是为什么 a²+b²=c² 被称为"定理"——它是被证明永远成立的。
+</div>
+
+<!-- ===== Comparison ===== -->
+<div class="section-label">方案对比：ECharts vs GeoGebra</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px;">
+  <div style="padding:12px;background:#fff;border-radius:8px;border:1px solid var(--lavender-gray);">
+    <b>ECharts</b><br>
+    ✅ npm install，离线可用<br>
+    ✅ 教练输出 JSON，前端渲染<br>
+    ✅ 多线图、树形图、热力图<br>
+    ❌ 不能交互式拖动<br>
+    适合：数据对比、多函数曲线、统计图
+  </div>
+  <div style="padding:12px;background:#fff;border-radius:8px;border:1px solid var(--lavender-gray);">
+    <b>GeoGebra</b><br>
+    ✅ 交互式拖动、旋转、缩放<br>
+    ✅ 几何+代数完美结合<br>
+    ✅ 已有海量公开课件<br>
+    ❌ 需要联网（iframe嵌入）<br>
+    ❌ 教练不能"生成"，只能"引用"<br>
+    适合：几何、函数交点、单位圆
+  </div>
+</div>
+
+<div style="text-align:center;margin-top:48px;font-size:10px;opacity:0.3;">
+  Coherence Phase 62 Preview — ECharts + GeoGebra
+</div>
+</div>
+
+<script>
+// ECharts: sin + cos comparison
+(function(){
+  var c = echarts.init(document.getElementById('chart-sin-cos'));
+  var dataSin = [], dataCos = [];
+  for (var i = 0; i <= 360; i++) {
+    var x = i * Math.PI / 180;
+    dataSin.push([x, Math.sin(x)]);
+    dataCos.push([x, Math.cos(x)]);
+  }
+  c.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['sin(x)', 'cos(x)'] },
+    xAxis: {
+      type: 'value', name: 'x (弧度)',
+      min: 0, max: 2*Math.PI,
+      axisLabel: { formatter: function(v) {
+        var labels = {0:'0',1.57:'π/2',3.14:'π',4.71:'3π/2',6.28:'2π'};
+        return labels[parseFloat(v.toFixed(2))] || '';
+      }}
+    },
+    yAxis: { type: 'value', name: 'y', min: -1.2, max: 1.2 },
+    series: [
+      { name: 'sin(x)', type: 'line', data: dataSin, smooth: true,
+        lineStyle: { color: '#e74c3c', width: 2 }, showSymbol: false },
+      { name: 'cos(x)', type: 'line', data: dataCos, smooth: true,
+        lineStyle: { color: '#2980b9', width: 2 }, showSymbol: false },
+    ],
+    grid: { left: 50, right: 20, top: 30, bottom: 40 },
+  });
+})();
+
+// ECharts: list tree
+(function(){
+  var c = echarts.init(document.getElementById('chart-tree-list'));
+  c.setOption({
+    tooltip: {},
+    series: [{
+      type: 'tree', data: [{
+        name: '列表 [a,b,c]',
+        children: [
+          { name: '索引0: a\n(地址0x100)' },
+          { name: '索引1: b\n(地址0x108)' },
+          { name: '索引2: c\n(地址0x110)' },
+        ]
+      }],
+      orient: 'TB', top: 5, left: 10, right: 10, bottom: 5,
+      symbol: 'roundRect', symbolSize: [80, 28],
+      label: { fontSize: 9, position: 'inside' },
+    }],
+  });
+})();
+
+// ECharts: dict tree
+(function(){
+  var c = echarts.init(document.getElementById('chart-tree-dict'));
+  c.setOption({
+    tooltip: {},
+    series: [{
+      type: 'tree', data: [{
+        name: '字典 {"name":"Tom"}',
+        children: [
+          { name: 'hash("name")\n→ 桶 #3' },
+          { name: '键: "name"\n→ 值: "Tom"' },
+        ]
+      }],
+      orient: 'TB', top: 5, left: 10, right: 10, bottom: 5,
+      symbol: 'roundRect', symbolSize: [80, 28],
+      label: { fontSize: 9, position: 'inside' },
+    }],
+  });
+})();
+</script>
+</body>
+</html>

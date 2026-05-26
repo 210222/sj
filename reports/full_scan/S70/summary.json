@@ -1,9 +1,9 @@
 {
   "step": "S70",
   "status": "GO",
-  "executed_at_utc": "2026-05-12T06:00:58.222Z",
+  "executed_at_utc": "2026-05-25T05:46:02.065Z",
   "layer": "Scoring + Tech Debt Capitalization",
-  "health_index": 53.0,
+  "health_index": 53.4,
   "risk_index": 100,
   "health_index_ok": true,
   "risk_index_ok": true

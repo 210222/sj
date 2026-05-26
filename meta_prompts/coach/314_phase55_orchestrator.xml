@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 55 -- LLM Observability 可视化</name><version>1.0.0</version><track>FRONTEND</track><phase>55</phase>
+  <before_state><file path="frontend/src/App.tsx">侧边栏和 Admin 面板不显示 LLM runtime 数据。教学审计结果不可见</file></before_state>
+  <after_state><file path="frontend/src/components/dashboard/LLMRuntimeCard.tsx">新建。App.tsx 侧边栏集成。Admin 面板缓存/延迟显示。教学审计柱状图</file></after_state>
+  <implementation>
+    <create file="frontend/src/components/dashboard/LLMRuntimeCard.tsx"/>
+    <modify file="frontend/src/App.tsx">+teachReport state + fetch effect + 侧边栏 LLMRuntimeCard + Admin 面板 3区块</modify>
+    <modify file="api/main.py">+app.mount("/reports",...)</modify>
+  </implementation>
+  <go_gate>1466/0/5, npm build 成功</go_gate>
+</prompt>

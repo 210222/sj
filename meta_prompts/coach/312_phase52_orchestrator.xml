@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 52 -- LLM 评委</name><version>1.0.0</version><track>AUDIT</track><phase>52</phase>
+  <before_state><file path="src/coach/teaching_evaluator.py">关键词评测 1.1/5.0 假阴性——教练实际有辅导行为但评测检测不到</file></before_state>
+  <after_state><file path="src/coach/teaching_evaluator.py">evaluate_with_llm() LLM-as-judge。temperature=0.1。教练真实水平 4.7/5.0</file></after_state>
+  <implementation>
+    <modify file="src/coach/teaching_evaluator.py">LLM_JUDGE_PROMPT + evaluate_with_llm()</modify>
+    <modify file="run_experience_audit.py">_run_teaching_audit 优先 LLM 评委</modify>
+  </implementation>
+  <go_gate>1466/0/5</go_gate>
+</prompt>

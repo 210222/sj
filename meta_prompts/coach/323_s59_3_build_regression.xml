@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S59.3 -- 构建 + 回归验证</name><phase>59</phase><sub_stage>S59.3</sub_stage>
+  <quality_gates><gate>npm run build 零错误</gate><gate>python -m pytest tests/ -q 0 failed</gate></quality_gates>
+</prompt>

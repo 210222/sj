@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 51 -- 辅导行为终端注入</name><version>1.0.0</version><track>COACH</track><phase>51</phase>
+  <before_state><file path="src/coach/llm/prompts.py">辅导协议在 stable prefix 中段，被更具体的输出要求压制。教练行为未改变</file></before_state>
+  <after_state><file path="src/coach/llm/prompts.py">_render_terminal_tutoring_checklist() 位于 prompt 末端(decoding frontier)，6条辅导自检</file></after_state>
+  <implementation>
+    <modify file="src/coach/llm/prompts.py">新增 _render_terminal_tutoring_checklist()，在 build_coach_context 的 context_layer 之后注入</modify>
+  </implementation>
+  <go_gate>1466/0/5</go_gate>
+</prompt>

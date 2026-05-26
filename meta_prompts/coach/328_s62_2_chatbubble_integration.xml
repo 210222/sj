@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S62.2 -- ChatBubble 集成 + 降级处理</name>
+  <phase>62</phase><sub_stage>S62.2</sub_stage>
+  <before_state><file path="frontend/src/components/chat/ChatBubble.tsx">无 diagram 字段处理</file></before_state>
+  <after_state><file path="frontend/src/components/chat/ChatBubble.tsx">检测 payload.diagram → 渲染 DiagramRenderer</file></after_state>
+  <task>
+    1. ChatBubble 在 message.content 渲染之后检测 payload.diagram
+    2. 如果 diagram 存在 → 渲染 DiagramRenderer
+    3. 如果 diagram 不存在 → 行为不变
+    4. 降级处理：DiagramRenderer 内部 catch → 显示 diagram.content 原始文本
+  </task>
+  <go_gate>旧消息（无 diagram）不受影响。新消息（有 diagram）正常渲染</go_gate>
+</prompt>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>零依赖方案预览 — 纯 SVG / Canvas / Unicode / 后端渲染</title>
+<style>
+:root {
+  --deep-mocha: #3d322b; --warm-white: #fdfaf5; --soft-blue: #dce8f5;
+  --sage-green: #8a9f87; --coral-candy: #f2d5c4; --lavender-gray: #e0dce8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: var(--warm-white); color: var(--deep-mocha); }
+.preview-container { max-width: 720px; margin: 24px auto; padding: 16px; }
+
+.chat-bubble {
+  padding: 14px 18px; border-radius: 14px; margin-bottom: 16px;
+  line-height: 1.6; font-size: 14px;
+}
+.chat-bubble.coach { background: var(--soft-blue); max-width: 94%; }
+.chat-bubble.user { background: var(--lavender-gray); max-width: 85%; margin-left: auto; }
+
+.diagram-box {
+  margin: 12px 0; padding: 12px; background: #fff;
+  border: 1px solid var(--lavender-gray); border-radius: 8px;
+}
+.diagram-box .label {
+  font-size: 10px; text-transform: uppercase; color: var(--sage-green);
+  margin-bottom: 8px; font-weight: 600;
+}
+
+.section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin: 32px 0 10px; opacity: 0.4; }
+
+.unicode-box { padding: 12px; background: #111; color: #0f0; font-family: 'Courier New', monospace; font-size: 12px; border-radius: 8px; white-space: pre; line-height: 1.2; }
+.ascii-box { padding: 12px; background: #fff; border: 1px solid var(--lavender-gray); border-radius: 8px; font-family: 'Courier New', monospace; font-size: 11px; white-space: pre; line-height: 1.3; overflow-x: auto; }
+.canvas-box { width: 100%; height: 260px; background: #fff; border-radius: 8px; border: 1px solid var(--lavender-gray); }
+.img-box img { max-width: 100%; border-radius: 8px; border: 1px solid var(--lavender-gray); }
+.css-chart { display: flex; align-items: flex-end; gap: 12px; height: 200px; padding: 12px; background: #fff; border-radius: 8px; border: 1px solid var(--lavender-gray); }
+.css-bar { flex: 1; border-radius: 4px 4px 0 0; text-align: center; color: #fff; font-size: 13px; font-weight: 600; padding-top: 8px; }
+
+.math-block { margin: 8px 0; padding: 8px 12px; background: #fff; border-radius: 6px; border-left: 3px solid var(--sage-green); }
+
+.verdict-table { width: 100%; font-size: 12px; border-collapse: collapse; margin-top: 16px; }
+.verdict-table td { padding: 6px 8px; border-bottom: 1px solid var(--lavender-gray); }
+.verdict-table .pick { background: #f0f7f0; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="preview-container">
+<h2 style="margin-bottom:16px;font-size:16px;">零外部依赖方案预览</h2>
+
+<!-- ===== 1. Pure SVG ===== -->
+<div class="section-label">方案 A：纯 SVG（零依赖，浏览器内置，AI 输出 XML 文本）</div>
+<div class="chat-bubble user">冒泡排序 [5,3,8,1] 每一步怎么变的？</div>
+<div class="chat-bubble coach">
+  一步步看：
+  <div class="diagram-box">
+    <div class="label">🎨 纯 SVG — 无需任何 JS 库</div>
+    <svg width="100%" height="200" viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg">
+      <!-- Step 1 -->
+      <text x="10" y="20" font-size="12" fill="#666">初始</text>
+      <rect x="80" y="5" width="40" height="28" rx="4" fill="#dce8f5"/><text x="100" y="24" text-anchor="middle" font-size="12">5</text>
+      <rect x="124" y="5" width="40" height="28" rx="4" fill="#dce8f5"/><text x="144" y="24" text-anchor="middle" font-size="12">3</text>
+      <rect x="168" y="5" width="40" height="28" rx="4" fill="#dce8f5"/><text x="188" y="24" text-anchor="middle" font-size="12">8</text>
+      <rect x="212" y="5" width="40" height="28" rx="4" fill="#dce8f5"/><text x="232" y="24" text-anchor="middle" font-size="12">1</text>
+      <text x="260" y="24" font-size="10" fill="#999">← 初始</text>
+
+      <!-- Step 2: after first comparison -->
+      <text x="10" y="80" font-size="12" fill="#666">第1轮</text>
+      <rect x="80" y="65" width="40" height="28" rx="4" fill="#dce8f5"/><text x="100" y="84" text-anchor="middle" font-size="12">3</text>
+      <rect x="124" y="65" width="40" height="28" rx="4" fill="#dce8f5"/><text x="144" y="84" text-anchor="middle" font-size="12">5</text>
+      <rect x="168" y="65" width="40" height="28" rx="4" fill="#dce8f5"/><text x="188" y="84" text-anchor="middle" font-size="12">1</text>
+      <rect x="212" y="65" width="40" height="28" rx="4" fill="#8a9f87"/><text x="232" y="84" text-anchor="middle" font-size="12" fill="#fff">8</text>
+      <text x="260" y="84" font-size="10" fill="#999">← 8 已就位</text>
+
+      <!-- Step 3: after second pass -->
+      <text x="10" y="140" font-size="12" fill="#666">第2轮</text>
+      <rect x="80" y="125" width="40" height="28" rx="4" fill="#dce8f5"/><text x="100" y="144" text-anchor="middle" font-size="12">3</text>
+      <rect x="124" y="125" width="40" height="28" rx="4" fill="#dce8f5"/><text x="144" y="144" text-anchor="middle" font-size="12">1</text>
+      <rect x="168" y="125" width="40" height="28" rx="4" fill="#8a9f87"/><text x="188" y="144" text-anchor="middle" font-size="12" fill="#fff">5</text>
+      <rect x="212" y="125" width="40" height="28" rx="4" fill="#8a9f87"/><text x="232" y="144" text-anchor="middle" font-size="12" fill="#fff">8</text>
+
+      <!-- Final -->
+      <text x="10" y="190" font-size="12" fill="#666">最终</text>
+      <rect x="80" y="172" width="40" height="28" rx="4" fill="#8a9f87"/><text x="100" y="191" text-anchor="middle" font-size="12" fill="#fff">1</text>
+      <rect x="124" y="172" width="40" height="28" rx="4" fill="#8a9f87"/><text x="144" y="191" text-anchor="middle" font-size="12" fill="#fff">3</text>
+      <rect x="168" y="172" width="40" height="28" rx="4" fill="#8a9f87"/><text x="188" y="191" text-anchor="middle" font-size="12" fill="#fff">5</text>
+      <rect x="212" y="172" width="40" height="28" rx="4" fill="#8a9f87"/><text x="232" y="191" text-anchor="middle" font-size="12" fill="#fff">8</text>
+    </svg>
+  </div>
+  <b>AI 输出方式</b>：纯 XML 文本（&lt;svg&gt;...&lt;/svg&gt;）<br>
+  <b>优点</b>：零 npm 依赖，浏览器原生支持，轻量，无限灵活<br>
+  <b>缺点</b>：无交互（不能拖拽）。复杂图需要 AI 输出大量坐标
+</div>
+
+<!-- ===== 2. Canvas API ===== -->
+<div class="section-label">方案 B：Canvas API（浏览器内置，AI 输出 JS 绘图指令）</div>
+<div class="chat-bubble user">sin(x) 在 [0, 2π] 的图像是什么样？</div>
+<div class="chat-bubble coach">
+  <div class="diagram-box">
+    <div class="label">🖌️ Canvas API — 无需任何库</div>
+    <canvas class="canvas-box" id="canvas-sin"></canvas>
+  </div>
+  <b>AI 输出方式</b>：JS 绘图指令（ctx.moveTo / ctx.lineTo / ctx.fillText）<br>
+  <b>优点</b>：零依赖，高性能（GPU 加速），可做动画<br>
+  <b>缺点</b>：AI 需要输出 JS 代码——比 SVG 更难生成，出错风险高
+</div>
+
+<!-- ===== 3. CSS-only charts ===== -->
+<div class="section-label">方案 C：纯 CSS 图表（零依赖，CSS flexbox + div）</div>
+<div class="chat-bubble user">列表、字典、集合的查找速度对比？</div>
+<div class="chat-bubble coach">
+  <div class="diagram-box">
+    <div class="label">📊 纯 CSS 柱状图</div>
+    <div class="css-chart">
+      <div>
+        <div class="css-bar" style="height:40px;background:#8a9f87;width:80px;">O(1)</div>
+        <div style="text-align:center;font-size:10px;margin-top:4px;">列表</div>
+      </div>
+      <div>
+        <div class="css-bar" style="height:180px;background:#c74440;width:80px;">O(n)</div>
+        <div style="text-align:center;font-size:10px;margin-top:4px;">链表</div>
+      </div>
+      <div>
+        <div class="css-bar" style="height:80px;background:#2d70b3;width:80px;">O(log n)</div>
+        <div style="text-align:center;font-size:10px;margin-top:4px;">二叉树</div>
+      </div>
+    </div>
+  </div>
+  <b>AI 输出方式</b>：HTML + div + inline style<br>
+  <b>优点</b>：最简单——就是加了颜色的 div<br>
+  <b>缺点</b>：只能做柱状图这种简单的。不能画曲线、几何图
+</div>
+
+<!-- ===== 4. Unicode / ASCII ===== -->
+<div class="section-label">方案 D：Unicode / ASCII 文本图（纯文本，任何终端都能看）</div>
+<div class="chat-bubble user">二叉树长什么样？</div>
+<div class="chat-bubble coach">
+  用字符画出来：
+  <div class="diagram-box">
+    <div class="label">📝 ASCII 文本图</div>
+    <div class="ascii-box">
+        5
+       / \
+      3   8
+     / \   \
+    1   4   10
+    </div>
+  </div>
+  另外如果学生用的终端支持 Unicode：
+  <div class="unicode-box">
+ ┌─────┐
+ │  5  │
+ └──┬──┘
+  ┌─┴──┐
+┌─┴─┐ ┌┴─┐
+│ 3 │ │ 8│
+└─┬─┘ └─┬┘
+ </div>
+  <b>AI 输出方式</b>：纯文本字符串<br>
+  <b>优点</b>：最轻量——就是一串字符。任何时候都能用<br>
+  <b>缺点</b>：表达能力有限
+</div>
+
+<!-- ===== 5. Backend rendering ===== -->
+<div class="section-label">方案 E：后端渲染（Python matplotlib → PNG 图片）</div>
+<div class="chat-bubble user">z = sin(x²+y²) 的 3D 曲面是什么样的？</div>
+<div class="chat-bubble coach">
+  这个需要后端用 matplotlib 生成：
+  <div class="diagram-box">
+    <div class="label">🖼️ 后端渲染（Python matplotlib → PNG）</div>
+    <div class="img-box">
+      <div style="text-align:center;padding:60px;background:#f8f8f8;border-radius:8px;">
+        <div style="font-size:40px;margin-bottom:12px;">🌐</div>
+        <div style="font-size:13px;color:#666;">
+          AI 教练输出 Python 绘图代码 →<br>
+          后端沙箱执行 matplotlib →<br>
+          返回 PNG 图片 URL →<br>
+          前端 &lt;img src="..."&gt; 显示
+        </div>
+        <div style="font-size:11px;color:#c9a04a;margin-top:12px;">
+          （需要 Python matplotlib + 沙箱安全隔离）
+        </div>
+      </div>
+    </div>
+  </div>
+  <b>AI 输出方式</b>：Python 代码字符串<br>
+  <b>优点</b>：能力无上限——matplotlib 能画任何图。3D、统计、地图<br>
+  <b>缺点</b>：需要后端代码执行 + 图片存储 + 安全沙箱。复杂度最高
+</div>
+
+<!-- ===== Comparison ===== -->
+<div class="section-label">全部方案对比</div>
+<table class="verdict-table">
+  <tr style="border-bottom:2px solid var(--sage-green);">
+    <td><b>方案</b></td><td><b>依赖</b></td><td><b>AI 生成难度</b></td><td><b>交互</b></td><td><b>离线</b></td><td><b>适用场景</b></td>
+  </tr>
+  <tr>
+    <td>Mermaid</td><td>npm (2MB)</td><td>★☆☆ 极简（文本语法）</td><td>❌</td><td>✅</td><td>流程/关系/时序/类图/思维导图</td>
+  </tr>
+  <tr>
+    <td>KaTeX</td><td>npm (300KB)</td><td>★☆☆ 极简（LaTeX）</td><td>❌</td><td>✅</td><td>数学公式</td>
+  </tr>
+  <tr>
+    <td>Desmos</td><td>npm (1MB)</td><td>★★☆ 中等（表达式 JSON）</td><td>✅ 拖拽缩放</td><td>✅</td><td>交互式数学图+几何</td>
+  </tr>
+  <tr>
+    <td>Prism</td><td>npm (50KB)</td><td>★☆☆ 极简（code block）</td><td>❌</td><td>✅</td><td>代码高亮</td>
+  </tr>
+  <tr style="border-top:2px solid var(--lavender-gray);">
+    <td>纯 SVG</td><td><b>零</b></td><td>★★★ 高（坐标计算）</td><td>❌</td><td>✅</td><td>任何静态图，但 AI 输出复杂</td>
+  </tr>
+  <tr>
+    <td>Canvas</td><td><b>零</b></td><td>★★★★ 很高（JS 代码）</td><td>✅</td><td>✅</td><td>动画、高性能绘图</td>
+  </tr>
+  <tr>
+    <td>纯 CSS</td><td><b>零</b></td><td>★☆☆ 极简</td><td>❌</td><td>✅</td><td>只有柱状图/进度条</td>
+  </tr>
+  <tr>
+    <td>Unicode</td><td><b>零</b></td><td>★☆☆ 极简</td><td>❌</td><td>✅</td><td>终端/纯文本环境</td>
+  </tr>
+  <tr>
+    <td>后端 matplotlib</td><td>Python</td><td>★★★ 高（沙箱+存储）</td><td>❌</td><td>✅</td><td>3D/统计/地图（最强大但最复杂）</td>
+  </tr>
+</table>
+
+<div style="margin-top:16px;padding:14px;background:#f0f7f0;border-radius:10px;border:1px solid var(--sage-green);font-size:13px;line-height:1.6;">
+  <b>推荐</b><br>
+  零依赖方案（SVG/CSS/Unicode）可以作为<b>轻量补充</b>——当 npm 库因网络问题不可用时自动降级。<br>
+  但作为<b>主力方案</b>，npm 库（Mermaid+KaTeX+Desmos+Prism）的 AI 生成难度和图形质量明显更优。<br><br>
+  <b>最终建议</b>：主力 = npm 4 库。降级备用 = 纯 SVG + CSS + Unicode。<br>
+  后端 matplotlib 作为远期方案（Phase 63+），不放在 Phase 62。
+</div>
+
+<div style="text-align:center;margin-top:32px;font-size:10px;opacity:0.3;">
+  Coherence Phase 62 Research — Zero-Dependency Alternatives
+</div>
+</div>
+
+<script>
+// Canvas: sin(x) graph
+(function(){
+  var c = document.getElementById('canvas-sin');
+  var w = c.parentElement.clientWidth;
+  c.width = w; c.height = 260;
+  var ctx = c.getContext('2d');
+  var pad = {top:30, right:20, bottom:30, left:50};
+  var pw = w - pad.left - pad.right;
+  var ph = c.height - pad.top - pad.bottom;
+
+  // Grid
+  ctx.strokeStyle = '#eee'; ctx.lineWidth = 0.5;
+  for (var i = 0; i <= 10; i++) {
+    var y = pad.top + ph * i / 10;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w-pad.right, y); ctx.stroke();
+  }
+  // Axes
+  ctx.strokeStyle = '#999'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.left, pad.top+ph/2); ctx.lineTo(w-pad.right, pad.top+ph/2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, c.height-pad.bottom); ctx.stroke();
+
+  // sin curve
+  ctx.strokeStyle = '#c74440'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (var x = 0; x <= pw; x++) {
+    var sx = x / pw * 2 * Math.PI;
+    var sy = Math.sin(sx);
+    var px = pad.left + x;
+    var py = pad.top + ph/2 - sy * ph/2.2;
+    if (x === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#666'; ctx.font = '11px sans-serif';
+  ctx.fillText('0', pad.left-10, pad.top+ph/2+14);
+  ctx.fillText('π/2', pad.left+pw/4-10, pad.top+ph/2+14);
+  ctx.fillText('π', pad.left+pw/2-6, pad.top+ph/2+14);
+  ctx.fillText('2π', pad.left+pw-15, pad.top+ph/2+14);
+  ctx.fillStyle = '#c74440'; ctx.font = '12px sans-serif';
+  ctx.fillText('y = sin(x)', pad.left+10, pad.top+16);
+})();
+</script>
+</body>
+</html>

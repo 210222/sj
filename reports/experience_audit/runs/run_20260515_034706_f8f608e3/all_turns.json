@@ -1,0 +1,908 @@
+{
+  "novice_confirm": [
+    {
+      "turn": 1,
+      "user": "好",
+      "action_type": "reflect",
+      "payload_statement": "你刚才说'好'，看来你愿意尝试。我们一起写一个替代思维，来挑战那个'我肯定会失败'的想法。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "cb16dc37-4323-4ec1-8ab8-deec678b7d65",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(38%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.3753,
+          "action_contract_hash": "70bd32a5ca6e78ab",
+          "policy_layer_hash": "d7643ac79e3a797d",
+          "context_layer_hash": "cdd3dd34e3c048cd",
+          "context_fingerprint": "c0314f65422e6851",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:47:13.941512+00:00",
+          "latency_ms": 3282.0,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 1381,
+          "tokens_prompt": 1147,
+          "tokens_completion": 234,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 379,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 1,
+          "retention_memory_hits": 1,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 2,
+      "user": "嗯",
+      "action_type": "reflect",
+      "payload_statement": "你刚才说'嗯'，看来你开始思考了。我们一起写一个替代思维，来挑战那个'我肯定会失败'的想法。你想到什么更客观、平衡的想法了吗？比如，你过去成功过的事情。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "e9108018-57e0-4654-a228-844be6a14fd7",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(36%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.3611,
+          "action_contract_hash": "70bd32a5ca6e78ab",
+          "policy_layer_hash": "d7643ac79e3a797d",
+          "context_layer_hash": "98085f50c4b62b09",
+          "context_fingerprint": "df28158527d1ea3f",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:47:17.584184+00:00",
+          "latency_ms": 2895.1,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 1437,
+          "tokens_prompt": 1189,
+          "tokens_completion": 248,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 421,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 2,
+          "retention_memory_hits": 2,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 3,
+      "user": "继续",
+      "action_type": "reflect",
+      "payload_statement": "你刚才说'嗯'，看来你在思考替代思维了。我们一起来写一个替代思维，挑战那个'我肯定会失败'的想法。你过去有没有成功过的事情？哪怕是很小的成功，比如一次考试通过、一次演讲顺利、或者一次完成了一个小目标？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "4205c88c-72ba-4f82-afd6-27f3cb40c385",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(32%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.3174,
+          "action_contract_hash": "70bd32a5ca6e78ab",
+          "policy_layer_hash": "d7643ac79e3a797d",
+          "context_layer_hash": "ea50e37e4782296b",
+          "context_fingerprint": "14ddc215cb23df9f",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:47:20.847787+00:00",
+          "latency_ms": 2717.2,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 1505,
+          "tokens_prompt": 1363,
+          "tokens_completion": 142,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 595,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 3,
+          "retention_memory_hits": 3,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 4,
+      "user": "可以",
+      "action_type": "reflect",
+      "payload_statement": "你刚才说“可以”，看来你愿意尝试回忆过去的成功经验。我们一起写一个替代思维，来挑战那个“我肯定会失败”的想法。你过去有没有成功过的事情？哪怕是很小的成功，比如一次考试通过、一次演讲顺利、或者一次完成了一个小目标？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "53b7610a-b767-4973-bda3-af46e5bf3e48",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(28%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.2823,
+          "action_contract_hash": "70bd32a5ca6e78ab",
+          "policy_layer_hash": "d7643ac79e3a797d",
+          "context_layer_hash": "2bded7d174e635b0",
+          "context_fingerprint": "2ac7391841605cc9",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:47:23.938731+00:00",
+          "latency_ms": 2459.6,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 1789,
+          "tokens_prompt": 1532,
+          "tokens_completion": 257,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 764,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 4,
+          "retention_memory_hits": 4,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 5,
+      "user": "好",
+      "action_type": "reflect",
+      "payload_statement": "你刚才说'好'，看来你愿意继续。我们一起回忆一下，你过去有没有什么成功的事情？哪怕是很小的，比如一次考试通过、一次演讲顺利，或者一次完成了一个小目标？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "0aaf53cf-574c-40e3-b575-f95c0741109f",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(26%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.256,
+          "action_contract_hash": "70bd32a5ca6e78ab",
+          "policy_layer_hash": "d7643ac79e3a797d",
+          "context_layer_hash": "cc19257a59984218",
+          "context_fingerprint": "33f75e07d94d5c7c",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:47:26.762432+00:00",
+          "latency_ms": 2105.1,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 1807,
+          "tokens_prompt": 1687,
+          "tokens_completion": 120,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 919,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 5,
+          "retention_memory_hits": 5,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    }
+  ],
+  "novice_jump": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "reflect",
+      "payload_statement": "你刚才提到了函数参数的概念，我们继续深入。第二步，理解参数如何传递值。当你调用`greet('Alice')`时，字符串'Alice'被赋值给参数`name`，函数内部就可以使用这个值。就像你把一张写有名字的纸条递给函数。现在，你能否说出调用`greet('Bob')`时，函数内部`name`的值是什么？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "f1775514-5817-4e83-b5fa-7a22c25158a6",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(35%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.3514,
+          "action_contract_hash": "70bd32a5ca6e78ab",
+          "policy_layer_hash": "d7643ac79e3a797d",
+          "context_layer_hash": "5bb11adbbd8d3a31",
+          "context_fingerprint": "ad00c4f3fa8debca",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:47:35.631270+00:00",
+          "latency_ms": 2126.6,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 1402,
+          "tokens_prompt": 1185,
+          "tokens_completion": 217,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 417,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 1,
+          "retention_memory_hits": 1,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 2,
+      "user": "讲列表",
+      "action_type": "reflect",
+      "payload_statement": "你刚才提到了学习Python，我们继续。列表是一种可以存储多个元素的有序容器，用方括号[]表示。比如`fruits = ['apple', 'banana', 'cherry']`。现在，我们先理解列表的基本结构。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "af213f5d-2405-48e9-b2a5-1e99c88e7b74",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(32%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.317,
+          "action_contract_hash": "70bd32a5ca6e78ab",
+          "policy_layer_hash": "d7643ac79e3a797d",
+          "context_layer_hash": "617e2ee5aae545e7",
+          "context_fingerprint": "77a480239690e429",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:47:38.120192+00:00",
+          "latency_ms": 3401.6,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 1597,
+          "tokens_prompt": 1312,
+          "tokens_completion": 285,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 544,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 2,
+          "retention_memory_hits": 1,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 3,
+      "user": "循环是什么",
+      "action_type": "reflect",
+      "payload_statement": "你刚才问循环是什么，我们继续。循环是让计算机重复执行一段代码的结构，就像你反复做同一件事直到满足条件。我们先拆解一下。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "b9642b66-ed00-4975-b1ff-51e78b405e58",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(28%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.2838,
+          "action_contract_hash": "70bd32a5ca6e78ab",
+          "policy_layer_hash": "d7643ac79e3a797d",
+          "context_layer_hash": "4d6435f828b9236b",
+          "context_fingerprint": "45d84f2a183f4d9c",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:47:41.909586+00:00",
+          "latency_ms": 3061.3,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 1648,
+          "tokens_prompt": 1438,
+          "tokens_completion": 210,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 670,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 3,
+          "retention_memory_hits": 2,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 4,
+      "user": "字典怎么用",
+      "action_type": "reflect",
+      "payload_statement": "你刚才问字典怎么用，我们之前聊过列表，字典和列表类似，也是一种容器，但它是通过键来查找值的，就像查字典一样。我们来拆解一下字典的使用步骤。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "default"
+      },
+      "trace_id": "20b8dc4a-86b5-4849-ae2f-b9505d8e13e0",
+      "intent": "怎么",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(31%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.3076,
+          "action_contract_hash": "70bd32a5ca6e78ab",
+          "policy_layer_hash": "6427229ba3ede0dd",
+          "context_layer_hash": "a05d38067229098a",
+          "context_fingerprint": "b29bbf59a49dd4ed",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:47:45.328090+00:00",
+          "latency_ms": 3371.7,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 1672,
+          "tokens_prompt": 1372,
+          "tokens_completion": 300,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 860,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 2,
+          "retention_memory_hits": 3,
+          "retention_duplicate_dropped": 2,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 5,
+      "user": "学函数",
+      "action_type": "reflect",
+      "payload_statement": "你刚才问字典怎么用，现在想学函数，其实函数和字典都是Python中很重要的概念。函数是一段可重复使用的代码块，用来完成特定任务。我们先来拆解一下函数的基本结构。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "a65d9b7f-aa09-4707-84aa-1e6c51a33a9b",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(25%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.2515,
+          "action_contract_hash": "70bd32a5ca6e78ab",
+          "policy_layer_hash": "d7643ac79e3a797d",
+          "context_layer_hash": "a59a9b178725e2a2",
+          "context_fingerprint": "3a8115bba7baca40",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:47:49.192004+00:00",
+          "latency_ms": 3164.7,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 1928,
+          "tokens_prompt": 1671,
+          "tokens_completion": 257,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 896,
+          "prompt_cache_miss_tokens": 775,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 5,
+          "retention_memory_hits": 4,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    }
+  ],
+  "tester": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "suggest",
+      "payload_statement": "你刚才用自动售货机的比喻来理解循环的三个部分，现在我们一起来巩固一下。既然你提到想用自己的话解释循环，我们来做个练习吧。",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "3079b635-2854-4cc3-884b-ba7f5d18fb97",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(35%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.3528,
+          "action_contract_hash": "46223c68c7bdb74c",
+          "policy_layer_hash": "10882142086b6589",
+          "context_layer_hash": "b99340ce76528c9a",
+          "context_fingerprint": "dd37ef8c9ae0186a",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:47:59.770204+00:00",
+          "latency_ms": 2705.9,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 1396,
+          "tokens_prompt": 1191,
+          "tokens_completion": 205,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 384,
+          "prompt_cache_miss_tokens": 807,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 1,
+          "retention_memory_hits": 2,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 2,
+      "user": "考考我",
+      "action_type": "suggest",
+      "payload_statement": "你刚才提到想用自己的话解释循环，那我们来做个练习巩固一下。假设有一个列表 fruits = ['苹果', '香蕉', '橙子']，用 for 循环遍历它，你能说说循环的每一步会输出什么吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "33c5a50b-07f3-494c-88e6-12f53089a57c",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(32%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.3219,
+          "action_contract_hash": "46223c68c7bdb74c",
+          "policy_layer_hash": "64e189a428a0733e",
+          "context_layer_hash": "37ee125974744e4d",
+          "context_fingerprint": "b8b84397bea03fce",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:48:02.837172+00:00",
+          "latency_ms": 3401.5,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 1524,
+          "tokens_prompt": 1326,
+          "tokens_completion": 198,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 384,
+          "prompt_cache_miss_tokens": 942,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 2,
+          "retention_memory_hits": 3,
+          "retention_duplicate_dropped": 10,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 3,
+      "user": "教列表",
+      "action_type": "suggest",
+      "payload_statement": "你刚才提到想用自己的话解释循环，现在我们换个新话题——列表。列表是Python里最常用的数据结构之一，就像一个有序的容器，可以放各种东西。比如 `[1, 2, 3]` 就是一个列表。你之前用for循环遍历了水果列表，其实就是在操作列表。我们先从创建和访问列表开始，你觉得怎么样？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "df860cf3-c162-4842-b357-7ecc7d457dd4",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(29%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.29,
+          "action_contract_hash": "46223c68c7bdb74c",
+          "policy_layer_hash": "10882142086b6589",
+          "context_layer_hash": "2c74e1cba9b797eb",
+          "context_fingerprint": "06978e8dbda10c1d",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:48:06.671263+00:00",
+          "latency_ms": 4274.3,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 1770,
+          "tokens_prompt": 1441,
+          "tokens_completion": 329,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 929,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 3,
+          "retention_memory_hits": 4,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 4,
+      "user": "考考我",
+      "action_type": "suggest",
+      "payload_statement": "你刚才说想考考列表的知识，那我们来做个练习吧。假设有一个列表 `colors = ['红', '绿', '蓝']`，用 `for` 循环遍历它，每次输出颜色。你能说出循环的每一步会输出什么吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "7f4b7d87-d262-4845-8b0d-bff5df7b3dc5",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(27%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.2679,
+          "action_contract_hash": "46223c68c7bdb74c",
+          "policy_layer_hash": "64e189a428a0733e",
+          "context_layer_hash": "3cdbe6afdef872d1",
+          "context_fingerprint": "0d1f657ba58ba6f3",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:48:11.309797+00:00",
+          "latency_ms": 2892.3,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 1865,
+          "tokens_prompt": 1598,
+          "tokens_completion": 267,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 512,
+          "prompt_cache_miss_tokens": 1086,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 3,
+          "retention_memory_hits": 5,
+          "retention_duplicate_dropped": 9,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 5,
+      "user": "教循环",
+      "action_type": "suggest",
+      "payload_statement": "你刚才做了列表遍历的练习，现在我们回到循环本身，一起深入理解它的工作原理。循环就像自动售货机：初始化是设定库存数量（比如5瓶水），条件是检查库存是否大于0，循环体是取出一瓶水并减少库存。你觉得这个比喻能帮你理解循环的三个核心部分吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "90f9081b-c291-4e7d-b92a-a2a045ed2eda",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=772chars(25%) threshold=400chars/15%",
+          "stable_prefix_hash": "15620410a2904cbb",
+          "stable_prefix_chars": 772,
+          "stable_prefix_lines": 35,
+          "stable_prefix_share": 0.2465,
+          "action_contract_hash": "46223c68c7bdb74c",
+          "policy_layer_hash": "10882142086b6589",
+          "context_layer_hash": "bd910415de3f9e97",
+          "context_fingerprint": "0b5771149be3b1ba",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-15T03:48:14.626459+00:00",
+          "latency_ms": 5260.7,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 2130,
+          "tokens_prompt": 1725,
+          "tokens_completion": 405,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 768,
+          "prompt_cache_miss_tokens": 957,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 4,
+          "retention_memory_hits": 6,
+          "retention_duplicate_dropped": 2,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    }
+  ]
+}

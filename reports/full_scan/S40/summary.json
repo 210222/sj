@@ -1,11 +1,11 @@
 {
   "step": "S40",
   "status": "GO",
-  "executed_at_utc": "2026-05-12T06:00:50.421Z",
+  "executed_at_utc": "2026-05-25T05:44:15.746Z",
   "layer": "D — Data Metabolism",
   "data_lineage": {
-    "sources": 1150,
-    "sinks": 162,
+    "sources": 1327,
+    "sinks": 168,
     "transforms": 0
   },
   "ai_audit": {

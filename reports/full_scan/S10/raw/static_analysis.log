@@ -1,25 +1,24 @@
-S10 Layer A — Code Anatomy | 2026-05-12T05:58:43.159Z
+S10 Layer A — Code Anatomy | 2026-05-25T05:39:26.051Z
 Status: GO
-Files: 188, Lines: 31884
-Functions: 1962, Classes: 417
-High Complexity (>10): 28
-Code Smells: 144, Dead Code: 103, Concurrency: 1
-SBOM Packages: 3
+Files: 199, Lines: 35147
+Functions: 2126, Classes: 461
+High Complexity (>10): 37
+Code Smells: 153, Dead Code: 113, Concurrency: 1
+SBOM Packages: 5
 TLA+ Ready: True
-  [P3] long_function: __init__() is 82 lines (max 80)
+  [P3] long_function: __init__() is 83 lines (max 80)
   [P3] too_many_parameters: run_diagnostics() has 9 parameters (max 6)
   [P3] too_many_parameters: audit_v18_7_gates() has 8 parameters (max 6)
-  [P3] long_function: _build_context_summary() is 111 lines (max 80)
-  [P3] deep_nesting: _build_context_summary() nesting depth 7 (max 5)
-  [P3] long_function: act() is 737 lines (max 80)
-  [P3] deep_nesting: act() nesting depth 7 (max 5)
+  [P3] deep_nesting: _add_context_skill_snapshot() nesting depth 7 (max 5)
+  [P3] long_function: act() is 749 lines (max 80)
+  [P3] deep_nesting: act() nesting depth 9 (max 5)
   [P3] long_function: _handle_consent_response() is 90 lines (max 80)
   [P3] long_function: _handle_activation_intent() is 109 lines (max 80)
-  [P4] magic_constants: 186 magic number constants detected
+  [P4] magic_constants: 200 magic number constants detected
   [P4] magic_constants: 19 magic number constants detected
-  [P3] long_function: compose() is 100 lines (max 80)
+  [P3] long_function: compose() is 105 lines (max 80)
   [P3] too_many_parameters: compose() has 9 parameters (max 6)
-  [P4] magic_constants: 24 magic number constants detected
+  [P4] magic_constants: 39 magic number constants detected
   [P4] magic_constants: 22 magic number constants detected
   [P3] too_many_parameters: insert_fact() has 7 parameters (max 6)
   [P3] too_many_parameters: tag_event() has 7 parameters (max 6)
@@ -31,17 +30,24 @@ TLA+ Ready: True
   [P4] magic_constants: 37 magic number constants detected
   [P3] too_many_parameters: audit() has 8 parameters (max 6)
   [P4] magic_constants: 14 magic number constants detected
+  [P3] long_function: recall() is 101 lines (max 80)
   [P3] too_many_parameters: promote_to_fact() has 7 parameters (max 6)
-  [P4] magic_constants: 19 magic number constants detected
-  [P4] magic_constants: 36 magic number constants detected
+  [P4] magic_constants: 38 magic number constants detected
+  [P4] magic_constants: 27 magic number constants detected
   [P4] magic_constants: 25 magic number constants detected
+  [P4] magic_constants: 36 magic number constants detected
+  [P3] long_function: evaluate_teaching_capability() is 187 lines (max 80)
+  [P4] magic_constants: 68 magic number constants detected
   [P4] magic_constants: 20 magic number constants detected
   [P3] too_many_parameters: record_block() has 10 parameters (max 6)
   [P4] magic_constants: 11 magic number constants detected
-  [P3] too_many_parameters: build_coach_context() has 10 parameters (max 6)
-  [P4] magic_constants: 31 magic number constants detected
+  [P4] magic_constants: 15 magic number constants detected
+  [P3] long_function: build_coach_context() is 115 lines (max 80)
+  [P3] too_many_parameters: build_coach_context() has 12 parameters (max 6)
+  [P4] magic_constants: 56 magic number constants detected
   [P3] too_many_parameters: __init__() has 8 parameters (max 6)
   [P3] deep_nesting: filter_payload() nesting depth 6 (max 5)
+  [P4] magic_constants: 17 magic number constants detected
   [P4] magic_constants: 38 magic number constants detected
   [P4] magic_constants: 13 magic number constants detected
   [P4] magic_constants: 15 magic number constants detected
@@ -94,13 +100,14 @@ TLA+ Ready: True
   [P3] long_function: run_combo_subprocess() is 82 lines (max 80)
   [P3] long_function: main() is 114 lines (max 80)
   [P4] magic_constants: 38 magic number constants detected
-  [P4] magic_constants: 42 magic number constants detected
+  [P4] magic_constants: 49 magic number constants detected
+  [P4] magic_constants: 19 magic number constants detected
   [P4] magic_constants: 25 magic number constants detected
   [P4] magic_constants: 60 magic number constants detected
   [P4] magic_constants: 121 magic number constants detected
   [P4] magic_constants: 21 magic number constants detected
   [P4] magic_constants: 11 magic number constants detected
-  [P4] magic_constants: 13 magic number constants detected
+  [P4] magic_constants: 16 magic number constants detected
   [P4] magic_constants: 20 magic number constants detected
   [P4] magic_constants: 12 magic number constants detected
   [P4] magic_constants: 17 magic number constants detected
@@ -110,6 +117,8 @@ TLA+ Ready: True
   [P4] magic_constants: 50 magic number constants detected
   [P4] magic_constants: 27 magic number constants detected
   [P4] magic_constants: 11 magic number constants detected
+  [P4] magic_constants: 21 magic number constants detected
+  [P4] magic_constants: 14 magic number constants detected
   [P4] magic_constants: 30 magic number constants detected
   [P4] magic_constants: 23 magic number constants detected
   [P4] magic_constants: 39 magic number constants detected
@@ -155,18 +164,22 @@ TLA+ Ready: True
   [P4] unused_import: Unused imports: os
   [P4] unused_import: Unused imports: annotations, field, json
   [P4] unused_import: Unused imports: annotations, defaultdict, re
+  [P4] unused_import: Unused imports: timezone
+  [P4] unused_import: Unused imports: Any, field
+  [P4] unused_import: Unused imports: annotations
+  [P4] unused_import: Unused imports: annotations, json
   [P4] unused_import: Unused imports: annotations
   [P4] unused_import: Unused imports: CoachAgent
   [P4] unused_import: Unused imports: annotations
-  [P4] unused_import: Unused imports: annotations
+  [P4] unused_import: Unused imports: RetentionObservability, annotations
   [P4] unused_import: Unused imports: annotations, field
   [P4] unused_import: Unused imports: annotations
+  [P4] unused_import: Unused imports: Any, annotations
   [P4] unused_import: Unused imports: annotations
   [P4] unused_import: Unused imports: annotations
   [P4] unused_import: Unused imports: annotations
   [P4] unused_import: Unused imports: annotations
-  [P4] unused_import: Unused imports: annotations
-  [P4] unused_import: Unused imports: annotations
+  [P4] unused_import: Unused imports: annotations, time
   [P4] unused_import: Unused imports: QSCollector
   [P4] unused_import: Unused imports: AuditClassifier, P0_FIELDS, P1_FIELDS, compute_batch_stats, generate_audit_report
   [P4] unused_import: Unused imports: WINDOW_SCHEMA_VERSION, add_days_anchor, add_hours_offset, format_utc, get_window_30min, get_window_30min_parts, get_window_biweekly, parse_utc, validate_window_consistency, validate_window_id
@@ -193,6 +206,7 @@ TLA+ Ready: True
   [P4] unused_import: Unused imports: generate_fallback
   [P4] unused_import: Unused imports: pytest
   [P4] unused_import: Unused imports: asyncio, pytest
+  [P4] unused_import: Unused imports: EXPOSED_KEYS
   [P4] unused_import: Unused imports: pytest
   [P4] unused_import: Unused imports: pytest
   [P4] unused_import: Unused imports: pytest
@@ -211,13 +225,14 @@ TLA+ Ready: True
   [P4] unused_import: Unused imports: yaml
   [P4] unused_import: Unused imports: os
   [P4] unused_import: Unused imports: yaml
+  [P4] unused_import: Unused imports: os, pytest
   [P4] unused_import: Unused imports: math
   [P4] unused_import: Unused imports: yaml
   [P4] unused_import: Unused imports: EXCURSION_MIN_EVIDENCE
-  [P4] unused_import: Unused imports: SYSTEM_PROMPT, json, os
+  [P4] unused_import: Unused imports: json, os
   [P4] unused_import: Unused imports: os, pytest
   [P4] unused_import: Unused imports: LLMOutputValidator, pytest, time
-  [P4] unused_import: Unused imports: extract_memory_snippets, get_learning_path, pytest
+  [P4] unused_import: Unused imports: get_learning_path, pytest
   [P4] unused_import: Unused imports: pytest
   [P4] unused_import: Unused imports: json
   [P4] unused_import: Unused imports: pytest
@@ -228,6 +243,10 @@ TLA+ Ready: True
   [P4] unused_import: Unused imports: SCORE_THRESHOLD_PARTIAL
   [P4] unused_import: Unused imports: pytest
   [P4] unused_import: Unused imports: time
+  [P4] unused_import: Unused imports: SessionMemory, pytest
+  [P4] unused_import: Unused imports: json, os, pytest
+  [P4] unused_import: Unused imports: json, pytest
+  [P4] unused_import: Unused imports: json, pytest
   [P4] unused_import: Unused imports: pytest, src
   [P4] unused_import: Unused imports: pytest
   [P4] unused_import: Unused imports: GENESIS_PREV_HASH
@@ -254,6 +273,10 @@ TLA+ Ready: True
   [P4] unused_import: Unused imports: STAGES, STAGE_STRATEGY_MAP, pytest
   [P4] unused_import: Unused imports: itertools, os, re
   [P2] race_condition_risk: Threading usage without Lock/RLock — potential race condition
+  [P4] license_issue: fastapi: P4 — license not verified
+  [P4] license_issue: uvicorn: P4 — license not verified
+  [P4] license_issue: pydantic: P4 — license not verified
+  [P4] license_issue: google-generativeai: P4 — license not verified
   [P4] ?: Missing license/copyright header
   [P4] ?: Missing license/copyright header
   [P4] ?: Missing license/copyright header

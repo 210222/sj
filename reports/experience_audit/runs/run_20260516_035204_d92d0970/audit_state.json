@@ -1,0 +1,32 @@
+{
+  "run_id": "run_20260516_035204_d92d0970",
+  "start_time": "2026-05-16T03:53:25.223880+00:00",
+  "probes": {
+    "pulse_next_action": {
+      "passed": true,
+      "detail": "No pulse triggered (acceptable)",
+      "timestamp_utc": "2026-05-16T03:53:39.929687+00:00"
+    },
+    "dashboard_errors": {
+      "passed": true,
+      "detail": "Dashboard response shape OK",
+      "timestamp_utc": "2026-05-16T03:53:39.964241+00:00"
+    },
+    "aggregator_shape": {
+      "passed": true,
+      "detail": "Aggregator shape stable across 2 calls",
+      "timestamp_utc": "2026-05-16T03:53:40.024590+00:00"
+    },
+    "payload_extraction": {
+      "passed": true,
+      "detail": "All 9 payload shapes extracted correctly",
+      "timestamp_utc": "2026-05-16T03:53:40.024590+00:00"
+    },
+    "ws_status": {
+      "passed": true,
+      "detail": "WS hook structure OK",
+      "timestamp_utc": "2026-05-16T03:53:40.038375+00:00"
+    }
+  },
+  "breakpoints_detected": []
+}

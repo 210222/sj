@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>矩阵教学预览 — Mermaid + KaTeX + Desmos</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js"></script>
+<script src="https://www.desmos.com/api/v1.10/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
+<style>
+:root {
+  --deep-mocha: #3d322b; --warm-white: #fdfaf5; --soft-blue: #dce8f5;
+  --sage-green: #8a9f87; --coral-candy: #f2d5c4; --lavender-gray: #e0dce8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: var(--warm-white); color: var(--deep-mocha); }
+.preview-container { max-width: 720px; margin: 24px auto; padding: 16px; }
+
+.chat-bubble {
+  padding: 14px 18px; border-radius: 14px; margin-bottom: 16px;
+  line-height: 1.6; font-size: 14px;
+}
+.chat-bubble.coach { background: var(--soft-blue); max-width: 94%; }
+.chat-bubble.user { background: var(--lavender-gray); max-width: 85%; margin-left: auto; }
+
+.diagram-box {
+  margin: 12px 0; padding: 12px; background: #fff;
+  border: 1px solid var(--lavender-gray); border-radius: 8px;
+}
+.diagram-box .label {
+  font-size: 10px; text-transform: uppercase; color: var(--sage-green);
+  margin-bottom: 8px; font-weight: 600;
+}
+
+.section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin: 32px 0 10px; opacity: 0.4; }
+
+.desmos-board { width: 100%; height: 380px; border-radius: 8px; }
+.math-block { margin: 8px 0; padding: 8px 12px; background: #fff; border-radius: 6px; border-left: 3px solid var(--sage-green); overflow-x: auto; }
+.math-center { text-align: center; padding: 16px; background: #fff; border-radius: 8px; border: 1px solid var(--lavender-gray); margin: 8px 0; }
+</style>
+</head>
+<body>
+<div class="preview-container">
+<h2 style="margin-bottom:16px;font-size:16px;">矩阵教学预览 — KaTeX（公式）+ Mermaid（流程）+ Desmos（变换）</h2>
+
+<!-- ===== Scene 1: Matrix basics with KaTeX ===== -->
+<div class="section-label">场景 1：矩阵基础定义 — KaTeX 渲染矩阵符号</div>
+<div class="chat-bubble user">矩阵是什么？</div>
+<div class="chat-bubble coach">
+  矩阵就像一个数字表格——m 行 × n 列。比如这是一个 2×3 矩阵：
+  <div class="math-center">
+    <span id="eq-matrix-def"></span>
+  </div>
+  每个数字叫<b>元素</b>。第 i 行第 j 列的元素记作 <span id="eq-element"></span>。
+  <b>所以 a₂₁ 是第 2 行第 1 列——也就是哪个数字？</b>
+</div>
+
+<!-- ===== Scene 2: Matrix multiplication with KaTeX + Mermaid ===== -->
+<div class="section-label">场景 2：矩阵乘法 — KaTeX 公式 + Mermaid 流程图</div>
+<div class="chat-bubble user">矩阵怎么相乘？</div>
+<div class="chat-bubble coach">
+  矩阵乘法是<b>前行 × 后列，逐个点积</b>：
+  <div class="math-center">
+    <span id="eq-multiply"></span>
+  </div>
+  具体计算过程：
+  <div class="diagram-box">
+    <div class="label">📊 Mermaid — 矩阵乘法计算流程</div>
+    <pre class="mermaid" style="background:transparent;">
+flowchart LR
+    subgraph A["矩阵 A (2×2)"]
+      A1["[a b]"]
+      A2["[c d]"]
+    end
+    subgraph B["矩阵 B (2×2)"]
+      B1["[e f]"]
+      B2["[g h]"]
+    end
+    subgraph C["结果 C"]
+      C1["C₁₁ = a·e + b·g"]
+      C2["C₁₂ = a·f + b·h"]
+      C3["C₂₁ = c·e + d·g"]
+      C4["C₂₂ = c·f + d·h"]
+    end
+    A1 --> C1
+    A2 --> C3
+    B1 --> C1
+    B2 --> C3
+    </pre>
+  </div>
+  规律：<span id="eq-rule"></span>
+  <b>给你 A=[2,1; 0,3] 和 B=[1,4; 2,0]，算算 C₁₁ 是多少？</b>
+</div>
+
+<!-- ===== Scene 3: Matrix transformation with Desmos ===== -->
+<div class="section-label">场景 3：矩阵变换可视化 — Desmos 交互式向量图</div>
+<div class="chat-bubble user">"矩阵是空间的变换"是什么意思？</div>
+<div class="chat-bubble coach">
+  看这个交互图——<b>蓝色是原始向量 (1,0) 和 (0,1)，红色是经过矩阵变换后的向量</b>：
+  <div class="diagram-box">
+    <div class="label">📐 Desmos — 矩阵变换可视化（可拖动参数）</div>
+    <div class="desmos-board" id="desmos-transform"></div>
+  </div>
+  矩阵 <span id="eq-transform"></span> 把 (1,0) 变成了 (a,c)，把 (0,1) 变成了 (b,d)。<br>
+  整个空间被"拉伸"和"旋转"了。<b>拖动图中的滑块 a、b、c、d，看看空间怎么变形。</b><br>
+  <br>
+  这就是为什么矩阵被称为"线性变换"——它把直线变成直线，原点保持不动。
+</div>
+
+<!-- ===== Scene 4: Exam question ===== -->
+<div class="section-label">场景 4：考试出题 — 当场生成矩阵题 + 公式 + 验证</div>
+<div class="chat-bubble user">考考我矩阵</div>
+<div class="chat-bubble coach">
+  好的，请看题：
+
+  <div class="math-center">
+    <span id="eq-exam"></span>
+  </div>
+
+  步骤提示：
+  <div class="diagram-box">
+    <div class="label">📊 Mermaid — 行列式计算步骤</div>
+    <pre class="mermaid" style="background:transparent;">
+flowchart TD
+    A["3×3 行列式展开"] --> B["选第一行展开"]
+    B --> C["det = 2×(5×9-6×8)"]
+    B --> D["−1×(4×9-6×7)"]
+    B --> E["+3×(4×8-5×7)"]
+    C --> F["= 2×(45-48) = 2×(-3)"]
+    D --> G["= −1×(36-42) = −1×(−6)"]
+    E --> H["= 3×(32-35) = 3×(−3)"]
+    F --> I["= −6 + 6 + (−9) = −9"]
+    G --> I
+    H --> I
+    </pre>
+  </div>
+  <b>你算出来 det(A) 是多少？</b>
+</div>
+
+<div style="text-align:center;margin-top:40px;font-size:10px;opacity:0.3;">
+  Coherence Phase 62 — Matrix Teaching Preview
+</div>
+</div>
+
+<script>
+mermaid.initialize({startOnLoad:true, theme:'neutral', securityLevel:'loose'});
+
+// KaTeX: matrix definition
+katex.render("A = \\begin{bmatrix} a_{11} & a_{12} & a_{13} \\\\ a_{21} & a_{22} & a_{23} \\end{bmatrix}", document.getElementById("eq-matrix-def"), {displayMode:true});
+katex.render("a_{ij}", document.getElementById("eq-element"), {displayMode:true});
+
+// KaTeX: matrix multiplication
+katex.render("\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix} \\times \\begin{bmatrix} e & f \\\\ g & h \\end{bmatrix} = \\begin{bmatrix} ae+bg & af+bh \\\\ ce+dg & cf+dh \\end{bmatrix}", document.getElementById("eq-multiply"), {displayMode:true});
+katex.render("C_{ij} = \\sum_{k=1}^{n} A_{ik} \\cdot B_{kj}", document.getElementById("eq-rule"), {displayMode:true});
+
+// KaTeX: transform matrix
+katex.render("T = \\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}", document.getElementById("eq-transform"), {displayMode:true});
+
+// KaTeX: exam question
+katex.render("\\text{题目：计算矩阵 } A = \\begin{bmatrix} 2 & 1 & 3 \\\\ 7 & 5 & 6 \\\\ 4 & 8 & 9 \\end{bmatrix} \\text{ 的行列式 det(A)。}", document.getElementById("eq-exam"), {displayMode:true});
+
+// Desmos: matrix transform visualization
+(function(){
+  var el = document.getElementById('desmos-transform');
+  var calc = Desmos.GraphingCalculator(el, {
+    expressions: false, settingsMenu: false, zoomButtons: true,
+  });
+  // Sliders for matrix elements
+  calc.setExpression({id:'a', latex:'a=2', sliderBounds:{min:-3, max:3, step:0.1}});
+  calc.setExpression({id:'b', latex:'b=1', sliderBounds:{min:-3, max:3, step:0.1}});
+  calc.setExpression({id:'c', latex:'c=0.5', sliderBounds:{min:-3, max:3, step:0.1}});
+  calc.setExpression({id:'d', latex:'d=1.5', sliderBounds:{min:-3, max:3, step:0.1}});
+  // Original basis vectors (blue)
+  calc.setExpression({id:'e1', latex:'e_1=(1,0)', color:'#2d70b3', pointStyle:'POINT', pointSize:6});
+  calc.setExpression({id:'e2', latex:'e_2=(0,1)', color:'#2d70b3', pointStyle:'POINT', pointSize:6});
+  // Transformed vectors (red)
+  calc.setExpression({id:'t1', latex:'t_1=(a,c)', color:'#c74440', pointStyle:'POINT', pointSize:8, label:'(a,c)'});
+  calc.setExpression({id:'t2', latex:'t_2=(b,d)', color:'#c74440', pointStyle:'POINT', pointSize:8, label:'(b,d)'});
+  // Unit grid lines
+  calc.setExpression({id:'grid1', latex:'\\operatorname{polygon}((0,0),(a,c),(a+b,c+d),(b,d))', color:'#c74440', fillOpacity:0.1, lineStyle:'DASHED'});
+  calc.setMathBounds({left:-4, right:4, bottom:-4, top:4});
+})();
+</script>
+</body>
+</html>

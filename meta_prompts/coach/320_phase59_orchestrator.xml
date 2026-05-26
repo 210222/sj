@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 59 -- 学习路径前端可视化</name><version>1.0.0</version><track>FRONTEND</track><phase>59</phase>
+  <before_state>
+    <file path="config/skill_graph.json">18 概念，仅教练端上下文可见</file>
+    <file path="api/main.py">无 /config 静态挂载</file>
+    <file path="frontend/src/components/dashboard/">无技能树组件。mastery_snapshot 新 session 返回 null</file>
+  </before_state>
+  <after_state>
+    <file path="api/main.py">+/config 静态挂载(3行)</file>
+    <file path="frontend/src/components/dashboard/SkillTreeCard.tsx">新建。颜色编码 + 前置提示</file>
+    <file path="frontend/src/App.tsx">侧边栏集成</file>
+  </after_state>
+  <role>将 Phase 58 的学习路径从教练端扩展到 Dashboard 可视化。不改后端逻辑</role>
+  <global_constraints><forbidden>禁止修改 contracts/inner/middle/outer/provider/scoring/composer</forbidden></global_constraints>
+  <sub_stages>
+    <stage id="s59_1" name="静态挂载+SkillTreeCard"><meta_prompt>321_s59_1_skill_tree_component.xml</meta_prompt></stage>
+    <stage id="s59_2" name="App.tsx集成"><meta_prompt>322_s59_2_app_integration.xml</meta_prompt></stage>
+    <stage id="s59_3" name="构建+回归"><meta_prompt>323_s59_3_build_regression.xml</meta_prompt></stage>
+  </sub_stages>
+  <go_gate_policy>
+    <gate>GO_S59.1: /config/skill_graph.json HTTP可访问，SkillTreeCard 3场景正确</gate>
+    <gate>GO_S59.2: 侧边栏显示技能树，null mastery全灰</gate>
+    <gate>GO_S59.3: npm build + 1466/0/5</gate>
+  </go_gate_policy>
+</prompt>

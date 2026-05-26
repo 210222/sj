@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Mermaid + KaTeX 预览 — Phase 62</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true, theme:'neutral', securityLevel:'loose'});</script>
+<style>
+:root {
+  --deep-mocha: #3d322b; --warm-white: #fdfaf5; --soft-blue: #dce8f5;
+  --sage-green: #8a9f87; --coral-candy: #f2d5c4; --lavender-gray: #e0dce8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: var(--warm-white); color: var(--deep-mocha); }
+.preview-container { max-width: 600px; margin: 24px auto; padding: 16px; }
+
+.chat-bubble {
+  padding: 14px 18px; border-radius: 14px; margin-bottom: 16px;
+  line-height: 1.6; font-size: 14px;
+}
+.chat-bubble.coach { background: var(--soft-blue); max-width: 90%; }
+.chat-bubble.user { background: var(--lavender-gray); max-width: 85%; margin-left: auto; }
+
+.diagram-box {
+  margin: 12px 0; padding: 10px; background: #fff;
+  border: 1px solid var(--lavender-gray); border-radius: 8px;
+  overflow-x: auto;
+}
+.diagram-box .label {
+  font-size: 10px; text-transform: uppercase; color: var(--sage-green);
+  margin-bottom: 6px; font-weight: 600;
+}
+
+.section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin: 28px 0 10px; opacity: 0.4; }
+
+.math-block {
+  margin: 8px 0; padding: 8px 12px; background: #fff; border-radius: 6px;
+  border-left: 3px solid var(--sage-green); overflow-x: auto;
+}
+</style>
+</head>
+<body>
+<div class="preview-container">
+<h2 style="margin-bottom:16px;font-size:16px;">Coherence — Mermaid + KaTeX 预览</h2>
+
+<!-- Scene 1: Python concept -->
+<div class="section-label">场景 1：讲解 Python for 循环 — 概念流程图</div>
+<div class="chat-bubble user">我不太理解 for 循环是怎么工作的</div>
+<div class="chat-bubble coach">
+  想象一个流水线——每次从序列里取一个元素，处理完再取下一个：
+  <div class="diagram-box">
+    <div class="label">📊 概念流程图</div>
+    <pre class="mermaid" style="background:transparent;">
+graph TD
+    A["序列 [a, b, c, d]"] --> B["取第一个元素 a"]
+    B --> C["执行循环体代码"]
+    C --> D{"还有下一个吗?"}
+    D -->|"是"| B
+    D -->|"否"| E["循环结束"]
+    </pre>
+  </div>
+  所以你写的 <code>for x in [1,2,3]: print(x)</code> 就是挨个取出 1、2、3 然后打印。现在不看上面，你自己说说 range(3) 会产生哪几个数？
+</div>
+
+<!-- Scene 2: Trigonometry -->
+<div class="section-label">场景 2：讲解三角函数 sin(x) — 数学公式渲染</div>
+<div class="chat-bubble user">sin 函数的周期是什么意思？</div>
+<div class="chat-bubble coach">
+  周期就是"重复一次需要走多远"。sin(x) 的周期是<span class="math-block" id="eq1"></span>，意味着每隔 2π，图像完全重复：
+  <div class="diagram-box">
+    <div class="label">📊 概念关系图</div>
+    <pre class="mermaid" style="background:transparent;">
+graph LR
+    A["输入角度 x"] --> B["sin(x) 计算"]
+    B --> C["输出值 y ∈ [-1, 1]"]
+    C --> D["每 2π 重复"]
+    D --> A
+    </pre>
+  </div>
+  你可以这样理解：<span class="math-block" id="eq2"></span>就像一个钟摆，从中间→最右→中间→最左→中间，一个完整的来回就是一圈（2π）。你用一句话说说 sin(π/2) 应该是多少？
+</div>
+
+<!-- Scene 3: Algorithm -->
+<div class="section-label">场景 3：讲解冒泡排序 — 步骤流程图</div>
+<div class="chat-bubble user">冒泡排序是怎么一步步排的？</div>
+<div class="chat-bubble coach">
+  冒泡排序就像气泡从水底往上升——每次把最大的元素"浮"到最后面：
+  <div class="diagram-box">
+    <div class="label">📊 步骤流程图</div>
+    <pre class="mermaid" style="background:transparent;">
+flowchart TD
+    A["[5, 3, 8, 1]"] --> B["第一轮: 5↔3 交换"]
+    B --> C["[3, 5, 8, 1] → 5↔8 不动"]
+    C --> D["[3, 5, 8, 1] → 8↔1 交换"]
+    D --> E["第一轮结束: [3, 5, 1, <b>8</b>]"]
+    E --> F["第二轮: 把 5 浮到最后"]
+    F --> G["...逐轮重复直到有序"]
+    </pre>
+  </div>
+  关键规律：<span class="math-block" id="eq3"></span>
+  现在给你 [4, 2, 7, 1]，第一轮结束后会是什么样？自己推一下。
+</div>
+
+<!-- Scene 4: Function graph -->
+<div class="section-label">场景 4：三角函数 sin(x) — 函数曲线图 (XY Chart)</div>
+<div class="chat-bubble user">sin(x) 的图像长什么样子？</div>
+<div class="chat-bubble coach">
+  你看，这就是 sin(x) 在 0 到 2π 之间的图像——想象一个弹珠在圆周上滚动的投影高度：
+  <div class="diagram-box">
+    <div class="label">📊 sin(x) 函数图像 [0, 2π]</div>
+    <pre class="mermaid" style="background:transparent;">
+xychart-beta
+    title "正弦函数 y = sin(x)"
+    x-axis "角度" [0, "π/2", "π", "3π/2", "2π"]
+    y-axis "y 值" -1 --> 1
+    line "sin(x)" [0, 1, 0, -1, 0]
+    </pre>
+  </div>
+  你看：<span class="math-block" id="eq4"></span>——从 0 开始升到最高点 (π/2)，再降到 0 (π)，再降到最低点 (3π/2)，最后回到 0 (2π)。这个波浪就是 sin 的"周期"。现在你想象一下 cos(x) 会从哪个点开始？
+</div>
+
+<!-- Scene 5: Sequence diagram -->
+<div class="section-label">场景 5：HTTP 请求-响应 — 时序图</div>
+<div class="chat-bubble user">浏览器输入网址后发生了什么？</div>
+<div class="chat-bubble coach">
+  从你敲回车到页面出现，经历了这些步骤：
+  <div class="diagram-box">
+    <div class="label">📊 HTTP 请求时序图</div>
+    <pre class="mermaid" style="background:transparent;">
+sequenceDiagram
+    participant 浏览器
+    participant DNS
+    participant 服务器
+    participant 数据库
+
+    浏览器->>DNS: 1. "把 example.com 翻译成 IP 地址"
+    DNS-->>浏览器: 2. "它是 93.184.216.34"
+    浏览器->>服务器: 3. "GET /index.html"
+    服务器->>数据库: 4. "查一下最新的页面数据"
+    数据库-->>服务器: 5. 返回数据
+    服务器-->>浏览器: 6. 返回 HTML + CSS + JS
+    浏览器->>浏览器: 7. 渲染成你看到的页面
+    </pre>
+  </div>
+  总共 7 个步骤，DNS 解析 → 请求 → 处理 → 返回 → 渲染。现在你也用类似的方式，说说点击"发送消息"按钮后 Coherence 后端做了什么？
+</div>
+
+<!-- Scene 6: Mindmap -->
+<div class="section-label">场景 6：三角函数知识大纲 — 思维导图</div>
+<div class="chat-bubble user">三角函数有哪些相关的知识点？</div>
+<div class="chat-bubble coach">
+  三角函数不只是 sin 和 cos——它是一个完整的知识体系：
+  <div class="diagram-box">
+    <div class="label">📊 三角函数知识大纲</div>
+    <pre class="mermaid" style="background:transparent;">
+mindmap
+  root((三角函数))
+    基本函数
+      sin 正弦
+      cos 余弦
+      tan 正切
+      cot / sec / csc
+    核心性质
+      周期性 T = 2π
+      奇偶性 sin(-x) = -sin(x)
+      值域 [-1, 1]
+    恒等变换
+      sin²x + cos²x = 1
+      和差公式
+      倍角公式
+    图像特征
+      振幅
+      相位
+      频率
+    应用领域
+      物理: 简谐振动
+      工程: 信号处理
+      几何: 三角形求解
+    </pre>
+  </div>
+  这个大纲帮你整体把握。你觉得从哪个分支开始深入了解？我们一个一个来。
+</div>
+
+<div style="text-align:center;margin-top:32px;font-size:10px;opacity:0.3;">
+  Coherence Phase 62 Preview — Mermaid.js + KaTeX
+</div>
+</div>
+
+<script>
+// Render KaTeX formulas
+katex.render("f(x) = \\sin(x), \\quad T = 2\\pi", document.getElementById("eq1"), {displayMode:true});
+katex.render("\\sin(x + 2\\pi) = \\sin(x)", document.getElementById("eq2"), {displayMode:true});
+katex.render("\\text{第 }n\\text{ 轮比较次数} = \\text{数组长度} - n", document.getElementById("eq3"), {displayMode:true});
+katex.render("\\sin(0)=0,\\; \\sin(\\frac{\\pi}{2})=1,\\; \\sin(\\pi)=0,\\; \\sin(\\frac{3\\pi}{2})=-1,\\; \\sin(2\\pi)=0", document.getElementById("eq4"), {displayMode:true});
+</script>
+</body>
+</html>

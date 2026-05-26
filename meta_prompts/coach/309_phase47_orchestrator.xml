@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 47 -- 代码级债务封版</name><version>1.0.0</version><track>CODE</track><phase>47</phase>
+  <before_state><numeric>36 failed / 1430 passed (审计发现 8 P0 + 10 P1 + 19 P2)</numeric></before_state>
+  <after_state><numeric>1466 passed / 0 failed。13/17 修复完成。F12 文件锁单独处理。P2 债务登记册接受。</numeric></after_state>
+  <sub_stages>
+    <stage>S47.1 数据完整性 (F1/F2/F8/F13)</stage>
+    <stage>S47.2 Admin/Auth (F3/F4/F5/F6/F7)</stage>
+    <stage>S47.3 崩溃安全 (F9/F10/F11/F18/F21)</stage>
+    <stage>S47.4 评分检索 (F14/F15/F16/F17)</stage>
+  </sub_stages>
+  <implementation>
+    <modify file="src/coach/persistence.py">row_factory + 命名列 + WAL + save_skill_masteries</modify>
+    <modify file="src/coach/agent.py">yaml None 防护</modify>
+    <modify file="src/coach/composer.py">yaml None 防护 + reload_config</modify>
+    <modify file="src/coach/mrt.py">删除死代码</modify>
+    <modify file="src/coach/memory.py">recall() session_id 参数</modify>
+    <modify file="api/middleware/auth.py">ADMIN_TOKENS 直接验证</modify>
+    <modify file="api/routers/admin.py">?token= fallback</modify>
+    <modify file="api/services/coach_bridge.py">import 移顶</modify>
+    <modify file="run_experience_audit.py">dir() 修复 + abs→max + transcript索引</modify>
+    <modify file="frontend/src/types/api.ts">LLMRuntimeSummary 对齐</modify>
+  </implementation>
+  <go_gate>1466/0/5</go_gate>
+</prompt>

@@ -123,5 +123,80 @@
     "latest_run_id": "run_20260514_132116_3347d4aa",
     "timestamp_utc": "2026-05-14T13:22:52.530824+00:00",
     "overall_score": 15.13
+  },
+  {
+    "latest_run_id": "run_20260515_034536_e1b0e816",
+    "timestamp_utc": "2026-05-15T03:47:06.176338+00:00",
+    "overall_score": 14.87
+  },
+  {
+    "latest_run_id": "run_20260515_034706_f8f608e3",
+    "timestamp_utc": "2026-05-15T03:48:30.609801+00:00",
+    "overall_score": 14.8
+  },
+  {
+    "latest_run_id": "run_20260515_034831_b16edeaa",
+    "timestamp_utc": "2026-05-15T03:50:05.380657+00:00",
+    "overall_score": 14.47
+  },
+  {
+    "latest_run_id": "run_20260515_044300_84db9790",
+    "timestamp_utc": "2026-05-15T04:44:24.375873+00:00",
+    "overall_score": 15.6
+  },
+  {
+    "latest_run_id": "run_20260515_065726_a7093018",
+    "timestamp_utc": "2026-05-15T06:58:58.259687+00:00",
+    "overall_score": 15.6
+  },
+  {
+    "latest_run_id": "run_20260515_101346_921516a5",
+    "timestamp_utc": "2026-05-15T10:15:21.795351+00:00",
+    "overall_score": 15.53
+  },
+  {
+    "latest_run_id": "run_20260515_122900_c955e43e",
+    "timestamp_utc": "2026-05-15T12:30:24.723794+00:00",
+    "overall_score": 15.4
+  },
+  {
+    "latest_run_id": "run_20260515_123252_c92c7c82",
+    "timestamp_utc": "2026-05-15T12:34:43.762804+00:00",
+    "overall_score": 14.87
+  },
+  {
+    "latest_run_id": "run_20260515_124244_a90f29bc",
+    "timestamp_utc": "2026-05-15T12:44:32.939936+00:00",
+    "overall_score": 15.33
+  },
+  {
+    "latest_run_id": "run_20260516_035204_d92d0970",
+    "timestamp_utc": "2026-05-16T03:53:40.039377+00:00",
+    "overall_score": 15.53
+  },
+  {
+    "latest_run_id": "run_20260516_050234_5d0f03b8",
+    "timestamp_utc": "2026-05-16T05:03:57.299515+00:00",
+    "overall_score": 14.93
+  },
+  {
+    "latest_run_id": "run_20260517_120705_c881d909",
+    "timestamp_utc": "2026-05-17T12:08:37.418772+00:00",
+    "overall_score": 15.13
+  },
+  {
+    "latest_run_id": "run_20260517_132356_c2033c6a",
+    "timestamp_utc": "2026-05-17T13:25:24.878199+00:00",
+    "overall_score": 14.87
+  },
+  {
+    "latest_run_id": "run_20260522_031127_57d6fd18",
+    "timestamp_utc": "2026-05-22T03:14:08.910885+00:00",
+    "overall_score": 13.93
+  },
+  {
+    "latest_run_id": "run_20260522_060914_9ab76a42",
+    "timestamp_utc": "2026-05-22T06:13:00.634061+00:00",
+    "overall_score": 14.4
   }
 ]

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>LLM Observability Preview</title>
+<style>
+:root {
+  --deep-mocha: #3d322b;
+  --warm-white: #fdfaf5;
+  --soft-blue: #dce8f5;
+  --sage-green: #8a9f87;
+  --coral-candy: #f2d5c4;
+  --lavender-gray: #e0dce8;
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--warm-white); color: var(--deep-mocha); }
+
+.preview-container { max-width: 400px; margin: 32px auto; padding: 16px; }
+
+/* Chat area */
+.chat-area { margin-bottom: 24px; }
+.chat-msg { margin-bottom: 12px; padding: 12px 16px; border-radius: 12px; max-width: 85%; font-size: 14px; line-height: 1.5; }
+.chat-msg.coach { background: var(--soft-blue); border-bottom-left-radius: 4px; }
+.chat-msg.user { background: var(--lavender-gray); margin-left: auto; border-bottom-right-radius: 4px; }
+
+/* LLM tags on coach messages */
+.llm-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; font-size: 11px; }
+.llm-tag { padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+.llm-tag.latency { background: var(--warm-white); border: 1px solid var(--lavender-gray); }
+.llm-tag.cache-hit { background: var(--sage-green); color: #fff; }
+.llm-tag.cost { background: var(--coral-candy); }
+.llm-tag.ai { background: var(--sage-green); color: #fff; }
+.llm-tag.difficulty { background: var(--coral-candy); }
+
+/* Sidebar dashboard */
+.sidebar { background: #fff; border: 1px solid var(--lavender-gray); border-radius: 12px; padding: 16px; }
+.sidebar h3 { font-size: 13px; margin-bottom: 12px; color: var(--deep-mocha); opacity: 0.7; }
+
+/* LLM Runtime Card - the new component */
+.llm-runtime-card {
+  background: linear-gradient(135deg, #f8f5f0 0%, #fdfaf5 100%);
+  border: 1px solid var(--lavender-gray);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.llm-runtime-card h4 { font-size: 12px; font-weight: 600; margin-bottom: 10px; opacity: 0.8; }
+.llm-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.llm-stat { text-align: center; padding: 8px; background: #fff; border-radius: 8px; }
+.llm-stat .value { font-size: 18px; font-weight: 700; }
+.llm-stat .label { font-size: 10px; opacity: 0.6; margin-top: 2px; }
+.value.good { color: var(--sage-green); }
+.value.warn { color: #c9a04a; }
+
+/* Admin panel */
+.admin-panel { margin-top: 16px; padding: 14px 16px; background: #f9f7f3; border-radius: 10px; border: 1px dashed var(--lavender-gray); }
+.admin-panel h4 { font-size: 12px; margin-bottom: 8px; }
+.admin-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px solid var(--lavender-gray); }
+.admin-row:last-child { border-bottom: none; }
+.admin-row .key { opacity: 0.7; }
+.admin-row .val { font-weight: 600; }
+
+/* Teaching audit scores */
+.teach-scores { margin-top: 16px; }
+.teach-scores h4 { font-size: 12px; margin-bottom: 8px; }
+.score-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; }
+.score-bar .profile-name { width: 130px; text-align: right; opacity: 0.7; }
+.score-bar .bar-track { flex: 1; height: 8px; background: var(--lavender-gray); border-radius: 4px; overflow: hidden; }
+.score-bar .bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+.score-bar .bar-fill.excellent { background: var(--sage-green); }
+.score-bar .bar-val { width: 50px; font-weight: 600; }
+
+/* Section labels */
+.section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 8px; opacity: 0.5; }
+</style>
+</head>
+<body>
+
+<div class="preview-container">
+  <h2 style="margin-bottom:20px;font-size:16px;">Coherence — LLM Observability 预览</h2>
+
+  <!-- Section: Chat messages with LLM tags -->
+  <div class="section-label">对话气泡 — 每条 AI 回复上的 LLM 标签</div>
+  <div class="chat-area">
+    <div class="chat-msg user">我不太理解列表和数组的区别</div>
+    <div class="chat-msg coach">
+      你刚才说列表和数组感觉有点像，这其实是很常见的困惑。我们先把它们的关键区别拆开来看。
+      <div class="llm-tags">
+        <span class="llm-tag ai">AI</span>
+        <span class="llm-tag difficulty">中等</span>
+        <span class="llm-tag latency">2.3s</span>
+        <span class="llm-tag cache-hit">缓存命中</span>
+        <span class="llm-tag cost">$0.0008</span>
+      </div>
+    </div>
+    <div class="chat-msg user">嗯，懂了。那继续往下吧</div>
+    <div class="chat-msg coach">
+      很好！现在不看上面的内容，你自己试一下：用 Python 创建一个包含三种不同数据类型的列表，然后打印第二个元素。
+      <div class="llm-tags">
+        <span class="llm-tag ai">AI</span>
+        <span class="llm-tag difficulty">中等</span>
+        <span class="llm-tag latency">1.8s</span>
+        <span class="llm-tag cache-hit">缓存命中</span>
+        <span class="llm-tag cost">$0.0006</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: Sidebar Dashboard -->
+  <div class="section-label">侧边栏 — LLM Runtime 摘要卡片 + Admin 面板</div>
+  <div class="sidebar">
+    <h3>Session: a7093018...</h3>
+
+    <!-- NEW: LLM Runtime Card -->
+    <div class="llm-runtime-card">
+      <h4>⚡ LLM Runtime（本会话）</h4>
+      <div class="llm-stats">
+        <div class="llm-stat">
+          <div class="value good">84%</div>
+          <div class="label">缓存命中率</div>
+        </div>
+        <div class="llm-stat">
+          <div class="value">1.8s</div>
+          <div class="label">平均延迟</div>
+        </div>
+        <div class="llm-stat">
+          <div class="value">6</div>
+          <div class="label">LLM 调用</div>
+        </div>
+        <div class="llm-stat">
+          <div class="value">$0.004</div>
+          <div class="label">本次消耗</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Existing TTM/SDT/Teaching cards (shown as concept) -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div style="padding:10px;background:var(--soft-blue);border-radius:8px;font-size:11px;text-align:center;">TTM 阶段<br><b>action</b></div>
+      <div style="padding:10px;background:var(--soft-blue);border-radius:8px;font-size:11px;text-align:center;">SDT 自主性<br><b>65%</b></div>
+    </div>
+
+    <!-- Admin toggle panel -->
+    <div style="margin-top:12px;border-top:1px solid var(--lavender-gray);padding-top:12px;">
+      <button style="padding:6px 12px;background:var(--sage-green);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">管理面板</button>
+    </div>
+
+    <!-- Admin panel content -->
+    <div class="admin-panel" style="margin-top:12px;">
+      <h4>🔧 系统状态</h4>
+      <div class="admin-row">
+        <span class="key">全局缓存命中率</span>
+        <span class="val" style="color:var(--sage-green);">84% (最近200次)</span>
+      </div>
+      <div class="admin-row">
+        <span class="key">P50 延迟 / P95 / P99</span>
+        <span class="val">1.2s / 3.5s / 5.1s</span>
+      </div>
+      <div class="admin-row">
+        <span class="key">稳定前缀</span>
+        <span class="val">772 chars (47%)</span>
+      </div>
+      <div class="admin-row">
+        <span class="key">prefix hash</span>
+        <span class="val" style="font-family:monospace;font-size:10px;">15620410a2904cbb</span>
+      </div>
+    </div>
+
+    <!-- Teaching audit results -->
+    <div class="teach-scores">
+      <h4>📊 教学能力评测（最近一次 · LLM 评委）</h4>
+      <div class="score-bar">
+        <span class="profile-name">虚假掌握型</span>
+        <div class="bar-track"><div class="bar-fill excellent" style="width:95%"></div></div>
+        <span class="bar-val">28.7</span>
+      </div>
+      <div class="score-bar">
+        <span class="profile-name">思维误区型</span>
+        <div class="bar-track"><div class="bar-fill excellent" style="width:94%"></div></div>
+        <span class="bar-val">28.3</span>
+      </div>
+      <div class="score-bar">
+        <span class="profile-name">畏难退缩型</span>
+        <div class="bar-track"><div class="bar-fill excellent" style="width:93%"></div></div>
+        <span class="bar-val">28.0</span>
+      </div>
+      <div style="font-size:10px;opacity:0.5;margin-top:6px;">综合均值 28.0/30 (4.7/5.0) · 10 turns × 3 runs</div>
+    </div>
+
+    <div class="section-label" style="margin-top:20px;">Settings panel (existing)</div>
+    <div style="font-size:11px;opacity:0.5;">TTM / SDT / Flow / MRT toggle switches...</div>
+  </div>
+
+  <div style="text-align:center;margin-top:24px;font-size:10px;opacity:0.4;">
+    Coherence Phase 54 Preview — LLM Observability + Teaching Audit Dashboard
+  </div>
+</div>
+
+</body>
+</html>

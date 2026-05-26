@@ -1,0 +1,101 @@
+{
+  "novice_confirm": {
+    "name": "新手A: 只确认",
+    "avg_score": 14.6,
+    "dimensions": {
+      "引用性": 0.4,
+      "连续性": 3.8,
+      "无空转": 4.0,
+      "稳定性": 3.4,
+      "推进感": 3.0
+    },
+    "worst_turns": [
+      {
+        "turn": 1,
+        "score": 13,
+        "user": "好",
+        "statement": "好的！已为你启用推荐能力：学习阶段检测(TTM)和动机评估(SDT)。你可以随时在设置面板中调整。"
+      },
+      {
+        "turn": 2,
+        "score": 14,
+        "user": "嗯",
+        "statement": "关于你问的线性代数，我们继续看矩阵乘法。具体数字实例：\n\n$\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix}\\begin{pmatrix"
+      },
+      {
+        "turn": 3,
+        "score": 14,
+        "user": "继续",
+        "statement": "关于你问的线性代数，我们继续看矩阵乘法。具体数字实例：\n\n$\\begin{pmatrix}1&2&3\\\\4&5&6\\end{pmatrix}\\begin{pma"
+      }
+    ],
+    "failure_cases": [],
+    "total_turns": 5
+  },
+  "novice_jump": {
+    "name": "新手B: 乱跳",
+    "avg_score": 13.6,
+    "dimensions": {
+      "引用性": 0.0,
+      "连续性": 3.8,
+      "无空转": 4.0,
+      "稳定性": 2.8,
+      "推进感": 3.0
+    },
+    "worst_turns": [
+      {
+        "turn": 5,
+        "score": 11,
+        "user": "学函数",
+        "statement": ""
+      },
+      {
+        "turn": 1,
+        "score": 13,
+        "user": "教 Python",
+        "statement": "关于你问的“怎么学线性代数”，我们先从最核心的概念开始——向量。你能用你自己的话描述一下，你觉得向量是什么吗？"
+      },
+      {
+        "turn": 2,
+        "score": 14,
+        "user": "讲列表",
+        "statement": "列表是 Python 中最常用的数据结构之一。你之前接触过编程中的“数组”或“列表”概念吗？"
+      }
+    ],
+    "failure_cases": [],
+    "total_turns": 5
+  },
+  "tester": {
+    "name": "测试者: 考我",
+    "avg_score": 13.6,
+    "dimensions": {
+      "引用性": 0.4,
+      "连续性": 3.8,
+      "无空转": 4.0,
+      "稳定性": 2.4,
+      "推进感": 3.0
+    },
+    "worst_turns": [
+      {
+        "turn": 1,
+        "score": 10,
+        "user": "教 Python",
+        "statement": ""
+      },
+      {
+        "turn": 2,
+        "score": 11,
+        "user": "考考我",
+        "statement": ""
+      },
+      {
+        "turn": 3,
+        "score": 15,
+        "user": "教列表",
+        "statement": "关于你问的如何学习Python，我们从列表开始。列表是Python中最常用的数据结构之一，比如 `scores = [85, 92, 78]` 存储了三个分数。"
+      }
+    ],
+    "failure_cases": [],
+    "total_turns": 5
+  }
+}

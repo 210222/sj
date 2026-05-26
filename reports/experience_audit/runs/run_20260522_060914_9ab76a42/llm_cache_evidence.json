@@ -1,0 +1,11 @@
+{
+  "run_id": "run_20260522_060914_9ab76a42",
+  "total_turns_with_obs": 14,
+  "cache_eligible_rate": 1.0,
+  "unique_prefix_hashes": 1,
+  "prefix_hash_is_stable": true,
+  "prefix_hashes": [
+    "fc12d7196dc04b0d"
+  ],
+  "avg_stable_prefix_share": 0.484
+}

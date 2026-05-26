@@ -1,0 +1,744 @@
+{
+  "novice_confirm": [
+    {
+      "turn": 1,
+      "user": "好",
+      "action_type": "suggest",
+      "payload_statement": "好的！已为你启用推荐能力：学习阶段检测(TTM)和动机评估(SDT)。你可以随时在设置面板中调整。",
+      "llm_generated": false,
+      "difficulty": null,
+      "trace_id": "6a7eeb5cf2604232",
+      "intent": "consent_enable_recommended",
+      "has_pulse": false,
+      "ttm_stage": null,
+      "source_tag": "rule",
+      "llm_observability": null
+    },
+    {
+      "turn": 2,
+      "user": "嗯",
+      "action_type": "suggest",
+      "payload_statement": "关于你问的线性代数，我们继续看矩阵乘法。具体数字实例：\n\n$\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix}\\begin{pmatrix}5&6\\\\7&8\\end{pmatrix}=\\begin{pmatrix}1\\cdot5+2\\cdot7&1\\cdot6+2\\cdot8\\\\3\\cdot5+4\\cdot7&3\\cdot6+4\\cdot8\\end{pmatrix}=\\begin{pmatrix}19&22\\\\43&50\\end{pmatrix}$\n\n计算方法是左矩阵的行与右矩阵的列对应元素相乘再相加。你能用这个规则自己算一下：$\\begin{pmatrix}1&0\\\\0&1\\end{pmatrix}\\begin{pmatrix}2&3\\\\4&5\\end{pmatrix}$ 的结果吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "48228996-a523-4417-a271-687c0d34fa12",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=2417chars(45%) threshold=400chars/15%",
+          "stable_prefix_hash": "d8b6a6dfda2a8de3",
+          "stable_prefix_chars": 2417,
+          "stable_prefix_lines": 89,
+          "stable_prefix_share": 0.4528,
+          "action_contract_hash": "c8c0c086c062751d",
+          "policy_layer_hash": "223ffdcc4d6e514a",
+          "context_layer_hash": "9501c171c808db89",
+          "context_fingerprint": "8c0fbb70d9edde23",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-22T03:11:43.854678+00:00",
+          "latency_ms": 4925.5,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 3305,
+          "tokens_prompt": 2907,
+          "tokens_completion": 398,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 1536,
+          "prompt_cache_miss_tokens": 1371,
+          "cost_usd": 0.000915,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 1,
+          "retention_memory_hits": 2,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 3,
+      "user": "继续",
+      "action_type": "suggest",
+      "payload_statement": "关于你问的线性代数，我们继续看矩阵乘法。具体数字实例：\n\n$\\begin{pmatrix}1&2&3\\\\4&5&6\\end{pmatrix}\\begin{pmatrix}7&8\\\\9&10\\\\11&12\\end{pmatrix}=\\begin{pmatrix}1\\cdot7+2\\cdot9+3\\cdot11&1\\cdot8+2\\cdot10+3\\cdot12\\\\4\\cdot7+5\\cdot9+6\\cdot11&4\\cdot8+5\\cdot10+6\\cdot12\\end{pmatrix}=\\begin{pmatrix}58&64\\\\139&154\\end{pmatrix}$\n\n左边矩阵的行数与右边矩阵的列数相等时才能乘。现在不看上面，你试着自己做：$\\begin{pmatrix}2&0\\\\1&3\\end{pmatrix}\\begin{pmatrix}1&4\\\\2&5\\end{pmatrix}=?$",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "d62a11f6-fcee-423a-81b8-61bf7e88bfcf",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=2417chars(42%) threshold=400chars/15%",
+          "stable_prefix_hash": "d8b6a6dfda2a8de3",
+          "stable_prefix_chars": 2417,
+          "stable_prefix_lines": 89,
+          "stable_prefix_share": 0.4183,
+          "action_contract_hash": "c8c0c086c062751d",
+          "policy_layer_hash": "a7ad7688b8ecd5bd",
+          "context_layer_hash": "33db7453c815c605",
+          "context_fingerprint": "6bbf4b9817e406fd",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-22T03:11:48.949931+00:00",
+          "latency_ms": 7694.0,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 3578,
+          "tokens_prompt": 3098,
+          "tokens_completion": 480,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 1536,
+          "prompt_cache_miss_tokens": 1562,
+          "cost_usd": 0.001057,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 2,
+          "retention_memory_hits": 3,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 4,
+      "user": "可以",
+      "action_type": "suggest",
+      "payload_statement": "{\n  \"statement\": \"矩阵乘法的关键是第一个矩阵的行与第二个矩阵的列对应元素相乘再相加。比如 $\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix}\\begin{pmatrix}5&6\\\\7&8\\end{pmatrix}=\\begin{pmatrix}19&22\\\\43&50\\end{pmatrix}$，结果矩阵第1行第1列是1×5+2×7=19。你之前接触过矩阵乘法吗？\",\n  \"question\": \"你能用自己的话描述一下矩阵乘法中一个元素是怎么算出来的吗？\",\n  \"steps\": [\n    {\n      \"order\": 1,\n      \"action\": \"确认第一个矩阵的行数和第二个矩阵的列数是否相等\",\n      \"expected\": \"用户回答：相等才能相乘\"\n    },\n    {\n      \"order\": 2,\n      \"action\": \"取第一个矩阵的第i行和第二个矩阵的第j列\",\n      \"expected\": \"用户指出对应行和列\"\n    },\n    {\n      \"order\": 3,\n      \"action\": \"将对应元素相乘后相加得到结果矩阵的第i行第j列\",\n      \"expected\": \"用户能正确计算一个元素\"\n    }\n  ],\n  \"option\": [\n    \"我理解了，继续下一个例子\",\n    \"我想自己算一个试试\",\n    \"能再解释一下为什么这样算吗\"\n  ],\n  \"topics\": [\"矩阵乘法\", \"线性代数\"]\n}",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "95f4dd4b-7d7f-4961-8a4d-155d5be55ea4",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=2417chars(39%) threshold=400chars/15%",
+          "stable_prefix_hash": "d8b6a6dfda2a8de3",
+          "stable_prefix_chars": 2417,
+          "stable_prefix_lines": 89,
+          "stable_prefix_share": 0.3886,
+          "action_contract_hash": "c8c0c086c062751d",
+          "policy_layer_hash": "aa7c97a50523ac2e",
+          "context_layer_hash": "c429ed9f3605191f",
+          "context_fingerprint": "51e5ac897b16a439",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-22T03:11:56.817722+00:00",
+          "latency_ms": 5960.0,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 3610,
+          "tokens_prompt": 3313,
+          "tokens_completion": 297,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 1536,
+          "prompt_cache_miss_tokens": 1777,
+          "cost_usd": 0.000914,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 3,
+          "retention_memory_hits": 4,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 5,
+      "user": "好",
+      "action_type": "suggest",
+      "payload_statement": "{\n  \"statement\": \"矩阵乘法我们已经看了两个例子。现在不看上面的计算，你自己试一下：$\\begin{pmatrix}1&0\\\\0&1\\end{pmatrix}\\begin{pmatrix}2&3\\\\4&5\\end{pmatrix}$ 的结果是什么？\",\n  \"question\": \"你算出来结果矩阵第一行第一列是多少？\",\n  \"options\": [\n    {\"label\": \"2\", \"description\": \"第一行第一列是2\"},\n    {\"label\": \"3\", \"description\": \"第一行第一列是3\"},\n    {\"label\": \"4\", \"description\": \"第一行第一列是4\"},\n    {\"label\": \"1\", \"description\": \"第一行第一列是1\"}\n  ],\n  \"topics\": [\"矩阵乘法\", \"单位矩阵\"]\n}",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "f3a94bae-2128-49e0-8324-9e7227454980",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=2417chars(36%) threshold=400chars/15%",
+          "stable_prefix_hash": "d8b6a6dfda2a8de3",
+          "stable_prefix_chars": 2417,
+          "stable_prefix_lines": 89,
+          "stable_prefix_share": 0.3632,
+          "action_contract_hash": "c8c0c086c062751d",
+          "policy_layer_hash": "d36c328889cc14c2",
+          "context_layer_hash": "fe4da672b9ddf247",
+          "context_fingerprint": "8631f0a80d59c7f9",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-22T03:12:02.966226+00:00",
+          "latency_ms": 5232.8,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 3667,
+          "tokens_prompt": 3503,
+          "tokens_completion": 164,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 1536,
+          "prompt_cache_miss_tokens": 1967,
+          "cost_usd": 0.000819,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 4,
+          "retention_memory_hits": 5,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    }
+  ],
+  "novice_jump": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "suggest",
+      "payload_statement": "关于你问的“怎么学线性代数”，我们先从最核心的概念开始——向量。你能用你自己的话描述一下，你觉得向量是什么吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "6b44c26a-e969-423f-b628-125d5289bef5",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=2417chars(51%) threshold=400chars/15%",
+          "stable_prefix_hash": "d8b6a6dfda2a8de3",
+          "stable_prefix_chars": 2417,
+          "stable_prefix_lines": 89,
+          "stable_prefix_share": 0.5064,
+          "action_contract_hash": "c8c0c086c062751d",
+          "policy_layer_hash": "223ffdcc4d6e514a",
+          "context_layer_hash": "256f5f54a606cde8",
+          "context_fingerprint": "ec6c5cc185dcd44a",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-22T03:12:17.901152+00:00",
+          "latency_ms": 2520.4,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 2822,
+          "tokens_prompt": 2691,
+          "tokens_completion": 131,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 1536,
+          "prompt_cache_miss_tokens": 1155,
+          "cost_usd": 0.000563,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 1,
+          "retention_memory_hits": 1,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 2,
+      "user": "讲列表",
+      "action_type": "suggest",
+      "payload_statement": "列表是 Python 中最常用的数据结构之一。你之前接触过编程中的“数组”或“列表”概念吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "7163c663-c582-4108-b67c-13f1c21ab749",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=2417chars(49%) threshold=400chars/15%",
+          "stable_prefix_hash": "d8b6a6dfda2a8de3",
+          "stable_prefix_chars": 2417,
+          "stable_prefix_lines": 89,
+          "stable_prefix_share": 0.4922,
+          "action_contract_hash": "c8c0c086c062751d",
+          "policy_layer_hash": "a7ad7688b8ecd5bd",
+          "context_layer_hash": "bba81f4292b13732",
+          "context_fingerprint": "726fc05e1cc0bc28",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-22T03:12:20.582805+00:00",
+          "latency_ms": 2958.9,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 2906,
+          "tokens_prompt": 2765,
+          "tokens_completion": 141,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 1536,
+          "prompt_cache_miss_tokens": 1229,
+          "cost_usd": 0.000594,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 2,
+          "retention_memory_hits": 1,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 3,
+      "user": "循环是什么",
+      "action_type": "suggest",
+      "payload_statement": "关于你问的循环，我们先看一个具体例子：\n\n$\\text{for i in range(3): print(i)}$\n\n输出是 0, 1, 2。循环就是让一段代码重复执行多次。你之前接触过编程中的“循环”概念吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "21ce2690-9162-44c5-9924-a74ccbb23eaa",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=2417chars(48%) threshold=400chars/15%",
+          "stable_prefix_hash": "d8b6a6dfda2a8de3",
+          "stable_prefix_chars": 2417,
+          "stable_prefix_lines": 89,
+          "stable_prefix_share": 0.4768,
+          "action_contract_hash": "c8c0c086c062751d",
+          "policy_layer_hash": "aa7c97a50523ac2e",
+          "context_layer_hash": "07edfa78450b0e6b",
+          "context_fingerprint": "74f0e7557ee5b3ae",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-22T03:12:23.698406+00:00",
+          "latency_ms": 6668.0,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 3081,
+          "tokens_prompt": 2848,
+          "tokens_completion": 233,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 1536,
+          "prompt_cache_miss_tokens": 1312,
+          "cost_usd": 0.000718,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 3,
+          "retention_memory_hits": 2,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 4,
+      "user": "字典怎么用",
+      "action_type": "suggest",
+      "payload_statement": "关于你问的字典，字典是 Python 中通过键来查找值的数据结构。比如：\n\n$\\text{ages} = \\{\"\\text{Alice}\": 25, \"\\text{Bob}\": 30\\}$\n\n用键 `\"Alice\"` 就能拿到值 25。你之前接触过字典或类似键值对的概念吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "0453ad97-ff49-46e0-885f-4be3e1314e94",
+      "intent": "怎么",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=2417chars(48%) threshold=400chars/15%",
+          "stable_prefix_hash": "d8b6a6dfda2a8de3",
+          "stable_prefix_chars": 2417,
+          "stable_prefix_lines": 89,
+          "stable_prefix_share": 0.4849,
+          "action_contract_hash": "c8c0c086c062751d",
+          "policy_layer_hash": "4c8511fb4162ed78",
+          "context_layer_hash": "fe1a33bf02f9ae10",
+          "context_fingerprint": "59e74f2d3e9d5293",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-22T03:12:30.533379+00:00",
+          "latency_ms": 6506.8,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 3327,
+          "tokens_prompt": 2810,
+          "tokens_completion": 517,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 1408,
+          "prompt_cache_miss_tokens": 1402,
+          "cost_usd": 0.001046,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 0,
+          "retention_memory_hits": 3,
+          "retention_duplicate_dropped": 0,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 5,
+      "user": "学函数",
+      "action_type": "suggest",
+      "payload_statement": "",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "e4daa68b-7521-4bbe-9cce-49f481d43e12",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": null
+    }
+  ],
+  "tester": [
+    {
+      "turn": 1,
+      "user": "教 Python",
+      "action_type": "suggest",
+      "payload_statement": "",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "8ad5d4ab-56c6-4ae8-9a9a-73dad42ee902",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": null
+    },
+    {
+      "turn": 2,
+      "user": "考考我",
+      "action_type": "suggest",
+      "payload_statement": "",
+      "llm_generated": false,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "85d69b91-077d-4526-9bb3-eeb7c3978e02",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": null
+    },
+    {
+      "turn": 3,
+      "user": "教列表",
+      "action_type": "suggest",
+      "payload_statement": "关于你问的如何学习Python，我们从列表开始。列表是Python中最常用的数据结构之一，比如 `scores = [85, 92, 78]` 存储了三个分数。你之前接触过列表或数组的概念吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "6ce4bd3b-5f4a-402a-af08-ccc3256b299d",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=2417chars(45%) threshold=400chars/15%",
+          "stable_prefix_hash": "d8b6a6dfda2a8de3",
+          "stable_prefix_chars": 2417,
+          "stable_prefix_lines": 89,
+          "stable_prefix_share": 0.4541,
+          "action_contract_hash": "c8c0c086c062751d",
+          "policy_layer_hash": "aa7c97a50523ac2e",
+          "context_layer_hash": "349746fb7e6e33c1",
+          "context_fingerprint": "f6e35afae5b41973",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-22T03:13:21.580835+00:00",
+          "latency_ms": 4620.2,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 3281,
+          "tokens_prompt": 2951,
+          "tokens_completion": 330,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 1792,
+          "prompt_cache_miss_tokens": 1159,
+          "cost_usd": 0.000801,
+          "retry_count": 0,
+          "timeout_s": 30.0,
+          "transport_status": "ok"
+        },
+        "retention": {
+          "retention_history_hits": 3,
+          "retention_memory_hits": 4,
+          "retention_duplicate_dropped": 1,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 4,
+      "user": "考考我",
+      "action_type": "suggest",
+      "payload_statement": "关于你问的如何学习Python，列表的索引从0开始，比如 `scores = [85, 92, 78]`，`scores[0]` 是85，`scores[1]` 是92。你之前接触过索引的概念吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "4edd9787-f4ac-455a-84e3-880c2b7e6758",
+      "intent": "考考",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=2417chars(46%) threshold=400chars/15%",
+          "stable_prefix_hash": "d8b6a6dfda2a8de3",
+          "stable_prefix_chars": 2417,
+          "stable_prefix_lines": 89,
+          "stable_prefix_share": 0.4613,
+          "action_contract_hash": "c8c0c086c062751d",
+          "policy_layer_hash": "afea3b3c44ac7c17",
+          "context_layer_hash": "746cbeed363a7d5b",
+          "context_fingerprint": "57bfa55a4212ba98",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-22T03:13:26.385758+00:00",
+          "latency_ms": 6813.4,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 3396,
+          "tokens_prompt": 2934,
+          "tokens_completion": 462,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 1408,
+          "prompt_cache_miss_tokens": 1526,
+          "cost_usd": 0.001019,
+          "retry_count": 1,
+          "timeout_s": 30.0,
+          "transport_status": "retry"
+        },
+        "retention": {
+          "retention_history_hits": 1,
+          "retention_memory_hits": 5,
+          "retention_duplicate_dropped": 0,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    },
+    {
+      "turn": 5,
+      "user": "教循环",
+      "action_type": "suggest",
+      "payload_statement": "关于你问的如何学习Python，列表的索引从0开始，比如 `scores = [85, 92, 78]`，`scores[0]` 是85。现在我们来学习循环。循环可以让你重复执行一段代码，比如遍历列表中的每个元素。你之前接触过循环的概念吗？",
+      "llm_generated": true,
+      "difficulty": {
+        "level": "medium",
+        "reason": "bkt_mastery"
+      },
+      "trace_id": "e56740d7-0137-4999-b665-a6b771703e67",
+      "intent": "general",
+      "has_pulse": false,
+      "ttm_stage": "action",
+      "source_tag": "rule",
+      "llm_observability": {
+        "cache": {
+          "cache_eligible": true,
+          "cache_eligibility_reason": "stable_prefix=2417chars(41%) threshold=400chars/15%",
+          "stable_prefix_hash": "d8b6a6dfda2a8de3",
+          "stable_prefix_chars": 2417,
+          "stable_prefix_lines": 89,
+          "stable_prefix_share": 0.4116,
+          "action_contract_hash": "c8c0c086c062751d",
+          "policy_layer_hash": "f3e97bb63c9b0e07",
+          "context_layer_hash": "db04474c619e4abc",
+          "context_fingerprint": "f16b00ad39baab5a",
+          "prefix_shape_version": "1.0.0"
+        },
+        "runtime": {
+          "path": "http_sync",
+          "streaming": false,
+          "request_started_at_utc": "2026-05-22T03:13:33.370787+00:00",
+          "latency_ms": 9947.7,
+          "first_chunk_latency_ms": null,
+          "stream_duration_ms": null,
+          "finish_reason": "stop",
+          "response_model": "deepseek-v4-flash",
+          "tokens_total": 3665,
+          "tokens_prompt": 3292,
+          "tokens_completion": 373,
+          "token_usage_available": true,
+          "prompt_cache_hit_tokens": 1536,
+          "prompt_cache_miss_tokens": 1756,
+          "cost_usd": 0.000992,
+          "retry_count": 2,
+          "timeout_s": 30.0,
+          "transport_status": "retry"
+        },
+        "retention": {
+          "retention_history_hits": 4,
+          "retention_memory_hits": 6,
+          "retention_duplicate_dropped": 2,
+          "retention_budget_history_limit": 12,
+          "retention_budget_memory_limit": 6,
+          "retention_progress_included": false,
+          "retention_context_summary_included": true,
+          "session_scoped": true
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>计算机教学预览 — Mermaid + Prism + KaTeX</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1/themes/prism.min.css">
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1/prism.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
+<style>
+:root {
+  --deep-mocha: #3d322b; --warm-white: #fdfaf5; --soft-blue: #dce8f5;
+  --sage-green: #8a9f87; --coral-candy: #f2d5c4; --lavender-gray: #e0dce8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: var(--warm-white); color: var(--deep-mocha); }
+.preview-container { max-width: 720px; margin: 24px auto; padding: 16px; }
+
+.chat-bubble {
+  padding: 14px 18px; border-radius: 14px; margin-bottom: 16px;
+  line-height: 1.6; font-size: 14px;
+}
+.chat-bubble.coach { background: var(--soft-blue); max-width: 94%; }
+.chat-bubble.user { background: var(--lavender-gray); max-width: 85%; margin-left: auto; }
+
+.diagram-box {
+  margin: 12px 0; padding: 12px; background: #fff;
+  border: 1px solid var(--lavender-gray); border-radius: 8px;
+}
+.diagram-box .label {
+  font-size: 10px; text-transform: uppercase; color: var(--sage-green);
+  margin-bottom: 8px; font-weight: 600;
+}
+
+.section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin: 32px 0 10px; opacity: 0.4; }
+
+.code-block {
+  margin: 8px 0; padding: 14px 16px; background: #1e1e2e; border-radius: 8px;
+  overflow-x: auto; font-size: 13px; line-height: 1.6;
+}
+.code-block pre { margin: 0; }
+.code-block code { color: #cdd6f4; background: none !important; }
+
+.math-block { margin: 8px 0; padding: 8px 12px; background: #fff; border-radius: 6px; border-left: 3px solid var(--sage-green); overflow-x: auto; }
+
+.memory-map { display: flex; gap: 4px; align-items: flex-end; padding: 12px; background: #fff; border-radius: 8px; overflow-x: auto; }
+.memory-cell { text-align: center; min-width: 44px; padding: 6px; border-radius: 4px; font-size: 11px; }
+.memory-addr { font-size: 9px; color: #999; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="preview-container">
+<h2 style="margin-bottom:16px;font-size:16px;">计算机教学预览 — Prism(代码) + Mermaid(流程) + KaTeX(公式)</h2>
+
+<!-- ===== Scene 1: Code + Flow ===== -->
+<div class="section-label">场景 1：Python for 循环 — 代码高亮 + 执行流程图</div>
+<div class="chat-bubble user">for 循环是怎么执行的？</div>
+<div class="chat-bubble coach">
+  看这段代码：
+  <div class="code-block">
+    <pre><code class="language-python">fruits = ['apple', 'banana', 'cherry']
+for fruit in fruits:
+    print(f'I like {fruit}')
+print('Done!')</code></pre>
+  </div>
+  执行流程是这样的：
+  <div class="diagram-box">
+    <div class="label">📊 Mermaid — 代码执行流程</div>
+    <pre class="mermaid" style="background:transparent;">
+flowchart TD
+    A["创建列表 ['apple','banana','cherry']"] --> B["取第 1 个: 'apple'"]
+    B --> C["执行 print('I like apple')"]
+    C --> D{"还有下一个?"}
+    D -->|"是"| E["取第 2 个: 'banana'"]
+    E --> F["执行 print('I like banana')"]
+    F --> D
+    D -->|"是"| G["取第 3 个: 'cherry'"]
+    G --> H["执行 print('I like cherry')"]
+    H --> D
+    D -->|"否"| I["执行 print('Done!')"]
+    I --> J["✅ 程序结束"]
+    </pre>
+  </div>
+  <b>循环就是"取一个→处理→取下一个"的重复。range(3) 等价于 [0,1,2]。</b>
+</div>
+
+<!-- ===== Scene 2: Data structure visualization ===== -->
+<div class="section-label">场景 2：数据结构对比 — 列表 vs 链表（内存布局图）</div>
+<div class="chat-bubble user">列表和链表的区别是什么？</div>
+<div class="chat-bubble coach">
+  列表在内存里是<b>连续排列</b>的——就像电影院里的连号座位：
+  <div class="diagram-box">
+    <div class="label">📊 Mermaid — 列表 (连续内存)</div>
+    <pre class="mermaid" style="background:transparent;">
+graph LR
+    A["a 0x100"] --> B["b 0x108"] --> C["c 0x110"] --> D["d 0x118"]
+    </pre>
+  </div>
+  链表在内存里是<b>散落的</b>——每个节点存了"下一个在哪"的地址：
+  <div class="diagram-box">
+    <div class="label">📊 Mermaid — 链表 (分散 + 指针)</div>
+    <pre class="mermaid" style="background:transparent;">
+graph LR
+    A["a ·→"] -->|"指针"| B["c ·→"]
+    B -->|"指针"| C["b ·→"]
+    C -->|"指针"| D["d ·→"]
+    </pre>
+  </div>
+  <b>时间复杂度对比</b>：<span id="eq-list"></span>
+  <b>关键区别</b>：列表快速随机访问(O(1))但插入慢(O(n))。链表插入快(O(1))但找第 k 个元素慢(O(n))。
+</div>
+
+<!-- ===== Scene 3: Recursion visualization ===== -->
+<div class="section-label">场景 3：递归可视化 — 斐波那契调用栈（Mermaid 时序图）</div>
+<div class="chat-bubble user">递归是怎么一层层调用的？</div>
+<div class="chat-bubble coach">
+  斐波那契数列的递归实现：
+  <div class="code-block">
+    <pre><code class="language-python">def fib(n):
+    if n <= 1:
+        return n
+    return fib(n-1) + fib(n-2)
+
+print(fib(4))  # 输出: 3</code></pre>
+  </div>
+  fib(4) 的调用树：
+  <div class="diagram-box">
+    <div class="label">📊 Mermaid — 递归调用树</div>
+    <pre class="mermaid" style="background:transparent;">
+graph TD
+    A["fib(4)"] --> B["fib(3)"]
+    A --> C["fib(2)"]
+    B --> D["fib(2)"]
+    B --> E["fib(1)=1"]
+    D --> F["fib(1)=1"]
+    D --> G["fib(0)=0"]
+    C --> H["fib(1)=1"]
+    C --> I["fib(0)=0"]
+    </pre>
+  </div>
+  <b>递归的本质是"函数调用自己，直到触底反弹"</b>——fib(1) 和 fib(0) 是底，直接返回。然后一层层往上算。
+  <br><br>
+  <span id="eq-recursion"></span>
+</div>
+
+<!-- ===== Scene 4: OOP class diagram ===== -->
+<div class="section-label">场景 4：面向对象继承 — Mermaid 类图 + 代码</div>
+<div class="chat-bubble user">Python 的类和继承是怎样的？</div>
+<div class="chat-bubble coach">
+  <div class="code-block">
+    <pre><code class="language-python">class Animal:
+    def __init__(self, name):
+        self.name = name
+    def speak(self):
+        pass
+
+class Dog(Animal):
+    def speak(self):
+        return f'{self.name}: Woof!'
+
+class Cat(Animal):
+    def speak(self):
+        return f'{self.name}: Meow!'</code></pre>
+  </div>
+  继承关系图：
+  <div class="diagram-box">
+    <div class="label">📊 Mermaid — 类继承图</div>
+    <pre class="mermaid" style="background:transparent;">
+classDiagram
+    class Animal {
+        +name: str
+        +__init__(name)
+        +speak()
+    }
+    class Dog {
+        +speak() "Woof!"
+    }
+    class Cat {
+        +speak() "Meow!"
+    }
+    Animal <|-- Dog : 继承
+    Animal <|-- Cat : 继承
+    </pre>
+  </div>
+  <b>Dog 和 Cat 都继承了 Animal 的 name 属性，但各自重写了 speak() 方法。这叫什么？</b>
+  <span id="eq-oop"></span>
+</div>
+
+<div style="text-align:center;margin-top:40px;font-size:10px;opacity:0.3;">
+  Coherence Phase 62 — CS Teaching Preview (Prism + Mermaid + KaTeX)
+</div>
+</div>
+
+<script>
+mermaid.initialize({startOnLoad:true, theme:'neutral', securityLevel:'loose'});
+
+katex.render("\\text{列表查找: } O(1) \\quad \\text{链表查找: } O(n) \\quad \\text{链表插入: } O(1) \\quad \\text{列表插入: } O(n)", document.getElementById("eq-list"), {displayMode:true});
+katex.render("\\text{fib}(n) = \\text{fib}(n-1) + \\text{fib}(n-2), \\quad \\text{fib}(0)=0, \\; \\text{fib}(1)=1", document.getElementById("eq-recursion"), {displayMode:true});
+katex.render("\\text{这就是 多态 (Polymorphism)——同一个接口，不同实现}", document.getElementById("eq-oop"), {displayMode:true});
+</script>
+</body>
+</html>

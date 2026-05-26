@@ -1,9 +1,10 @@
-SAST Extended | 2026-05-12T06:00:50.013Z
-Files: 188
-Findings: 79 (P0:2 P1:1 P2:79)
-  [P1] src/coach/persistence.py:45 — Potential SQL injection (f-string in query)
+SAST Extended | 2026-05-25T05:44:07.527Z
+Files: 199
+Findings: 87 (P0:2 P1:1 P2:87)
+  [P1] src/coach/persistence.py:47 — Potential SQL injection (f-string in query)
   [P2] tests/test_api_admin.py:25 — assert statement — disabled with -O flag
   [P2] tests/test_api_chat.py:20 — assert statement — disabled with -O flag
+  [P2] tests/test_api_config.py:35 — assert statement — disabled with -O flag
   [P2] tests/test_api_dashboard.py:14 — assert statement — disabled with -O flag
   [P2] tests/test_api_excursion.py:16 — assert statement — disabled with -O flag
   [P2] tests/test_api_pulse.py:19 — assert statement — disabled with -O flag
@@ -25,6 +26,7 @@ Findings: 79 (P0:2 P1:1 P2:79)
   [P2] tests/test_exhaustive_all_configs.py:71 — Weak hash MD5
   [P2] tests/test_exhaustive_all_configs.py:229 — assert statement — disabled with -O flag
   [P2] tests/test_exhaustive_quality.py:34 — assert statement — disabled with -O flag
+  [P2] tests/test_experience_audit.py:13 — assert statement — disabled with -O flag
   [P2] tests/test_flow.py:10 — assert statement — disabled with -O flag
   [P2] tests/test_gates.py:40 — assert statement — disabled with -O flag
   [P2] tests/test_ledger.py:32 — assert statement — disabled with -O flag
@@ -52,6 +54,12 @@ Findings: 79 (P0:2 P1:1 P2:79)
   [P2] tests/test_phase26.py:10 — assert statement — disabled with -O flag
   [P2] tests/test_phase27.py:10 — assert statement — disabled with -O flag
   [P2] tests/test_phase30.py:28 — assert statement — disabled with -O flag
+  [P2] tests/test_phase31.py:31 — assert statement — disabled with -O flag
+  [P2] tests/test_phase35_scaffold_quality.py:16 — assert statement — disabled with -O flag
+  [P2] tests/test_phase35_stream_parity.py:9 — assert statement — disabled with -O flag
+  [P2] tests/test_phase36_llm_observability.py:22 — assert statement — disabled with -O flag
+  [P2] tests/test_phase36_stream_runtime_parity.py:16 — assert statement — disabled with -O flag
+  [P2] tests/test_phase38_mrt_ab.py:16 — assert statement — disabled with -O flag
   [P2] tests/test_pipeline_audit_integration.py:27 — assert statement — disabled with -O flag
   [P2] tests/test_pipeline_dual_mode.py:26 — assert statement — disabled with -O flag
   [P2] tests/test_pipeline_gates_integration.py:21 — assert statement — disabled with -O flag
@@ -62,7 +70,7 @@ Findings: 79 (P0:2 P1:1 P2:79)
   [P2] tests/test_s16_awakening.py:20 — assert statement — disabled with -O flag
   [P2] tests/test_s17_consent.py:49 — assert statement — disabled with -O flag
   [P2] tests/test_s5_safety_integration.py:13 — assert statement — disabled with -O flag
-  [P2] tests/test_s6_mapek_integration.py:12 — assert statement — disabled with -O flag
+  [P2] tests/test_s6_mapek_integration.py:13 — assert statement — disabled with -O flag
   [P2] tests/test_s7_diagnostics.py:18 — assert statement — disabled with -O flag
   [P2] tests/test_s7_gates.py:14 — assert statement — disabled with -O flag
   [P2] tests/test_s7_mrt.py:10 — assert statement — disabled with -O flag

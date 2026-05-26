@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S62.3 -- 教练 prompt 注入 + diagram 字段</name>
+  <phase>62</phase><sub_stage>S62.3</sub_stage>
+  <before_state>
+    <file path="src/coach/llm/prompts.py">_STABLE_SYSTEM_PREFIX 无图形触发策略。_ACTION_TYPE_INSTRUCTIONS 不要求 diagram 字段</file>
+  </before_state>
+  <after_state>
+    <file path="src/coach/llm/prompts.py">_STABLE_SYSTEM_PREFIX 新增图形触发规则块。_ACTION_TYPE_INSTRUCTIONS 追加 diagram 字段说明</file>
+  </after_state>
+  <task>
+    1. _STABLE_SYSTEM_PREFIX: 第 57 行"察觉情绪并调整"之后、空行之前(第 58 行)插入图形触发规则块
+    2. _ACTION_TYPE_INSTRUCTIONS: scaffold/challenge/probe/suggest/reflect 每个 force-output 要求追加: "如果内容涉及流程/关系/函数/代码，必须输出 diagram 字段"
+    3. diagram 字段格式: {"type":"mermaid|desmos|prism","content":"...","language":"(prism only)"}
+    4. KaTeX 不通过 diagram 字段——statement 内用 $...$ 包裹 LaTeX
+  </task>
+  <drift_guard>
+    <forbidden>不删除已有 prompt 块</forbidden>
+    <forbidden>diagram 为可选字段——不输出时前端行为不变</forbidden>
+  </drift_guard>
+  <go_gate>教练 JSON 输出可选含 diagram 字段。触发策略文本在 _STABLE_SYSTEM_PREFIX 中</go_gate>
+</prompt>

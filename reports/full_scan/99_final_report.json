@@ -2,12 +2,12 @@
   "report_meta": {
     "audit_name": "platinum_full_system_audit_l3",
     "version": "2.0.0",
-    "generated_at_utc": "2026-05-12T06:02:21.985Z",
+    "generated_at_utc": "2026-05-25T05:49:39.063Z",
     "framework": "L3 Platinum — 五层六维八章 (蓝皮书规范)",
     "scope": "All completed phases (0-5) + A/B/C tracks"
   },
   "chapter_1_executive_summary": {
-    "health_index": 53.0,
+    "health_index": 53.4,
     "risk_index": 100,
     "labels": {
       "availability": "Guarded (受保护运行)",
@@ -15,22 +15,22 @@
       "auditability": "Partial (部分断层)"
     },
     "go_no_go_decision": "WARN",
-    "go_no_go_statement": "WARN — 835 tests pass but non-critical findings require attention before production deployment.",
+    "go_no_go_statement": "WARN — 1466 tests pass but non-critical findings require attention before production deployment.",
     "key_metrics": {
-      "total_files": 188,
-      "total_lines": 31884,
-      "tests_passed": 835,
+      "total_files": 199,
+      "total_lines": 35147,
+      "tests_passed": 1466,
       "contracts_frozen": "13/13",
       "critical_security_findings": 4,
-      "total_findings": 364,
+      "total_findings": 385,
       "tech_debt_estimate": "$45,000"
     }
   },
   "chapter_2_risk_overview": {
-    "total_risks": 364,
+    "total_risks": 385,
     "p0_count": 2,
-    "p1_count": 6,
-    "p2_count": 90,
+    "p1_count": 4,
+    "p2_count": 91,
     "risks_by_business_impact": [
       {
         "id": "F001",
@@ -43,10 +43,10 @@
       {
         "id": "F002",
         "severity": "P0",
-        "type": "api_key",
+        "type": "github_token",
         "source": "S30",
         "business_impact": "Critical — 可能引发数据泄露、系统崩溃或法律诉讼",
-        "detail": "OpenAI/API Secret Key"
+        "detail": "GitHub Personal Access Token"
       },
       {
         "id": "F003",
@@ -62,47 +62,47 @@
         "type": "runtime_wiring_failure",
         "source": "S65",
         "business_impact": "High — 可能导致功能失效或安全边界突破",
-        "detail": "运行时接线验证失败: 'NoneType' object has no attribute 'get'"
+        "detail": "运行时接线验证失败: MAPE-K 默认关闭, phase6_integrated 应为 False"
       },
       {
         "id": "F005",
         "severity": "P1",
-        "type": "runtime_crash",
+        "type": "exhaustive_fail",
         "source": "S85",
         "business_impact": "High — 可能导致功能失效或安全边界突破",
-        "detail": "运行时验证异常: 'NoneType' object has no attribute 'get'"
+        "detail": "Phase 17 穷尽测试 (tests/test_s17_exhaustive.py) 返回 1: \n=== S17.1: Ƽ ===\n[OK  ] S17.1.1 û awakening\n[OK  ] S17.1.2 awakening.triggered=True\n[OK  ] S17.1.3 recommended  2 ģ  got 4\n[OK  ] S17.1.4 TTM Ƽ\n[OK  ] S17.1.5 SDT Ƽ\n[OK  ] S17.1.6 Ƽģ recommended=True\n[OK  ] S17.1.7  awakening\n\n=== S17.2: ͬ ===\n[OK  ] S17.2.1 ͬؼ 'Ƽ'  intent=consent_enable_recommen"
       },
       {
         "id": "F006",
         "severity": "P1",
-        "type": "regression_failures",
+        "type": "composer_behavior",
         "source": "S85",
         "business_impact": "High — 可能导致功能失效或安全边界突破",
-        "detail": "全量回归有 55 个失败"
+        "detail": "composer 行为异常: 无 TTM 时 action_type 应正常, got scaffold"
       },
       {
         "id": "F007",
-        "severity": "P1",
-        "type": "exhaustive_fail",
-        "source": "S85",
-        "business_impact": "High — 可能导致功能失效或安全边界突破",
-        "detail": "S14/S15 快速质量验证 (tests/test_s15_quick.py) 返回 1: ============================================================\nS15 QUICK EVALUATION: 5 configs x 5 turns\n============================================================\nTraceback (most recent call last):\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s15_quick.py\", line 151, in <module>\n    main()\n  File \"D:"
-      },
-      {
-        "id": "F008",
-        "severity": "P1",
-        "type": "exhaustive_fail",
-        "source": "S85",
-        "business_impact": "High — 可能导致功能失效或安全边界突破",
-        "detail": "Phase 17 穷尽测试 (tests/test_s17_exhaustive.py) 返回 1: Traceback (most recent call last):\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s17_exhaustive.py\", line 373, in <module>\n    ok = run()\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s17_exhaustive.py\", line 64, in run\n    restore_config()\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s17_exhaustive.py\", li"
-      },
-      {
-        "id": "F009",
         "severity": "P2",
         "type": "race_condition_risk",
         "source": "S10",
         "business_impact": "Medium — 影响系统可靠性或维护效率",
         "detail": "Threading usage without Lock/RLock — potential race condition"
+      },
+      {
+        "id": "F008",
+        "severity": "P2",
+        "type": "assert_used",
+        "source": "S30",
+        "business_impact": "Medium — 影响系统可靠性或维护效率",
+        "detail": "assert statement — disabled with -O flag"
+      },
+      {
+        "id": "F009",
+        "severity": "P2",
+        "type": "assert_used",
+        "source": "S30",
+        "business_impact": "Medium — 影响系统可靠性或维护效率",
+        "detail": "assert statement — disabled with -O flag"
       },
       {
         "id": "F010",
@@ -200,16 +200,16 @@
       "status": "GO",
       "details": [
         "Per-module stats with complexity breakdown",
-        "Code smells: 144",
-        "SBOM: 3 packages",
+        "Code smells: 153",
+        "SBOM: 5 packages",
         "TLA+ ready: True"
       ]
     },
     "layer_b_runtime": {
       "layer": "B — Runtime Physiology",
-      "status": "NO-GO",
+      "status": "GO",
       "details": [
-        "Tests: 818 passed / 17 failed",
+        "Tests: 1466 passed / 0 failed",
         "Per-module breakdown available",
         "Cognitive load: 10/10"
       ]
@@ -218,9 +218,9 @@
       "layer": "C — Security Immunology",
       "status": "FAIL",
       "details": [
-        "SAST: 79 findings (P0:2)",
+        "SAST: 87 findings (P0:2)",
         "Secrets: 2",
-        "Dependency score: 3"
+        "Dependency score: 5"
       ]
     },
     "layer_d_data": {
@@ -236,28 +236,28 @@
       "layer": "E — Delivery & Governance",
       "status": "WARN",
       "details": [
-        "DORA: Medium (weekly) deploys",
+        "DORA: High (daily+) deploys",
         "Bus factor: 1",
         "Test pyramid healthy: False"
       ]
     },
     "layer_f_phase6": {
       "layer": "F — Phase 6 Integration Health",
-      "status": "FAIL",
+      "status": "WARN",
       "details": [
-        "Wiring checks: 14/18",
-        "Phase 6 contracts frozen check: FAIL",
-        "Runtime verify: 77.8%"
+        "Wiring checks: 17/18",
+        "Phase 6 contracts frozen check: WARN",
+        "Runtime verify: 94.4%"
       ]
     },
     "layer_h_phase19_21": {
       "layer": "H — Phase 19-21 Wiring & Exhaustive",
       "status": "FAIL",
       "details": [
-        "Wiring checks: 5/15",
+        "Wiring checks: 26/30",
         "Full regression: verified in S85 run",
         "Exhaustive test integration: FAIL",
-        "Runtime verify score: 33.3%"
+        "Runtime verify score: 86.7%"
       ]
     }
   },
@@ -269,7 +269,7 @@
       },
       "source_vs_tests": {
         "status": "GO",
-        "detail": "42/53 source modules have test coverage"
+        "detail": "42/56 source modules have test coverage"
       },
       "tests_vs_runtime": {
         "status": "GO",
@@ -288,20 +288,20 @@
   },
   "chapter_5_stress_and_limits": {
     "test_limits": {
-      "max_tests_run": 835,
-      "all_passed": false
+      "max_tests_run": 1466,
+      "all_passed": true
     },
     "cognitive_load": {
-      "comment_ratio": 0.0749,
-      "long_lines": 222,
+      "comment_ratio": 0.0726,
+      "long_lines": 282,
       "max_line_length": 259,
       "cognitive_load_score": 10,
       "assessment": "Healthy"
     },
     "dependency_attack_surface": {
-      "dependency_count": 3,
-      "attack_surface_score": 3,
-      "note": "3 dependencies — recommend regular `pip audit` or `safety check`"
+      "dependency_count": 5,
+      "attack_surface_score": 5,
+      "note": "5 dependencies — recommend regular `pip audit` or `safety check`"
     },
     "recommendation": "System handles current load levels. For production hardening: add fault injection, chaos engineering drills, and TLA+ formal verification.",
     "requires_manual_audit": [
@@ -314,7 +314,7 @@
     "automated_scan_results": {
       "sast_critical": 2,
       "secrets_critical": 2,
-      "extended_sast_patterns": 79
+      "extended_sast_patterns": 87
     },
     "requires_manual_audit": [
       "社会工程学审计 (钓鱼/伪装/诱饵攻击模拟)",
@@ -344,7 +344,7 @@
         "Run TLA+ model checking on state machine"
       ],
       "day_60_治理": [
-        "Address 364 audit findings by severity",
+        "Address 385 audit findings by severity",
         "Add AI model drift detection",
         "Implement data quality monitoring",
         "Repay tech debt: reduce high-complexity functions"
@@ -362,27 +362,27 @@
     "evidence_files": [
       {
         "path": "00_execution_index.md",
-        "sha256": "d583d6f568de73b6",
+        "sha256": "516a9347202843a6",
         "step_id": "root"
       },
       {
         "path": "99_final_report.json",
-        "sha256": "a0b4db990e036584",
+        "sha256": "d5ff48a9ce357dce",
         "step_id": "root"
       },
       {
         "path": "99_final_report.md",
-        "sha256": "3ca1f52198403c0a",
+        "sha256": "7101e07f547ec257",
         "step_id": "root"
       },
       {
         "path": "blockers.json",
-        "sha256": "5e4fe25e3d8028e4",
+        "sha256": "f2780512b465c0f0",
         "step_id": "root"
       },
       {
         "path": "evidence_manifest.json",
-        "sha256": "4fb4f27717088aab",
+        "sha256": "e45ea51a4acec3b7",
         "step_id": "root"
       },
       {
@@ -392,27 +392,27 @@
       },
       {
         "path": "S00/summary.json",
-        "sha256": "174d730fa6c713fc",
+        "sha256": "1fcf1a17ba6350e4",
         "step_id": "S00"
       },
       {
         "path": "S00/raw/env.txt",
-        "sha256": "f887325e131cb35e",
+        "sha256": "12d9c57e13c324cd",
         "step_id": "S00"
       },
       {
         "path": "S10/findings.json",
-        "sha256": "a80001c6ac1d1cb5",
+        "sha256": "5aee192c61008a5a",
         "step_id": "S10"
       },
       {
         "path": "S10/summary.json",
-        "sha256": "c406c0b8a1b83b37",
+        "sha256": "db2118d9f598631d",
         "step_id": "S10"
       },
       {
         "path": "S10/raw/static_analysis.log",
-        "sha256": "40b296d4c87c8249",
+        "sha256": "994b629b9d5b5ac5",
         "step_id": "S10"
       },
       {
@@ -422,32 +422,32 @@
       },
       {
         "path": "S20/summary.json",
-        "sha256": "f2c3b4c5ea103dd0",
+        "sha256": "a585e498c54150fc",
         "step_id": "S20"
       },
       {
         "path": "S20/raw/test_run.log",
-        "sha256": "9c2de9b94b2acdd0",
+        "sha256": "fe3c63b07e520282",
         "step_id": "S20"
       },
       {
         "path": "S30/findings.json",
-        "sha256": "27c032cfde47b1ad",
+        "sha256": "c734527f0bd006b1",
         "step_id": "S30"
       },
       {
         "path": "S30/summary.json",
-        "sha256": "ebfcf5c3a7a2cc38",
+        "sha256": "c59bee0f88b06222",
         "step_id": "S30"
       },
       {
         "path": "S30/raw/sast.log",
-        "sha256": "8b367d4025640015",
+        "sha256": "623a7b55c6c93a29",
         "step_id": "S30"
       },
       {
         "path": "S30/raw/secret_scan.log",
-        "sha256": "54192bb76b1b9436",
+        "sha256": "3c925e80be51277c",
         "step_id": "S30"
       },
       {
@@ -457,47 +457,47 @@
       },
       {
         "path": "S40/summary.json",
-        "sha256": "493ac8c425886e4c",
+        "sha256": "8d4b86b90fa70afe",
         "step_id": "S40"
       },
       {
         "path": "S40/raw/schema_check.log",
-        "sha256": "d2ef75b816c58e3d",
+        "sha256": "85d97dae3a372581",
         "step_id": "S40"
       },
       {
         "path": "S50/findings.json",
-        "sha256": "2f084193dc0d70a7",
+        "sha256": "c638e5328f5ec0d5",
         "step_id": "S50"
       },
       {
         "path": "S50/summary.json",
-        "sha256": "0ff89536e9fef60b",
+        "sha256": "b3c236ee2f45d239",
         "step_id": "S50"
       },
       {
         "path": "S50/raw/delivery_check.log",
-        "sha256": "e44cbc8056a6224e",
+        "sha256": "57c8cd41db92d901",
         "step_id": "S50"
       },
       {
         "path": "S60/consistency_matrix.json",
-        "sha256": "cc27382037467af0",
+        "sha256": "f94edffed1a4563b",
         "step_id": "S60"
       },
       {
         "path": "S60/summary.json",
-        "sha256": "0ef830dde4fdaaa9",
+        "sha256": "b3980571115a3edd",
         "step_id": "S60"
       },
       {
         "path": "S65/findings.json",
-        "sha256": "547d3a5fcf8b18df",
+        "sha256": "482ff197e5023221",
         "step_id": "S65"
       },
       {
         "path": "S65/summary.json",
-        "sha256": "781921dc7c738761",
+        "sha256": "437586223e392364",
         "step_id": "S65"
       },
       {
@@ -507,12 +507,12 @@
       },
       {
         "path": "S70/scoring.json",
-        "sha256": "251812f398c692cf",
+        "sha256": "b636a49dba64fff1",
         "step_id": "S70"
       },
       {
         "path": "S70/summary.json",
-        "sha256": "4cec452785c4887a",
+        "sha256": "45d867c9d063f43e",
         "step_id": "S70"
       },
       {
@@ -522,22 +522,22 @@
       },
       {
         "path": "S80/findings.json",
-        "sha256": "c1bb20addccf1d78",
+        "sha256": "d04b6515fe00603d",
         "step_id": "S80"
       },
       {
         "path": "S80/summary.json",
-        "sha256": "97b79e86ea76e1b4",
+        "sha256": "e4a499250d7533cd",
         "step_id": "S80"
       },
       {
         "path": "S85/findings.json",
-        "sha256": "8cd3785946f32e6d",
+        "sha256": "3f59c769205a317e",
         "step_id": "S85"
       },
       {
         "path": "S85/summary.json",
-        "sha256": "92d4ebdec4eddc1d",
+        "sha256": "174d70691567c85e",
         "step_id": "S85"
       },
       {
@@ -547,7 +547,7 @@
       },
       {
         "path": "S90/summary.json",
-        "sha256": "4e5cabde36713ed2",
+        "sha256": "97e92b206f1f1615",
         "step_id": "S90"
       }
     ]

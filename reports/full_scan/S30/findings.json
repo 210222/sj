@@ -3,7 +3,7 @@
     "severity": "P1",
     "type": "sql_injection",
     "file": "src/coach/persistence.py",
-    "line": 45,
+    "line": 47,
     "detail": "Potential SQL injection (f-string in query)"
   },
   {
@@ -18,6 +18,13 @@
     "type": "assert_used",
     "file": "tests/test_api_chat.py",
     "line": 20,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_api_config.py",
+    "line": 35,
     "detail": "assert statement — disabled with -O flag"
   },
   {
@@ -165,6 +172,13 @@
     "type": "assert_used",
     "file": "tests/test_exhaustive_quality.py",
     "line": 34,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_experience_audit.py",
+    "line": 13,
     "detail": "assert statement — disabled with -O flag"
   },
   {
@@ -359,6 +373,48 @@
   {
     "severity": "P2",
     "type": "assert_used",
+    "file": "tests/test_phase31.py",
+    "line": 31,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_phase35_scaffold_quality.py",
+    "line": 16,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_phase35_stream_parity.py",
+    "line": 9,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_phase36_llm_observability.py",
+    "line": 22,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_phase36_stream_runtime_parity.py",
+    "line": 16,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
+    "file": "tests/test_phase38_mrt_ab.py",
+    "line": 16,
+    "detail": "assert statement — disabled with -O flag"
+  },
+  {
+    "severity": "P2",
+    "type": "assert_used",
     "file": "tests/test_pipeline_audit_integration.py",
     "line": 27,
     "detail": "assert statement — disabled with -O flag"
@@ -430,7 +486,7 @@
     "severity": "P2",
     "type": "assert_used",
     "file": "tests/test_s6_mapek_integration.py",
-    "line": 12,
+    "line": 13,
     "detail": "assert statement — disabled with -O flag"
   },
   {
@@ -556,15 +612,15 @@
     "severity": "P0",
     "type": "api_key",
     "file": ".claude/settings.local.json",
-    "line": 152,
+    "line": 291,
     "detail": "OpenAI/API Secret Key"
   },
   {
     "severity": "P0",
-    "type": "api_key",
-    "file": "docs/USER_GUIDE.md",
-    "line": 14,
-    "detail": "OpenAI/API Secret Key"
+    "type": "github_token",
+    "file": ".claude/settings.local.json",
+    "line": 350,
+    "detail": "GitHub Personal Access Token"
   },
   {
     "severity": "P2",

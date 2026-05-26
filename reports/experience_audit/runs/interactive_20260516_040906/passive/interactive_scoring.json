@@ -1,0 +1,14 @@
+{
+  "run_id": "interactive_20260516_040906",
+  "profile": "passive",
+  "turns": 3,
+  "morphology_scores": null,
+  "effect_scores": {
+    "知识转移": 0,
+    "策略适应": 2.0,
+    "解释质量": 2,
+    "互动节奏": 4.0,
+    "total": 8.0,
+    "mastery_delta": 0.0
+  }
+}

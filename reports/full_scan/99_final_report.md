@@ -1,6 +1,6 @@
 # L3 Platinum Full System Audit — 8-Chapter Final Report
 
-**Generated**: 2026-05-12T06:02:21.985Z | **Framework**: L3 Platinum — 五层六维八章 (蓝皮书规范)
+**Generated**: 2026-05-25T05:49:39.063Z | **Framework**: L3 Platinum — 五层六维八章 (蓝皮书规范)
 **Decision**: **WARN**
 
 ---
@@ -9,15 +9,15 @@
 
 | Metric | Value |
 |--------|-------|
-| Health Index | **53.0/100** |
+| Health Index | **53.4/100** |
 | Risk Index | **100/100** |
 | Availability | Guarded (受保护运行) |
 | Maintainability | Fragile (脆弱不堪) |
 | Auditability | Partial (部分断层) |
-| Tests | 835 passed |
+| Tests | 1466 passed |
 | Tech Debt | $45,000 |
 
-WARN — 835 tests pass but non-critical findings require attention before production deployment.
+WARN — 1466 tests pass but non-critical findings require attention before production deployment.
 
 ---
 
@@ -26,14 +26,15 @@ WARN — 835 tests pass but non-critical findings require attention before produ
 | ID | Severity | Business Impact | Detail |
 |----|----------|-----------------|--------|
 | F001 | P0 | Critical — 可能引发数据泄露、系统崩溃或法律诉讼 | OpenAI/API Secret Key |
-| F002 | P0 | Critical — 可能引发数据泄露、系统崩溃或法律诉讼 | OpenAI/API Secret Key |
+| F002 | P0 | Critical — 可能引发数据泄露、系统崩溃或法律诉讼 | GitHub Personal Access Token |
 | F003 | P1 | High — 可能导致功能失效或安全边界突破 | Potential SQL injection (f-string in query) |
-| F004 | P1 | High — 可能导致功能失效或安全边界突破 | 运行时接线验证失败: 'NoneType' object has no attribute 'get' |
-| F005 | P1 | High — 可能导致功能失效或安全边界突破 | 运行时验证异常: 'NoneType' object has no attribute 'get' |
-| F006 | P1 | High — 可能导致功能失效或安全边界突破 | 全量回归有 55 个失败 |
-| F007 | P1 | High — 可能导致功能失效或安全边界突破 | S14/S15 快速质量验证 (tests/test_s15_quick.py) 返回 1: ============= |
-| F008 | P1 | High — 可能导致功能失效或安全边界突破 | Phase 17 穷尽测试 (tests/test_s17_exhaustive.py) 返回 1: Traceback |
-| F009 | P2 | Medium — 影响系统可靠性或维护效率 | Threading usage without Lock/RLock — potential race conditio |
+| F004 | P1 | High — 可能导致功能失效或安全边界突破 | 运行时接线验证失败: MAPE-K 默认关闭, phase6_integrated 应为 False |
+| F005 | P1 | High — 可能导致功能失效或安全边界突破 | Phase 17 穷尽测试 (tests/test_s17_exhaustive.py) 返回 1: 
+=== S17. |
+| F006 | P1 | High — 可能导致功能失效或安全边界突破 | composer 行为异常: 无 TTM 时 action_type 应正常, got scaffold |
+| F007 | P2 | Medium — 影响系统可靠性或维护效率 | Threading usage without Lock/RLock — potential race conditio |
+| F008 | P2 | Medium — 影响系统可靠性或维护效率 | assert statement — disabled with -O flag |
+| F009 | P2 | Medium — 影响系统可靠性或维护效率 | assert statement — disabled with -O flag |
 | F010 | P2 | Medium — 影响系统可靠性或维护效率 | assert statement — disabled with -O flag |
 | F011 | P2 | Medium — 影响系统可靠性或维护效率 | assert statement — disabled with -O flag |
 | F012 | P2 | Medium — 影响系统可靠性或维护效率 | assert statement — disabled with -O flag |
@@ -55,29 +56,29 @@ WARN — 835 tests pass but non-critical findings require attention before produ
 | Layer | Status | Key Finding |
 |-------|--------|-------------|
 | A — Code Anatomy | GO | Per-module stats with complexity breakdown |
-| B — Runtime Physiology | NO-GO | Tests: 818 passed / 17 failed |
-| C — Security Immunology | FAIL | SAST: 79 findings (P0:2) |
+| B — Runtime Physiology | GO | Tests: 1466 passed / 0 failed |
+| C — Security Immunology | FAIL | SAST: 87 findings (P0:2) |
 | D — Data Metabolism | GO | Contracts: 13/13 frozen |
-| E — Delivery & Governance | WARN | DORA: Medium (weekly) deploys |
-| F — Phase 6 Integration Health | FAIL | Wiring checks: 14/18 |
-| H — Phase 19-21 Wiring & Exhaustive | FAIL | Wiring checks: 5/15 |
+| E — Delivery & Governance | WARN | DORA: High (daily+) deploys |
+| F — Phase 6 Integration Health | WARN | Wiring checks: 17/18 |
+| H — Phase 19-21 Wiring & Exhaustive | FAIL | Wiring checks: 26/30 |
 
 
 ### A — Code Anatomy
 - **模块统计**: Per-module stats with complexity breakdown
-- **代码异味**: Code smells: 144
-- **依赖审计**: SBOM: 3 packages
+- **代码异味**: Code smells: 153
+- **依赖审计**: SBOM: 5 packages
 - **TLA+ 评估**: TLA+ ready: True
 
 ### B — Runtime Physiology
-- Tests: 818 passed / 17 failed
+- Tests: 1466 passed / 0 failed
 - Per-module breakdown available
 - Cognitive load: 10/10
 
 ### C — Security Immunology
-- SAST: 79 findings (P0:2)
+- SAST: 87 findings (P0:2)
 - Secrets: 2
-- Dependency score: 3
+- Dependency score: 5
 
 ### D — Data Metabolism
 - Contracts: 13/13 frozen
@@ -85,7 +86,7 @@ WARN — 835 tests pass but non-critical findings require attention before produ
 - AI drift detection: True
 
 ### E — Delivery & Governance
-- DORA: Medium (weekly) deploys
+- DORA: High (daily+) deploys
 - Bus factor: 1
 - Test pyramid healthy: False
 
@@ -96,7 +97,7 @@ WARN — 835 tests pass but non-critical findings require attention before produ
 | Pair | Status | Detail |
 |------|--------|--------|
 | contracts_vs_source | GO | 13 contracts, source imports verified |
-| source_vs_tests | GO | 42/53 source modules have test coverage |
+| source_vs_tests | GO | 42/56 source modules have test coverage |
 | tests_vs_runtime | GO | 916 tests pass at runtime — test-to-runtime alignment verified |
 | architecture_vs_implementation | GO | Inner→Middle→Outer layering intact |
 | docs_vs_reality | GO | B6=True B7=True B8=True |
@@ -108,10 +109,10 @@ WARN — 835 tests pass but non-critical findings require attention before produ
 
 | Metric | Value |
 |--------|-------|
-| Max Tests Run | 835 |
-| All Passed | False |
+| Max Tests Run | 1466 |
+| All Passed | True |
 | Cognitive Load | 10/10 |
-| Dependency Attack Surface | 3/10 |
+| Dependency Attack Surface | 5/10 |
 
 **Recommendation**: System handles current load levels. For production hardening: add fault injection, chaos engineering drills, and TLA+ formal verification.
 
@@ -128,7 +129,7 @@ WARN — 835 tests pass but non-critical findings require attention before produ
 |---------------|--------|
 | SAST Critical | 2 |
 | Secrets Critical | 2 |
-| Extended SAST Patterns | 79 findings |
+| Extended SAST Patterns | 87 findings |
 
 **需要人工红蓝对抗的项**:
   - 社会工程学审计 (钓鱼/伪装/诱饵攻击模拟)
@@ -158,7 +159,7 @@ WARN — 835 tests pass but non-critical findings require attention before produ
   - Run TLA+ model checking on state machine
 
 **Day 31-60 (治理)**:
-  - Address 364 audit findings by severity
+  - Address 385 audit findings by severity
   - Add AI model drift detection
   - Implement data quality monitoring
   - Repay tech debt: reduce high-complexity functions
@@ -175,35 +176,35 @@ WARN — 835 tests pass but non-critical findings require attention before produ
 
 | Evidence File | SHA-256 |
 |--------------|---------|
-| 00_execution_index.md | d583d6f568de73b6 |
-| 99_final_report.json | a0b4db990e036584 |
-| 99_final_report.md | 3ca1f52198403c0a |
-| blockers.json | 5e4fe25e3d8028e4 |
-| evidence_manifest.json | 4fb4f27717088aab |
+| 00_execution_index.md | 516a9347202843a6 |
+| 99_final_report.json | d5ff48a9ce357dce |
+| 99_final_report.md | 7101e07f547ec257 |
+| blockers.json | f2780512b465c0f0 |
+| evidence_manifest.json | e45ea51a4acec3b7 |
 | replay_commands.sh | 2a749959df83b29e |
-| S00/summary.json | 174d730fa6c713fc |
-| S00/raw/env.txt | f887325e131cb35e |
-| S10/findings.json | a80001c6ac1d1cb5 |
-| S10/summary.json | c406c0b8a1b83b37 |
-| S10/raw/static_analysis.log | 40b296d4c87c8249 |
+| S00/summary.json | 1fcf1a17ba6350e4 |
+| S00/raw/env.txt | 12d9c57e13c324cd |
+| S10/findings.json | 5aee192c61008a5a |
+| S10/summary.json | db2118d9f598631d |
+| S10/raw/static_analysis.log | 994b629b9d5b5ac5 |
 | S20/findings.json | bdc1023b3966f665 |
-| S20/summary.json | f2c3b4c5ea103dd0 |
-| S20/raw/test_run.log | 9c2de9b94b2acdd0 |
-| S30/findings.json | 27c032cfde47b1ad |
-| S30/summary.json | ebfcf5c3a7a2cc38 |
-| S30/raw/sast.log | 8b367d4025640015 |
-| S30/raw/secret_scan.log | 54192bb76b1b9436 |
+| S20/summary.json | a585e498c54150fc |
+| S20/raw/test_run.log | fe3c63b07e520282 |
+| S30/findings.json | c734527f0bd006b1 |
+| S30/summary.json | c59bee0f88b06222 |
+| S30/raw/sast.log | 623a7b55c6c93a29 |
+| S30/raw/secret_scan.log | 3c925e80be51277c |
 | S40/findings.json | bc971f2692dd86b4 |
-| S40/summary.json | 493ac8c425886e4c |
-| S40/raw/schema_check.log | d2ef75b816c58e3d |
-| S50/findings.json | 2f084193dc0d70a7 |
-| S50/summary.json | 0ff89536e9fef60b |
-| S50/raw/delivery_check.log | e44cbc8056a6224e |
-| S60/consistency_matrix.json | cc27382037467af0 |
-| S60/summary.json | 0ef830dde4fdaaa9 |
-| S65/findings.json | 547d3a5fcf8b18df |
-| S65/summary.json | 781921dc7c738761 |
+| S40/summary.json | 8d4b86b90fa70afe |
+| S40/raw/schema_check.log | 85d97dae3a372581 |
+| S50/findings.json | c638e5328f5ec0d5 |
+| S50/summary.json | b3c236ee2f45d239 |
+| S50/raw/delivery_check.log | 57c8cd41db92d901 |
+| S60/consistency_matrix.json | f94edffed1a4563b |
+| S60/summary.json | b3980571115a3edd |
+| S65/findings.json | 482ff197e5023221 |
+| S65/summary.json | 437586223e392364 |
 | S70/roadmap.json | ac2e2bd96520ffb5 |
-| S70/scoring.json | 251812f398c692cf |
+| S70/scoring.json | b636a49dba64fff1 |
 
 *共 38 个证据工件，SHA-256 签名可复现验证*

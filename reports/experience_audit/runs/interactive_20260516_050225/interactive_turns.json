@@ -1,0 +1,98 @@
+{
+  "run_id": "interactive_20260516_050225",
+  "profiles": {
+    "beginner": [
+      {
+        "turn": 0,
+        "student": "你好，我想学Python，但我是完全零基础，从哪里开始？",
+        "coach_action_type": "reflect",
+        "coach_statement": "你刚才说你是完全零基础，想学Python。这很好，我们一起从最基础的概念开始。Python是一种很容易上手的编程语言，我们先来理解什么是编程。想象一下，编程就像写菜谱——你告诉计算机一步步做什么，它就会照做。Python就是写这种'菜谱'的语言。",
+        "llm_generated": true
+      },
+      {
+        "turn": 1,
+        "student": "好的，继续讲吧。我有点跟着费劲，能慢一点吗？",
+        "coach_action_type": "reflect",
+        "coach_statement": "你刚才说有点跟着费劲，希望慢一点。那我们回到编程的比喻——写菜谱。第一步：计算机只能理解非常具体的指令，比如'把鸡蛋打到碗里'，而不是'做个蛋糕'。第二步：Python就像一本菜谱书，教你用简单的英文单词（如print, if, for）写指令。第三步：每条指令就是一个步骤，合起来就叫程序。你觉得这样拆解清楚吗？",
+        "llm_generated": true
+      },
+      {
+        "turn": 2,
+        "student": "哦，if原来是这个意思。那接下来呢？",
+        "coach_action_type": "reflect",
+        "coach_statement": "你刚才理解了if是'如果'的意思，很棒！那我们来继续拆解。if语句就像菜谱里的'如果...就...'——如果鸡蛋打好了，就搅拌。在Python里，if后面跟条件，然后冒号，下一行缩进写要执行的步骤。比如：if 鸡蛋打好了: 搅拌。你觉得这样清楚吗？",
+        "llm_generated": true
+      }
+    ],
+    "fuzzy_basics": [
+      {
+        "turn": 0,
+        "student": "我之前学过一点列表和循环，但感觉很多概念是模糊的，能帮我梳理一下吗？",
+        "coach_action_type": "reflect",
+        "coach_statement": "你刚才提到对列表和循环的概念感到模糊，这很正常，因为这两个概念在编程中紧密相关。让我们从最基础的结构开始梳理：列表是一个有序的容器，可以存储多个元素；而循环则是一种重复执行代码块的方式。我们先看一个简单的例子：`for item in [1, 2, 3]: print(item)`。这里列表是`[1, 2, 3]`，循环依次取出每个元素并打印。你能理解这个例子中列表和循环是如何配合工作的吗？",
+        "llm_generated": true
+      },
+      {
+        "turn": 1,
+        "student": "我大概知道循环了，能再深入讲一下吗？",
+        "coach_action_type": "reflect",
+        "coach_statement": "你刚才说大概知道循环了，那我们再深入一层：循环的核心是'迭代'——重复执行某段代码，直到满足某个条件。除了for循环，还有while循环，它更灵活，但容易造成死循环。我们先看看while的原理。",
+        "llm_generated": true
+      },
+      {
+        "turn": 2,
+        "student": "我大概知道循环了，能再深入讲一下吗？",
+        "coach_action_type": "reflect",
+        "coach_statement": "你刚才说大概知道循环了，那我们再深入一层：循环的核心是'迭代'——重复执行某段代码，直到满足某个条件。除了for循环，还有while循环，它更灵活，但容易造成死循环。我们先看看while的原理。你能理解为什么while循环需要特别注意条件更新吗？",
+        "llm_generated": true
+      }
+    ],
+    "jumpy": [
+      {
+        "turn": 0,
+        "student": "我学过变量和条件判断，但函数还不太懂。今天我们学什么？",
+        "coach_action_type": "reflect",
+        "coach_statement": "你刚才说你学过变量和条件判断，但对函数还不太懂。那我们今天就从函数开始吧。函数就像是一个“小工具”，你把原料放进去，它帮你加工出结果。比如，你想计算一个数的平方，可以写一个函数来完成。我们先来看看函数的基本结构。",
+        "llm_generated": true
+      },
+      {
+        "turn": 1,
+        "student": "哦，条件原来是这个意思。那接下来呢？",
+        "coach_action_type": "reflect",
+        "coach_statement": "你刚才理解了条件的意思，那我们继续深入函数的基本结构。函数由三部分组成：输入（参数）、处理（函数体）、输出（返回值）。比如你要计算一个数的平方，输入是那个数，处理是把它乘以自身，输出就是平方结果。你觉得这个比喻清楚了吗？",
+        "llm_generated": true
+      },
+      {
+        "turn": 2,
+        "student": "我大概知道条件了，能再深入讲一下吗？",
+        "coach_action_type": "reflect",
+        "coach_statement": "你刚才说你大概知道条件了，那我们继续深入函数的基本结构。函数由三部分组成：输入（参数）、处理（函数体）、输出（返回值）。比如你要计算一个数的平方，输入是那个数，处理是把它乘以自身，输出就是平方结果。现在我们来拆解一下：",
+        "llm_generated": true
+      }
+    ],
+    "passive": [
+      {
+        "turn": 0,
+        "student": "好",
+        "coach_action_type": "suggest",
+        "coach_statement": "好的！已为你启用推荐能力：学习阶段检测(TTM)和动机评估(SDT)。你可以随时在设置面板中调整。",
+        "llm_generated": false
+      },
+      {
+        "turn": 1,
+        "student": "好的，继续讲吧。我有点跟着费劲，能慢一点吗？",
+        "coach_action_type": "reflect",
+        "coach_statement": "你刚才说有点跟着费劲，那我们放慢节奏，一起重新梳理概念的本质。我们先从最基础的一个点开始：什么是“认知主权”？简单说，就是你对自己注意力和思想的控制权。",
+        "llm_generated": true
+      },
+      {
+        "turn": 2,
+        "student": "好的，继续讲吧。我有点跟着费劲，能慢一点吗？",
+        "coach_action_type": "reflect",
+        "coach_statement": "你刚才说有点跟着费劲，那我们放慢节奏，一起重新梳理概念的本质。我们先从最基础的一个点开始：什么是“认知主权”？简单说，就是你对自己注意力和思想的控制权。现在，你能用自己的话描述一下，在日常生活中，什么时候你感觉自己的注意力被外界“劫持”了？",
+        "llm_generated": true
+      }
+    ]
+  },
+  "game_turns": 3
+}

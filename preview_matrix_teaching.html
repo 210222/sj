@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>矩阵教学图预览 - 初学者最佳实践</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.47/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.15.0/dist/mermaid.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; color: #2c1810; }
+  h1 { text-align: center; margin-bottom: 8px; font-size: 22px; }
+  .subtitle { text-align: center; color: #888; margin-bottom: 30px; font-size: 13px; }
+  .section { max-width: 900px; margin: 0 auto 24px; background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .section h2 { font-size: 17px; margin-bottom: 8px; color: #1a73e8; }
+  .section .desc { font-size: 13px; color: #666; margin-bottom: 16px; line-height: 1.6; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-left: 8px; vertical-align: middle; }
+  .badge-good { background: #e6f4ea; color: #1e7e34; }
+  .badge-bad { background: #fce8e6; color: #c5221f; }
+  .diagram-box { background: #fafbfc; border: 1px solid #e1e4e8; border-radius: 8px; padding: 20px; overflow-x: auto; }
+  .diagram-box.mermaid { text-align: center; min-height: 60px; }
+  .diagram-box.katex { text-align: center; font-size: 18px; padding: 30px 20px; }
+  .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .comparison .col { border-radius: 8px; padding: 16px; }
+  .col-bad { background: #fef7f6; border: 1px solid #f5c6c2; }
+  .col-good { background: #f6fef7; border: 1px solid #b7e1c1; }
+  .col h4 { font-size: 13px; margin-bottom: 8px; }
+  .note { background: #fffde7; border-left: 3px solid #f9a825; padding: 10px 14px; margin-top: 12px; border-radius: 0 6px 6px 0; font-size: 13px; line-height: 1.6; }
+  code { background: #f1f3f4; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+  hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }
+  .flow-steps { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+  .flow-step { flex: 1; min-width: 180px; background: #f8f9fa; border-radius: 8px; padding: 14px; text-align: center; border: 1px solid #e8eaed; }
+  .flow-step .num { width: 24px; height: 24px; border-radius: 12px; background: #1a73e8; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+  .flow-step .title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .flow-step .detail { font-size: 12px; color: #666; }
+</style>
+</head>
+<body>
+
+<h1>矩阵初学者最佳教学图策略</h1>
+<p class="subtitle">核心原则: KaTeX 展示"矩阵长什么样" + Mermaid 展示"概念间什么关系" — 两者互补，不重复</p>
+
+<!-- ====== 错误示范 ====== -->
+<div class="section">
+  <h2>❌ 错误示范：抽象概念分类树 <span class="badge badge-bad">初学者看不懂</span></h2>
+  <p class="desc">这种图只罗列名词，没有具体数字实例。初学者看完只知道"有这些分类"，完全不知道矩阵到底长什么样。</p>
+  <div class="comparison">
+    <div class="col col-bad">
+      <h4>❌ 坏的 Mermaid 图</h4>
+      <div class="diagram-box mermaid">
+flowchart TD
+  A[矩阵] --> B[方阵]
+  A --> C[非方阵]
+  B --> D[单位矩阵]
+  B --> E[对角矩阵]
+  C --> F[行矩阵]
+  C --> G[列矩阵]
+      </div>
+      <p style="font-size:12px;color:#c5221f;margin-top:8px;">节点只有一个名词，边没有说明，没有具体例子</p>
+    </div>
+    <div class="col col-good">
+      <h4>✅ 好的组合策略</h4>
+      <p style="font-size:12px;color:#1e7e34;margin-bottom:8px;">KaTeX 先展示具体实例，Mermaid 再展示概念关系</p>
+      <div class="diagram-box katex" id="good-matrix-example"></div>
+      <div class="diagram-box mermaid" style="margin-top:8px;">
+flowchart LR
+  A["矩阵: m×n个数的矩形阵列"] -->|"按形状分类"| B{"m=n ?"}
+  B -->|"是(方阵)"| C["方阵: 有行列式/逆矩阵"]
+  B -->|"否"| D["非方阵: 只有转置/秩"]
+  C -->|"特殊方阵"| E["单位矩阵: 对角线全是1"]
+  C -->|"特殊方阵"| F["对角矩阵: 非对角线全是0"]
+      </div>
+      <p style="font-size:12px;color:#1e7e34;margin-top:8px;">KaTeX 给了心理图像 + Mermaid 给了知识结构 = 完整理解</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 策略1: 具体实例优先 ====== -->
+<div class="section">
+  <h2>✅ 策略一：具体实例优先 <span class="badge badge-good">最核心</span></h2>
+  <p class="desc">先展示带具体数字的最小实例，让学生"看到"概念长什么样，再给抽象定义。<br>对矩阵来说：<b>statement 中的 KaTeX 公式就是最好的"图"</b>。</p>
+
+  <div class="diagram-box katex" id="strategy1-a"></div>
+  <p style="font-size:12px;color:#666;margin-top:6px;text-align:center;">标注每个元素的位置名称——让学生知道怎么描述"第2行第3列的数字是6"</p>
+
+  <hr>
+
+  <div class="diagram-box katex" id="strategy1-b"></div>
+  <p style="font-size:12px;color:#666;margin-top:6px;text-align:center;">用具体数字展示变换——转置就是把"第1行变成第1列"</p>
+</div>
+
+<!-- ====== 策略2: 展示变换过程 ====== -->
+<div class="section">
+  <h2>✅ 策略二：展示变换过程（矩阵乘法）<span class="badge badge-good">关键</span></h2>
+  <p class="desc">教操作/运算时，展示"操作前 → 操作过程 → 操作后"。<b>具体数字走一遍，比任何抽象描述都有效。</b></p>
+  <div class="diagram-box katex" id="strategy2"></div>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="num">1</div>
+      <div class="title">维度检查</div>
+      <div class="detail">左矩阵列数(2) = 右矩阵行数(2) ✓<br>结果矩阵: 2×2</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">2</div>
+      <div class="title">行 × 列 点积</div>
+      <div class="detail">c₁₁ = 第1行·第1列<br>= 1×5 + 2×7 = 19</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">3</div>
+      <div class="title">逐个计算</div>
+      <div class="detail">c₁₂ = 1×6 + 2×8 = 22<br>c₂₁ = 3×5 + 4×7 = 43<br>c₂₂ = 3×6 + 4×8 = 50</div>
+    </div>
+    <div class="flow-step">
+      <div class="num">4</div>
+      <div class="title">得到结果</div>
+      <div class="detail">C = [[19,22],[43,50]]<br>2×3 × 3×2 = 2×2</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 策略3: 并排对比 ====== -->
+<div class="section">
+  <h2>✅ 策略三：并排对比区分（加法 vs 乘法）<span class="badge badge-good">防混淆</span></h2>
+  <p class="desc">当两个概念容易混淆时，同一组输入数据，并排展示两个操作的结果，差异一目了然。</p>
+  <div class="diagram-box katex" id="strategy3"></div>
+  <div class="note">
+    <b>教学要点：</b>加法和乘法完全不同——①规则不同(对应位置 vs 行列点积)
+    ②结果尺寸可能不同(同尺寸 vs m×p)
+    ③是否有交换律(A+B=B+A 但 AB≠BA)
+  </div>
+</div>
+
+<!-- ====== 策略4: Mermaid 概念关系图 ====== -->
+<div class="section">
+  <h2>✅ 策略四：Mermaid 展示矩阵知识结构</h2>
+  <p class="desc">当学生对矩阵有了基本认知后，用 Mermaid 展示完整的知识体系——<b>图展示"和什么有关+分几类"，KaTeX 展示"是什么+怎么变"</b>。</p>
+  <div class="diagram-box mermaid">
+flowchart LR
+  subgraph 基础概念
+    A["矩阵: m×n个数的矩形阵列"]
+    B["元素: aᵢⱼ = 第i行第j列的数"]
+  end
+  subgraph 基本运算
+    C["加法: 对应位置相加"]
+    D["数乘: 每个元素乘常数"]
+    E["转置: 行列互换 A→Aᵀ"]
+    F["乘法: 行×列 点积求和"]
+  end
+  subgraph 特殊矩阵
+    G["方阵: m=n"]
+    H["单位矩阵I: 对角线全1"]
+    I["逆矩阵A⁻¹: AA⁻¹=I"]
+  end
+  subgraph 应用
+    J["解线性方程组"]
+    K["图像变换"]
+    L["数据分析"]
+  end
+  A --> C
+  A --> D
+  A --> E
+  A --> F
+  G --> H
+  G --> I
+  C --> J
+  F --> K
+  F --> L
+  E --> K
+  </div>
+  <div class="note">
+    <b>subgraph 分组让结构清晰：</b>基础→运算→特殊→应用，逐层递进。每组内的节点用不同颜色区分。
+    <b>不用在一轮里全讲完——每轮讲一个 subgraph 就够了。</b>
+  </div>
+</div>
+
+<!-- ====== 完整教学示例 ====== -->
+<div class="section">
+  <h2>📖 完整教学示例：第一轮教矩阵</h2>
+  <p class="desc">以下是 coach 对"怎么学习矩阵"的理想首轮回复——KaTeX 展示具体实例 + 提问引导。</p>
+  <div style="background:#f8f9fa;border-radius:8px;padding:20px;line-height:1.8;font-size:15px;">
+    <p><b>Coach:</b> 关于你问的矩阵，我们先从最简单的例子开始。</p>
+    <p>这是一个 <b>2行3列</b> 的矩阵：</p>
+    <div class="diagram-box katex" style="background:transparent;border:none;" id="example-full"></div>
+    <p>📌 <b>第1行</b>是 (1, 2, 3)，<b>第2行</b>是 (4, 5, 6)</p>
+    <p>📌 <b>第1列</b>是 (1, 4)，<b>第2列</b>是 (2, 5)，<b>第3列</b>是 (3, 6)</p>
+    <p>📌 数字 6 在 <b>第2行第3列</b></p>
+    <p style="margin-top:12px;">你之前用过 Excel 表格或编程中的二维数组吗？你觉得矩阵和普通表格有什么不同？</p>
+  </div>
+  <div class="note" style="margin-top:16px;">
+    <b>这一轮不需要 Mermaid diagram。</b>KaTeX 具体实例已经足够。下一轮（教矩阵加法 vs 乘法时）再用 Mermaid 展示概念关系。
+    <b>好图的标准：学生看图+文字互相补充——不重复。</b>
+  </div>
+</div>
+
+<script>
+mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+
+// Render all KaTeX expressions
+const katexEls = {
+  'good-matrix-example': String.raw`\begin{pmatrix}1&2&3\\4&5&6\end{pmatrix} \quad \leftarrow \text{这是一个 }2\times3\text{ 矩阵}`,
+  'strategy1-a': String.raw`\begin{pmatrix}
+\overset{\text{第1列}}{1} & \overset{\text{第2列}}{2} & \overset{\text{第3列}}{3} \\[4pt]
+\underset{\text{第1列}}{4} & \underset{\text{第2列}}{5} & \underset{\text{第3列}}{6}
+\end{pmatrix}
+\quad
+\begin{aligned}
+&\text{第1行} \rightarrow (1,2,3) \\
+&\text{第2行} \rightarrow (4,5,6) \\
+&\text{矩阵记作: } A_{2\times3}
+\end{aligned}`,
+  'strategy1-b': String.raw`A = \begin{pmatrix}1&2\\3&4\\5&6\end{pmatrix}_{3\times2}
+\quad\xrightarrow{\text{转置}}\quad
+A^T = \begin{pmatrix}1&3&5\\2&4&6\end{pmatrix}_{2\times3}
+
+\small
+\begin{aligned}
+&\text{原第1行 }(1,2) \rightarrow \text{新第1列} \\
+&\text{原第2行 }(3,4) \rightarrow \text{新第2列} \\
+&\text{原第3行 }(5,6) \rightarrow \text{新第3列} \\
+&\text{规律: } (A^T)_{ji} = A_{ij}
+\end{aligned}`,
+  'strategy2': String.raw`\underbrace{\begin{pmatrix}1&2\\3&4\end{pmatrix}}_{A_{2\times2}}
+\times
+\underbrace{\begin{pmatrix}5&6\\7&8\end{pmatrix}}_{B_{2\times2}}
+=
+\underbrace{\begin{pmatrix}
+1\cdot5+2\cdot7 & 1\cdot6+2\cdot8 \\
+3\cdot5+4\cdot7 & 3\cdot6+4\cdot8
+\end{pmatrix}}_{\text{行}\times\text{列 点积求和}}
+=
+\boxed{\begin{pmatrix}19&22\\43&50\end{pmatrix}_{2\times2}}`,
+  'strategy3': String.raw`\begin{array}{c|c}
+\text{加法 (对应位置相加)} & \text{乘法 (行列点积)} \\
+\hline
+\begin{pmatrix}1&2\\3&4\end{pmatrix} + \begin{pmatrix}5&6\\7&8\end{pmatrix}
+= \begin{pmatrix}1+5&2+6\\3+7&4+8\end{pmatrix}
+= \begin{pmatrix}6&8\\10&12\end{pmatrix}
+&
+\begin{pmatrix}1&2\\3&4\end{pmatrix} \times \begin{pmatrix}5&6\\7&8\end{pmatrix}
+= \begin{pmatrix}19&22\\43&50\end{pmatrix} \\[8pt]
+\bullet\ \text{同尺寸矩阵} & \bullet\ \text{左列数=右行数} \\
+\bullet\ A+B = B+A\ \text{(交换律)} & \bullet\ AB \neq BA\ \text{(无交换律)} \\
+\bullet\ \text{结果同尺寸} & \bullet\ \text{结果: 左行数×右列数}
+\end{array}`,
+  'example-full': String.raw`\begin{pmatrix}
+\color{#1a73e8}{1} & \color{#1a73e8}{2} & \color{#1a73e8}{3} \\
+\color{#e37400}{4} & \color{#e37400}{5} & \color{#e37400}{6}
+\end{pmatrix}
+\qquad
+\begin{aligned}
+&\leftarrow \text{第1行 = (1,2,3)} \\
+&\leftarrow \text{第2行 = (4,5,6)} \\
+&\uparrow\qquad\uparrow\qquad\uparrow \\
+&\text{第1列}\ \text{第2列}\ \text{第3列}
+\end{aligned}`
+};
+
+for (const [id, expr] of Object.entries(katexEls)) {
+  const el = document.getElementById(id);
+  if (el) {
+    try {
+      katex.render(expr, el, { throwOnError: false, displayMode: true });
+    } catch(e) {
+      el.textContent = 'KaTeX Error: ' + e.message;
+    }
+  }
+}
+</script>
+</body>
+</html>

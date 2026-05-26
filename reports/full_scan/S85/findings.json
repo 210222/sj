@@ -1,57 +1,22 @@
 [
   {
     "severity": "P1",
-    "type": "runtime_crash",
-    "detail": "运行时验证异常: 'NoneType' object has no attribute 'get'"
-  },
-  {
-    "severity": "P1",
-    "type": "regression_failures",
-    "detail": "全量回归有 55 个失败"
-  },
-  {
-    "severity": "P1",
     "type": "exhaustive_fail",
-    "detail": "S14/S15 快速质量验证 (tests/test_s15_quick.py) 返回 1: ============================================================\nS15 QUICK EVALUATION: 5 configs x 5 turns\n============================================================\nTraceback (most recent call last):\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s15_quick.py\", line 151, in <module>\n    main()\n  File \"D:"
+    "detail": "Phase 17 穷尽测试 (tests/test_s17_exhaustive.py) 返回 1: \n=== S17.1: Ƽ ===\n[OK  ] S17.1.1 û awakening\n[OK  ] S17.1.2 awakening.triggered=True\n[OK  ] S17.1.3 recommended  2 ģ  got 4\n[OK  ] S17.1.4 TTM Ƽ\n[OK  ] S17.1.5 SDT Ƽ\n[OK  ] S17.1.6 Ƽģ recommended=True\n[OK  ] S17.1.7  awakening\n\n=== S17.2: ͬ ===\n[OK  ] S17.2.1 ͬؼ 'Ƽ'  intent=consent_enable_recommen"
+  },
+  {
+    "severity": "P2",
+    "type": "dashboard_error",
+    "detail": "Dashboard 数据验证异常: DashboardAggregator.__init__() missing 1 required positional argument: 'session_id'"
   },
   {
     "severity": "P1",
-    "type": "exhaustive_fail",
-    "detail": "Phase 17 穷尽测试 (tests/test_s17_exhaustive.py) 返回 1: Traceback (most recent call last):\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s17_exhaustive.py\", line 373, in <module>\n    ok = run()\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s17_exhaustive.py\", line 64, in run\n    restore_config()\n  File \"D:\\Claudedaoy\\coherence\\tests\\test_s17_exhaustive.py\", li"
-  },
-  {
-    "severity": "P2",
-    "type": "dashboard_placeholder",
-    "detail": "Dashboard total_turns=0, 预期 > 0（可能是硬编码占位符）"
-  },
-  {
-    "severity": "P2",
-    "type": "composer_error",
-    "detail": "composer 验证异常: 'NoneType' object has no attribute 'get'"
-  },
-  {
-    "severity": "P2",
-    "type": "coach_bridge_error",
-    "detail": "CoachBridge 验证异常: 'NoneType' object has no attribute 'get'"
-  },
-  {
-    "severity": "P2",
-    "type": "sdt_tone_error",
-    "detail": "_build_behavior_signals 验证异常: 'NoneType' object has no attribute 'get'"
-  },
-  {
-    "severity": "P3",
-    "type": "history_data_error",
-    "detail": "profile_history 数据查询异常: local variable 'SessionPersistence' referenced before assignment"
-  },
-  {
-    "severity": "P2",
-    "type": "diag_engine_error",
-    "detail": "DiagnosticEngine 验证异常: 'NoneType' object has no attribute 'get'"
+    "type": "composer_behavior",
+    "detail": "composer 行为异常: 无 TTM 时 action_type 应正常, got scaffold"
   },
   {
     "severity": "P2",
     "type": "data_flow_error",
-    "detail": "端到端数据流验证异常: 'NoneType' object has no attribute 'get'"
+    "detail": "端到端数据流验证异常: DashboardAggregator.__init__() missing 1 required positional argument: 'session_id'"
   }
 ]

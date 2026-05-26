@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Phase 62 最终预览 — Mermaid + KaTeX + Desmos</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js"></script>
+<script src="https://www.desmos.com/api/v1.10/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>
+<style>
+:root {
+  --deep-mocha: #3d322b; --warm-white: #fdfaf5; --soft-blue: #dce8f5;
+  --sage-green: #8a9f87; --coral-candy: #f2d5c4; --lavender-gray: #e0dce8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; background: var(--warm-white); color: var(--deep-mocha); }
+.preview-container { max-width: 720px; margin: 24px auto; padding: 16px; }
+
+.chat-bubble {
+  padding: 14px 18px; border-radius: 14px; margin-bottom: 16px;
+  line-height: 1.6; font-size: 14px;
+}
+.chat-bubble.coach { background: var(--soft-blue); max-width: 92%; }
+.chat-bubble.user { background: var(--lavender-gray); max-width: 85%; margin-left: auto; }
+
+.diagram-box {
+  margin: 12px 0; padding: 12px; background: #fff;
+  border: 1px solid var(--lavender-gray); border-radius: 8px;
+}
+.diagram-box .label {
+  font-size: 10px; text-transform: uppercase; color: var(--sage-green);
+  margin-bottom: 8px; font-weight: 600;
+}
+
+.section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin: 32px 0 10px; opacity: 0.4; }
+.desmos-board { width: 100%; height: 380px; border-radius: 8px; }
+.math-block { margin: 8px 0; padding: 8px 12px; background: #fff; border-radius: 6px; border-left: 3px solid var(--sage-green); overflow-x: auto; }
+
+.comparison-footer {
+  margin-top: 20px; padding: 14px; background: #f0f7f0; border-radius: 10px;
+  border: 1px solid var(--sage-green); font-size: 13px; line-height: 1.6;
+}
+</style>
+</head>
+<body>
+<div class="preview-container">
+<h2 style="margin-bottom:16px;font-size:16px;">Phase 62 最终预览 — Mermaid + KaTeX + Desmos</h2>
+
+<!-- ===== Scene 1: Trigonometry — Desmos (interactive graph) + KaTeX (formula) ===== -->
+<div class="section-label">场景 1：三角函数 — Desmos 交互图 + KaTeX 公式</div>
+<div class="chat-bubble user">sin 和 cos 的图像有什么区别？</div>
+<div class="chat-bubble coach">
+  看这个交互式图——<b>红色是 sin(x)，蓝色是 cos(x)</b>。你可以拖拽、缩放、点击曲线上任意一点看坐标：
+  <div class="diagram-box">
+    <div class="label">📐 Desmos — 交互式函数图（可拖拽缩放）</div>
+    <div class="desmos-board" id="desmos-scene1"></div>
+  </div>
+  <span class="math-block" id="eq1"></span><br>
+  注意：sin 从 0 开始，cos 从 1 开始。cos(x) 就是 sin(x) 向左移了 π/2。<b>sin(π) 和 cos(π) 各是多少？在图上看。</b>
+</div>
+
+<!-- ===== Scene 2: Python — Mermaid flowchart + KaTeX ===== -->
+<div class="section-label">场景 2：Python for 循环 — Mermaid 流程图 + KaTeX 公式</div>
+<div class="chat-bubble user">for 循环是怎么一步步执行的？</div>
+<div class="chat-bubble coach">
+  <div class="diagram-box">
+    <div class="label">📊 Mermaid — 执行流程</div>
+    <pre class="mermaid" style="background:transparent;">
+graph TD
+    A["序列 [a, b, c]"] --> B["取第 1 个: a"]
+    B --> C["执行循环体"]
+    C --> D{"还有下一个?"}
+    D -->|"是"| B
+    D -->|"否"| E["循环结束"]
+    </pre>
+  </div>
+  遍历三个元素：<span class="math-block" id="eq2"></span>
+  <b>现在不看上面，你自己说说 range(4) 会产生哪几个数？</b>
+</div>
+
+<!-- ===== Scene 3: Algorithm sorting — Mermaid sequence + KaTeX ===== -->
+<div class="section-label">场景 3：冒泡排序 — Mermaid 时序图 + KaTeX 公式</div>
+<div class="chat-bubble user">冒泡排序怎么一趟趟排的？</div>
+<div class="chat-bubble coach">
+  <div class="diagram-box">
+    <div class="label">📊 Mermaid — 排序过程时序图</div>
+    <pre class="mermaid" style="background:transparent;">
+sequenceDiagram
+    participant 第1轮
+    participant 第2轮
+    participant 第3轮
+    Note over 第1轮: [5,3,8,1] → [3,5,1,|8|]
+    Note over 第2轮: [3,5,1] → [3,1,|5|]
+    Note over 第3轮: [3,1] → [1,|3|]
+    Note right of 第3轮: ✅ 最终: [1,3,5,8]
+    </pre>
+  </div>
+  规律：<span class="math-block" id="eq3"></span>
+  <b>给你 [4, 2, 7, 1]，第一轮结束后是什么？</b>
+</div>
+
+<!-- ===== Scene 4: Exam question — Desmos graph + KaTeX ===== -->
+<div class="section-label">场景 4：考试出题 — Desmos 当场生成题目图 + KaTeX 公式</div>
+<div class="chat-bubble user">考考我</div>
+<div class="chat-bubble coach">
+  好的。请看下图：
+  <div class="diagram-box">
+    <div class="label">📐 Desmos — 考试题：当场生成</div>
+    <div class="desmos-board" id="desmos-scene2"></div>
+  </div>
+  <span class="math-block" id="eq4"></span><br>
+  <b>图中 A、B 两点是两条曲线的交点。请写出 A 点的坐标 (x, y)。</b>
+</div>
+
+<!-- ===== Scene 5: Knowledge outline — Mermaid mindmap ===== -->
+<div class="section-label">场景 5：知识大纲 — Mermaid 思维导图</div>
+<div class="chat-bubble user">三角函数有哪些相关的知识点？</div>
+<div class="chat-bubble coach">
+  <div class="diagram-box">
+    <div class="label">📊 Mermaid — 知识体系思维导图</div>
+    <pre class="mermaid" style="background:transparent;">
+mindmap
+  root((三角函数))
+    基本定义
+      sin = 对边/斜边
+      cos = 邻边/斜边
+      tan = 对边/邻边
+    核心性质
+      周期性 T=2π
+      值域 [-1,1]
+    图像特征
+      振幅、相位、频率
+    恒等式
+      sin²+cos²=1
+    </pre>
+  </div>
+  从哪个分支开始深入了解？
+</div>
+
+<!-- ===== Comparison ===== -->
+<div class="comparison-footer">
+  <b>Phase 62 最终选型</b><br><br>
+  <table style="width:100%;font-size:12px;border-collapse:collapse;">
+    <tr style="border-bottom:1px solid #ddd;">
+      <td style="padding:4px;"><b>库</b></td>
+      <td><b>npm 验证</b></td>
+      <td><b>许可证</b></td>
+      <td><b>用途</b></td>
+    </tr>
+    <tr style="border-bottom:1px solid #ddd;">
+      <td style="padding:4px;">Mermaid</td><td>11.15.0</td><td>MIT</td><td>流程/时序/状态/思维导图/类图/甘特图</td>
+    </tr>
+    <tr style="border-bottom:1px solid #ddd;">
+      <td style="padding:4px;">KaTeX</td><td>0.16.47</td><td>MIT</td><td>数学公式（极速渲染）</td>
+    </tr>
+    <tr>
+      <td style="padding:4px;">Desmos API</td><td>1.5.4</td><td>ISC</td><td>交互式数学图、几何、考试出题（Khan Academy 同款）</td>
+    </tr>
+  </table>
+  <br>
+  ✅ 全部 npm install 离线可用 &nbsp; ✅ 全部 AI 可生成 &nbsp; ✅ 全部开源
+</div>
+
+<div style="text-align:center;margin-top:32px;font-size:10px;opacity:0.3;">
+  Coherence Phase 62 Final Preview — Mermaid + KaTeX + Desmos
+</div>
+</div>
+
+<script>
+mermaid.initialize({startOnLoad:true, theme:'neutral', securityLevel:'loose'});
+
+katex.render("\\sin(0)=0,\\; \\sin(\\frac{\\pi}{2})=1,\\; \\sin(\\pi)=0,\\; \\cos(0)=1,\\; \\cos(\\frac{\\pi}{2})=0", document.getElementById("eq1"), {displayMode:true});
+katex.render("\\text{总迭代次数} = \\text{len}([a,b,c]) = 3", document.getElementById("eq2"), {displayMode:true});
+katex.render("\\text{第 }n\\text{ 轮比较次数} = \\text{len} - n", document.getElementById("eq3"), {displayMode:true});
+katex.render("\\text{题目：已知 } f(x)=\\sin(x),\\; g(x)=x-1.5\\text{。求 A、B 两点坐标。}", document.getElementById("eq4"), {displayMode:true});
+
+// Desmos Scene 1: sin + cos comparison
+(function(){
+  var el = document.getElementById('desmos-scene1');
+  var calc = Desmos.GraphingCalculator(el, {
+    expressions: false, settingsMenu: false, zoomButtons: true,
+    xAxisLabel: 'x', yAxisLabel: 'y',
+  });
+  calc.setExpression({id:'sin', latex:'y=\\sin(x)', color:'#c74440'});
+  calc.setExpression({id:'cos', latex:'y=\\cos(x)', color:'#2d70b3'});
+  calc.setMathBounds({left:-1, right:7, bottom:-2, top:2});
+})();
+
+// Desmos Scene 2: exam question — sin(x) and g(x)=x-1.5
+(function(){
+  var el = document.getElementById('desmos-scene2');
+  var calc = Desmos.GraphingCalculator(el, {
+    expressions: false, settingsMenu: false, zoomButtons: true,
+    xAxisLabel: 'x', yAxisLabel: 'y',
+  });
+  calc.setExpression({id:'sin', latex:'y=\\sin(x)', color:'#c74440'});
+  calc.setExpression({id:'line', latex:'y=x-1.5', color:'#2d70b3'});
+  // Mark intersection points A and B
+  calc.setExpression({id:'A', latex:'A=(1.18, \\sin(1.18))', color:'#2d70b3', pointStyle:'POINT', pointSize:8});
+  calc.setExpression({id:'B', latex:'B=(2.94, \\sin(2.94))', color:'#2d70b3', pointStyle:'POINT', pointSize:8});
+  calc.setMathBounds({left:-1, right:4, bottom:-2.5, top:2});
+})();
+</script>
+</body>
+</html>

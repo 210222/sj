@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Phase 56 -- 文档缺口封版</name><version>1.0.0</version><track>GOVERNANCE</track><phase>56</phase>
+  <before_state>Phase 50-53 缺 XML orchestrator。Phase 55 缺 completion</before_state>
+  <after_state>310-313 XML + phase55 completion 落盘。全 55 Phase 治理层闭环</after_state>
+  <implementation>
+    <create file="meta_prompts/coach/310-313">Phase 50-53 orchestrator XML</create>
+    <create file="reports/phase55_obs_visualization_completion.md"/>
+  </implementation>
+  <go_gate>1466/0/5。零代码缺口。零文档缺口</go_gate>
+</prompt>

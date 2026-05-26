@@ -1,10 +1,13 @@
 {
-  "total_unique_prefix_hashes": 1,
-  "runs_analyzed": 8,
-  "stable_across_all_runs": true,
+  "total_unique_prefix_hashes": 4,
+  "runs_analyzed": 23,
+  "stable_across_all_runs": false,
   "hash_distribution": {
-    "15620410": 8
+    "15620410": 19,
+    "5f91eb9f": 2,
+    "d8b6a6df": 1,
+    "fc12d719": 1
   },
-  "unstable_hashes_count": 0,
+  "unstable_hashes_count": 4,
   "interpretation": "Single unique hash across all runs → stable_prefix is truly stable (content-identical). Multiple hashes → stable_prefix content varies across runs (possible dynamic injection)."
 }

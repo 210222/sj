@@ -1,0 +1,98 @@
+{
+  "run_id": "interactive_20260516_040906",
+  "profiles": {
+    "beginner": [
+      {
+        "turn": 0,
+        "student": "你好，我想学Python，但我是完全零基础，从哪里开始？",
+        "coach_action_type": "scaffold",
+        "coach_statement": "你刚才说想学Python但完全零基础，那我们就像搭积木一样，一步步来。第一步先理解Python是什么——它是一种编程语言，就像你和电脑对话用的规则。比如，你告诉电脑“print('你好')”，它就会在屏幕上显示“你好”。",
+        "llm_generated": true
+      },
+      {
+        "turn": 1,
+        "student": "哦，Python原来是这个意思。那接下来呢？",
+        "coach_action_type": "scaffold",
+        "coach_statement": "你刚才理解了Python是门语言，就像积木块。那第1步我们先学怎么放第一块积木：在电脑上安装Python。比如去python.org下载，像装游戏一样简单。",
+        "llm_generated": true
+      },
+      {
+        "turn": 2,
+        "student": "我大概知道Python了，能再深入讲一下吗？",
+        "coach_action_type": "scaffold",
+        "coach_statement": "你刚才说大概知道Python了，那我们继续搭积木。第2步，我们来学Python最基本的操作：变量。变量就像贴了标签的盒子，你可以往里面放东西。比如，你写`name = '小明'`，就是把'小明'这个值放进名叫name的盒子里。",
+        "llm_generated": true
+      }
+    ],
+    "fuzzy_basics": [
+      {
+        "turn": 0,
+        "student": "我之前学过一点列表和循环，但感觉很多概念是模糊的，能帮我梳理一下吗？",
+        "coach_action_type": "scaffold",
+        "coach_statement": "你刚才提到列表和循环的概念有些模糊，这正是很多初学者常遇到的情况。我们先从列表开始梳理，把它拆解成几个清晰的步骤，这样更容易掌握。第1步：理解列表的基本结构——列表是一个有序的元素集合，用方括号括起来，元素之间用逗号分隔。例如，`fruits = ['apple', 'banana', 'cherry']`。",
+        "llm_generated": true
+      },
+      {
+        "turn": 1,
+        "student": "我大概知道循环了，能再深入讲一下吗？",
+        "coach_action_type": "scaffold",
+        "coach_statement": "你刚才提到大概知道循环，那我们就往深处走一步。循环的核心是让一段代码重复执行，但关键是要理解它的**执行流程**——也就是每一步计算机到底在做什么。我们先拆解一个最简单的 `for` 循环，看看它如何一步步遍历列表。",
+        "llm_generated": true
+      },
+      {
+        "turn": 2,
+        "student": "我大概知道循环了，能再深入讲一下吗？",
+        "coach_action_type": "scaffold",
+        "coach_statement": "你刚才提到大概知道循环，那我们就往深处走一步。循环的核心是让一段代码重复执行，但关键是要理解它的**执行流程**。我们先拆解一个最简单的 `for` 循环，看看它如何一步步遍历列表。例如，`for fruit in ['apple', 'banana', 'cherry']:`，计算机每次取一个元素。",
+        "llm_generated": true
+      }
+    ],
+    "jumpy": [
+      {
+        "turn": 0,
+        "student": "我学过变量和条件判断，但函数还不太懂。今天我们学什么？",
+        "coach_action_type": "scaffold",
+        "coach_statement": "你刚才说已经学过变量和条件判断，现在对函数还不太懂。那我们今天就来拆解函数这个概念，把它分成几个清晰的步骤来理解。函数就像一个小工具箱，把一些常用的代码打包起来，需要的时候直接调用。例如，你想计算两个数的和，可以写一个函数，以后每次需要求和时就直接用这个函数。",
+        "llm_generated": true
+      },
+      {
+        "turn": 1,
+        "student": "哦，包原来是这个意思。那接下来呢？",
+        "coach_action_type": "scaffold",
+        "coach_statement": "你刚才理解了函数是打包代码的工具，那第1步我们先看函数的定义和调用。比如你有一个计算两数之和的函数，定义时给它一个名字叫add，然后每次需要求和时，直接写add(3,5)就能得到8。这就是函数的调用。",
+        "llm_generated": true
+      },
+      {
+        "turn": 2,
+        "student": "哦，条件原来是这个意思。那接下来呢？",
+        "coach_action_type": "scaffold",
+        "coach_statement": "你刚才理解了条件判断是用来控制程序流程的，那第2步我们来看条件表达式的写法。比如你要检查一个数是否大于10，就用'number > 10'这样的表达式，它返回真或假。",
+        "llm_generated": true
+      }
+    ],
+    "passive": [
+      {
+        "turn": 0,
+        "student": "好",
+        "coach_action_type": "suggest",
+        "coach_statement": "好的！已为你启用推荐能力：学习阶段检测(TTM)和动机评估(SDT)。你可以随时在设置面板中调整。",
+        "llm_generated": false
+      },
+      {
+        "turn": 1,
+        "student": "好的，继续讲吧。我有点跟着费劲，能慢一点吗？",
+        "coach_action_type": "reflect",
+        "coach_statement": "好的，你刚才说跟着有点费劲，我们放慢节奏，先把“认知主权”这个概念拆开来看。简单说，认知主权就是你对自己“如何思考、如何判断、如何决定”拥有完全的控制权，而不是被外部的算法、信息或他人悄悄影响。你理解的认知主权大概是什么？",
+        "llm_generated": true
+      },
+      {
+        "turn": 2,
+        "student": "好的，继续讲吧。我有点跟着费劲，能慢一点吗？",
+        "coach_action_type": "reflect",
+        "coach_statement": "你刚才说跟着有点费劲，我们放慢节奏。先确认一下：我上次解释了认知主权是你对自己思考、判断和决定的完全控制权，而不是被外部算法或他人影响。你觉得这个描述清楚吗？或者你理解的认知主权大概是什么？",
+        "llm_generated": true
+      }
+    ]
+  },
+  "game_turns": 3
+}

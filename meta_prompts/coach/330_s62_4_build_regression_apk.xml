@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S62.4 -- 构建验证 + 全量回归 + APK</name>
+  <phase>62</phase><sub_stage>S62.4</sub_stage>
+  <quality_gates>
+    <gate>cd frontend && npm run build → 零错误</gate>
+    <gate>cd .. && python -m pytest tests/ -q → 1466/0/5</gate>
+    <gate>build_apk.bat → APK 构建成功</gate>
+  </quality_gates>
+</prompt>

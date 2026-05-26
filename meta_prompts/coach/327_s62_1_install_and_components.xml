@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S62.1 -- npm install + 渲染组件</name>
+  <phase>62</phase><sub_stage>S62.1</sub_stage>
+  <before_state><file path="frontend/package.json">无可视化依赖</file></before_state>
+  <after_state><file path="frontend/package.json">+4 库。4 个 DiagramRenderer 子组件就位</file></after_state>
+  <task>
+    1. cd frontend && npm install mermaid katex desmos prismjs
+    2. 新建 frontend/src/components/chat/DiagramRenderer.tsx — 分发器：检测 diagram.type → 渲染对应子组件
+    3. 新建 MermaidRenderer / KaTeXRenderer / DesmosRenderer / PrismRenderer（各 ~30 行）
+    4. 每个组件必须 try/catch 渲染错误，失败时降级显示 diagram.content 原始文本
+    5. DesmosRenderer 使用 API key: dcb31709b452b1cf9dc26972add0fda6
+  </task>
+  <go_gate>npm run build 零错误。4 个组件可独立 import</go_gate>
+</prompt>

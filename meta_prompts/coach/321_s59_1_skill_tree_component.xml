@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>S59.1 -- 静态挂载 + SkillTreeCard 组件</name><phase>59</phase><sub_stage>S59.1</sub_stage>
+  <before_state><file path="api/main.py">无 /config 挂载</file><file path="frontend/src/components/dashboard/">无技能树组件</file></before_state>
+  <after_state><file path="api/main.py">+app.mount("/config",...)</file><file path="frontend/src/components/dashboard/SkillTreeCard.tsx">就位</file></after_state>
+  <task>
+    1. api/main.py: reports 挂载旁新增 config 静态挂载
+    2. SkillTreeCard.tsx: fetch /config/skill_graph.json + dashFull.mastery_snapshot
+    3. 内置 CONCEPT_NAMES 映射表(19条)
+    4. 颜色编码: 绿≥0.7/黄0.3-0.7/灰&lt;0.3或null/虚线黄=前置未满足
+    5. null mastery 显示"暂无学习记录"
+  </task>
+  <go_gate>HTTP GET /config/skill_graph.json 返回JSON。SkillTreeCard 3场景正确</go_gate>
+</prompt>

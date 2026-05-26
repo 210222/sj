@@ -1,13 +1,13 @@
 {
   "step": "S30",
   "status": "FAIL",
-  "executed_at_utc": "2026-05-12T06:00:50.013Z",
+  "executed_at_utc": "2026-05-25T05:44:07.527Z",
   "layer": "C — Security Immunology",
   "sast": {
-    "total": 79,
+    "total": 87,
     "critical": 2,
     "high": 1,
-    "medium": 79
+    "medium": 87
   },
   "secrets": {
     "total": 2,
@@ -20,9 +20,9 @@
     "findings": 1
   },
   "dependency_vulnerability": {
-    "dependency_count": 3,
-    "attack_surface_score": 3,
-    "note": "3 dependencies — recommend regular `pip audit` or `safety check`"
+    "dependency_count": 5,
+    "attack_surface_score": 5,
+    "note": "5 dependencies — recommend regular `pip audit` or `safety check`"
   },
-  "findings_count": 83
+  "findings_count": 91
 }
