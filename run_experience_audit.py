@@ -184,6 +184,8 @@ def simulate_profile(pid: str, profile: dict, use_http: bool = True,
                 "intent": r.get("intent"),
                 "has_pulse": r.get("pulse") is not None,
                 "ttm_stage": r.get("ttm_stage"),
+                "flow_channel": r.get("flow_channel"),
+                "sdt_competence": (r.get("sdt_profile") or {}).get("competence", 0),
                 "source_tag": r.get("domain_passport", {}).get("source_tag"),
                 "llm_observability": llm_obs,  # Phase 36
             })
