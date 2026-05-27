@@ -4,8 +4,112 @@ from abc import ABC, abstractmethod
 import json
 import logging
 import concurrent.futures
+import re
 
 _logger = logging.getLogger(__name__)
+
+
+def plan_to_mermaid(plan_text: str) -> dict | None:
+    """Pure Python converter: _diagram_plan text -> valid Mermaid, no Gemini needed.
+
+    Format: "LR: A[label]-->|label|B{label}-->C[label], A-->D[label]"
+    """
+    if not plan_text or len(plan_text) < 5:
+        return None
+    plan = plan_text.strip()
+
+    # 1. Extract direction (LR or TD)
+    direction = "LR"
+    if ":" in plan:
+        parts = plan.split(":", 1)
+        head = parts[0].strip().upper()
+        if head in ("LR", "TD"):
+            direction = head
+        plan = parts[1].strip()
+
+    # 2. Parse nodes and edges
+    nodes: dict[str, tuple[str, str]] = {}
+    edges: list[tuple[str, str, str]] = []
+
+    # Split by comma to get path groups, then by --> to get segments
+    groups = [g.strip() for g in plan.split(",") if g.strip()]
+
+    for group in groups:
+        segments = [s.strip() for s in group.split("-->") if s.strip()]
+        if len(segments) < 2:
+            continue
+        for i in range(len(segments) - 1):
+            # Parse source node from segments[i]
+            src_seg = segments[i]
+            # strip any leading |label| from src
+            sm = re.match(r'^\|[^|]+\|\s*(.*)', src_seg)
+            if sm:
+                src_seg = sm.group(1).strip()
+            sm = re.match(r'^([A-Z])', src_seg)
+            if not sm:
+                continue
+            src_id = sm.group(1)
+
+            # Parse edge label + target node from segments[i+1]
+            tgt_seg = segments[i + 1]
+            edge_label = ""
+            tm = re.match(r'^\|([^|]+)\|\s*(.*)', tgt_seg)
+            if tm:
+                edge_label = tm.group(1).strip()
+                tgt_seg = tm.group(2).strip()
+            tm = re.match(r'^([A-Z])(?:\[([^\]]+)\]|\{([^}]+)\})?$', tgt_seg)
+            if not tm:
+                continue
+            tgt_id = tm.group(1)
+
+            # Register target node
+            if tm.group(2) is not None and tgt_id not in nodes:
+                nodes[tgt_id] = (tm.group(2), "rect")
+            elif tm.group(3) is not None and tgt_id not in nodes:
+                nodes[tgt_id] = (tm.group(3), "diamond")
+
+            edges.append((src_id, tgt_id, edge_label))
+
+        # Also parse source node from the FIRST segment
+        first_seg = segments[0]
+        fm = re.match(r'^([A-Z])(?:\[([^\]]+)\]|\{([^}]+)\})', first_seg)
+        if fm:
+            nid = fm.group(1)
+            if fm.group(2) is not None and nid not in nodes:
+                nodes[nid] = (fm.group(2), "rect")
+            elif fm.group(3) is not None and nid not in nodes:
+                nodes[nid] = (fm.group(3), "diamond")
+
+    # Fill in any undefined nodes from edge endpoints
+    for src, dst, _ in edges:
+        if src not in nodes:
+            nodes[src] = (src, "rect")
+        if dst not in nodes:
+            nodes[dst] = (dst, "rect")
+
+    if not nodes:
+        return None
+
+    # 3. Generate Mermaid code
+    lines = [f"flowchart {direction}"]
+    for nid, (label, shape) in nodes.items():
+        if shape == "diamond":
+            lines.append(f'  {nid}{{{{{label}}}}}')
+        else:
+            lines.append(f'  {nid}["{label}"]')
+    seen_edges = set()
+    for src, dst, lbl in edges:
+        key = (src, dst, lbl)
+        if key in seen_edges:
+            continue
+        seen_edges.add(key)
+        if lbl:
+            lines.append(f"  {src}-->|{lbl}|{dst}")
+        else:
+            lines.append(f"  {src}-->{dst}")
+
+    content = "\n".join(lines)
+    return {"type": "mermaid", "content": content}
 
 
 class DiagramProvider(ABC):

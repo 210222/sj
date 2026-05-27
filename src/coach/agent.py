@@ -1098,27 +1098,45 @@ class CoachAgent:
                         llm_obs["retention"] = retention_obs
                         llm_observability = llm_obs
 
-                    # Phase 73: Gemini 读 _diagram_plan 生成, 或优化 DeepSeek 草稿
+                    # Phase 73: _diagram_plan → diagram（Gemini 增强可选）
                     try:
-                        provider = _get_diagram_provider(self._cfg())
-                        if provider:
-                            payload_before_align = llm_response.to_payload()
-                            stmt = action["payload"].get("statement", "")
-                            # 路径 A: DeepSeek 给了 _diagram_plan → Gemini 从描述生成
-                            plan = payload_before_align.get("_diagram_plan", "")
-                            if plan and len(str(plan)) > 10:
+                        payload_before_align = llm_response.to_payload()
+                        plan = payload_before_align.get("_diagram_plan", "")
+                        ds_diagram = payload_before_align.get("diagram", {})
+
+                        # 路径1: _diagram_plan 有值 → plan_to_mermaid 兜底 + Gemini 升级
+                        if plan and len(str(plan)) > 5:
+                            from src.coach.llm.diagram_provider import plan_to_mermaid
+                            action["payload"]["diagram"] = plan_to_mermaid(str(plan))
+                            provider = _get_diagram_provider(self._cfg())
+                            if provider:
+                                stmt = action["payload"].get("statement", "")
                                 gen = provider.generate_from_plan(plan_text=str(plan), statement=stmt)
                                 if gen and "type" in gen:
                                     action["payload"]["diagram"] = gen
-                            # 路径 B: DeepSeek 直接给了 diagram → Gemini 优化
-                            elif isinstance(payload_before_align.get("diagram"), dict):
-                                ds_diagram = payload_before_align["diagram"]
-                                if ds_diagram.get("content"):
-                                    opt = provider.generate(original=ds_diagram.get("content", ""), statement=stmt)
+                        # 路径2: diagram 字段含新格式文本 → plan_to_mermaid 转换
+                        elif isinstance(ds_diagram, dict) and ds_diagram.get("content"):
+                            content = str(ds_diagram.get("content", ""))
+                            if ("LR:" in content or "TD:" in content) and "flowchart" not in content:
+                                from src.coach.llm.diagram_provider import plan_to_mermaid
+                                action["payload"]["diagram"] = plan_to_mermaid(content)
+                                provider = _get_diagram_provider(self._cfg())
+                                if provider:
+                                    stmt = action["payload"].get("statement", "")
+                                    gen = provider.generate_from_plan(plan_text=content, statement=stmt)
+                                    if gen and "type" in gen:
+                                        action["payload"]["diagram"] = gen
+                            else:
+                                # 旧 Mermaid 代码 → Gemini 优化
+                                action["payload"]["diagram"] = ds_diagram
+                                provider = _get_diagram_provider(self._cfg())
+                                if provider:
+                                    stmt = action["payload"].get("statement", "")
+                                    opt = provider.generate(original=content, statement=stmt)
                                     if opt and "type" in opt:
                                         action["payload"]["diagram"] = opt
                     except Exception:
-                        pass  # Gemini 失败 → DeepSeek 原图兜底
+                        pass
                 else:
                     _logger.warning("LLM output validation failed: %s; using rule fallback", errors)
             except LLMError as e:
