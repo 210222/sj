@@ -78,12 +78,20 @@ export function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>('connecting');
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
   const [isLoading, setIsLoading] = useState(false);
   const [teachReport, setTeachReport] = useState<Record<string, Record<string, unknown>> | null>(null);
   // Phase 13x: 仪表盘可视化数据
   const [dashTTM, setDashTTM] = useState<TTMRadarData | null>(null);
   const [dashSDT, setDashSDT] = useState<SDTRingsData | null>(null);
   const [dashFull, setDashFull] = useState<UserDashboardResponse | null>(null);
+  // 移动端检测
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 600);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   // Phase 13x: 侧边栏打开时加载仪表盘数据
   useEffect(() => {
     if (sidebarOpen && state.sessionId) {
@@ -300,18 +308,29 @@ export function App() {
       {/* 侧边仪表盘 */}
       <aside
         style={{
-          width: sidebarOpen ? 320 : 0,
+          width: sidebarOpen ? (isMobile ? '100vw' : 320) : 0,
           overflow: 'hidden',
           transition: 'width 300ms ease',
           borderRight: sidebarOpen ? `1px solid ${coachColors.lavenderGray}` : 'none',
           background: 'var(--color-warm-white)',
+          flexShrink: 0,
+          zIndex: sidebarOpen ? 10 : 0,
         }}
       >
         {sidebarOpen && (
           <div style={{ padding: 'var(--space-md)', overflowY: 'auto', height: '100vh' }}>
-            <h4 style={{ marginBottom: 'var(--space-sm)', color: 'var(--color-deep-mocha)', fontSize: 13 }}>
-              {state.sessionId ? `Session: ${state.sessionId.slice(0, 8)}...` : 'Loading...'}
-            </h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-sm)' }}>
+              <h4 style={{ color: 'var(--color-deep-mocha)', fontSize: 13, margin: 0 }}>
+                {state.sessionId ? `Session: ${state.sessionId.slice(0, 8)}...` : 'Loading...'}
+              </h4>
+              {isMobile && (
+                <button onClick={() => setSidebarOpen(false)} style={{
+                  width: 32, height: 32, borderRadius: 16, border: 'none',
+                  background: 'var(--color-lavender-gray)', fontSize: 18,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>✕</button>
+              )}
+            </div>
             <div style={{ marginBottom: 'var(--space-md)' }}>
               <GateShieldBadge overall={state.blockingMode === 'soft' ? 'warn' : 'pass'} />
             </div>

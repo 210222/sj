@@ -35,7 +35,7 @@ def plan_to_mermaid(plan_text: str) -> dict | None:
     groups = [g.strip() for g in plan.split(",") if g.strip()]
 
     for group in groups:
-        segments = [s.strip() for s in group.split("-->") if s.strip()]
+        segments = [s.strip() for s in group.split("→") if s.strip()]
         if len(segments) < 2:
             continue
         for i in range(len(segments) - 1):

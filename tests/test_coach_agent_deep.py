@@ -143,11 +143,14 @@ class TestCoachAgentEdgeCases:
         result = agent.act("给个建议", {"safety_context": {"p0_count": 0, "p1_count": 0}})
         assert result["safety_allowed"] is True
 
-    def test_act_produces_same_intent_for_same_input(self):
+    def test_act_produces_valid_action_type_for_same_input(self):
+        """Phase 73: Flow 回路闭合后状态变化，不再保证相同输入产生相同 action_type."""
         agent = CoachAgent()
         r1 = agent.act("挑战一下")
         r2 = agent.act("挑战一下")
-        assert r1["action_type"] == r2["action_type"]
+        valid = {"suggest", "scaffold", "probe", "reflect", "challenge", "defer", "pulse", "excursion"}
+        assert r1["action_type"] in valid
+        assert r2["action_type"] in valid
 
 
 # ═══════════════════════════════════════════════════════════════
