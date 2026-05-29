@@ -285,6 +285,8 @@ sdt:
     autonomy: 0.35
     competence: 0.35
     relatedness: 0.3
+search:
+  enabled: true
 sovereignty_pulse:
   enabled: false
   high_intensity_threshold: 0.7

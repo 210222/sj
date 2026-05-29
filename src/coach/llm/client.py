@@ -203,6 +203,55 @@ class LLMClient:
             usage=usage if usage else None,
         )
 
+    def search(self, system_prompt: str, user_prompt: str,
+               json_mode: bool = True) -> dict:
+        """搜索 + 结构化输出。独立于 generate()，不走教练管线。
+
+        Args:
+            system_prompt: 搜索专用 system prompt（不是教练 prompt）
+            user_prompt: 搜索 query
+            json_mode: True=强制 JSON 输出, False=不限格式
+
+        Returns:
+            dict: 搜索结果的 JSON 解析（json_mode=True 时正常 dict，
+                  json_mode=False 时包装为 {"raw_text": "..."}）
+
+        Raises:
+            LLMError: API 调用或 JSON 解析失败
+        """
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        body: dict = {
+            "model": self._cfg.model,
+            "messages": messages,
+            "temperature": 0.3,
+            "max_tokens": 4000,
+            "extra_body": {"enable_search": True},
+        }
+        if json_mode:
+            body["response_format"] = {"type": "json_object"}
+
+        last_error = None
+        for attempt in range(self._cfg.max_retries + 1):
+            try:
+                resp = self._call_api(body)
+                if json_mode:
+                    result = json.loads(resp.content)
+                    if not isinstance(result, dict):
+                        raise ValueError(f"Expected dict, got {type(result)}")
+                    return result
+                else:
+                    return {"raw_text": resp.content}
+            except Exception as e:
+                last_error = e
+                if attempt < self._cfg.max_retries:
+                    time.sleep(2 ** attempt)
+
+        raise LLMError(f"Search failed after {self._cfg.max_retries + 1} attempts: {last_error}")
+
     async def generate_stream(
         self, coach_context: dict) -> AsyncGenerator[str, None]:
         """流式生成教学内容，逐 chunk 产出文本片段.

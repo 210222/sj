@@ -25,6 +25,7 @@ class LLMConfig:
     max_tokens: int = 2000
     fallback_to_rules: bool = False
     enabled: bool = True
+    search_enabled: bool = False
 
     @classmethod
     def from_yaml(cls, cfg: dict) -> "LLMConfig":
@@ -49,6 +50,7 @@ class LLMConfig:
             temperature=float(llm_cfg.get("temperature", 0.7)),
             max_tokens=int(llm_cfg.get("max_tokens", 2000)),
             fallback_to_rules=bool(llm_cfg.get("fallback_to_rules", False)),
+            search_enabled=bool(cfg.get("search", {}).get("enabled", False)),
             enabled=True,
         )
 
