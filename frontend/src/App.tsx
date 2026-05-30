@@ -124,7 +124,7 @@ export function App() {
     applyColorAdaptation();
     if (!state.sessionId) {
       createSession().then((res) => {
-        setSession(res.session_id, res.token);
+        setSession(res.session_id, res.token, res.course_id || '');
         if (res.ttm_stage) setTTMStage(res.ttm_stage as TTMStage);
         if (res.sdt_scores) setSDTProfile(res.sdt_scores);
         setConnectionStatus('connected');

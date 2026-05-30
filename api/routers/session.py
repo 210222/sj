@@ -37,11 +37,24 @@ async def create_session(req: CreateSessionRequest, request: Request):
     token = req.token if req.token and iam.validate_token(req.token) else iam.issue_anonymous_token()
     session_id = req.session_id or __import__("uuid").uuid4().hex[:16]
 
+    # Phase 79-C: 绑定课程到会话
+    course_id = req.course_id or ""
+
     # 初始化状态树
     iam.update_session_state(token, session_id, {
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "ttm_stage": None,
+        "course_id": course_id,
     })
+
+    # 持久化 course_id 到 profiles 表
+    if course_id:
+        try:
+            from src.coach.persistence import SessionPersistence
+            persist = SessionPersistence(session_id)
+            persist.save_course_id(course_id)
+        except Exception:
+            pass
 
     ttm_stage = CoachBridge.get_ttm_stage(session_id)
     sdt_scores = CoachBridge.get_sdt_scores(session_id)
@@ -49,6 +62,7 @@ async def create_session(req: CreateSessionRequest, request: Request):
     return CreateSessionResponse(
         session_id=session_id,
         token=token,
+        course_id=course_id,
         ttm_stage=ttm_stage,
         sdt_scores=sdt_scores,
         created_at_utc=datetime.now(timezone.utc).isoformat(),

@@ -66,18 +66,22 @@ class CoachBridge:
     """CoachAgent 适配器——无状态，每个请求独立创建 agent 实例."""
 
     @staticmethod
-    def chat(message: str, session_id: str) -> dict[str, Any]:
+    def chat(message: str, session_id: str, course_id: str = "") -> dict[str, Any]:
         """转发消息到 CoachAgent.act() 并返回 DSL 响应.
 
         通过线程池执行同步调用，防止阻塞事件循环。
         """
         def _call() -> dict[str, Any]:
             agent = _get_or_create_agent(session_id)
+            # Phase 79-C: 注入 course_id
+            if course_id and not getattr(agent, 'course_id', ''):
+                agent.course_id = course_id
             return agent.act(
                 message,
                 context={
                     "session_id": session_id,
                     "event_time_utc": datetime.now(timezone.utc).isoformat(),
+                    "course_id": course_id,
                 },
             )
 
@@ -179,7 +183,7 @@ class CoachBridge:
         return {"autonomy": 0.5, "competence": 0.5, "relatedness": 0.5}
 
     @staticmethod
-    async def chat_stream(message: str, session_id: str):
+    async def chat_stream(message: str, session_id: str, course_id: str = ""):
         """WebSocket 流式推送适配器 — AsyncGenerator.
 
         Yields:
@@ -192,6 +196,9 @@ class CoachBridge:
 
         try:
             agent = _get_or_create_agent(session_id)
+            # Phase 79-C: 注入 course_id
+            if course_id and not getattr(agent, 'course_id', ''):
+                agent.course_id = course_id
             cfg = agent._cfg()
             llm_cfg = cfg.get("llm", {})
             if not llm_cfg.get("enabled", False):

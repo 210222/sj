@@ -13,11 +13,13 @@ from pydantic import BaseModel, Field
 class CreateSessionRequest(BaseModel):
     session_id: str | None = None
     token: str | None = None
+    course_id: str = ""  # optional course binding (Phase 79-C)
 
 
 class CreateSessionResponse(BaseModel):
     session_id: str
     token: str
+    course_id: str = ""  # echo back bound course
     ttm_stage: str | None = None
     sdt_scores: dict[str, float] | None = None
     created_at_utc: str

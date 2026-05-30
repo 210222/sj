@@ -35,10 +35,11 @@ async function request<T>(
 
 // ── 会话 ──
 
-export function createSession(sessionId?: string, token?: string): Promise<SessionResponse> {
+export function createSession(sessionId?: string, token?: string, courseId?: string): Promise<SessionResponse> {
   return request<SessionResponse>('POST', '/session', {
     session_id: sessionId ?? null,
     token: token ?? null,
+    course_id: courseId ?? '',
   });
 }
 

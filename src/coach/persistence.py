@@ -54,6 +54,12 @@ def _get_db() -> sqlite3.Connection:
         conn.commit()
     except sqlite3.OperationalError:
         pass
+    # Phase 79-C: course_id 列迁移
+    try:
+        conn.execute("ALTER TABLE profiles ADD COLUMN course_id TEXT DEFAULT ''")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass
     return conn
 
 
@@ -181,6 +187,7 @@ class SessionPersistence:
             "learning_goal": row["learning_goal"] or "",
             "current_topic": row["current_topic"] or "",
             "goal_progress": row["goal_progress"] or 0.0,
+            "course_id": row["course_id"] if "course_id" in row.keys() else "",
         }
 
     def save_skill_masteries(self, masteries: dict) -> None:
@@ -208,6 +215,22 @@ class SessionPersistence:
             "UPDATE profiles SET consent_status = ? WHERE session_id = ?",
             (status, self.session_id))
         self.db.commit()
+
+    # ── Phase 79-C: 课程归属 ──
+
+    def save_course_id(self, course_id: str) -> None:
+        """绑定会话到课程。course_id="" 表示未绑定。"""
+        self.db.execute(
+            "UPDATE profiles SET course_id = ? WHERE session_id = ?",
+            (course_id, self.session_id))
+        self.db.commit()
+
+    def get_course_id(self) -> str:
+        """读取会话的课程绑定。"""
+        row = self.db.execute(
+            "SELECT course_id FROM profiles WHERE session_id = ?",
+            (self.session_id,)).fetchone()
+        return (row[0] if row and row[0] else "") if row else ""
 
     def load_consent_status(self) -> str:
         """加载跨会话的 consent_status."""

@@ -17,6 +17,7 @@ function loadInitialState(): CoachState {
   return {
     sessionId,
     token,
+    courseId: '',  // Phase 79-C
     ttmStage: null,
     sdtProfile: null,
     flowChannel: null,
@@ -30,10 +31,11 @@ function loadInitialState(): CoachState {
 export function useCoachState() {
   const [state, setState] = useState<CoachState>(loadInitialState);
 
-  const setSession = useCallback((sessionId: string, token: string) => {
+  const setSession = useCallback((sessionId: string, token: string, courseId?: string) => {
     sessionStorage.setItem('coherence_session_id', sessionId);
     sessionStorage.setItem('coherence_token', token);
-    setState((s) => ({ ...s, sessionId, token }));
+    if (courseId) sessionStorage.setItem('coherence_course_id', courseId);
+    setState((s) => ({ ...s, sessionId, token, courseId: courseId || s.courseId || '' }));
   }, []);
 
   const addMessage = useCallback((msg: ChatMessage) => {

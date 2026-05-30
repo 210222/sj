@@ -40,6 +40,7 @@ export interface TTMUIMapping {
 export interface CoachState {
   sessionId: string;
   token: string;
+  courseId: string;  // Phase 79-C
   ttmStage: TTMStage | null;
   sdtProfile: Record<string, number> | null;
   flowChannel: string | null;

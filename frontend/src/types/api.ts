@@ -3,6 +3,7 @@
 export interface SessionResponse {
   session_id: string;
   token: string;
+  course_id: string;  // Phase 79-C: bound course ("" if unbound)
   ttm_stage: string | null;
   sdt_scores: Record<string, number> | null;
   created_at_utc: string;

@@ -55,6 +55,14 @@ async def chat(req: ChatMessageRequest, request: Request):
             detail={"error": "RATE_LIMITED", "detail": "Chat rate limit exceeded"},
         )
 
+    # Phase 79-C: 读取会话的课程绑定
+    course_id = ""
+    try:
+        from src.coach.persistence import SessionPersistence
+        course_id = SessionPersistence(req.session_id).get_course_id() or ""
+    except Exception:
+        pass
+
     # 使用 run_in_executor 避免阻塞事件循环
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(
@@ -62,6 +70,7 @@ async def chat(req: ChatMessageRequest, request: Request):
         CoachBridge.chat,
         req.message,
         req.session_id,
+        course_id,
     )
 
     # 如果是 pulse，记录到 PulseService
@@ -142,10 +151,18 @@ async def chat_websocket(ws: WebSocket):
 
             if msg_type == WSMessageType.USER_MESSAGE.value:
                 # 尝试流式路径
+                # Phase 79-C: WS 端也读取 course_id
+                ws_course_id = ""
+                try:
+                    from src.coach.persistence import SessionPersistence
+                    ws_course_id = SessionPersistence(session_id).get_course_id() or ""
+                except Exception:
+                    pass
+
                 if _should_stream():
                     try:
                         async for event in CoachBridge.chat_stream(
-                                content, session_id):
+                                content, session_id, ws_course_id):
                             await ws.send_json(event)
                     except Exception:
                         await _send(WSMessageType.ERROR,
@@ -159,6 +176,7 @@ async def chat_websocket(ws: WebSocket):
                     CoachBridge.chat,
                     content,
                     session_id,
+                    ws_course_id,
                 )
 
                 pulse = result.get("pulse")

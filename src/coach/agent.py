@@ -107,11 +107,13 @@ class CoachAgent:
         state_tracker: UserStateTracker | None = None,
         memory: SessionMemory | None = None,
         session_id: str = "default",
+        course_id: str = "",
     ):
         self.composer = composer or PolicyComposer()
         self.state_tracker = state_tracker or UserStateTracker()
         self.memory = memory or SessionMemory()
         self.session_id = session_id
+        self.course_id = course_id  # Phase 79-C: 会话↔课程绑定
 
         # V18.8 脉冲追踪
         self._pulse_history: list[dict] = []
@@ -730,6 +732,11 @@ class CoachAgent:
             gate_decision, audit_level, premise_rewrite_rate (V18.8)
         """
         ctx = context or {}
+
+        # Phase 79-C: 优先从 context 取 course_id（新会话），否则用实例属性（旧会话恢复）
+        course_id = ctx.get("course_id") or self.course_id
+        if course_id and not self.course_id:
+            self.course_id = course_id
 
         # 0. 判定上一轮脉冲结果
         self._resolve_prior_pulse(user_input)
