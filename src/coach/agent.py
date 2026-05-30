@@ -345,6 +345,9 @@ class CoachAgent:
             limit_history=history_limit,
             limit_memory=memory_limit,
         )
+        # Phase 79-A: 卡片注入管线
+        context_window = self._retrieve_lesson_cards(user_input, action_type)
+
         ctx = build_coach_context(
             intent=intent,
             action_type=action_type,
@@ -357,8 +360,85 @@ class CoachAgent:
             difficulty=llm_difficulty,
             progress_summary=retention.get("progress_summary") or None,
             context_summary=retention.get("context_summary") or None,
+            context_window=context_window,
         )
         return ctx, retention, llm_difficulty
+
+    # ── Phase 79-A: A1 卡片注入管线 ──
+
+    def _retrieve_lesson_cards(self, user_input: str, action_type: str) -> list[str] | None:
+        """用户消息关键词匹配 → FTS5 检索备课卡 → 格式化注入文本。
+
+        降级策略（四层防护）:
+          1. 特性开关关闭 → None
+          2. pulse/defer 等 action_type → None
+          3. 检索异常/无结果 → None
+          4. 格式化全部失败 → None
+        """
+        # Layer 1: 特性开关
+        cfg = self._cfg()
+        card_cfg = cfg.get("card_injection", {})
+        if not card_cfg.get("enabled", True):
+            return None
+
+        # Layer 2: action_type 跳过
+        skip_types = card_cfg.get("skip_action_types", ["pulse", "defer"])
+        if action_type in skip_types:
+            return None
+
+        top_n = card_cfg.get("top_n", 3)
+
+        # Layer 3: 检索
+        try:
+            from src.coach.curriculum.retriever import LessonCardRetriever
+            retriever = LessonCardRetriever()
+            results = retriever.search(user_input, top_n=top_n)
+        except Exception:
+            return None
+
+        if not results:
+            return None
+
+        # Layer 4: 格式化
+        context_items = []
+        for r in results:
+            item = self._format_card_for_context(r)
+            if item:
+                context_items.append(item)
+
+        return context_items if context_items else None
+
+    @staticmethod
+    def _format_card_for_context(result) -> str | None:
+        """将 SearchResult 格式化为 1-2 行教学提示文本。
+
+        预算: 每张卡 ≤150 字符。超过则截断 analogy 和 misconceptions。
+        """
+        try:
+            card = result.card or {}
+            feynman = card.get("feynman", {})
+            insights = card.get("teaching_insights", {})
+            kp = result.knowledge_point or card.get("knowledge_point", "")
+
+            parts = [f"【{kp}】"]
+
+            one_sentence = feynman.get("one_sentence", "")
+            if one_sentence:
+                parts.append(one_sentence)
+
+            analogy = feynman.get("analogy", "")
+            if analogy:
+                # 截断类比保留核心意象（~60 char）
+                parts.append(f"类比: {analogy[:60]}")
+
+            misconceptions = insights.get("misconceptions", [])
+            if misconceptions:
+                parts.append(f"常见误解: {str(misconceptions[0])}")
+
+            line = "。".join(parts)
+            return f"[卡片参考] {line}" if len(line) > 15 else None
+        except Exception:
+            return None
 
     # ── Phase 4 延迟加载 ────────────────────────────────────────
 

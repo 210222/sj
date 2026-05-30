@@ -1,4 +1,12 @@
 capabilities:
+  card_injection:
+    auto_affects: []
+    impact: 上下文增强
+    name: 卡片注入
+    purpose: 备课卡关键词检索注入教学上下文
+    recommended: true
+    recommended_for: 所有用户
+    risk: low
   counterfactual:
     auto_affects: []
     impact: 安全优先
@@ -108,6 +116,12 @@ capabilities:
     recommended: true
     recommended_for: 持续学习
     risk: low
+card_injection:
+  enabled: true
+  skip_action_types:
+  - pulse
+  - defer
+  top_n: 3
 composer_rules:
   challenge:
   - 挑战
