@@ -27,7 +27,7 @@ class AbstractLessonStore(ABC):
 
 
 class JsonLessonStore(AbstractLessonStore):
-    """Phase 76: JSON 文件存储。Phase 77 替换为 ChromaLessonStore。"""
+    """Phase 76: JSON 文件存储。Phase 77: Fts5LessonStore, Phase 77.1: ChromaLessonStore 升级。"""
 
     def __init__(self, base_dir: str | None = None):
         if base_dir is None:

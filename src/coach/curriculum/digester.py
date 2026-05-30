@@ -5,6 +5,19 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+
+def _ensure_list(val):
+    """Ensure val is a list of strings. Defends against LLM returning
+    a string or None instead of a list for array fields."""
+    if val is None:
+        return []
+    if isinstance(val, str):
+        return [val]
+    if isinstance(val, list):
+        return [str(item) for item in val]
+    return [str(val)]
+
+
 DIGEST_SEARCH_SYSTEM = """你是教学研究员。搜索 {kp} 的教学资料。
 
 搜索方向:
@@ -76,19 +89,30 @@ def digest(kp_name: str, search_text: str, llm_client,
     user = DIGEST_USER.replace("{subject}", subject or kp_name)
     user = user.replace("{category}", category)
     user = user.replace("{kp}", kp_name)
-    user = user.replace("{search_text}", search_text[:3000])
+    truncated = search_text[:3000]
+    if len(search_text) > 3000:
+        truncated += "\n...[truncated]"
+        _logger.debug("search_text truncated from %d to 3000 chars for '%s'",
+                      len(search_text), kp_name)
+    user = user.replace("{search_text}", truncated)
 
     raw = llm_client.search(system, user)
     if isinstance(raw, str):
         raw = json.loads(raw)
 
+    _logger.debug("digest complete for '%s': def=%dchars, mis=%d, stick=%d, det=%d, pre=%d",
+                  kp_name, len(str(raw.get("definition", ""))),
+                  len(raw.get("misconceptions") or []),
+                  len(raw.get("sticking_points") or []),
+                  len(raw.get("detours") or []),
+                  len(raw.get("prerequisites") or []))
     return DigestedOutput(
         knowledge_point=kp_name,
         definition=str(raw.get("definition", "")),
-        misconceptions=[str(m) for m in raw.get("misconceptions", [])],
-        sticking_points=[str(s) for s in raw.get("sticking_points", [])],
-        detours=[str(d) for d in raw.get("detours", [])],
-        prerequisites=[str(p) for p in raw.get("prerequisites", [])],
+        misconceptions=_ensure_list(raw.get("misconceptions")),
+        sticking_points=_ensure_list(raw.get("sticking_points")),
+        detours=_ensure_list(raw.get("detours")),
+        prerequisites=_ensure_list(raw.get("prerequisites")),
     )
 
 
@@ -106,4 +130,5 @@ def search_knowledge(kp_name: str, llm_client,
         text = resp.get("raw_text", json.dumps(resp, ensure_ascii=False))
     else:
         text = str(resp)
+    _logger.debug("search_knowledge for '%s' returned %d chars", kp_name, len(text))
     return text

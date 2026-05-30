@@ -7,6 +7,7 @@ from typing import Callable
 
 from src.coach.curriculum.models import KnowledgePoint, LessonCard
 from src.coach.curriculum.store import AbstractLessonStore, JsonLessonStore
+from src.coach.curriculum.fts5_store import Fts5LessonStore
 from src.coach.curriculum.digester import digest, search_knowledge
 from src.coach.curriculum.feynman import feynman_self_explain
 from src.coach.curriculum.verifier import self_verify
@@ -31,23 +32,42 @@ def prepare_knowledge_point(
 
     for attempt in range(1, MAX_RETRIES + 1):
         _progress(f"搜索中 (第{attempt}轮)")
-        search_text = search_knowledge(kp.name, llm_client, kp.subject, kp.category)
+        try:
+            search_text = search_knowledge(kp.name, llm_client, kp.subject, kp.category)
+        except Exception as e:
+            _logger.warning("search_knowledge failed (attempt %d): %s", attempt, e)
+            continue
+        if not search_text or not search_text.strip():
+            _logger.warning("search_knowledge returned empty (attempt %d)", attempt)
+            continue
 
         _progress(f"消化中 (第{attempt}轮)")
-        digested = digest(kp.name, search_text, llm_client, kp.subject, kp.category)
+        try:
+            digested = digest(kp.name, search_text, llm_client, kp.subject, kp.category)
+        except Exception as e:
+            _logger.warning("digest failed (attempt %d): %s", attempt, e)
+            continue
         ok, errs = digested.validate()
         if not ok:
             _logger.warning(f"Digest validation failed (attempt {attempt}): {errs}")
             continue
 
         _progress(f"费曼自述 (第{attempt}轮)")
-        feynman = feynman_self_explain(kp.name, digested, llm_client, kp.subject, kp.category)
+        try:
+            feynman = feynman_self_explain(kp.name, digested, llm_client, kp.subject, kp.category)
+        except Exception as e:
+            _logger.warning("feynman_self_explain failed (attempt %d): %s", attempt, e)
+            continue
         if feynman.grade != "通过":
             _logger.warning(f"Feynman failed (attempt {attempt}): jargon={feynman.jargon_count}")
             continue
 
         _progress(f"自验证 (第{attempt}轮)")
-        verified = self_verify(kp.name, feynman, digested, llm_client, kp.subject, kp.category)
+        try:
+            verified = self_verify(kp.name, feynman, digested, llm_client, kp.subject, kp.category)
+        except Exception as e:
+            _logger.warning("self_verify failed (attempt %d): %s", attempt, e)
+            continue
         if not verified.verified:
             _logger.warning(f"Verify failed (attempt {attempt}): {verified.failed_topics}")
             continue
@@ -100,17 +120,28 @@ def prepare_chapter(
 ) -> dict[str, LessonCard | None]:
     """逐知识点备课一章。返回 {kp_name: LessonCard | None}。"""
     store = store or JsonLessonStore()
+    fts5_store = Fts5LessonStore()
     results = {}
-
-    for section in chapter.get("sections", []):
-        for kp_name in section.get("knowledge_points", []):
-            kp = KnowledgePoint(
-                name=kp_name,
-                chapter_id=chapter.get("id", ""),
-                subject=subject,
-                category=category,
-            )
-            card = prepare_knowledge_point(kp, llm_client, store, course_id, on_progress)
-            results[kp_name] = card
-
-    return results
+    try:
+        for section in chapter.get("sections", []):
+            for kp_name in section.get("knowledge_points", []):
+                kp = KnowledgePoint(
+                    name=kp_name,
+                    chapter_id=chapter.get("id", ""),
+                    subject=subject,
+                    category=category,
+                )
+                try:
+                    card = prepare_knowledge_point(kp, llm_client, store, course_id, on_progress)
+                except Exception as e:
+                    _logger.error("prepare_knowledge_point crashed for '%s': %s", kp_name, e)
+                    card = None
+                results[kp_name] = card
+                if card is not None:
+                    try:
+                        fts5_store.save_card(course_id, card)
+                    except Exception as e:
+                        _logger.warning("FTS5 parallel write failed for '%s': %s", kp_name, e)
+        return results
+    finally:
+        fts5_store.close()

@@ -5,6 +5,8 @@ import logging
 import random
 import re
 
+from src.coach.curriculum.feynman import JARGON_DB
+
 _logger = logging.getLogger(__name__)
 
 VERIFIER_Q_SYSTEM = """你是考题设计师。你的任务是找出教师理解的漏洞。
@@ -98,7 +100,10 @@ def self_verify(kp_name: str, feynman_card, digested, llm_client,
     q_user = f"为 {subject} 的 {kp_name} 设计自验证考题。"
     q_raw = llm_client.search(q_system, q_user)
     if isinstance(q_raw, str):
-        q_raw = json.loads(q_raw)
+        try:
+            q_raw = json.loads(q_raw)
+        except json.JSONDecodeError:
+            return VerificationReport(kp_name, False, 0, 0, ["出题JSON解析失败"], [], [], {})
     questions = q_raw.get("questions", [])
 
     # Defense 1: coverage check
@@ -125,7 +130,10 @@ def self_verify(kp_name: str, feynman_card, digested, llm_client,
     a_system = VERIFIER_A_SYSTEM.replace("{subject}", subject or kp_name)
     a_raw = llm_client.search(a_system, a_user)
     if isinstance(a_raw, str):
-        a_raw = json.loads(a_raw)
+        try:
+            a_raw = json.loads(a_raw)
+        except json.JSONDecodeError:
+            return VerificationReport(kp_name, False, 0, 0, ["答题JSON解析失败"], [], [], {})
     answers = a_raw.get("answers", [])
 
     # Defense 2: answer quality
@@ -140,13 +148,27 @@ def self_verify(kp_name: str, feynman_card, digested, llm_client,
         if re.match(r"^[A-D][)）]", a.get("answer", "")[:3]) and len(a.get("answer", "")) < 80:
             return VerificationReport(kp_name, False, 0, 0, ["选项推理不足"], [], [], {})
 
+    # Defense 2b: Feynman cross-check — if feynman was jargon-free,
+    # the answering LLM should also use minimal jargon.
+    if feynman_card is not None and getattr(feynman_card, 'jargon_count', 1) == 0:
+        answer_jargon = _check_answer_jargon(answers, category, kp_name)
+        if len(answer_jargon) > 3:
+            return VerificationReport(
+                kp_name, False, 0, 0,
+                [f"费曼零术语但答题用术语({len(answer_jargon)}个): {answer_jargon[:5]}"],
+                [], [], {}
+            )
+
     target_answers = [a for a in answers if a["question_id"] in target_ids]
 
     # Call 3: grader
     g_user = f"判分:\n题目: {json.dumps([q for q in questions if q['id'] in target_ids], ensure_ascii=False, indent=2)}\n回答: {json.dumps(target_answers, ensure_ascii=False, indent=2)}"
     g_raw = llm_client.search(VERIFIER_G_SYSTEM, g_user)
     if isinstance(g_raw, str):
-        g_raw = json.loads(g_raw)
+        try:
+            g_raw = json.loads(g_raw)
+        except json.JSONDecodeError:
+            return VerificationReport(kp_name, False, 0, 0, ["判分JSON解析失败"], [], [], {})
     verified = g_raw.get("verified", False)
     failed = g_raw.get("failed_topics", [])
     passed_q = sum(1 for g in g_raw.get("graded", []) if g.get("passed", False))
@@ -177,3 +199,20 @@ def _obfuscate(questions: list) -> tuple[list, list]:
     shuffled = list(questions)
     random.shuffle(shuffled)
     return shuffled, [q["id"] for q in questions]
+
+
+def _check_answer_jargon(answers: list, category: str, kp_name: str) -> list[str]:
+    """费曼交叉校验: 如果费曼零术语，答题也不应有术语。
+
+    返回答题中出现的术语列表。空列表 = 通过。
+    """
+    jargon_list = JARGON_DB.get(category, [])
+    if not jargon_list:
+        return []
+    # 排除知识点本身的词（教"变量"不能禁止说"变量"）
+    kp_words = set(kp_name.replace("赋值", "").replace("定义", ""))
+    jargon_filtered = [j for j in jargon_list
+                       if j not in kp_words and j not in kp_name]
+
+    all_text = " ".join(a.get("answer", "") for a in answers)
+    return [j for j in jargon_filtered if j in all_text]
