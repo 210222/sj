@@ -60,6 +60,12 @@ def _get_db() -> sqlite3.Connection:
         conn.commit()
     except sqlite3.OperationalError:
         pass
+    # Phase 83-S2: syllabus_json 列迁移
+    try:
+        conn.execute("ALTER TABLE profiles ADD COLUMN syllabus_json TEXT DEFAULT ''")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass
     return conn
 
 
@@ -357,3 +363,26 @@ class SessionPersistence:
                 "days_elapsed": round(days_elapsed, 2),
             }
         return result
+
+    # ── Phase 83-S2: syllabus 持久化 ──
+
+    def save_syllabus(self, syllabus: dict) -> None:
+        """持久化课程大纲到 profiles 表。"""
+        import json
+        self.db.execute(
+            "UPDATE profiles SET syllabus_json = ? WHERE session_id = ?",
+            (json.dumps(syllabus, ensure_ascii=False), self.session_id))
+        self.db.commit()
+
+    def get_syllabus(self) -> dict | None:
+        """读取持久化的大纲。"""
+        import json
+        row = self.db.execute(
+            "SELECT syllabus_json FROM profiles WHERE session_id = ?",
+            (self.session_id,)).fetchone()
+        if row and row[0]:
+            try:
+                return json.loads(row[0])
+            except json.JSONDecodeError:
+                return None
+        return None

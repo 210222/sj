@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Request
 
 from api.middleware.rate_limit import get_rate_limiter
 from api.models.schemas import (
+    ConfirmSyllabusRequest,
     ErrorResponse,
     PrepareChapterRequest,
     PrepareChapterResponse,
@@ -215,3 +216,28 @@ async def get_prep_status(task_id: str):
         started_at=progress.started_at,
         finished_at=progress.finished_at,
     )
+
+
+# ── Phase 83-S2: 大纲确认 ──
+
+@router.post("/syllabus/confirm")
+async def confirm_syllabus(req: ConfirmSyllabusRequest, request: Request):
+    """确认大纲，持久化到 session，激活章节进度追踪。"""
+    limiter = get_rate_limiter()
+    client_key = f"confirm:{request.client.host if request.client else 'unknown'}"
+    if not limiter.is_allowed(client_key, limit=10, window_s=60):
+        raise HTTPException(
+            status_code=429,
+            detail={"error": "RATE_LIMITED", "detail": "Too many confirm requests"},
+        )
+
+    try:
+        from src.coach.persistence import SessionPersistence
+        sp = SessionPersistence(req.session_id)
+        sp.save_syllabus(req.syllabus)
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail={"error": "SYLLABUS_CONFIRM_FAILED", "detail": str(e)},
+        )

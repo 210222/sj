@@ -244,3 +244,10 @@ class PrepStatusResponse(BaseModel):
     error: str | None = None
     started_at: float | None = None
     finished_at: float | None = None
+
+
+# ── 大纲确认 (Phase 83) ──
+
+class ConfirmSyllabusRequest(BaseModel):
+    session_id: str = Field(..., description="会话 ID")
+    syllabus: dict[str, Any] = Field(..., description="已确认的大纲 dict")

@@ -114,6 +114,7 @@ class CoachAgent:
         self.memory = memory or SessionMemory()
         self.session_id = session_id
         self.course_id = course_id  # Phase 79-C: 会话↔课程绑定
+        self._chapter_progress_store = None  # Phase 83: 懒加载
 
         # V18.8 脉冲追踪
         self._pulse_history: list[dict] = []
@@ -478,6 +479,31 @@ class CoachAgent:
                 from src.coach.diagnostic_engine import DiagnosticEngine
                 self._diagnostic_engine = DiagnosticEngine(config=cfg)
         return self._diagnostic_engine
+
+    @property
+    def chapter_progress_store(self):
+        """Phase 83: ChapterProgressStore — 懒加载，课程知识点级 BKT 追踪。
+
+        与 ttm/sdt/flow/diagnostic_engine 一致的 enabled 检查模式。
+        enabled=false → 返回 None → act() 中 if 守卫跳过。
+        需要 syllabus 才能激活。无 syllabus → 空操作。
+        syllabus 通过 Phase 83-S2 的 POST /syllabus/confirm 持久化。
+        """
+        if self._chapter_progress_store is None:
+            cfg = _coach_cfg.get("chapter_progress", {})
+            if cfg.get("enabled", False):
+                from src.coach.curriculum.progress import ChapterProgressStore
+                # 尝试从持久化加载 syllabus
+                syllabus = None
+                try:
+                    syllabus = self._persistence.get_syllabus() if self._persistence else None
+                except Exception:
+                    pass
+                self._chapter_progress_store = ChapterProgressStore(
+                    course_id=self.course_id or self.session_id,
+                    syllabus=syllabus,
+                )
+        return self._chapter_progress_store
 
     # ── Phase 5 延迟加载：语义安全三件套 ────────────────────────
 
@@ -1105,6 +1131,14 @@ class CoachAgent:
                 )
                 if diag_result:
                     diagnostic_result = diag_result
+                # Phase 83: 诊断评估结果 → ChapterProgressStore
+                # 匹配 diagnostic_engine L1100 的 if 守卫模式 (if self.X: ...)
+                if diagnostic_result and diagnostic_result.get("evaluated"):
+                    if self.chapter_progress_store:
+                        self.chapter_progress_store.record_observation(
+                            knowledge_point=diagnostic_result.get("skill", ""),
+                            correct=diagnostic_result.get("correct", False),
+                        )
                 probe = self.diagnostic_engine.should_and_generate(
                     turn_count=self._diagnostic_turn_count,
                     intent=intent,

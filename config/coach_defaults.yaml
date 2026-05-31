@@ -7,6 +7,14 @@ capabilities:
     recommended: true
     recommended_for: 所有用户
     risk: low
+  chapter_progress:
+    auto_affects: []
+    impact: 数据收集
+    name: 章节进度
+    purpose: 课程知识点级 BKT 掌握度追踪
+    recommended: true
+    recommended_for: 课程化学习
+    risk: low
   counterfactual:
     auto_affects: []
     impact: 安全优先
@@ -122,6 +130,8 @@ card_injection:
   - pulse
   - defer
   top_n: 3
+chapter_progress:
+  enabled: true
 composer_rules:
   challenge:
   - 挑战
