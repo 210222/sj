@@ -204,7 +204,7 @@ class LLMClient:
         )
 
     def search(self, system_prompt: str, user_prompt: str,
-               json_mode: bool = True) -> dict:
+               json_mode: bool = True, temperature: float | None = None) -> dict:
         """搜索 + 结构化输出。独立于 generate()，不走教练管线。
 
         Args:
@@ -227,7 +227,7 @@ class LLMClient:
         body: dict = {
             "model": self._cfg.model,
             "messages": messages,
-            "temperature": 0.3,
+            "temperature": temperature if temperature is not None else 0.3,
             "max_tokens": 4000,
             "extra_body": {"enable_search": True},
         }

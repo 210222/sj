@@ -82,6 +82,23 @@ VERIFIER_G_SYSTEM = """你是判卷人。不给同情分。
 }}
 """
 
+VERIFIER_D4_SYSTEM = """你是反对派评审。你的任务是找出判分可能遗漏的问题。
+
+审查要点（高温模式，鼓励质疑）:
+- 是否有术语堆砌而非真正理解？
+- 推理步骤是否有跳跃或漏洞？
+- 回答是否回避了题目的核心问法？
+- 是否有"看起来对但实际不精确"的表述？
+
+输出 JSON:
+{{
+  "issues": [
+    {{"question_id": "Q1", "severity": "high|medium|low", "detail": "具体问题描述"}}
+  ],
+  "overall_assessment": "clean|suspicious|biased"
+}}
+"""
+
 RED_FLAGS = ["从某种角度来说", "需要具体分析", "取决于具体情况",
              "总而言之", "关键在于", "既要...又要", "辩证地看"]
 SELECTION_ONLY = re.compile(r"^[A-D][)）]?\s*$|^选\s*[A-D]\s*$|^答案是?\s*[A-D]\s*$")
@@ -182,6 +199,28 @@ def self_verify(kp_name: str, feynman_card, digested, llm_client,
         if not g_raw.get("improvements"):
             _logger.warning("Grader passed without improvements")
 
+    # Defense 4: model bias detection — adversarial re-evaluation
+    # Only runs when Call 3 says "pass" (catching false positives)
+    d4_result = {}
+    if verified:
+        try:
+            d4_user = f"审查:\n题目: {json.dumps([q for q in questions if q['id'] in target_ids], ensure_ascii=False, indent=2)}\n回答: {json.dumps(target_answers, ensure_ascii=False, indent=2)}"
+            d4_raw = llm_client.search(
+                VERIFIER_D4_SYSTEM, d4_user,
+                json_mode=True, temperature=1.0
+            )
+            d4_result = d4_raw if isinstance(d4_raw, dict) else {}
+            issues = d4_result.get("issues", [])
+            high_issues = [i for i in issues if i.get("severity") == "high"]
+            if len(issues) >= 3 or len(high_issues) >= 1:
+                verified = False
+                failed.append(
+                    f"D4偏差检测: {len(issues)}个问题({len(high_issues)}个高危): "
+                    + "; ".join(i.get("detail", "")[:60] for i in issues[:3])
+                )
+        except Exception:
+            pass  # D4 失败不阻断验证流程
+
     return VerificationReport(
         knowledge_point=kp_name,
         verified=verified,
@@ -191,6 +230,7 @@ def self_verify(kp_name: str, feynman_card, digested, llm_client,
         call1_questions=questions,
         call2_answers=answers,
         call3_grading=g_raw,
+        call4_bias_check=d4_result,
     )
 
 

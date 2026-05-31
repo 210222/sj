@@ -54,6 +54,7 @@ class VerificationReport:
     call1_questions: list[dict]
     call2_answers: list[dict]
     call3_grading: dict
+    call4_bias_check: dict = field(default_factory=dict)  # Phase 84: D4 偏差检测结果
 
 
 @dataclass
