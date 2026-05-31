@@ -292,12 +292,12 @@ def build_coach_context(
     terminal_checklist = _render_terminal_checklist(action_type)
 
     system_parts = [stable_prefix]
+    if terminal_tutoring:
+        system_parts.append(terminal_tutoring)
     if action_contract:
         system_parts.append(action_contract)
     system_parts.append(policy_layer)
     system_parts.append(context_layer)
-    if terminal_tutoring:
-        system_parts.append(terminal_tutoring)
     if terminal_checklist:
         system_parts.append(terminal_checklist)
     system_prompt = "\n\n".join(part for part in system_parts if part)
