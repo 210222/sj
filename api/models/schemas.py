@@ -220,3 +220,27 @@ class SyllabusSearchResponse(BaseModel):
         default=False,
         description="是否需人工审核。LLM搜索成功=False，模板兜底=True"
     )
+
+
+# ── 章节备课 (Phase 76/82) ──
+
+class PrepareChapterRequest(BaseModel):
+    chapter: dict[str, Any] = Field(..., description="章节字典 (id, title, sections, knowledge_points)")
+    subject: str = Field(..., min_length=1, max_length=100, description="学科名称")
+    category: str = Field(default="编程语言", description="学科分类")
+    course_id: str = Field(default="", description="可选课程绑定")
+
+
+class PrepareChapterResponse(BaseModel):
+    task_id: str = Field(..., description="任务 ID，用于轮询进度")
+    state: str = Field(default="running", description="任务状态: running")
+
+
+class PrepStatusResponse(BaseModel):
+    task_id: str
+    state: str                    # running | done | error
+    kps: dict[str, str]           # kp_name → 当前状态描述
+    result: dict[str, Any] | None = None  # 完成时: {kp_name: card_dict|None}
+    error: str | None = None
+    started_at: float | None = None
+    finished_at: float | None = None
