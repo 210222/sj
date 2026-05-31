@@ -139,8 +139,9 @@ def self_verify(kp_name: str, feynman_card, digested, llm_client,
             if pat.search(q["question"]):
                 return VerificationReport(kp_name, False, len(questions), 0, [f"禁止题型: {qtype}"], [], [], {})
 
-    # Defense 5: obfuscate questions
-    shuffled, target_ids = _obfuscate(questions)
+    # Defense 5: obfuscate questions + distractor injection
+    distractors = _fetch_distractors(kp_name, n=2)
+    shuffled, target_ids = _obfuscate(questions, distractors)
     a_user = f"回答以下考题:\n{json.dumps(shuffled, ensure_ascii=False, indent=2)}"
 
     # Call 2: exam taker
@@ -175,6 +176,22 @@ def self_verify(kp_name: str, feynman_card, digested, llm_client,
                 [f"费曼零术语但答题用术语({len(answer_jargon)}个): {answer_jargon[:5]}"],
                 [], [], {}
             )
+
+    # Defense 5b: distractor response check
+    if distractors:
+        distractor_ids = {d["id"] for d in distractors}
+        distractor_answers = [a for a in answers if a["question_id"] in distractor_ids]
+        confident_on_distractor = [
+            a for a in distractor_answers
+            if a.get("certainty", "low") in ("high", "medium")
+            and len(a.get("answer", "")) > 10
+        ]
+        if len(confident_on_distractor) >= 1:
+            d_ids = ", ".join(a["question_id"] for a in confident_on_distractor)
+            _logger.warning(
+                "答题LLM未识别干扰题: %s (confidence on distractor %s)", kp_name, d_ids
+            )
+            # 不 overrule verified —— 干扰题不识别是质量警告，不是阻断条件
 
     target_answers = [a for a in answers if a["question_id"] in target_ids]
 
@@ -234,11 +251,53 @@ def self_verify(kp_name: str, feynman_card, digested, llm_client,
     )
 
 
-def _obfuscate(questions: list) -> tuple[list, list]:
-    """打乱顺序，返回 (shuffled, target_ids)。"""
-    shuffled = list(questions)
-    random.shuffle(shuffled)
-    return shuffled, [q["id"] for q in questions]
+def _obfuscate(questions: list, distractors: list | None = None) -> tuple[list, list]:
+    """打乱顺序 + 注入干扰题，返回 (shuffled, target_ids)。
+
+    target_ids 只包含原始题目的 ID（不包含干扰题）。
+    Call 3 评分者通过 target_ids 过滤，干扰题不会被评判。
+    """
+    pool = list(questions)
+    if distractors:
+        pool.extend(distractors)
+    random.shuffle(pool)
+    target_ids = [q["id"] for q in questions]  # 不含干扰题 ID
+    return pool, target_ids
+
+
+def _fetch_distractors(kp_name: str, n: int = 2) -> list[dict]:
+    """从 FTS5 中取其他知识点的练习题作为干扰题。
+
+    返回最多 n 道题（id 重命名为 D1..Dn），无可用题时返回 []。
+    """
+    try:
+        from src.coach.curriculum.fts5_store import Fts5LessonStore
+        store = Fts5LessonStore()
+        all_kps = store.list_cards("")
+        # 排除当前 KP
+        candidates = [k for k in all_kps if k != kp_name]
+        if not candidates:
+            return []
+        # 随机选 1 个其他 KP，取它的 exercises
+        import random as _random
+        other_kp = _random.choice(candidates)
+        card = store.get_card("", other_kp)
+        if not card:
+            return []
+        exercises = card.get("exercises", [])
+        if not exercises:
+            return []
+        # 取最多 n 道，重命名 ID
+        selected = _random.sample(exercises, min(n, len(exercises)))
+        distractors = []
+        for i, ex in enumerate(selected):
+            d = dict(ex)
+            d["id"] = f"D{i+1}"          # 重命名: Q1→D1, 避免与真实题冲突
+            d["_distractor"] = True       # 标记为干扰题
+            distractors.append(d)
+        return distractors
+    except Exception:
+        return []  # 任何失败 → 降级
 
 
 def _check_answer_jargon(answers: list, category: str, kp_name: str) -> list[str]:
