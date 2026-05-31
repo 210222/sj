@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 from api.config import CORS_ORIGINS
 from api.models.schemas import ErrorResponse, HealthResponse
-from api.routers import admin, chat, code_executor, config_router, dashboard, excursion, pulse, session
+from api.routers import admin, chat, code_executor, config_router, dashboard, excursion, pulse, session, syllabus
 
 _logger = logging.getLogger(__name__)
 
@@ -112,6 +112,7 @@ app.include_router(dashboard.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
 app.include_router(code_executor.router, prefix="/api/v1")
 app.include_router(config_router.router, prefix="/api/v1")
+app.include_router(syllabus.router, prefix="/api/v1")
 
 
 @app.get("/api/v1/health", response_model=HealthResponse, tags=["health"])

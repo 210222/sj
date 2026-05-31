@@ -199,3 +199,24 @@ class ErrorResponse(BaseModel):
     error: str
     detail: str | None = None
     reason_code: str | None = None
+
+
+# ── 大纲搜索 (Phase 75/81) ──
+
+class SyllabusSearchRequest(BaseModel):
+    subject: str = Field(..., min_length=1, max_length=100, description="学科名称")
+    level: str = Field(default="beginner", description="水平: beginner/intermediate/advanced")
+    category: str = Field(default="编程语言", description="学科分类")
+    course_id: str = Field(default="", description="可选课程绑定")
+
+
+class SyllabusSearchResponse(BaseModel):
+    syllabus: dict[str, Any] = Field(..., description="search_syllabus() 原始返回 dict")
+    source: str = Field(
+        default="llm_search",
+        description="数据来源。LLM搜索=llm_search(默认值)，模板兜底=fallback_template"
+    )
+    needs_review: bool = Field(
+        default=False,
+        description="是否需人工审核。LLM搜索成功=False，模板兜底=True"
+    )
