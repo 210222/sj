@@ -5,6 +5,9 @@ import type {
   HealthResponse,
   SessionResponse,
   UserDashboardResponse,
+  SyllabusSearchResponse,
+  PrepareChapterResponse,
+  PrepStatusResponse,
 } from '../types/api';
 
 const BASE_URL = '/api/v1';
@@ -95,4 +98,22 @@ export function createChatWebSocket(_sessionId: string): WebSocket {
   const ws = new WebSocket(`${protocol}//${host}/api/v1/chat/ws`);
   ws.onopen = () => {};
   return ws;
+}
+
+// ── 课程大纲 (Phase 86) ──
+
+export function searchSyllabus(subject: string, level = 'beginner', category = '编程语言'): Promise<SyllabusSearchResponse> {
+  return request<SyllabusSearchResponse>('POST', '/syllabus/search', { subject, level, category });
+}
+
+export function prepareChapter(chapter: Record<string, unknown>, subject: string, category: string): Promise<PrepareChapterResponse> {
+  return request<PrepareChapterResponse>('POST', '/syllabus/prepare', { chapter, subject, category });
+}
+
+export function getPrepStatus(taskId: string): Promise<PrepStatusResponse> {
+  return request<PrepStatusResponse>('GET', `/syllabus/prepare/${encodeURIComponent(taskId)}`);
+}
+
+export function confirmSyllabus(sessionId: string, syllabus: Record<string, unknown>): Promise<{status: string}> {
+  return request<{status: string}>('POST', '/syllabus/confirm', { session_id: sessionId, syllabus });
 }

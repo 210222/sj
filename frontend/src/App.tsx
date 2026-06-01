@@ -9,6 +9,7 @@ import { ChatBubble } from './components/chat/ChatBubble';
 import { ChatInput } from './components/chat/ChatInput';
 import { PulsePanel } from './components/chat/PulsePanel';
 import { ExcursionOverlay } from './components/chat/ExcursionOverlay';
+import { SyllabusPanel } from './components/syllabus/SyllabusPanel';
 import { SettingsPanel } from './components/settings/SettingsPanel';
 import { TTMStageCard } from './components/dashboard/TTMStageCard';
 import { SDTEnergyRings } from './components/dashboard/SDTEnergyRings';
@@ -79,6 +80,7 @@ export function App() {
   const [adminMode, setAdminMode] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<string>('connecting');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
+  const [syllabusOpen, setSyllabusOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [teachReport, setTeachReport] = useState<Record<string, Record<string, unknown>> | null>(null);
   // Phase 13x: 仪表盘可视化数据
@@ -304,6 +306,7 @@ export function App() {
       }}
     >
       <ExcursionOverlay active={state.excursionActive} onExit={() => setExcursionActive(false)} />
+    {syllabusOpen && <SyllabusPanel sessionId={state.sessionId} isMobile={isMobile} onClose={() => setSyllabusOpen(false)} />}
 
       {/* 侧边仪表盘 */}
       <aside
@@ -434,6 +437,20 @@ export function App() {
             }}
           >
             ☰
+          </button>
+          <button
+            onClick={() => setSyllabusOpen(!syllabusOpen)}
+            title="课程大纲"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              fontSize: 18,
+              cursor: 'pointer',
+              color: 'var(--color-deep-mocha)',
+              marginLeft: 8,
+            }}
+          >
+            📚
           </button>
           <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--color-deep-mocha)' }}>
             Coherence Coach

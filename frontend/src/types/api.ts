@@ -182,3 +182,46 @@ export interface HealthResponse {
   version: string;
   timestamp_utc: string;
 }
+
+// ── 课程大纲 (Phase 86) ──
+
+interface SyllabusDict {
+  course_name: string;
+  subject_category: string;
+  description: string;
+  chapters: ChapterDict[];
+  total_chapters: number;
+  recommended_order: string;
+}
+
+interface ChapterDict {
+  id: string;
+  title: string;
+  sections: SectionDict[];
+}
+
+interface SectionDict {
+  title: string;
+  knowledge_points: string[];
+}
+
+export interface SyllabusSearchResponse {
+  syllabus: SyllabusDict;
+  source: string;
+  needs_review: boolean;
+}
+
+export interface PrepareChapterResponse {
+  task_id: string;
+  state: string;
+}
+
+export interface PrepStatusResponse {
+  task_id: string;
+  state: string;
+  kps: Record<string, string>;
+  result: Record<string, unknown> | null;
+  error: string | null;
+  started_at: number | null;
+  finished_at: number | null;
+}
