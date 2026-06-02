@@ -55,7 +55,7 @@ capabilities:
     impact: 自动调节
     name: 心流优化
     purpose: 动态调节难度
-    recommended: false
+    recommended: true
     recommended_for: 明确目标
     risk: low
   llm:
@@ -81,7 +81,7 @@ capabilities:
     impact: 策略变体
     name: MRT
     purpose: 策略效果随机对照实验
-    recommended: false
+    recommended: true
     recommended_for: 数据驱动优化
     risk: medium
   precedent_intercept:
@@ -107,6 +107,14 @@ capabilities:
     purpose: 动机评估
     recommended: true
     recommended_for: 个性化
+    risk: low
+  search:
+    auto_affects: []
+    impact: 搜索增强
+    name: 联网搜索
+    purpose: DeepSeek 联网搜索课程大纲生成
+    recommended: true
+    recommended_for: 课程化学习
     risk: low
   sovereignty_pulse:
     auto_affects: []

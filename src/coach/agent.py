@@ -349,6 +349,22 @@ class CoachAgent:
         # Phase 79-A: 卡片注入管线
         context_window = self._retrieve_lesson_cards(user_input, action_type)
 
+        # Phase 89: Inner Monologue + Profile + mastery 注入
+        mastery = self._get_current_mastery()
+        mastery_summary = None
+        try:
+            if self.diagnostic_engine:
+                mastery_summary = self.diagnostic_engine.get_mastery_summary()
+        except Exception:
+            pass
+
+        analysis_block = self._build_analysis_block(action_type, mastery, context_window)
+        learner_profile = self._build_learner_profile(ttm_stage, sdt_profile, mastery_summary)
+        enriched_summary = analysis_block + "\n" + learner_profile
+        ctx_summary_from_retention = retention.get("context_summary") or ""
+        if ctx_summary_from_retention:
+            enriched_summary += "\n" + ctx_summary_from_retention
+
         ctx = build_coach_context(
             intent=intent,
             action_type=action_type,
@@ -360,10 +376,118 @@ class CoachAgent:
             covered_topics=covered_topics,
             difficulty=llm_difficulty,
             progress_summary=retention.get("progress_summary") or None,
-            context_summary=retention.get("context_summary") or None,
+            context_summary=enriched_summary,
             context_window=context_window,
         )
         return ctx, retention, llm_difficulty
+
+    # ── Phase 89: Inner Monologue + Profile + Mastery ──
+
+    def _build_analysis_block(self, action_type: str, mastery: float | None,
+                               cards: list[str] | None) -> str:
+        """构建 Inner Monologue 分析块 — 集中注入教学决策依据."""
+        lines = ["=== 教学分析（本轮决策依据） ==="]
+
+        # 1. 本轮策略
+        lines.append(f"本轮策略: {action_type}")
+
+        # 2. 掌握度 → 提示级别 (Stamper 四段映射)
+        if mastery is not None:
+            if mastery < 0.3:
+                hint = "元认知: 先问学生卡在哪里，用最简类比，不直接给答案"
+            elif mastery < 0.5:
+                hint = "概念: 用类比解释核心概念，给具体数字实例"
+            elif mastery < 0.7:
+                hint = "策略: 分步骤引导，让学生自己尝试，给变式题"
+            else:
+                hint = "精确: 指出具体可改进处，给开放性问题，鼓励跨知识点联想"
+            lines.append(f"掌握度: {mastery:.2f} → {hint}")
+
+        # 3. 备课卡摘要（直接引用已格式化的卡片）
+        if cards:
+            lines.append(f"备课卡: {len(cards)} 张匹配，优先使用其中的类比和误解预警")
+            for c in cards[:2]:
+                lines.append(c)
+
+        lines.append("=== 分析结束，开始教学 ===")
+        return "\n".join(lines)
+
+    def _build_learner_profile(self, ttm_stage: str | None,
+                                sdt_profile: dict | None,
+                                mastery_summary: dict | None) -> str:
+        """合并 TTM+SDT+BKT 为统一的 Learner Profile."""
+        lines = ["=== 学习者画像 ==="]
+
+        # TTM 阶段
+        if ttm_stage:
+            stage_cn = {
+                "contemplation": "观望期(还在考虑要不要学)",
+                "preparation": "准备期(开始了解基础概念)",
+                "action": "行动期(主动学习和练习)",
+                "maintenance": "维持期(巩固已学内容)",
+            }
+            lines.append(f"学习阶段: {stage_cn.get(ttm_stage, ttm_stage)}")
+
+        # SDT 动机
+        if sdt_profile:
+            a = sdt_profile.get("autonomy", 0.5)
+            c = sdt_profile.get("competence", 0.5)
+            r = sdt_profile.get("relatedness", 0.5)
+            if a < 0.4: lines.append("动机提示: 学生自主性偏低，多给选择而非直接指令")
+            if c < 0.4: lines.append("动机提示: 学生胜任感偏低，降低难度，多给正面反馈")
+            lines.append(f"动机数值: 自主性={a:.0%} 胜任感={c:.0%} 关联性={r:.0%}")
+
+        # BKT 掌握度
+        if mastery_summary:
+            skills = mastery_summary.get("skills", {})
+            if skills:
+                top = sorted(skills.items(), key=lambda x: x[1])[:3]
+                lines.append("掌握度最低: " + ", ".join(f"{k}={v:.0%}" for k, v in top))
+                low = [k for k, v in skills.items() if v < 0.4]
+                if low:
+                    lines.append(f"需复习: {', '.join(low[:3])}")
+
+        return "\n".join(lines) if len(lines) > 1 else ""
+
+    def _get_current_mastery(self) -> float | None:
+        """聚合当前掌握度: ChapterProgressStore 优先, diagnostic_engine 回退."""
+        # 优先: 课程知识点级 BKT
+        try:
+            if self.chapter_progress_store:
+                kps = self.chapter_progress_store.get_all_kp_masteries()
+                if kps:
+                    return sum(kps.values()) / len(kps)
+        except Exception:
+            pass
+        # 回退: 通用技能 mastery
+        try:
+            if self.diagnostic_engine:
+                ms = self.diagnostic_engine.get_mastery_summary()
+                skills = ms.get("skills", {})
+                if skills:
+                    return sum(skills.values()) / len(skills)
+        except Exception:
+            pass
+        return None
+
+    @staticmethod
+    def _adjust_action_by_mastery(action_type: str, mastery: float | None) -> str:
+        """Phase 90: 根据掌握度调节 action_type 强度.
+
+        新手降级: 避免 challenge/reflect
+        高手升级: 避免 probe/scaffold
+        """
+        if mastery is None:
+            return action_type
+        # 新手降级
+        if mastery < 0.3:
+            if action_type == "challenge": return "scaffold"
+            if action_type == "reflect":   return "suggest"
+        # 高手升级
+        if mastery > 0.7:
+            if action_type == "probe":     return "challenge"
+            if action_type == "scaffold":  return "challenge"
+        return action_type
 
     # ── Phase 79-A: A1 卡片注入管线 ──
 
@@ -411,9 +535,9 @@ class CoachAgent:
 
     @staticmethod
     def _format_card_for_context(result) -> str | None:
-        """将 SearchResult 格式化为 1-2 行教学提示文本。
+        """将 SearchResult 格式化为层次结构教学提示文本。
 
-        预算: 每张卡 ≤150 字符。超过则截断 analogy 和 misconceptions。
+        Phase 89: 结构保持注入 — 一行一个维度，LLM 无需从压缩文本中解析。
         """
         try:
             card = result.card or {}
@@ -421,23 +545,25 @@ class CoachAgent:
             insights = card.get("teaching_insights", {})
             kp = result.knowledge_point or card.get("knowledge_point", "")
 
-            parts = [f"【{kp}】"]
+            lines = [f"【{kp}】"]
 
             one_sentence = feynman.get("one_sentence", "")
             if one_sentence:
-                parts.append(one_sentence)
+                lines.append(f"  定义: {one_sentence}")
 
             analogy = feynman.get("analogy", "")
             if analogy:
-                # 截断类比保留核心意象（~60 char）
-                parts.append(f"类比: {analogy[:60]}")
+                lines.append(f"  类比: {analogy[:60]}")
 
             misconceptions = insights.get("misconceptions", [])
             if misconceptions:
-                parts.append(f"常见误解: {str(misconceptions[0])}")
+                lines.append(f"  误解: {', '.join(str(m) for m in misconceptions[:2])}")
 
-            line = "。".join(parts)
-            return f"[卡片参考] {line}" if len(line) > 15 else None
+            sticking = insights.get("sticking_points", [])
+            if sticking:
+                lines.append(f"  卡点: {', '.join(str(s) for s in sticking[:2])}")
+
+            return "\n".join(lines) if len(lines) > 1 else None
         except Exception:
             return None
 
@@ -789,6 +915,9 @@ class CoachAgent:
         prev_a = prev_data.get("action_type", "?")
         lines.append("=== 策略连续性 ===")
         lines.append(f"  上一轮策略: {prev_a}")
+        prev_turn = recent[0].get("data", {})
+        if prev_turn.get("action_type") == "probe":
+            lines.append("  探测状态: 已完成（学生已回应，禁止重复探测，应直接进入教学）")
         if cur != prev_a and cur != "?":
             reason = "策略切换"
             try:
@@ -1049,6 +1178,12 @@ class CoachAgent:
                 flow_result=flow_result,
                 self_eval=getattr(self, '_self_eval', None),
             )
+
+        # Phase 90: mastery 调节 action_type
+        mastery = self._get_current_mastery()
+        action["action_type"] = self._adjust_action_by_mastery(
+            action.get("action_type", "suggest"), mastery
+        )
 
         # Phase 23: 复习覆盖 — 低保留率技能优先
         if review_override:

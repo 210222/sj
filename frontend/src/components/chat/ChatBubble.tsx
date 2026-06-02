@@ -41,6 +41,11 @@ export function ChatBubble({ message, onEnableRecommended, onSkipAwakening }: Ch
         const hasDelimiters = /\$[^$]+\$/.test(raw);
         if (!hasDelimiters) {
           raw = raw.replace(/(\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\})/g, '$$$1$$');
+          // Phase 91: 裸 LaTeX 兜底 — 自动包裹无参数命令
+          raw = raw.replace(
+            /\\(rightarrow|leftarrow|Rightarrow|Leftarrow|to|mapsto|lim|infty|times|cdot|pm|mp|partial|nabla|leq|geq|neq|approx|equiv|sim|propto|forall|exists|in|notin|subset|subseteq|cup|cap|emptyset|cdots|vdots|ddots|ldots|alpha|beta|gamma|delta|epsilon|theta|pi|sigma|omega)(?![a-zA-Z])/g,
+            '$$$1$'
+          );
         }
 
         // 安全网: HTML 实体解码 (&amp;→&, &lt;→< 等), 防止管线中任何环节的意外转义

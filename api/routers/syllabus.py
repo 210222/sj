@@ -159,15 +159,6 @@ async def prepare_chapter_endpoint(req: PrepareChapterRequest, request: Request)
 
     返回 task_id，通过 GET /syllabus/prepare/{task_id} 轮询进度。
     """
-    # Rate limit: 1/min (昂贵操作)
-    limiter = get_rate_limiter()
-    client_key = f"prepare:{request.client.host if request.client else 'unknown'}"
-    if not limiter.is_allowed(client_key, limit=1, window_s=60):
-        raise HTTPException(
-            status_code=429,
-            detail={"error": "RATE_LIMITED", "detail": "Chapter preparation is limited to 1/min"},
-        )
-
     chapter = req.chapter
     chapter_id = chapter.get("id", "unknown")
     task_id = f"{chapter_id}"
