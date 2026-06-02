@@ -2,6 +2,7 @@
 
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from typing import Callable
 
@@ -33,7 +34,8 @@ def prepare_knowledge_point(
     for attempt in range(1, MAX_RETRIES + 1):
         _progress(f"搜索中 (第{attempt}轮)")
         try:
-            search_text = search_knowledge(kp.name, llm_client, kp.subject, kp.category)
+            search_text = search_knowledge(kp.name, llm_client, kp.subject, kp.category,
+                                           attempt=attempt)
         except Exception as e:
             _logger.warning("search_knowledge failed (attempt %d): %s", attempt, e)
             continue
@@ -99,6 +101,7 @@ def prepare_knowledge_point(
             quality_gate={"passed": True, "checks": 5},
             version=1,
             created_at=datetime.now(timezone.utc).isoformat(),
+            knowledge_type=digested.knowledge_type,  # Phase 92: 类型传递
         )
 
         _progress("已完成")
@@ -118,30 +121,47 @@ def prepare_chapter(
     store: AbstractLessonStore | None = None,
     on_progress: Callable | None = None,
 ) -> dict[str, LessonCard | None]:
-    """逐知识点备课一章。返回 {kp_name: LessonCard | None}。"""
+    """逐知识点备课一章。Phase 93: KP 并行化 — 3 workers。返回 {kp_name: LessonCard | None}。"""
     store = store or JsonLessonStore()
     fts5_store = Fts5LessonStore()
     results = {}
     try:
-        for section in chapter.get("sections", []):
-            for kp_name in section.get("knowledge_points", []):
-                kp = KnowledgePoint(
-                    name=kp_name,
-                    chapter_id=chapter.get("id", ""),
-                    subject=subject,
-                    category=category,
-                )
+        # 收集所有 KP
+        kp_list = [KnowledgePoint(
+            name=n, chapter_id=chapter.get("id", ""),
+            subject=subject, category=category)
+            for s in chapter.get("sections", [])
+            for n in s.get("knowledge_points", [])]
+
+        if not kp_list:
+            return results
+
+        # Phase 93: 并行处理 KP（无依赖，天然可并行）
+        with ThreadPoolExecutor(max_workers=3, thread_name_prefix="kp_prep") as pool:
+            futures = {pool.submit(_prepare_kp_worker, kp, llm_client, store, course_id, on_progress): kp
+                       for kp in kp_list}
+            for future in as_completed(futures):
+                kp = futures[future]
                 try:
-                    card = prepare_knowledge_point(kp, llm_client, store, course_id, on_progress)
+                    card = future.result()
                 except Exception as e:
-                    _logger.error("prepare_knowledge_point crashed for '%s': %s", kp_name, e)
+                    _logger.error("prepare_knowledge_point crashed for '%s': %s", kp.name, e)
                     card = None
-                results[kp_name] = card
-                if card is not None:
-                    try:
-                        fts5_store.save_card(course_id, card)
-                    except Exception as e:
-                        _logger.warning("FTS5 parallel write failed for '%s': %s", kp_name, e)
+                results[kp.name] = card
+
+        # 主线程统一写入 FTS5（避免跨线程 sqlite3 连接冲突）
+        for kp_name, card in results.items():
+            if card is not None:
+                try:
+                    fts5_store.save_card(course_id, card)
+                except Exception as e:
+                    _logger.warning("FTS5 write failed for '%s': %s", kp_name, e)
+
         return results
     finally:
         fts5_store.close()
+
+
+def _prepare_kp_worker(kp, llm_client, store, course_id, on_progress):
+    """Worker 函数 — 在线程池中独立执行单个 KP 备课。Phase 93。"""
+    return prepare_knowledge_point(kp, llm_client, store, course_id, on_progress)

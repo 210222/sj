@@ -555,11 +555,28 @@ class CoachAgent:
             if analogy:
                 lines.append(f"  类比: {analogy[:60]}")
 
+            kp_type = card.get("knowledge_type", "")
+            detours = insights.get("detours", [])
             misconceptions = insights.get("misconceptions", [])
-            if misconceptions:
-                lines.append(f"  误解: {', '.join(str(m) for m in misconceptions[:2])}")
-
             sticking = insights.get("sticking_points", [])
+
+            if kp_type == "procedural":
+                if misconceptions:
+                    lines.append(f"  操作错误: {', '.join(str(m) for m in misconceptions[:2])}")
+                if detours:
+                    lines.append(f"  环境差异: {', '.join(str(d) for d in detours[:2])}")
+            elif kp_type == "factual":
+                if misconceptions:
+                    lines.append(f"  易混点: {', '.join(str(m) for m in misconceptions[:2])}")
+                if detours:
+                    lines.append(f"  记忆技巧: {', '.join(str(d) for d in detours[:2])}")
+            else:
+                # conceptual (默认)
+                if misconceptions:
+                    lines.append(f"  误解: {', '.join(str(m) for m in misconceptions[:2])}")
+                if detours:
+                    lines.append(f"  弯路: {', '.join(str(d) for d in detours[:2])}")
+
             if sticking:
                 lines.append(f"  卡点: {', '.join(str(s) for s in sticking[:2])}")
 

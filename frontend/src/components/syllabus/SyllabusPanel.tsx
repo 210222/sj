@@ -49,7 +49,7 @@ export function SyllabusPanel({ sessionId, isMobile, onClose }: Props) {
     setSearching(true);
     setError(null);
     setSyllabus(null);
-    setPrepTasks({});
+    // 保留 prepTasks — 新搜索不会冲突(旧 chapter_id 在新大纲中不存在则自然隐藏)
     try {
       const res = await searchSyllabus(q);
       setSyllabus(res);
@@ -121,7 +121,7 @@ export function SyllabusPanel({ sessionId, isMobile, onClose }: Props) {
           updates[chId] = status;
         } catch (e: unknown) {
           const msg = e instanceof Error ? e.message : '';
-          if (msg.includes('NOT_FOUND') || msg.includes('404')) {
+          if (msg.includes('NOT_FOUND') || msg.includes('No task found') || msg.includes('404')) {
             updates[chId] = {
               ...task,
               state: 'error',

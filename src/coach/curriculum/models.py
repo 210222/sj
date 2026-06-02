@@ -19,17 +19,29 @@ class DigestedOutput:
     sticking_points: list[str]
     detours: list[str]
     prerequisites: list[str]
+    knowledge_type: str = ""  # Phase 92: conceptual|procedural|factual
 
     def validate(self) -> tuple[bool, list[str]]:
         errors = []
         if not self.definition:
             errors.append("definition is empty")
-        if len(self.misconceptions) < 3:
-            errors.append(f"misconceptions < 3: {len(self.misconceptions)}")
-        if len(self.sticking_points) < 2:
-            errors.append(f"sticking_points < 2: {len(self.sticking_points)}")
-        if len(self.detours) < 2:
-            errors.append(f"detours < 2: {len(self.detours)}")
+
+        # Phase 92: 阈值分型
+        kt = self.knowledge_type
+        thresholds = {
+            "conceptual":  (3, 2, 2),
+            "unknown":     (2, 1, 1),
+            "procedural":  (1, 1, 1),
+            "factual":     (2, 1, 0),
+        }
+        min_mis, min_stick, min_det = thresholds.get(kt, thresholds["unknown"])
+
+        if len(self.misconceptions) < min_mis:
+            errors.append(f"misconceptions < {min_mis}: {len(self.misconceptions)}")
+        if len(self.sticking_points) < min_stick:
+            errors.append(f"sticking_points < {min_stick}: {len(self.sticking_points)}")
+        if len(self.detours) < min_det:
+            errors.append(f"detours < {min_det}: {len(self.detours)}")
         return len(errors) == 0, errors
 
 
@@ -71,3 +83,4 @@ class LessonCard:
     quality_gate: dict
     version: int
     created_at: str
+    knowledge_type: str = ""  # Phase 92: conceptual|procedural|factual
