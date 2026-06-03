@@ -104,6 +104,72 @@ RED_FLAGS = ["从某种角度来说", "需要具体分析", "取决于具体情�
 SELECTION_ONLY = re.compile(r"^[A-D][)）]?\s*$|^选\s*[A-D]\s*$|^答案是?\s*[A-D]\s*$")
 
 
+def _check_coverage(items: list[str], questions: list[dict]) -> list[str]:
+    """检查 misconceptions/sticking_points 是否被题目覆盖.
+
+    Args:
+        items: 来自 DigestedOutput 的 misconceptions 或 sticking_points
+        questions: A 类题（用于 misconceptions）或 B 类题（用于 sticking_points）
+
+    Returns:
+        未被覆盖的条目列表（每个截断到 40 字符）
+    """
+    if not items or not questions:
+        return []
+
+    def _chinese_chars(text: str) -> list[str]:
+        return [c for c in text if '一' <= c <= '鿿']
+
+    def _chinese_bigrams(text: str) -> set[str]:
+        chars = _chinese_chars(text)
+        return {chars[i] + chars[i + 1] for i in range(len(chars) - 1)}
+
+    uncovered = []
+    for item in items:
+        item_stripped = item.strip()
+        if not item_stripped:
+            continue
+
+        covered = False
+        for q in questions:
+            targets = q.get("targets", "") or ""
+            q_text = q.get("question", "") or ""
+            combined = targets + " " + q_text
+
+            # Layer 2 Step A: 完整文本 in targets
+            if item_stripped in targets:
+                covered = True
+                break
+
+            # Layer 2 Step B: 分割后的片段 (>=2 chars) in targets+question
+            segments = re.split(r'[：:，。！？、；()（）\s—–]+', item_stripped)
+            for seg in segments:
+                seg = seg.strip()
+                if len(seg) >= 2 and seg in combined:
+                    covered = True
+                    break
+            if covered:
+                break
+
+            # Layer 3: 中文 bigram Jaccard（仅对 targets 字段）
+            if targets:
+                item_bigrams = _chinese_bigrams(item_stripped)
+                if len(item_bigrams) >= 2:
+                    target_bigrams = _chinese_bigrams(targets)
+                    if target_bigrams:
+                        overlap = item_bigrams & target_bigrams
+                        jaccard = len(overlap) / len(item_bigrams | target_bigrams)
+                        if jaccard >= 0.20:
+                            covered = True
+                            break
+
+        if not covered:
+            truncated = item_stripped if len(item_stripped) <= 40 else item_stripped[:37] + "..."
+            uncovered.append(truncated)
+
+    return uncovered
+
+
 def self_verify(kp_name: str, feynman_card, digested, llm_client,
                 subject: str = "", category: str = "") -> "VerificationReport":
     """自验证: 3 个独立 LLM 调用 + 代码防御。"""
@@ -123,13 +189,13 @@ def self_verify(kp_name: str, feynman_card, digested, llm_client,
             return VerificationReport(kp_name, False, 0, 0, ["出题JSON解析失败"], [], [], {})
     questions = q_raw.get("questions", [])
 
-    # Defense 1: coverage check
+    # Defense 1: coverage check (quantity + content)
     if len(questions) < 5:
-        return VerificationReport(kp_name, False, len(questions), 0, ["不足5题"], [], [], {})
+        return VerificationReport(kp_name, False, len(questions), 0, ["D1不足5题"], [], [], {})
     types = set(q["type"] for q in questions)
     for t in ["A", "B", "C"]:
         if t not in types:
-            return VerificationReport(kp_name, False, len(questions), 0, [f"缺{t}类题"], [], [], {})
+            return VerificationReport(kp_name, False, len(questions), 0, [f"D1缺{t}类题"], [], [], {})
 
     # Detect forbidden question types
     for q in questions:
@@ -137,7 +203,35 @@ def self_verify(kp_name: str, feynman_card, digested, llm_client,
                             (re.compile(r"对还是错|判断.*正确.*错误"), "判断题"),
                             (re.compile(r"填空|____"), "填空题")]:
             if pat.search(q["question"]):
-                return VerificationReport(kp_name, False, len(questions), 0, [f"禁止题型: {qtype}"], [], [], {})
+                return VerificationReport(kp_name, False, len(questions), 0, [f"D1禁止题型: {qtype}"], [], [], {})
+
+    # --- Content coverage check ---
+    failed_d1 = []
+
+    # Layer 1: LLM self-report
+    llm_coverage = q_raw.get("coverage")
+    if isinstance(llm_coverage, dict):
+        uncovered_self = llm_coverage.get("uncovered", [])
+        if uncovered_self:
+            short = [u if len(u) <= 40 else u[:37] + "..." for u in uncovered_self[:5]]
+            failed_d1.append(f"D1自报未覆盖({len(uncovered_self)}条): {', '.join(short)}")
+            return VerificationReport(kp_name, False, len(questions), 0, failed_d1, [], [], {})
+
+    # Layer 2+3: code-level keyword check
+    a_questions = [q for q in questions if q.get("type") == "A"]
+    b_questions = [q for q in questions if q.get("type") == "B"]
+
+    uncovered_mis = _check_coverage(digested.misconceptions, a_questions)
+    uncovered_sp = _check_coverage(digested.sticking_points, b_questions)
+
+    if uncovered_mis:
+        failed_d1.append(f"D1覆盖: {len(uncovered_mis)}条误解未覆盖: {', '.join(uncovered_mis[:5])}")
+    if uncovered_sp:
+        failed_d1.append(f"D1覆盖: {len(uncovered_sp)}条卡点未覆盖: {', '.join(uncovered_sp[:5])}")
+
+    if failed_d1:
+        return VerificationReport(kp_name, False, len(questions), 0, failed_d1, [], [], {})
+    # --- End content coverage check ---
 
     # Defense 5: obfuscate questions + distractor injection
     distractors = _fetch_distractors(kp_name, n=2)

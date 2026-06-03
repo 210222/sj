@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence — Phase 95 JARGON_DB 费曼术语检测全覆盖</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>95</phase>
+  <scope>D:/Claudedaoy/coherence</scope>
+  <design_doc>reports/phase95_jargon_expansion_design.md</design_doc>
+
+  <role>
+    你是 Coherence 项目 Coach 轨 Phase 95 执行者。
+    目标：将 feynman.py 中 JARGON_DB 从 3 学科扩展到 6 学科。
+    纯数据改动——不改函数逻辑、不动已有术语、不碰消费方代码。
+  </role>
+
+  <context>
+    JARGON_DB 当前只有 "编程语言" / "数学" / "语言学习" 三个学科。
+    用户在 syllabus 中选择 "自然科学" / "工程/技术" / "人文社科" 时，
+    JARGON_DB.get(category, []) 返回空列表，D2 和 D2b 防御全部跳过。
+    两个消费方（feynman.py:101 和 verifier.py:402）已有兜底逻辑，无需改动。
+  </context>
+
+  <mission>
+    1) 读取 feynman.py 的 JARGON_DB 定义块，确认 old_string 精确匹配。
+    2) 用 Edit 工具替换为 6-key 版本。已有 3 学科一字不动，新增 3 学科追加在末尾。
+    3) 运行导入验证 + 全量回归。
+    4) 创建 reports/phase95_completion.md 验收报告。
+  </mission>
+
+  <boundaries>
+    <allowed>
+      <item>src/coach/curriculum/feynman.py — 仅 JARGON_DB 常量块 (lines 50-58)</item>
+      <item>reports/phase95_completion.md — 新建验收报告</item>
+    </allowed>
+    <forbidden>
+      <item>contracts/** — 冻结</item>
+      <item>src/inner/** src/middle/** src/outer/** — 冻结</item>
+      <item>src/coach/curriculum/verifier.py — 消费方，已有兜底，禁止修改</item>
+      <item>src/coach/curriculum/orchestrator.py — 禁止修改</item>
+      <item>src/coach/curriculum/digester.py — 禁止修改</item>
+      <item>src/coach/curriculum/models.py — 禁止修改</item>
+      <item>tests/ — 已有测试禁止修改</item>
+      <item>config/ — 禁止修改</item>
+    </forbidden>
+  </boundaries>
+
+  <execution>
+    <step id="1" name="确认当前内容">
+      <action>Read feynman.py 的 JARGON_DB 定义块</action>
+      <check>确认 old_string 与文件内容精确匹配（包括缩进和逗号）</check>
+    </step>
+    <step id="2" name="精确替换">
+      <action>Edit 工具替换 JARGON_DB 为以下内容</action>
+      <target>feynman.py:50-58</target>
+      <new_content><![CDATA[JARGON_DB = {
+    "编程语言": ["变量", "赋值", "引用", "内存", "类型", "函数", "参数", "返回",
+                 "对象", "类", "实例", "指针", "静态", "动态", "编译", "解释",
+                 "作用域", "循环", "条件", "迭代", "递归", "模块", "导入"],
+    "数学": ["函数", "极限", "导数", "积分", "矩阵", "向量", "定理", "证明",
+             "收敛", "发散", "无穷", "域", "集合", "映射", "变换", "特征值"],
+    "语言学习": ["时态", "语态", "从句", "主语", "谓语", "宾语", "定语", "状语",
+                 "虚拟语气", "倒装", "省略", "冠词", "介词", "连词"],
+    "自然科学": ["量子态", "波函数", "叠加态", "纠缠", "退相干",
+                "哈密顿量", "拉格朗日量", "规范场", "自发对称性破缺",
+                "熵增", "自由能", "焓变", "活化能", "吉布斯",
+                "摩尔浓度", "电负性", "杂化轨道", "同位素丰度",
+                "有丝分裂", "减数分裂", "等位基因", "表观遗传"],
+    "工程/技术": ["时间复杂度", "空间复杂度", "大O表示", "动态规划",
+                 "贪心算法", "分治法", "回溯", "剪枝",
+                 "虚拟内存", "页表", "上下文切换", "中断向量",
+                 "三次握手", "四次挥手", "拥塞控制", "子网掩码",
+                 "原子性", "隔离级别", "幻读", "写时复制"],
+    "人文社科": ["唯物史观", "阶级分析", "年鉴学派", "长时段",
+                "先验", "超验", "辩证", "扬弃", "异化",
+                "边际效用", "比较优势", "基尼系数", "流动性陷阱",
+                "认知失调", "条件反射", "习得性无助", "防御机制",
+                "社会契约", "自然状态"],
+}]]></new_content>
+    </step>
+    <step id="3" name="导入验证">
+      <action>python -c "from src.coach.curriculum.feynman import JARGON_DB; assert len(JARGON_DB)==6; [print(f'{k}: {len(v)} terms') for k,v in JARGON_DB.items()]; print('OK')"</action>
+    </step>
+    <step id="4" name="全量回归">
+      <action>python -m pytest tests/ -q -k "not user_flow"</action>
+      <expect>1501 passed, 0 failed</expect>
+    </step>
+    <step id="5" name="验收报告">
+      <action>创建 reports/phase95_completion.md</action>
+      <content>记录改动前后对比 + 测试结果 + 逐项比对验收表</content>
+    </step>
+  </execution>
+
+  <verification>
+    <item>JARGON_DB 从 3 key → 6 key</item>
+    <item>已有 3 key 内容与改前逐字一致</item>
+    <item>新增 3 key 每项 ≥ 15 条术语</item>
+    <item>全量回归 1501 passed, 0 failed</item>
+    <item>feynman.py 除 JARGON_DB 定义外无改动</item>
+    <item>verifier.py 未修改</item>
+  </verification>
+
+  <risks>
+    <risk id="R1" sev="low">
+      <desc>人文社科术语通用性可能产生 false positive</desc>
+      <mitigation>阈值 >2 + 定义标记豁免 + kp_name 过滤。如某学科触发率 >50% → 减术语</mitigation>
+    </risk>
+    <risk id="R2" sev="low">
+      <desc>工程/技术术语与编程语言术语有交叉（如"动态规划"与"动态"）</desc>
+      <mitigation>JARGON_DB 按 category 隔离，不跨学科混用</mitigation>
+    </risk>
+    <risk id="R3" sev="medium" prob="very-low">
+      <desc>新增 D2 拦截 → orchestrator 重试增加 → API 成本略增</desc>
+      <mitigation>3 轮重试预算内。如产出率降 >10% → 调整术语</mitigation>
+    </risk>
+  </risks>
+</prompt>
