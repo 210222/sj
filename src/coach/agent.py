@@ -298,6 +298,8 @@ class CoachAgent:
         sdt_profile: dict | None,
         user_input: str,
         user_state: dict,
+        flow_channel: str = "",
+        mastery: float | None = None,
     ) -> tuple[dict, dict, str]:
         """统一准备主路径的 LLM context，避免后补式注入与双路径漂移。"""
         llm_difficulty = self._determine_llm_difficulty()
@@ -378,6 +380,8 @@ class CoachAgent:
             progress_summary=retention.get("progress_summary") or None,
             context_summary=enriched_summary,
             context_window=context_window,
+            flow_channel=flow_channel or "",
+            mastery=mastery,
         )
         return ctx, retention, llm_difficulty
 
@@ -1345,6 +1349,8 @@ class CoachAgent:
                     sdt_profile=sdt_profile,
                     user_input=user_input,
                     user_state=user_state,
+                    flow_channel=flow_channel,
+                    mastery=mastery,
                 )
                 s4_history = retention.get("history") or []
                 s4_memory_list = retention.get("memory_snippets") or []

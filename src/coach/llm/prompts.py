@@ -242,6 +242,8 @@ def build_coach_context(
     context_window: list[str] | None = None,
     context_summary: str | None = None,
     progress_summary: str | None = None,
+    flow_channel: str = "",
+    mastery: float | None = None,
 ) -> dict:
     """构建完整的教练上下文，用于 LLM prompt 注入."""
     stage = ttm_stage or "contemplation"
@@ -278,6 +280,8 @@ def build_coach_context(
         ttm_signal=ttm_signal,
         behavior_signals=behavior_signals,
         difficulty=difficulty,
+        flow_channel=flow_channel,
+        mastery=mastery,
     )
     context_layer = _render_context_layer(
         history_text=history_text,
@@ -347,6 +351,62 @@ def build_coach_context(
     }
 
 
+def _render_behavioral_constraints(
+    *,
+    stage: str,
+    autonomy: float,
+    competence: float,
+    relatedness: float,
+    flow_channel: str = "",
+    mastery: float | None = None,
+) -> str:
+    """根据当前信号生成教学行为约束（MUST/MUST NOT 指令）."""
+    rules: list[tuple[int, str]] = []
+
+    # Priority 1: Flow (most urgent)
+    if flow_channel in ("anxiety", "near_anxiety"):
+        rules.append((1, "学生可能焦虑 → 降一级难度。先做示范再让学生尝试。禁止: 追问/时间压力/连续挑战。"))
+    elif flow_channel == "near_boredom":
+        rules.append((1, "学生可能无聊 → 换一个角度或增加难度。禁止: 重复同类型练习。"))
+
+    # Priority 2: Mastery
+    if mastery is not None:
+        if mastery < 0.3:
+            rules.append((2, "学生是新手 → 用生活类比解释每个概念。禁止: 用术语解释术语/挑战题/连续多个新概念。"))
+        elif mastery > 0.7:
+            rules.append((2, "学生已熟练 → 给开放性问题和多解法题目。禁止: 重复基础概念解释/封闭型提问。"))
+
+    # Priority 3: TTM Stage
+    ttm_map = {
+        "precontemplation": (3, "学生尚未决定学习 → 只探索感受和动机。禁止: 教学/练习/推荐行动。"),
+        "contemplation": (3, "学生在犹豫 → 每次先肯定学生的思考。给一个低门槛尝试入口。禁止: 催促决定/长篇教学。"),
+        "action": (3, "学生主动在学 → 每轮给练习机会。先练后讲。禁止: 连续两轮无互动/长篇独白。"),
+        "maintenance": (3, "学生已掌握基础 → 引入变化防止回退。禁止: 重复已学内容/降低难度。"),
+        "relapse": (3, "学生遭遇挫折 → 无评判接纳。给最短重启路径。禁止: 分析失败原因/追加压力。"),
+    }
+    if stage in ttm_map:
+        rules.append(ttm_map[stage])
+
+    # Priority 4: SDT
+    if autonomy < 0.4:
+        rules.append((4, "学生自主性低 → 提供 2-3 个选项让学生选。禁止: 替学生做学习决策/单一指令。"))
+    if competence < 0.4:
+        rules.append((4, "学生胜任感低 → 本轮必须指出至少一个学生做得好的具体点。禁止: 直接纠错而不先肯定。"))
+    if relatedness < 0.4:
+        rules.append((4, "学生关联感低 → 本轮必须关联学生之前提到过的兴趣或经历。"))
+
+    if not rules:
+        return ""
+
+    rules.sort(key=lambda x: x[0])
+    selected = rules[:5]
+
+    lines = ["教学行为约束（本轮必须遵守）:"]
+    for _, rule in selected:
+        lines.append(f"  - {rule}")
+    return "\n".join(lines)
+
+
 def _render_policy_layer(
     *,
     intent: str,
@@ -360,8 +420,10 @@ def _render_policy_layer(
     ttm_signal: str,
     behavior_signals: str,
     difficulty: str,
+    flow_channel: str = "",
+    mastery: float | None = None,
 ) -> str:
-    return """当前教练策略: {action_type_strategy}
+    rendered = """当前教练策略: {action_type_strategy}
 当前 action_type: {action_type}
 用户意图: {intent}
 
@@ -391,6 +453,19 @@ def _render_policy_layer(
         ttm_strategy_signal=ttm_signal,
         difficulty=difficulty,
     ).strip()
+
+    # 生成教学行为约束
+    constraints = _render_behavioral_constraints(
+        stage=stage,
+        autonomy=autonomy,
+        competence=competence,
+        relatedness=relatedness,
+        flow_channel=flow_channel,
+        mastery=mastery,
+    )
+    if constraints:
+        rendered += "\n\n" + constraints
+    return rendered
 
 
 def _render_context_layer(
@@ -429,7 +504,10 @@ def _render_terminal_tutoring_checklist() -> str:
 - 教了新概念 → statement 末尾必须是独立验证指令。学生不看笔记自己试，不是\"一起来做\"。做不出 → 换方式再教，绝不跳过验证
 - 本轮是否跟了至少一个开放型追问（你觉得呢/你怎么看/用你自己的话说说看）？
 - 对学生的反馈是否具体到过程（\"你刚才XX的方法很好\"），而非泛泛\"很好/不对\"？
-- 本轮 statement 是否超过 3 句话？如果是，压缩到 2-3 句核心 + 1 个追问。每轮只教一个点，把说话空间留给学生。学生的话语应该比教练多""".strip()
+- 本轮 statement 是否超过 3 句话？如果是，压缩到 2-3 句核心 + 1 个追问。每轮只教一个点，把说话空间留给学生。学生的话语应该比教练多
+- 【互动比例】本轮你的回应是否超过了 3 句话？如果是 → 违规。压缩到 2-3 句核心内容 + 1 个开放型追问。一个知识点只讲一个核心点，不要试图一次讲完所有相关内容。
+- 【开放提问】本轮你是否用了'对不对/懂了吗/明白吗/会了吗/可以吗'？如果是 → 违规。必须替换为开放型提问（'你觉得呢/用你自己的话说说看/你怎么理解/试试看会怎样'）。
+- 【避免独白】检查最近两轮: 你是否连续两轮没有向学生提问？如果是 → 违规。每轮必须以至少一个开放型问题结尾，让学生说话。""".strip()
 
 
 def _render_terminal_checklist(action_type: str) -> str:

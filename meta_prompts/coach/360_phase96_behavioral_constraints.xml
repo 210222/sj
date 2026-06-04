@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<prompt>
+  <name>Coherence — Phase 96 Prompt 行为约束强化</name>
+  <version>1.0.0</version>
+  <track>COACH</track>
+  <phase>96</phase>
+  <scope>D:/Claudedaoy/coherence</scope>
+  <design_doc>reports/phase96_behavioral_constraints_design.md</design_doc>
+  <plan>reports/phase96_behavioral_constraints_plan.md</plan>
+
+  <role>
+    你是 Coherence 项目 Coach 轨 Phase 96 执行者。
+    目标：将 prompt 中的学生画像信号从"描述性信息"升级为"规定性行为约束"。
+    双路径注入——3 条通用规则进 terminal_tutoring（缓存区）+ 信号感知规则进 policy_layer（动态区）。
+  </role>
+
+  <context>
+    教学审计（Phase 94-95 之后）显示：学生画像 1/5，自然度 1/5。
+    根因：policy_layer 用描述性语言报告学生状态（"胜任感: 40%"），
+    但没有给 LLM 下达行为指令。LLM 看到信息但不行动。
+
+    稳定前缀（stable_prefix）和终端自检（terminal_tutoring）已经是规定性语言，
+    且 LLM 服从率高。本 Phase 将相同的语言风格扩展到画像信号层。
+  </context>
+
+  <mission>
+    1) prompts.py: terminal_tutoring 追加 3 条通用行为规则
+    2) prompts.py: 新增 _render_behavioral_constraints() 函数
+    3) prompts.py: _render_policy_layer() 接收新参数并注入行为约束
+    4) prompts.py: build_coach_context() 传递 flow_channel + mastery
+    5) agent.py: _build_llm_context_bundle() 传递 flow_channel + mastery 到 prompt
+  </mission>
+
+  <boundaries>
+    <allowed>
+      <item>src/coach/llm/prompts.py — terminal_tutoring, policy_layer, 新函数, build_coach_context</item>
+      <item>src/coach/agent.py — _build_llm_context_bundle (仅传参 4 行)</item>
+      <item>reports/phase96_behavioral_constraints_plan.md — 新建</item>
+      <item>reports/phase96_completion.md — 新建</item>
+    </allowed>
+    <forbidden>
+      <item>contracts/** — 冻结</item>
+      <item>src/inner/** src/middle/** src/outer/** — 冻结</item>
+      <item>src/coach/curriculum/** — Phase 94-95 已完成，禁止修改</item>
+    </forbidden>
+  </boundaries>
+
+  <execution>
+    <step id="1" name="审计当前代码">
+      <description>读取 prompts.py 中以下函数的当前精确内容，确认 old_string</description>
+      <action>Read prompts.py: _render_terminal_tutoring_checklist (约 lines 419-432)</action>
+      <action>Read prompts.py: _render_policy_layer (约 lines 350-393)</action>
+      <action>Read prompts.py: build_coach_context 中 _render_policy_layer 的调用点</action>
+      <action>Read agent.py: _build_llm_context_bundle 中 build_coach_context 的调用点 (约 lines 368-381)</action>
+    </step>
+
+    <step id="2" name="改动 A: 追加通用规则到 terminal_tutoring">
+      <description>在 _render_terminal_tutoring_checklist 函数末尾，return lines 之前，追加 3 条规则</description>
+      <target>prompts.py: _render_terminal_tutoring_checklist() 函数内部, return 语句之前</target>
+      <code><![CDATA[
+    lines.append("")
+    lines.append("【互动比例】本轮你的回应是否超过了 3 句话？如果是 → 违规。压缩到 2-3 句核心内容 + 1 个开放型追问。一个知识点只讲一个核心点，不要试图一次讲完所有相关内容。")
+    lines.append("【开放提问】本轮你是否用了'对不对/懂了吗/明白吗/会了吗/可以吗'？如果是 → 违规。必须替换为开放型提问（'你觉得呢/用你自己的话说说看/你怎么理解/试试看会怎样'）。")
+    lines.append("【避免独白】检查最近两轮: 你是否连续两轮没有向学生提问？如果是 → 违规。每轮必须以至少一个开放型问题结尾，让学生说话。")
+]]></code>
+    </step>
+
+    <step id="3" name="改动 B: 新增 _render_behavioral_constraints 函数">
+      <description>在 prompts.py 中，_render_policy_layer 函数之前，插入新函数</description>
+      <target>prompts.py: 在 _render_policy_layer 之前（约 line 348 之前）</target>
+      <code><![CDATA[
+def _render_behavioral_constraints(
+    *,
+    stage: str,
+    autonomy: float,
+    competence: float,
+    relatedness: float,
+    flow_channel: str = "",
+    mastery: float | None = None,
+) -> str:
+    """根据当前信号生成教学行为约束（MUST/MUST NOT 指令）."""
+    rules: list[tuple[int, str]] = []
+
+    # Priority 1: Flow (most urgent)
+    if flow_channel in ("anxiety", "near_anxiety"):
+        rules.append((1, "学生可能焦虑 → 降一级难度。先做示范再让学生尝试。禁止: 追问/时间压力/连续挑战。"))
+    elif flow_channel == "near_boredom":
+        rules.append((1, "学生可能无聊 → 换一个角度或增加难度。禁止: 重复同类型练习。"))
+
+    # Priority 2: Mastery
+    if mastery is not None:
+        if mastery < 0.3:
+            rules.append((2, "学生是新手 → 用生活类比解释每个概念。禁止: 用术语解释术语/挑战题/连续多个新概念。"))
+        elif mastery > 0.7:
+            rules.append((2, "学生已熟练 → 给开放性问题和多解法题目。禁止: 重复基础概念解释/封闭型提问。"))
+
+    # Priority 3: TTM Stage
+    ttm_map = {
+        "precontemplation": (3, "学生尚未决定学习 → 只探索感受和动机。禁止: 教学/练习/推荐行动。"),
+        "contemplation": (3, "学生在犹豫 → 每次先肯定学生的思考。给一个低门槛尝试入口。禁止: 催促决定/长篇教学。"),
+        "action": (3, "学生主动在学 → 每轮给练习机会。先练后讲。禁止: 连续两轮无互动/长篇独白。"),
+        "maintenance": (3, "学生已掌握基础 → 引入变化防止回退。禁止: 重复已学内容/降低难度。"),
+        "relapse": (3, "学生遭遇挫折 → 无评判接纳。给最短重启路径。禁止: 分析失败原因/追加压力。"),
+    }
+    if stage in ttm_map:
+        rules.append(ttm_map[stage])
+
+    # Priority 4: SDT
+    if autonomy < 0.4:
+        rules.append((4, "学生自主性低 → 提供 2-3 个选项让学生选。禁止: 替学生做学习决策/单一指令。"))
+    if competence < 0.4:
+        rules.append((4, "学生胜任感低 → 本轮必须指出至少一个学生做得好的具体点。禁止: 直接纠错而不先肯定。"))
+    if relatedness < 0.4:
+        rules.append((4, "学生关联感低 → 本轮必须关联学生之前提到过的兴趣或经历。"))
+
+    if not rules:
+        return ""
+
+    rules.sort(key=lambda x: x[0])
+    selected = rules[:5]
+
+    lines = ["教学行为约束（本轮必须遵守）:"]
+    for _, rule in selected:
+        lines.append(f"  - {rule}")
+    return "\n".join(lines)
+]]></code>
+    </step>
+
+    <step id="4" name="改动 C: _render_policy_layer 加参数 + 注入约束块">
+      <description>修改 _render_policy_layer 函数签名和函数体</description>
+      <target>prompts.py: _render_policy_layer() 函数</target>
+      <action>函数签名新增参数: flow_channel: str = "", mastery: float | None = None</action>
+      <action>函数体末尾 (return 之前) 追加约束块生成逻辑</action>
+      <code><![CDATA[
+    # 生成教学行为约束
+    constraints = _render_behavioral_constraints(
+        stage=stage,
+        autonomy=autonomy,
+        competence=competence,
+        relatedness=relatedness,
+        flow_channel=flow_channel,
+        mastery=mastery,
+    )
+    if constraints:
+        rendered += "\n\n" + constraints
+]]></code>
+    </step>
+
+    <step id="5" name="改动 D: build_coach_context 传递新参数">
+      <description>在 build_coach_context 中调用 _render_policy_layer 时传递新参数</description>
+      <target>prompts.py: build_coach_context() 函数</target>
+      <action>定位调用 _render_policy_layer() 的位置</action>
+      <action>在已有参数末尾追加: flow_channel=..., mastery=...</action>
+      <note>flow_channel 来自 build_coach_context 的新参数，mastery 同上</note>
+    </step>
+
+    <step id="6" name="改动 E: build_coach_context 接收新参数">
+      <description>build_coach_context 签名新增 flow_channel 和 mastery 参数</description>
+      <target>prompts.py: build_coach_context() 函数签名</target>
+      <action>新增参数: flow_channel: str = "", mastery: float | None = None</action>
+    </step>
+
+    <step id="7" name="改动 F: agent.py 传递 flow_channel + mastery">
+      <description>_build_llm_context_bundle 在调用 build_coach_context 时传新参数</description>
+      <target>agent.py: _build_llm_context_bundle() 函数</target>
+      <action>定位调用 build_coach_context(**ctx) 的位置 (约 line 379)</action>
+      <action>在 ctx dict 或调用参数中新增: 'flow_channel': ..., 'mastery': ...</action>
+      <detail>
+        flow_channel 来源: self._get_flow_channel() 或 self._flow_channel 或从 flow_result 提取
+        mastery 来源: 已有的 mastery 变量 (_get_current_mastery 的返回值)
+      </detail>
+    </step>
+
+    <step id="8" name="全量回归验证">
+      <action>python -m pytest tests/ -q -k "not user_flow"</action>
+      <expect>1501 passed, 0 failed</expect>
+    </step>
+
+    <step id="9" name="行为约束单元验证">
+      <action><![CDATA[
+python -c "
+from src.coach.llm.prompts import _render_behavioral_constraints
+
+# 测试 1: 新手 + 焦虑 → 应输出多条约束
+r = _render_behavioral_constraints(
+    stage='action', autonomy=0.5, competence=0.3, relatedness=0.6,
+    flow_channel='near_anxiety', mastery=0.2)
+assert '焦虑' in r, f'Missing anxiety: {r}'
+assert '新手' in r, f'Missing novice: {r}'
+assert '胜任感低' in r, f'Missing competence: {r}'
+assert r.count(chr(10)) <= 7, f'Too many lines: {len(r.splitlines())}'
+print(f'Test1 OK ({len(r.splitlines())} lines)')
+
+# 测试 2: 熟练 → 只有 mastery 和 TTM
+r = _render_behavioral_constraints(
+    stage='maintenance', autonomy=0.8, competence=0.8, relatedness=0.7,
+    flow_channel='flow', mastery=0.8)
+assert '熟练' in r, f'Missing expert: {r}'
+print(f'Test2 OK')
+
+# 测试 3: 正常信号 → 空字符串
+r = _render_behavioral_constraints(
+    stage='action', autonomy=0.5, competence=0.5, relatedness=0.5,
+    flow_channel='flow', mastery=0.5)
+assert r == '', f'Expected empty, got: {r}'
+print('Test3 OK')
+
+# 测试 4: 全部异常 → 最多 5 条
+r = _render_behavioral_constraints(
+    stage='precontemplation', autonomy=0.2, competence=0.2, relatedness=0.2,
+    flow_channel='anxiety', mastery=0.1)
+lines = r.splitlines()
+assert len(lines) <= 7, f'At most 5 rules + 1 title + empty = 7 lines, got {len(lines)}'
+print(f'Test4 OK ({len(lines)} lines)')
+
+# 测试 5: 关联感低 → 相关约束
+r = _render_behavioral_constraints(
+    stage='action', autonomy=0.5, competence=0.5, relatedness=0.3,
+    flow_channel='flow', mastery=0.5)
+assert '关联感低' in r, f'Missing relatedness: {r}'
+print('Test5 OK')
+
+print('ALL TESTS PASSED')
+"]]></action>
+    </step>
+
+    <step id="10" name="验收签收">
+      <action>创建 reports/phase96_completion.md</action>
+      <content>逐项比对验收表 + 测试结果 + 改动清单</content>
+    </step>
+  </execution>
+
+  <risk_register>
+    <risk id="R1" sev="medium" prob="low">
+      <desc>约束可能使 LLM 回复变得机械——每条规则要求特定动作</desc>
+      <mitigation>约束是边界不是脚本。LLM 在边界内有自由度。5 条上限防止过载</mitigation>
+    </risk>
+    <risk id="R2" sev="low" prob="low">
+      <desc>flow 信号误判 → 假焦虑/假无聊 → 不必要的教学调整</desc>
+      <mitigation>影响仅 1 轮。下一轮 flow 重新计算会自动纠正</mitigation>
+    </risk>
+    <risk id="R3" sev="low" prob="very-low">
+      <desc>规则间可能产生冲突（如 anxiety 要求降难度 + mastery>0.7 要求加难度）</desc>
+      <mitigation>四级优先级明确: Flow(1) > Mastery(2)。焦虑时先处理情绪</mitigation>
+    </risk>
+    <risk id="R4" sev="low" prob="low">
+      <desc>prompt 长度增加 ~400 chars → token 成本略增</desc>
+      <mitigation>增加量可忽略。且约束仅在信号异常时激活</mitigation>
+    </risk>
+  </risk_register>
+
+  <verification>
+    <item>terminal_tutoring 追加 3 条通用规则</item>
+    <item>_render_behavioral_constraints 四级优先级正确</item>
+    <item>_render_policy_layer 接收并传递新参数</item>
+    <item>build_coach_context 传递 flow_channel + mastery</item>
+    <item>agent.py 传递 flow_channel + mastery</item>
+    <item>正常信号不产生约束（空字符串）</item>
+    <item>异常信号最多 5 条约束</item>
+    <item>全量回归 1501/0/X</item>
+    <item>prompts.py 原有逻辑未破坏</item>
+    <item>agent.py 仅传参，核心逻辑不变</item>
+  </verification>
+</prompt>
