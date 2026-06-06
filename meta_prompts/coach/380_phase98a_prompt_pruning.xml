@@ -1,0 +1,159 @@
+<prompt>
+  <name>Coherence — Phase 98a-1 教练提示词规则修剪 v2.0（交叉验证修正）</name>
+  <version>2.0.0</version>
+  <track>COACH</track>
+  <phase>98a-1</phase>
+  <scope>D:/Claudedaoy/coherence</scope>
+  <design_doc>reports/phase98a_complete_fix_plan.md</design_doc>
+  <cross_validation>reports/phase98_direction_b_root_cause.md</cross_validation>
+  <supersedes>meta_prompts/coach/380_phase98a_prompt_pruning.xml v1.0</supersedes>
+
+  <role>
+你是 Coherence 教练提示词的规则修剪师。教练提示词经过 97 个 Phase 的累积，形成 119 条规则。核心问题是 6 条辅导协议在 stable_prefix(位置1)和 terminal_tutoring(位置2)中有不同版本——有的完全重复，有的部分重叠。
+
+已经完成的工作：terminal_tutoring 从 14 条精简到 4 条。交叉验证发现了 3 个需要修正的问题。
+
+你的任务：执行 3 个精准修补——不重做去重，不改变装配顺序，不动其他 23 个提示词。
+  </role>
+
+  <context>
+交叉验证已确认的事实：
+
+1. 去重基本正确。6 条协议中：
+   - 完全重复(2/6): 协议4(反馈具体)、图表规则 → 去重正确，无需修改
+   - 部分重叠(2/6): 协议1(先诊后教)、协议6(察觉情绪) → 去重丢失了独特信息，需修补
+   - 混合型(2/6): 协议2(多提问少独白)、协议3(利用错误) → 去重正确（保留了独特部分）
+
+2. 矛盾消解已经是 no-op。3 处矛盾(R107 vs R05, R58 vs R22, R62 vs R19)在代码中已通过显式覆盖声明解决。无需修改。
+
+3. 降频已经是 no-op。probe/reflect 从未要求 _diagram_plan，challenge 已是"可选"。无需修改。
+
+4. 缓存安全。stable_prefix 变化量 <±5%（实际 <1.4%）。
+
+5. 回退机制：prompts.py 整个模块不感知配置。配置门控需要改造 4 个文件——代价远超收益。使用 git revert 回退。
+  </context>
+
+  <mission>
+仅执行 3 个精准修补：
+
+1. 协议 1(先诊后教) — 补充探测后程序逻辑。原 terminal"探测闭环"被删除后，探测后的行为规范（正确回答→反馈→推进；不知道→从基础开始；禁止重复提问）丢失。将该逻辑合并到 stable_prefix 协议 1 末尾。
+
+2. 协议 6(察觉情绪) — 恢复"不空泛鼓励"教学理念。原 stable_prefix 协议 6 中的"不空泛鼓励——把大目标切成学生能做到的小台阶"在合并时丢失。在 terminal 情绪检测规则中补充此句。
+
+3. Terminal 规则 A(引用安全) — 删除冗余。当前 terminal 第 495 行的引用安全规则是 stable_prefix 第 111-118 行的严格子集——无独特信息，且 Phase 97c 已程序化生成引用列表。
+  </mission>
+
+  <boundaries>
+    <allowed>
+      <item>src/coach/llm/prompts.py — _STABLE_SYSTEM_PREFIX 协议 1（第 34-37 行）</item>
+      <item>src/coach/llm/prompts.py — _render_terminal_tutoring_checklist() 第 495-496 行</item>
+    </allowed>
+    <forbidden>
+      <item>src/coach/llm/prompts.py — 其他所有函数（_ACTION_TYPE_INSTRUCTIONS、_render_behavioral_constraints、_render_policy_layer、_render_context_layer、_render_terminal_checklist）</item>
+      <item>src/coach/agent.py — 上下文构建逻辑不变</item>
+      <item>config/coach_defaults.yaml — 不新增配置项（回退用 git revert）</item>
+      <item>contracts/**, src/inner/**, src/middle/**, src/outer/**</item>
+      <item>其他 23 个运行时提示词</item>
+    </forbidden>
+  </boundaries>
+
+  <execution>
+    <step id="1" name="Fix 1 — 协议 1 补充探测后程序逻辑">
+      <description>原 terminal"探测闭环"规则包含探测后的操作程序：正确回答→反馈→推进；不知道→从基础开始；禁止重复提问。这些在去重时丢失。将它们合并到 stable_prefix 协议 1 末尾，形成完整的"诊断→处理→推进"闭环。</description>
+      <target>_STABLE_SYSTEM_PREFIX 第 37 行（协议 1 末尾）</target>
+      <action><![CDATA[
+当前协议 1（第 34-37 行）:
+1. 先诊断再教学: 引入任何新概念前，必须先问学生对此了解多少。
+   使用"你之前接触过X吗？""你是怎么理解X的？"等开放式探测。
+   不要假设学生零基础——也不要假设学生已掌握。
+   同一话题只诊断一次——如果上一轮已经问过探测题，不论学生如何回答，本轮直接进入教学，不重复探测。
+
+在第 37 行末尾（"不重复探测。"之后）追加:
+   探测后处理: 学生正确回答→先给具体正面反馈（指出做对了什么、用了什么方法），
+   然后推进到下一个紧密关联的教学点（更深一层/变式题/关联概念）。
+   学生表示没接触过/不了解→直接从最基础的定义+具体数字实例开始教学，不再问"你接触过X吗"。
+   严禁重复上一轮的提问——正确回答后重复同样问题 = 学生觉得教练没在听。
+      ]]></action>
+      <check>追加文本以"探测后处理:"开头，单独成段</check>
+      <check>不改变协议1已有的 4 行内容</check>
+      <check>追加后协议1总长度不超过 250 字符（原~170字符 + ~80字符追加）</check>
+      <note>这个修复让协议1从"只说不重复诊断"变成"诊断→处理→推进"的完整闭环。追加的文本是原 terminal 探测闭环的核心逻辑。</note>
+    </step>
+
+    <step id="2" name="Fix 2 — 协议 6 恢复"不空泛鼓励"">
+      <description>原 stable_prefix 协议 6 中的"不空泛鼓励——把大目标切成学生能做到的小台阶"在合并时丢失。terminal 情绪检测规则有"拆成更小步骤"但缺少教学理念支撑。在"拆成更小步骤"后补充此句。</description>
+      <target>_render_terminal_tutoring_checklist() 第 496 行</target>
+      <action><![CDATA[
+当前第 496 行:
+- 【情绪检测】学生回复是否突然变短/带负面词（太难了/算了吧/学不会/不想学了）？是 → 先共情（"这部分确实绕，很多人在这卡过"），拆成更小步骤。不直接教新内容。此规则优先于"简短确认"豁免
+
+在"拆成更小步骤"后、"不直接教新内容"前插入:
+。不空泛鼓励——把大目标切成学生能做到的小台阶
+
+修改后:
+- 【情绪检测】学生回复是否突然变短/带负面词（太难了/算了吧/学不会/不想学了）？是 → 先共情（"这部分确实绕，很多人在这卡过"），拆成更小步骤。不空泛鼓励——把大目标切成学生能做到的小台阶。不直接教新内容。此规则优先于"简短确认"豁免
+      ]]></action>
+      <check>插入后句子通顺——"拆成更小步骤。不空泛鼓励——把大目标切成学生能做到的小台阶。不直接教新内容。"</check>
+      <check>不改变情绪检测规则的其他部分</check>
+      <note>~20 字符追加。terminal 不在缓存键中——零缓存影响。</note>
+    </step>
+
+    <step id="3" name="Fix 3 — 删除 Terminal 规则 A（引用安全冗余）">
+      <description>terminal 第 495 行的引用安全规则是 stable_prefix 第 111-118 行的严格子集。无独特信息。引用安全是"约束型"规则（知道即可）而非"执行型"规则（需要高注意力提醒）。Phase 97c 程序化生成引用列表并注入上下文——LLM 在上下文中看到列表时，stable_prefix 的规则自动约束其行为。</description>
+      <target>_render_terminal_tutoring_checklist() 第 495 行</target>
+      <action><![CDATA[
+删除第 495 行整行:
+- 【引用安全】本轮是否有"本轮可安全引用"列表？有 → 使用其中至少1个短语，用"你刚才说的X"句式。列表为空 → 禁用任何引用句式，直接进入教学
+
+terminal 从 4 条规则 → 3 条规则:
+  保留: 【情绪检测】、【学生反馈处理】、【避免独白】
+  删除: 【引用安全】——被 stable_prefix 第 111-118 行完全覆盖
+      ]]></action>
+      <check>terminal 返回字符串中不再包含"引用安全"</check>
+      <check>stable_prefix 第 111-118 行的引用安全规则完整无缺</check>
+      <note>删除理由: (1) stable 版本更全面(6条 vs 2条), (2) 引用安全是约束型——不需要在生成端反复提醒, (3) Phase 97c 程序化生成引用列表——LLM 在上下文中自然看到。</note>
+    </step>
+
+    <step id="4" name="验证 — 全量回归 + 审计">
+      <description>三个修复都完成后，跑全量回归确认无代码错误，然后跑 anxious 画像审计验证效果。</description>
+      <action><![CDATA[
+1. 全量回归:
+   cd D:\Claudedaoy\coherence && python -m pytest tests/ -q
+   确认: 1551/0/8
+
+2. anxious 画像审计:
+   python run_experience_audit.py --teaching-audit --use-http --turns 10 --runs 1
+   目标: 学情诊断 ≥2 (Fix 1 贡献), 深度互动 ≥3 (已有基线)
+   红线: 即时反馈/关系建立不下降
+      ]]></action>
+      <check>全量回归 0 failed</check>
+      <check>anxious 学情诊断 ≥2</check>
+      <check>无维度退化</check>
+    </step>
+  </execution>
+
+  <risk_register>
+    <risk id="R1" sev="low" prob="low">
+      <desc>Fix 1 追加~80 字符到 stable_prefix → 首次调用缓存未命中</desc>
+      <mitigation>变化量 ~3.5%，在一次调用后自动恢复。不影响长期缓存效率</mitigation>
+    </risk>
+    <risk id="R2" sev="low" prob="low">
+      <desc>Fix 3 删除 terminal 引用安全 → LLM 引用率下降</desc>
+      <mitigation>stable_prefix 版本更全面（6 条 vs 2 条）。Phase 97c 程序化生成引用列表。如果审计显示引用率下降，恢复 terminal 规则（一行代码）</mitigation>
+    </risk>
+    <risk id="R3" sev="low" prob="low">
+      <desc>Fix 1 的探测后处理逻辑与协议 2（每轮必须提问）在探测轮产生互动过多</desc>
+      <mitigation>探测后处理是"探测完成后的行为规范"——正面反馈 + 推进不是额外的强制步骤，是对"探测之后该做什么"的描述。不增加新的行为要求</mitigation>
+    </risk>
+  </risk_register>
+
+  <verification>
+    <item>全量回归 1551/0/8</item>
+    <item>协议 1 末尾包含"探测后处理:"段</item>
+    <item>terminal 情绪检测包含"不空泛鼓励——把大目标切成学生能做到的小台阶"</item>
+    <item>terminal 中不再有"引用安全"条目（只剩 3 条: 情绪检测/学生反馈处理/避免独白）</item>
+    <item>stable_prefix 引用安全规则（第 111-118 行）完整无缺</item>
+    <item>anxious 审计: keyword 学情诊断 ≥2</item>
+    <item>无维度退化（对比修复前 baseline）</item>
+  </verification>
+</prompt>
