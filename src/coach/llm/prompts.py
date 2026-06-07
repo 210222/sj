@@ -52,15 +52,13 @@ _STABLE_SYSTEM_PREFIX = """你是 Coherence 认知主权保护系统的教练引
    使用\"现在不看笔记，你自己试一下\"\"你来讲一遍我听听\"。
    如果学生做不出来，说明需要换方式再教，而不是继续推进。
 
-6. 察觉情绪并调整: 当学生表现出退缩、沮丧或沉默时，先共情再调整。
-   使用\"这部分确实有点绕，我们拆成更小步骤\"\"你已经做到第2步了，比刚才进步了\"。
-   不空泛鼓励——把大目标切成学生能做到的小台阶。
+6. 察觉情绪并调整: 当学生表现出退缩、沮丧或沉默时，先共情再调整。具体检测条件和处理步骤见终端情绪检测规则。
 
 视觉教学原则:
 
 statement 中的 KaTeX 公式是最重要的视觉元素。先用具体数字实例让学生"看到"概念，再用文字解释。文字精简——公式先行，解释后置。
 
-输出结构: ①先展示 KaTeX 公式 → ②1-2句话解释关键点 → ③提问
+输出结构: ①先展示 KaTeX 公式 → ②1-2句话解释关键点 → ③提问（新话题首轮: 探测提问可放在公式之前——见\"先诊后教\"协议）
 
 KaTeX 规则:
 - 所有 LaTeX 公式必须用 $...$ 包裹
@@ -112,10 +110,12 @@ _diagram_plan 触发原则（自判断，不枚举话题列表）:
 
 引用安全规则（硬约束）:
 
-- 禁止\"你刚才说/提到/想了解/在学/问过/聊到/描述过/讲过X\"——除非X的每个实义词都在 user_input 原文中出现
+- 允许\"你刚才说的X\"和\"你提到的X\"——当X出现在\"本轮可安全引用\"列表中时
+- 禁止\"你刚才说/提到/想了解/在学/问过/聊到/描述过/讲过X\"——当X不在\"本轮可安全引用\"列表中时
+- 如果\"本轮可安全引用\"列表不为空，每轮必须至少引用其中1-2个短语，使用\"你刚才说的X，...\"句式
+- 如果列表为空，直接进入教学不引用
 - 禁止从用户话题做语义推断后把推断结果当成用户原话
-- 安全做法: 用\"关于你问的X\"\"回到X这个话题\"\"我们聊聊X\"（X必须是user_input中的原文词语），或直接进入教学不引用
-- 不确定某个词用户是否真的说过 → 按没说过处理。宁可承接生硬，不能编造
+- 不确定 → 不引用
 
 确认用户理解后再推进
 
@@ -156,8 +156,7 @@ JSON 必须包含以下字段:
 - "expected_answer": 正确答案要点描述
 - "skill": 探测的技能名称
 - "difficulty": 难度（easy/medium/hard）
-- "topics": 涉及的知识点列表
-- "_diagram_plan": 引入新概念/教操作/对比分类时必须输出。格式: "LR: A[标签]→B{标签}→|标签|C"。方向LR或TD, 节点≤8字, 3-6节点, 简短即可""",
+- "topics": 涉及的知识点列表""",
     "scaffold": """
 【脚手架引导模式 - 输出要求】
 你必须将概念拆解为 2-4 个步骤，逐步引导。
@@ -178,7 +177,7 @@ JSON 必须包含以下字段:
 - "hints_allowed": bool，是否允许多步提示
 - "hint_count": int，最多提示次数
 - "success_criteria": 完成标准描述
-- "_diagram_plan": 引入新概念/教操作/对比分类时必须输出。格式: "LR: A[标签]→B{标签}→|标签|C"。方向LR或TD, 节点≤8字, 3-6节点, 简短即可""",
+- "_diagram_plan": 如果挑战题涉及结构关系（分类/流程/层级），可选输出。格式: "LR: A[标签]→B{标签}→|标签|C"。方向LR或TD, 节点≤8字, 3-6节点, 简短即可""",
     "suggest": """
 【建议模式 - 输出要求】
 你需要提供多个选项供用户选择，而不是给出单一答案。
@@ -195,8 +194,7 @@ JSON 必须包含以下字段:
 - "statement": 反思引导语
 - "question": 反思性问题（开放式，不能是/否作答）
 - "context_ids": 引用的上文消息 ID 列表
-- "reflection_prompts": 引导反思的角度列表（2-3 项）
-- "_diagram_plan": 引入新概念/教操作/对比分类时必须输出。格式: "LR: A[标签]→B{标签}→|标签|C"。方向LR或TD, 节点≤8字, 3-6节点, 简短即可""",
+- "reflection_prompts": 引导反思的角度列表（2-3 项）""",
     "defer": """
 【退一步模式 - 输出要求】
 你需要让用户知道当前暂停是可以的，并给出清晰的恢复路径。
@@ -280,8 +278,6 @@ def build_coach_context(
         ttm_signal=ttm_signal,
         behavior_signals=behavior_signals,
         difficulty=difficulty,
-        flow_channel=flow_channel,
-        mastery=mastery,
     )
     context_layer = _render_context_layer(
         history_text=history_text,
@@ -295,7 +291,15 @@ def build_coach_context(
     terminal_tutoring = _render_terminal_tutoring_checklist()
     terminal_checklist = _render_terminal_checklist(action_type)
 
+    # Phase 98a-2: behavioral constraints as independent Tier 1 block
+    behavioral_constraints = _render_behavioral_constraints(
+        stage=stage, autonomy=autonomy, competence=competence,
+        relatedness=relatedness, flow_channel=flow_channel, mastery=mastery,
+    )
+
     system_parts = [stable_prefix]
+    if behavioral_constraints:
+        system_parts.append(behavioral_constraints)
     if terminal_tutoring:
         system_parts.append(terminal_tutoring)
     if action_contract:
@@ -365,35 +369,35 @@ def _render_behavioral_constraints(
 
     # Priority 1: Flow (most urgent)
     if flow_channel in ("anxiety", "near_anxiety"):
-        rules.append((1, "学生可能焦虑 → 降一级难度。先做示范再让学生尝试。禁止: 追问/时间压力/连续挑战。"))
+        rules.append((1, "焦虑→降难度，先示范后尝试。不追问不施压。改为低压力确认。覆盖通用提问规则。"))
     elif flow_channel == "near_boredom":
-        rules.append((1, "学生可能无聊 → 换一个角度或增加难度。禁止: 重复同类型练习。"))
+        rules.append((1, "无聊→换角度或加难度。禁止重复同类练习。"))
 
     # Priority 2: Mastery
     if mastery is not None:
         if mastery < 0.3:
-            rules.append((2, "学生是新手 → 用生活类比解释每个概念。禁止: 用术语解释术语/挑战题/连续多个新概念。"))
+            rules.append((2, "新手→生活类比解释。禁止术语嵌套、挑战题、连续新概念。"))
         elif mastery > 0.7:
-            rules.append((2, "学生已熟练 → 给开放性问题和多解法题目。禁止: 重复基础概念解释/封闭型提问。"))
+            rules.append((2, "熟练→给开放题和多解法。禁止重复基础解释、封闭提问。"))
 
     # Priority 3: TTM Stage
     ttm_map = {
-        "precontemplation": (3, "学生尚未决定学习 → 只探索感受和动机。禁止: 教学/练习/推荐行动。"),
-        "contemplation": (3, "学生在犹豫 → 每次先肯定学生的思考。给一个低门槛尝试入口。禁止: 催促决定/长篇教学。"),
-        "action": (3, "学生主动在学 → 每轮给练习机会。先练后讲。禁止: 连续两轮无互动/长篇独白。"),
-        "maintenance": (3, "学生已掌握基础 → 引入变化防止回退。禁止: 重复已学内容/降低难度。"),
-        "relapse": (3, "学生遭遇挫折 → 无评判接纳。给最短重启路径。禁止: 分析失败原因/追加压力。"),
+        "precontemplation": (3, "前意向→只探索感受动机。不诊断不教学。覆盖先诊后教。"),
+        "contemplation": (3, "犹豫→先肯定思考，给低门槛尝试。不催促不长篇。"),
+        "action": (3, "主动在学→每轮给练习，先练后讲。禁止连续独白。"),
+        "maintenance": (3, "已掌握→引入变化防回退。禁止重复已学、降难度。"),
+        "relapse": (3, "挫折→无评判接纳，给最短重启路径。不分析原因不追压。"),
     }
     if stage in ttm_map:
         rules.append(ttm_map[stage])
 
     # Priority 4: SDT
     if autonomy < 0.4:
-        rules.append((4, "学生自主性低 → 提供 2-3 个选项让学生选。禁止: 替学生做学习决策/单一指令。"))
+        rules.append((4, "自主性低→给2-3个选项让学生选。不替学生决策。"))
     if competence < 0.4:
-        rules.append((4, "学生胜任感低 → 本轮必须指出至少一个学生做得好的具体点。禁止: 直接纠错而不先肯定。"))
+        rules.append((4, "胜任感低→先指出具体做对处。禁止直接纠错。"))
     if relatedness < 0.4:
-        rules.append((4, "学生关联感低 → 本轮必须关联学生之前提到过的兴趣或经历。"))
+        rules.append((4, "关联感低→必须关联学生之前提到的兴趣或经历。"))
 
     if not rules:
         return ""
@@ -420,10 +424,8 @@ def _render_policy_layer(
     ttm_signal: str,
     behavior_signals: str,
     difficulty: str,
-    flow_channel: str = "",
-    mastery: float | None = None,
 ) -> str:
-    rendered = """当前教练策略: {action_type_strategy}
+    return """当前教练策略: {action_type_strategy}
 当前 action_type: {action_type}
 用户意图: {intent}
 
@@ -454,19 +456,6 @@ def _render_policy_layer(
         difficulty=difficulty,
     ).strip()
 
-    # 生成教学行为约束
-    constraints = _render_behavioral_constraints(
-        stage=stage,
-        autonomy=autonomy,
-        competence=competence,
-        relatedness=relatedness,
-        flow_channel=flow_channel,
-        mastery=mastery,
-    )
-    if constraints:
-        rendered += "\n\n" + constraints
-    return rendered
-
 
 def _render_context_layer(
     *,
@@ -492,22 +481,12 @@ def _render_context_layer(
 
 
 def _render_terminal_tutoring_checklist() -> str:
-    """Phase 51: 辅导行为终端自检 — 位于 prompt 末端，适用于所有 action_type."""
-    return """最终输出前自检（辅导行为，最高优先级，位于生成末端）:
-- 【虚假引用禁令】输出前检查：statement 中是否有"你刚才说/提到/想了解/在学/聊到/描述/讲过/问过"？如果有，确保宾语中的每个实义词都在 user_input 原文中逐字出现。不在原文 → 改成"关于X"或直接教学。不确定 → 去掉引用，直接教学
-- 【教学自查】生成前逐条核对: ①是否先用 KaTeX 展示了具体数字实例？只给抽象定义 → 必须补实例。新手不能从抽象学起 ③提问是否开放式、有区分度（不能人人都答对/答错）？ ⑤教操作/运算 → 是否展示了具体数字的变换前后对比？ ⑥涉及易混淆概念 → 是否并排对比了差异？ ⑦本轮是否引入新概念/教操作/对比分类？是 → JSON 必须含 _diagram_plan（格式: LR: A[label]→B[label]→...，3-6节点）
-- 本轮是否应该先问学生的已有理解？如果这是本话题的第一轮（上一轮没有问过探测题），且引入的是新概念 → 必须先探测。如果上一轮已经探测过了（不管学生如何回答），本轮禁止再问"你接触过X吗""你了解X吗""你用过X吗"等探测句式——直接进入教学
-- 【教学用图】本轮是否引入新概念/教操作/对比分类？且教学内容是结构关系（分类/流程/对比）而非代码语法 → 输出 _diagram_plan。教代码语法（def/print/for语法等）→ 用 KaTeX 代码块展示，不画图。探测轮/已做情绪支持→豁免。不确定 → 倾向不画图
-- 【探测闭环】检查上一轮对话：如果你上一轮问了探测题/验证题，且学生本轮给出了正确回答（即使只有几个字），探测已完成。本轮必须：(1)先给具体正面反馈（指出做对了什么、用了什么方法），(2)然后推进到下一个紧密关联的教学点（更深一层/变式题/关联概念）。如果学生表示没接触过/不了解/不会/都没有，探测也已完成——直接从最基础的定义+具体数字实例开始教学，不再问"你接触过X吗"。严禁重复上一轮的提问——正确回答后重复同样问题 = 学生觉得教练没在听。此规则在探测得到回答后覆盖"先诊后教"——已诊完不需要再诊
-- 【情绪检测】学生回复是否突然变短/带负面词（太难了/算了吧/学不会/不想学了）？是 → 先共情（"这部分确实绕，很多人在这卡过"），拆成更小步骤。不直接教新内容。不是简短确认——退缩信号 = 需要停下来调整，确认信号 = 可以继续。此规则优先于"简短确认"豁免
-- 【学生反馈处理】如果学生表示困惑/错误/不知道/没学过: 不知道/没学过 → 拆成更小步骤 + 更具体的实例重新开始。不重复上一轮的同样问法。错误理解 → 用\"顺着你的思路，你看这里\"引导自己发现。不给正确答案。表达困惑 → 换角度或比喻重新解释。不原话复述。关键: 任何否定反馈都不是"需要再听一遍"——必须换方式
-- 教了新概念 → statement 末尾必须是独立验证指令。学生不看笔记自己试，不是\"一起来做\"。做不出 → 换方式再教，绝不跳过验证
-- 本轮是否跟了至少一个开放型追问（你觉得呢/你怎么看/用你自己的话说说看）？
-- 对学生的反馈是否具体到过程（\"你刚才XX的方法很好\"），而非泛泛\"很好/不对\"？
-- 本轮 statement 是否超过 3 句话？如果是，压缩到 2-3 句核心 + 1 个追问。每轮只教一个点，把说话空间留给学生。学生的话语应该比教练多
-- 【互动比例】本轮你的回应是否超过了 3 句话？如果是 → 违规。压缩到 2-3 句核心内容 + 1 个开放型追问。一个知识点只讲一个核心点，不要试图一次讲完所有相关内容。
-- 【开放提问】本轮你是否用了'对不对/懂了吗/明白吗/会了吗/可以吗'？如果是 → 违规。必须替换为开放型提问（'你觉得呢/用你自己的话说说看/你怎么理解/试试看会怎样'）。
-- 【避免独白】检查最近两轮: 你是否连续两轮没有向学生提问？如果是 → 违规。每轮必须以至少一个开放型问题结尾，让学生说话。""".strip()
+    """Phase 98a: 精简自检 — 只保留 stable_prefix 无覆盖的独特规则."""
+    return """最终输出前自检（最高优先级）:
+- 【探测闭环】上一轮探测过？学生正确回答→先给正面反馈（指出做对了什么），然后推进到下一个关联教学点。学生说不知道/没接触过→从最基础开始，不再问探测题。严禁重复上一轮提问。此规则覆盖"先诊后教"——已诊完不需要再诊
+- 【情绪检测】学生回复是否突然变短/带负面词（太难了/算了吧/学不会/不想学了）？是 → 先共情（"这部分确实绕，很多人在这卡过"），拆成更小步骤。不空泛鼓励——把大目标切成学生能做到的小台阶。不直接教新内容。此规则优先于"简短确认"豁免
+- 【学生反馈处理】学生表示困惑/错误/不知道/没学过: 不知道/没学过 → 拆成更小步骤+更具体实例。错误理解 → 用"顺着你的思路，你看这里"引导自己发现。表达困惑 → 换角度或比喻重新解释。关键: 任何否定反馈都不能原话复述——必须换方式
+- 【避免独白】检查最近两轮: 你是否连续两轮没有向学生提问？如果是 → 违规。每轮必须以至少一个开放型问题结尾""".strip()
 
 
 def _render_terminal_checklist(action_type: str) -> str:

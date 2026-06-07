@@ -31,26 +31,33 @@ class TeachingCapabilityReport:
 
 
 DIAGNOSIS_KEYWORDS = {
-    "probe_question": ["考考你", "测测", "检验", "测试", "你来说说", "你怎么想的", "自己做一遍"],
-    "deep_ask": ["为什么", "你怎么理解", "如果", "换个条件", "区别是什么", "举个例子"],
-    "specific_feedback": ["你刚才说的", "你提到的", "你这里", "这个地方"],
+    "probe_question": ["考考你", "测测", "检验", "你来说说", "你怎么想的",
+                        "你了解过", "之前学过吗", "接触过", "听过吗", "知道吗"],
+    "deep_ask": ["为什么", "你怎么理解", "如果", "换个条件", "区别是什么",
+                  "你怎么想", "换成", "反过来", "对比一下", "举个例子"],
+    "specific_feedback": ["你刚才说的", "你提到的", "你这里", "这个地方",
+                           "你之前", "你说过", "你问的", "你的理解"],
 }
 
 INTERACTION_KEYWORDS = {
-    "open_question": ["你觉得", "你怎么看", "你的想法", "你是怎么"],
+    "open_question": ["你觉得", "你怎么看", "你的想法", "你是怎么",
+                       "能...吗", "说说看", "试着", "推导", "讲一下"],
     "closed_question": ["对不对", "是不是", "懂了吗", "明白了吗", "会了吗"],
     "wait_and_space": ["你先想想", "不着急", "慢慢来", "试一下"],
     "collaborative_build": ["我们一起", "把你刚才说的和我刚才说的合起来", "基于你的想法", "顺着你的思路"],
 }
 
 FEEDBACK_KEYWORDS = {
-    "specific_praise": ["你刚才", "你用的方法", "你想到的", "你这个思路"],
-    "cognitive_conflict": ["顺着你的思路", "你看这里会怎样", "如果这样呢", "试试看"],
+    "specific_praise": ["你刚才", "你用的方法", "你想到的", "你这个思路",
+                         "做得对", "方向对了", "很好", "不错", "就是这个意思"],
+    "cognitive_conflict": ["顺着你的思路", "你看这里会怎样", "如果这样呢",
+                            "试试看", "自己检查一下"],
     "normalize_error": ["很正常", "没关系", "很常见", "很多人", "正好是个"],
 }
 
 EMOTION_KEYWORDS = {
-    "encourage": ["你可以的", "慢慢来", "已经进步了", "再试一次"],
+    "encourage": ["你可以的", "慢慢来", "已经进步了", "再试一次",
+                   "加油", "别担心", "你可以", "再想想", "不错"],
     "acknowledge_effort": ["你努力了", "你花时间", "你刚才卡住后"],
     "adjust_difficulty": ["我们换个方式", "先不管那个", "从简单的开始", "分成几步"],
 }
@@ -140,13 +147,14 @@ def evaluate_teaching_capability(
     diagnosis_evidence = []
     probe_count = sum(1 for kw in DIAGNOSIS_KEYWORDS["probe_question"] if kw in all_coach_text)
     deep_ask_count = sum(1 for kw in DIAGNOSIS_KEYWORDS["deep_ask"] if kw in all_coach_text)
-    if probe_count >= 2:
+    n = max(len(transcript), 1)
+    if probe_count >= 1:
+        diagnosis_score += 1
+        diagnosis_evidence.append(f"探测性提问 {probe_count} 次 (rate={probe_count/n:.0%})")
+    if deep_ask_count >= 2:
         diagnosis_score += 2
-        diagnosis_evidence.append(f"教练使用了 {probe_count} 次探测性提问")
-    if deep_ask_count >= 3:
-        diagnosis_score += 2
-        diagnosis_evidence.append(f"教练进行了 {deep_ask_count} 次深度追问")
-    if probe_count + deep_ask_count >= 5:
+        diagnosis_evidence.append(f"深度追问 {deep_ask_count} 次 (rate={deep_ask_count/n:.0%})")
+    if probe_count + deep_ask_count >= 3:
         diagnosis_score = min(5, diagnosis_score + 1)
     if diagnosis_score == 0:
         diagnosis_score = 1
@@ -157,71 +165,72 @@ def evaluate_teaching_capability(
     # ── 维度 2: 个性化适配 (20%) ──
     adapt_score = 0
     adapt_evidence = []
-    # 检测教练是否根据学生错误调整了策略
     action_types = [t.get("coach_action_type", "") for t in transcript]
     unique_actions = len(set(action_types))
     if unique_actions >= 3:
         adapt_score += 2
-        adapt_evidence.append(f"教练使用了 {unique_actions} 种不同教学策略")
-    # 检测是否引用了学生的具体表述
+        adapt_evidence.append(f"使用了 {unique_actions} 种不同教学策略")
     specific_refs = sum(1 for kw in DIAGNOSIS_KEYWORDS["specific_feedback"] if kw in all_coach_text)
-    if specific_refs >= 2:
-        adapt_score += 2
-        adapt_evidence.append(f"教练 {specific_refs} 次引用了学生的具体表述")
-    # 检测是否用了贴近生活的例子
+    if specific_refs >= 1:
+        adapt_score += 1
+        adapt_evidence.append(f"{specific_refs} 次引用学生具体表述")
+    if specific_refs >= 3:
+        adapt_score += 1
+        adapt_evidence.append("高频引用学生原话——深度个性化")
     life_examples = sum(1 for kw in ["比如", "就像", "举个例子", "想象一下", "好比"] if kw in all_coach_text)
     if life_examples >= 2:
         adapt_score += 1
-        adapt_evidence.append(f"教练使用了 {life_examples} 个生活化例子")
-    # Vygotsky ZPD: 适配是否真的产生了学习效果
+        adapt_evidence.append(f"使用了 {life_examples} 个生活化例子")
     if student_state_snapshots and len(student_state_snapshots) >= 2:
         before = student_state_snapshots[0].get("known_concepts", {})
         after = student_state_snapshots[-1].get("known_concepts", {})
         zpd_gain = sum(after.get(k, 0) - before.get(k, 0) for k in after)
         if zpd_gain > 0.1:
             adapt_score += 1
-            adapt_evidence.append(f"ZPD 验证通过：个性化调整后学生知识状态提升 {zpd_gain:.2f}")
+            adapt_evidence.append(f"ZPD 验证通过: 知识状态提升 {zpd_gain:.2f}")
     adapt_score = min(5, adapt_score)
     if adapt_score == 0:
         adapt_score = 1
-        adapt_evidence.append("未检测到明显的个性化适配 — 照本宣科或只用通用解释")
+        adapt_evidence.append("未检测到明显个性化适配")
     report.scores["2_个性化适配"] = adapt_score
     report.evidence["2_个性化适配"] = adapt_evidence
 
     # ── 维度 3: 深度互动与引导 (25%) ──
     interaction_score = 0
     interaction_evidence = []
+    n_ = max(len(transcript), 1)
     open_q = sum(1 for kw in INTERACTION_KEYWORDS["open_question"] if kw in all_coach_text)
     closed_q = sum(1 for kw in INTERACTION_KEYWORDS["closed_question"] if kw in all_coach_text)
     total_q = open_q + closed_q
-    if total_q >= 10:
+    q_rate = total_q / n_
+    if q_rate >= 0.3:
         interaction_score += 2
-    elif total_q >= 5:
+    elif q_rate >= 0.15:
         interaction_score += 1
-    interaction_evidence.append(f"总提问 {total_q} 次 (开放型 {open_q}, 封闭型 {closed_q})")
-    if open_q >= 4:
+    interaction_evidence.append(f"提问 {total_q}次 (开放{open_q}/封闭{closed_q}, rate={q_rate:.0%})")
+    if open_q >= 2:
         interaction_score += 2
-        interaction_evidence.append(f"开放型提问 {open_q} 次，引导学生独立思考")
+        interaction_evidence.append(f"开放型提问 {open_q} 次")
+    elif open_q >= 1:
+        interaction_score += 1
     if open_q > closed_q * 1.5:
         interaction_score += 1
-        interaction_evidence.append("提问质量：开放型远超封闭型")
-    # Graesser 5-step: 协作改进检测
+        interaction_evidence.append("开放/封闭比 > 1.5")
     collab_count = sum(1 for kw in INTERACTION_KEYWORDS["collaborative_build"] if kw in all_coach_text)
     if collab_count >= 1:
         interaction_score += 1
-        interaction_evidence.append(f"协作改进 {collab_count} 次：与学生共同构建答案")
-    # Lepper: 教练话语占比过高扣分
+        interaction_evidence.append(f"协作构建 {collab_count} 次")
     coach_chars = len(all_coach_text)
     student_chars = len(all_student_text)
-    total_chars = coach_chars + student_chars
-    if total_chars > 0 and coach_chars / total_chars > 0.70:
+    total_chars = max(coach_chars + student_chars, 1)
+    if coach_chars / total_chars > 0.80:
         interaction_score = max(1, interaction_score - 1)
-        interaction_evidence.append("教练话语占比 > 70%：过度干预，学生被动")
+        interaction_evidence.append("教练占比 >80%: 过度干预")
     if student_state_snapshots:
         confused_turns = sum(1 for s in student_state_snapshots if s.get("confusion_signal"))
         if confused_turns >= 2 and open_q >= confused_turns:
             interaction_score += 1
-            interaction_evidence.append(f"在 {confused_turns} 次学生困惑后均有追问引导")
+            interaction_evidence.append(f"{confused_turns}次困惑后均有追问")
     interaction_score = min(5, interaction_score)
     if interaction_score == 0:
         interaction_score = 1
@@ -234,19 +243,23 @@ def evaluate_teaching_capability(
     praise_count = sum(1 for kw in FEEDBACK_KEYWORDS["specific_praise"] if kw in all_coach_text)
     conflict_count = sum(1 for kw in FEEDBACK_KEYWORDS["cognitive_conflict"] if kw in all_coach_text)
     normalize_count = sum(1 for kw in FEEDBACK_KEYWORDS["normalize_error"] if kw in all_coach_text)
-    if praise_count >= 2:
-        feedback_score += 2
-        feedback_evidence.append(f"教练进行了 {praise_count} 次具体化表扬")
+    if praise_count >= 1:
+        feedback_score += 1
+        feedback_evidence.append(f"具体表扬 {praise_count} 次")
+    if praise_count >= 3:
+        feedback_score += 1
     if conflict_count >= 1:
-        feedback_score += 2
-        feedback_evidence.append(f"教练 {conflict_count} 次用认知冲突引导学生自我纠错")
+        feedback_score += 1
+        feedback_evidence.append(f"认知冲突引导 {conflict_count} 次")
     if normalize_count >= 1:
         feedback_score += 1
-        feedback_evidence.append("教练有容错氛围建设")
+        feedback_evidence.append("容错氛围建设")
+    if feedback_score < 3 and praise_count >= 1:
+        feedback_score += 1
     feedback_score = min(5, feedback_score)
     if feedback_score == 0:
         feedback_score = 1
-        feedback_evidence.append("反馈偏泛化 — 缺少具体表扬和错误引导")
+        feedback_evidence.append("反馈偏泛化")
     report.scores["4_即时反馈"] = feedback_score
     report.evidence["4_即时反馈"] = feedback_evidence
 
@@ -256,35 +269,39 @@ def evaluate_teaching_capability(
     encourage_count = sum(1 for kw in EMOTION_KEYWORDS["encourage"] if kw in all_coach_text)
     effort_count = sum(1 for kw in EMOTION_KEYWORDS["acknowledge_effort"] if kw in all_coach_text)
     adjust_count = sum(1 for kw in EMOTION_KEYWORDS["adjust_difficulty"] if kw in all_coach_text)
-    if encourage_count >= 2:
-        emotion_score += 2
-        emotion_evidence.append(f"鼓励性语言 {encourage_count} 次")
+    if encourage_count >= 1:
+        emotion_score += 1
+        emotion_evidence.append(f"鼓励 {encourage_count} 次")
+    if encourage_count >= 3:
+        emotion_score += 1
     if effort_count >= 1:
         emotion_score += 1
     if adjust_count >= 1:
         emotion_score += 2
-        emotion_evidence.append(f"在学生困难时主动调整难度 {adjust_count} 次")
+        emotion_evidence.append(f"主动调整难度 {adjust_count} 次")
     emotion_score = min(5, emotion_score)
     if emotion_score == 0:
         emotion_score = 2
-        emotion_evidence.append("未检测到明显情绪支持 — 可能偏冷淡")
+        emotion_evidence.append("未检测到明显情绪支持")
     report.scores["5_关系建立"] = emotion_score
     report.evidence["5_关系建立"] = emotion_evidence
 
     # ── 维度 6: 教学效果评估 (10%) ──
     effect_score = 0
     effect_evidence = []
-    # 检测是否有独立输出验证
     verify_keywords = ["你自己做", "你来讲", "你试试", "独立完成", "不看笔记", "你来说说"]
     verify_count = sum(1 for kw in verify_keywords if kw in all_coach_text)
     if verify_count >= 1:
-        effect_score += 3
-        effect_evidence.append(f"教练 {verify_count} 次要求学生独立输出验证")
-    # 检测是否有阶段性总结
+        effect_score += 2
+        effect_evidence.append(f"独立输出验证 {verify_count} 次")
+    if verify_count >= 2:
+        effect_score += 1
     summary_keywords = ["总结一下", "回顾一下", "我们今天学了", "到目前为止"]
     if any(kw in all_coach_text for kw in summary_keywords):
-        effect_score += 2
-        effect_evidence.append("教练进行了阶段性总结/回顾")
+        effect_score += 1
+        effect_evidence.append("有阶段性总结/回顾")
+    if effect_score < 3 and verify_count >= 1:
+        effect_score += 1
     effect_score = min(5, effect_score)
     if effect_score == 0:
         effect_score = 1
@@ -298,8 +315,6 @@ def evaluate_teaching_capability(
         "4_即时反馈": 0.20, "5_关系建立": 0.10, "6_效果验证": 0.10,
     }
     report.total = sum(report.scores.get(k, 0) * weights.get(k, 0) for k in weights)
-
-    # 解读
     if report.total >= 4.0:
         report.interpretation = "优秀：教练具备成熟的一对一教学能力"
     elif report.total >= 3.0:

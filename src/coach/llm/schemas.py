@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 
@@ -266,6 +267,153 @@ class LLMOutputValidator:
             type_errors = cls.validate_by_action_type(payload, action_type)
             errors.extend(type_errors)
         return len(errors) == 0, errors
+
+    # ── Phase 97a: Output Contract — sentence / compactness ─────
+
+    @classmethod
+    def _split_sentences_katex_safe(cls, text: str) -> list[str]:
+        """Split text into sentences while protecting $...$ formulas."""
+        if not text:
+            return []
+        _katex_pat = re.compile(r'\$[^$]+\$')
+        _boundary_pat = re.compile(r'(?<=[。！？\n])')
+        placeholders: dict[str, str] = {}
+        def _replace_katex(m: re.Match) -> str:
+            idx = len(placeholders)
+            key = f"__KATEX_{idx}__"
+            placeholders[key] = m.group(0)
+            return key
+        protected = _katex_pat.sub(_replace_katex, text)
+        raw = _boundary_pat.split(protected)
+        result = []
+        for chunk in raw:
+            chunk = chunk.strip()
+            if not chunk:
+                continue
+            for key, original in placeholders.items():
+                chunk = chunk.replace(key, original)
+            result.append(chunk)
+        return result
+
+    @classmethod
+    def count_statement_sentences(cls, statement: str) -> int:
+        if not statement:
+            return 0
+        sentences = cls._split_sentences_katex_safe(statement)
+        return max(len(sentences), 1)
+
+    @classmethod
+    def _truncate_chars_katex_safe(cls, text: str, max_chars: int) -> str:
+        """Truncate text to max_chars while protecting $...$ formulas."""
+        if len(text) <= max_chars:
+            return text
+        katex_intervals: list[tuple[int, int]] = []
+        start = 0
+        while True:
+            dollar = text.find("$", start)
+            if dollar == -1:
+                break
+            closing = text.find("$", dollar + 1)
+            if closing == -1:
+                break
+            katex_intervals.append((dollar, closing + 1))
+            start = closing + 1
+        truncation_point = max_chars
+        for istart, iend in katex_intervals:
+            if istart < truncation_point < iend:
+                truncation_point = istart
+                break
+        return text[:truncation_point]
+
+    @classmethod
+    def _extract_question_near_boundary(
+        cls, original_text: str, truncation_point: int, markers: list[str],
+    ) -> str | None:
+        """Extract complete question sentence near truncation boundary."""
+        if truncation_point <= 0 or not original_text:
+            return None
+        half_window = 100
+        window_start = max(0, truncation_point - half_window)
+        window_end = min(len(original_text), truncation_point + half_window)
+        window = original_text[window_start:window_end]
+        best_pos = -1
+        for marker in markers:
+            pos = window.find(marker)
+            if pos != -1 and (best_pos == -1 or pos < best_pos):
+                best_pos = pos
+        if best_pos == -1:
+            return None
+        abs_marker_pos = window_start + best_pos
+        marker_end = abs_marker_pos + len(markers[0])
+        if marker_end < truncation_point:
+            after_trunc = original_text[truncation_point:truncation_point + 50]
+            if after_trunc and after_trunc[0] in "。！？\n":
+                return None
+        sent_start = abs_marker_pos
+        for i in range(abs_marker_pos - 1, max(0, abs_marker_pos - 200), -1):
+            if original_text[i] in "。！？\n":
+                sent_start = i + 1
+                break
+        sent_end = abs_marker_pos
+        for i in range(abs_marker_pos, min(len(original_text), abs_marker_pos + 300)):
+            if original_text[i] in "。！？\n":
+                sent_end = i + 1
+                break
+        extracted = original_text[sent_start:sent_end].strip()
+        return extracted if extracted else None
+
+    @classmethod
+    def enforce_statement_compactness(
+        cls, payload: dict, max_sentences: int = 4, max_chars: int = 300,
+    ) -> tuple[dict, dict]:
+        """Three-phase pipeline: sentence trunc → char trunc → question extract."""
+        statement = payload.get("statement", "")
+        report: dict = {"truncated": False}
+        modified = False
+        if not statement:
+            return payload, report
+        original = statement
+        truncation_point = len(original)
+        payload = dict(payload)
+        # Phase 1: Sentence-level
+        sent_count = cls.count_statement_sentences(statement)
+        if sent_count > max_sentences:
+            report["truncated"] = True
+            sentences = cls._split_sentences_katex_safe(statement)
+            kept = sentences[:max_sentences]
+            statement = "".join(kept)
+            truncation_point = len(statement)
+            modified = True
+        # Phase 2: Char-level
+        if len(statement) > max_chars:
+            report["truncated"] = True
+            statement = cls._truncate_chars_katex_safe(statement, max_chars)
+            truncation_point = min(truncation_point, len(statement))
+            modified = True
+        if not modified:
+            return payload, report
+        payload["statement"] = statement
+        # Phase 3: Question extraction
+        question_markers = [
+            "？", "?", "你觉得", "你怎么", "说说看", "试试", "用你自己的话",
+            "能不能", "能...吗", "看看...对不对",
+        ]
+        existing_q = payload.get("question")
+        if not existing_q:
+            extracted = cls._extract_question_near_boundary(
+                original, truncation_point, question_markers)
+            if extracted:
+                payload["question"] = extracted
+        if len(statement) < 20:
+            report["too_short"] = True
+        return payload, report
+
+    @classmethod
+    def validate_question_presence(cls, payload: dict) -> tuple[bool, str]:
+        q = payload.get("question", "")
+        if isinstance(q, str) and q.strip():
+            return True, ""
+        return False, "missing required 'question' field"
 
 
 # ── S2.1: DSL Schema Aligner ─────────────────────────────────

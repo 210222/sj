@@ -367,6 +367,35 @@ class CoachAgent:
         if ctx_summary_from_retention:
             enriched_summary += "\n" + ctx_summary_from_retention
 
+        # Phase 97c: Quote extraction — pre-verified safe phrases for student quoting
+        quote_cfg = self._cfg().get("quote_extraction", {})
+        if quote_cfg.get("enabled", False):
+            import re
+            max_phrases = quote_cfg.get("max_phrases", 8)
+            min_len = quote_cfg.get("min_phrase_len", 2)
+            quotable = []
+            quoted = re.findall(r'["""](.+?)["""]', user_input)
+            quotable.extend(quoted[:3])
+            bracket_quoted = re.findall(r'「(.+?)」', user_input)
+            quotable.extend(bracket_quoted[:3])
+            cn_phrases = re.findall(r'[一-鿿]{2,6}', user_input)
+            en_phrases = re.findall(r'\b[a-zA-Z_]{2,}\b', user_input)
+            seen = set()
+            safe_phrases = []
+            for p in quotable + cn_phrases + en_phrases:
+                p = p.strip()
+                if p and len(p) >= min_len and p not in seen:
+                    seen.add(p)
+                    safe_phrases.append(p)
+            safe_phrases = safe_phrases[:max_phrases]
+            if safe_phrases:
+                enriched_summary += (
+                    "\n\n【本轮可安全引用】"
+                    "以下短语已确认来自用户原文，"
+                    "可安全使用\"你刚才说的X\"句式引用：\n- "
+                    + "\n- ".join(safe_phrases)
+                )
+
         ctx = build_coach_context(
             intent=intent,
             action_type=action_type,
@@ -508,11 +537,13 @@ class CoachAgent:
         cfg = self._cfg()
         card_cfg = cfg.get("card_injection", {})
         if not card_cfg.get("enabled", True):
+            _logger.debug("card_injection: disabled in config")
             return None
 
         # Layer 2: action_type 跳过
         skip_types = card_cfg.get("skip_action_types", ["pulse", "defer"])
         if action_type in skip_types:
+            _logger.debug("card_injection: skipped for action_type=%s", action_type)
             return None
 
         top_n = card_cfg.get("top_n", 3)
@@ -522,11 +553,15 @@ class CoachAgent:
             from src.coach.curriculum.retriever import LessonCardRetriever
             retriever = LessonCardRetriever()
             results = retriever.search(user_input, top_n=top_n)
-        except Exception:
+        except Exception as e:
+            _logger.warning("card_injection: retrieval failed for query '%.40s': %s", user_input, e)
             return None
 
         if not results:
+            _logger.debug("card_injection: no cards matched for query '%.40s'", user_input)
             return None
+
+        _logger.info("card_injection: %d cards matched for query '%.40s'", len(results), user_input)
 
         # Layer 4: 格式化
         context_items = []
@@ -535,7 +570,10 @@ class CoachAgent:
             if item:
                 context_items.append(item)
 
-        return context_items if context_items else None
+        if not context_items:
+            _logger.debug("card_injection: all cards failed formatting")
+            return None
+        return context_items
 
     @staticmethod
     def _format_card_for_context(result) -> str | None:
@@ -1365,6 +1403,27 @@ class CoachAgent:
                 filtered_payload = LLMSafetyFilter.enforce_action_type(
                     filtered_payload, action.get("action_type", "suggest"))
                 valid, errors = LLMOutputValidator.validate(filtered_payload)
+                # Phase 97b: action_contract — programmatic statement compactness
+                output_contract_cfg = _coach_cfg.get("output_contract", {})
+                contract_enabled = output_contract_cfg.get("enabled", False)
+                contract_report = {}
+                if contract_enabled and valid:
+                    max_sent = output_contract_cfg.get("max_statement_sentences", 4)
+                    max_chars = output_contract_cfg.get("max_statement_chars", 300)
+                    filtered_payload, contract_report = LLMOutputValidator.enforce_statement_compactness(
+                        filtered_payload, max_sentences=max_sent, max_chars=max_chars)
+                    if contract_report.get("truncated"):
+                        _logger.info("Phase97b: Statement compacted [action=%s]: %s",
+                                     action.get("action_type"), contract_report)
+                    if contract_report.get("too_short"):
+                        _logger.warning("Phase97b: Statement too short after compactness; using rule fallback")
+                        valid = False
+                        errors.append("statement too short after compactness enforcement")
+                # Phase 97d: question presence check — soft execution, WARNING only
+                if contract_enabled and valid and output_contract_cfg.get("require_question_per_turn"):
+                    q_ok, q_msg = LLMOutputValidator.validate_question_presence(filtered_payload)
+                    if not q_ok:
+                        _logger.warning("Phase97d: Missing question in payload (action_type=%s)", action.get("action_type"))
                 if valid and align_report.get("valid", False):
                     action["payload"] = filtered_payload
                     llm_generated = True

@@ -1168,7 +1168,10 @@ def run_interactive_game(
 
         # 学生消费教练回复
         student.consume_coach_response(coach_r)
-        coach_stmt = str(coach_r.get("payload", {}).get("statement", ""))[:200]
+        payload = coach_r.get("payload", {})
+        stmt = str(payload.get("statement", ""))
+        q = str(payload.get("question", ""))
+        coach_stmt = (stmt + (" " + q if q.strip() else ""))[:300]
         action_type = str(coach_r.get("action_type", "?"))
         transcript.append({
             "turn": turn,

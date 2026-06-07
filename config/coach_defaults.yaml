@@ -286,6 +286,13 @@ mrt:
   - satisfaction_rating
   randomization_rate: 0.5
   window_hours: 24
+output_contract:
+  compactness_fallback: truncate
+  enabled: true
+  max_statement_chars: 300
+  max_statement_sentences: 4
+  require_question_per_turn: true
+  truncation_min_viable_chars: 20
 precedent_intercept:
   action:
     on_hit: block
@@ -294,6 +301,13 @@ precedent_intercept:
     max_results: 5
     min_confidence: 0.3
     text_similarity_threshold: 0.4
+prompt_pruning:
+  phase_98a_1_enabled: true
+  phase_98a_2_enabled: true
+quote_extraction:
+  enabled: true
+  max_phrases: 8
+  min_phrase_len: 2
 relational_safety:
   coach_mode: false
   compliance_thresholds:
